@@ -9,7 +9,9 @@ spacing and arc, choose a tatami or satin fill and a satin or running edge,
 pick Janome threads, and save a JEF for the machine. Save as JEF also converts
 an opened DST, EXP or PES file, with any rotation or mirroring baked in.
 
-The Artwork tab turns SVG files (logos, clip art, icons) into designs: every
+The Artwork tab turns SVG files and pictures (PNG, JPG, WebP; logos and clip
+art, not photos) into designs. Pictures are reduced to a few flat colors and
+traced into smooth outlines first. Every artwork every
 color becomes a Janome thread, shapes are filled with any fill style, strokes
 become running or satin lines, hidden parts are cut away so layers don't pile
 up, and the colors can be merged down to a few threads.
@@ -43,6 +45,7 @@ you pick that file in the save dialog yourself.
 | `O`                     | Open a file                                |
 | `V` / `L` / `A`         | Viewer / lettering / artwork               |
 | `Ctrl+S`                | Save as JEF                                |
+| `Ctrl+U`                | Send to the machine's USB stick            |
 | `Ctrl+V`                | Paste SVG code as artwork                  |
 | `Ctrl+Shift+S`          | Save a picture of the preview              |
 | `Space`                 | Play or pause the stitch-out               |
@@ -97,6 +100,11 @@ Script, Lobster, Pacifico, Righteous) come from Google Fonts under the SIL Open
 Font License (`assets/fonts/OFL.txt`). Installed system fonts are listed too.
 
 ## Artwork tips
+
+- Send to USB writes the JEF into `EMB/Embf` on the stick with an 8-letter
+  name, and Eject closes the stick so it can be pulled out.
+- For pictures, set Colors to the number of colors in the logo plus one for
+  the background, and raise Clean for scanned or blurry images.
 
 - Flat-color logos work best. Gradients become one thread in their average
   color; embedded pictures are skipped (trace them into paths first).

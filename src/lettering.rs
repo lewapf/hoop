@@ -1275,7 +1275,7 @@ fn edt_1d(f: &[f32], out: &mut [f32]) {
 
 /// Closed lines where `field` equals `level`, from marching squares over cell
 /// centers. Points come back in world units through `center`.
-fn iso_lines(field: &[f32], w: usize, h: usize, level: f32, center: &dyn Fn(usize, usize) -> Pt) -> Vec<Contour> {
+pub fn iso_lines(field: &[f32], w: usize, h: usize, level: f32, center: &dyn Fn(usize, usize) -> Pt) -> Vec<Contour> {
     use std::collections::HashMap;
     let v = |i: usize, j: usize| field[j * w + i].min(1e6);
     // An edge point is keyed by the cell edge it lies on, so neighbors agree.

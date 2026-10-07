@@ -6,6 +6,7 @@ mod hoops;
 mod lettering;
 mod prefs;
 mod theme;
+mod trace;
 mod usb;
 
 fn main() -> eframe::Result {

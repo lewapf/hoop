@@ -9,6 +9,7 @@ use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
 use crate::prefs::Prefs;
+use crate::trace::{self, TraceSettings};
 use crate::usb;
 use crate::theme::Theme;
 
@@ -174,6 +175,10 @@ pub struct HoopApp {
     capture: Capture,
     pinned: Vec<Pinned>,
     usb: UsbState,
+    /// The picture behind traced artwork, kept so it can be traced again.
+    picture: Option<trace::Picture>,
+    trace_set: TraceSettings,
+    pending_retrace: bool,
     status: Option<(String, std::time::Instant)>,
     prefs: Prefs,
     /// Font name from the last session, waiting for the font list to load.
@@ -230,6 +235,9 @@ impl HoopApp {
             capture: Capture::Idle,
             pinned: Vec::new(),
             usb: UsbState::default(),
+            picture: None,
+            trace_set: TraceSettings::default(),
+            pending_retrace: false,
             status: None,
             prefs: Prefs::load(),
             want_font: None,
@@ -289,7 +297,22 @@ impl HoopApp {
 
     fn open(&mut self, ctx: &egui::Context, path: &Path) {
         let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let ext = path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+        if matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif") {
+            self.set_mode(Mode::Artwork);
+            match trace::load(path) {
+                Ok(pic) => {
+                    self.picture = Some(pic);
+                    self.trace_set = TraceSettings::default();
+                    self.retrace(true);
+                    self.prefs.add_recent(path);
+                }
+                Err(e) => self.error = Some(e),
+            }
+            return;
+        }
         if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg") || e.eq_ignore_ascii_case("svgz")) {
+            self.picture = None;
             if self.use_artwork(artwork::load(path)) {
                 self.prefs.add_recent(path);
             }
@@ -335,7 +358,7 @@ impl HoopApp {
         std::thread::spawn(move || {
             let file = rfd::FileDialog::new()
                 .set_title("Open an embroidery design")
-                .add_filter("Designs and artwork", &["jef", "dst", "exp", "pes", "pec", "svg", "svgz", "JEF", "DST", "EXP", "PES", "PEC", "SVG"])
+                .add_filter("Designs, artwork and pictures", &["jef", "dst", "exp", "pes", "pec", "svg", "svgz", "png", "jpg", "jpeg", "webp", "bmp", "gif", "JEF", "DST", "EXP", "PES", "PEC", "SVG", "PNG", "JPG", "JPEG"])
                 .pick_file();
             let _ = tx.send(file);
             ctx.request_repaint();
@@ -1353,7 +1376,26 @@ impl HoopApp {
         }
     }
 
+    /// Traces the picture again, keeping the stitch settings unless `fresh`.
+    fn retrace(&mut self, fresh: bool) {
+        let Some(pic) = &self.picture else { return };
+        let old = self.art.clone();
+        let result = trace::trace(pic, &self.trace_set);
+        if self.use_artwork(result) {
+            if let (Some(new), Some(old)) = (&mut self.art, old.filter(|_| !fresh)) {
+                new.width_mm = old.width_mm;
+                new.style = old.style;
+                new.knockout = old.knockout;
+                new.min_detail_mm = old.min_detail_mm;
+                new.stroke = old.stroke;
+            } else if let Some(new) = &mut self.art {
+                new.width_mm = 90.0;
+            }
+        }
+    }
+
     fn paste_svg(&mut self, text: &str) -> bool {
+        self.picture = None;
         self.use_artwork(artwork::parse("Pasted SVG", text.trim().as_bytes()))
     }
 
@@ -1400,14 +1442,14 @@ impl HoopApp {
                     }
                 }
                 None => {
-                    ui.label(RichText::new("Open an SVG, or drop one on the hoop. Logos and clip art with flat colors work best.").color(muted));
+                    ui.label(RichText::new("Open an SVG or a picture (PNG, JPG), or drop one on the hoop. Logos and clip art with flat colors work best.").color(muted));
                 }
             }
             ui.add_space(4.0);
             let w = (ui.available_width() - 12.0) / 3.0;
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
-                if ui.add(primary("Open SVG…", accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
+                if ui.add(primary("Open…", accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
                     self.pick_file();
                 }
                 if ui.add(egui::Button::new("Paste SVG").selected(self.paste_open).min_size(vec2(w, 30.0)))
@@ -1453,6 +1495,27 @@ impl HoopApp {
         });
         if !has_art {
             return;
+        }
+        if self.picture.is_some() {
+            let mut t = self.trace_set;
+            card(ui, "Trace", accent, |ui| {
+                ui.label(RichText::new("Pictures are reduced to a few flat colors and outlined. Logos and clip art work best; photos don't stitch well.").size(12.0).color(muted));
+                int_row(ui, "Colors", &mut t.colors, 2..=10, "How many colors the picture is reduced to, background included");
+                int_row(ui, "Smooth", &mut t.smooth, 0..=3, "Rounds off pixel corners in the outlines");
+                int_row(ui, "Clean", &mut t.clean, 0..=3, "Removes specks and noise before tracing. Raise it for scanned or blurry pictures.");
+                ui.checkbox(&mut t.drop_background, "Leave out the background color");
+            });
+            if t != self.trace_set && !ui.ctx().input(|i| i.pointer.any_down()) {
+                self.trace_set = t;
+                self.retrace(false);
+            } else if t != self.trace_set {
+                self.trace_set = t;
+                self.pending_retrace = true;
+            }
+            if self.pending_retrace && !ui.ctx().input(|i| i.pointer.any_down()) {
+                self.pending_retrace = false;
+                self.retrace(false);
+            }
         }
         let hoop = self.hoop_size();
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
@@ -2075,6 +2138,19 @@ fn segmented<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(
                 }
             }
         });
+    });
+}
+
+/// Like `slider_row`, for whole numbers.
+fn int_row<T: egui::emath::Numeric>(ui: &mut egui::Ui, label: &str, v: &mut T, range: std::ops::RangeInclusive<T>, hover: &str) {
+    ui.horizontal(|ui| {
+        ui.allocate_ui_with_layout(vec2(62.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.set_min_width(62.0);
+            ui.label(label);
+        });
+        ui.spacing_mut().slider_width = (ui.available_width() - 86.0).max(40.0);
+        ui.add(egui::Slider::new(v, range.clone()).show_value(false)).on_hover_text(hover);
+        ui.add_sized([78.0, 22.0], egui::DragValue::new(v).range(range).speed(0.05));
     });
 }
 
