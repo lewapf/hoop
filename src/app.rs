@@ -93,6 +93,8 @@ pub struct HoopApp {
     picker: Option<Receiver<Option<PathBuf>>>,
     weave: Option<egui::TextureHandle>,
     canvas_rect: egui::Rect,
+    /// Lets background threads wake the window when their work is done.
+    ctx: egui::Context,
     user_view: bool,
     mode: Mode,
     /// The other mode's design, kept while this one is shown.
@@ -136,6 +138,7 @@ impl HoopApp {
             picker: None,
             weave: None,
             canvas_rect: egui::Rect::NOTHING,
+            ctx: cc.egui_ctx.clone(),
             user_view: false,
             mode: Mode::Viewer,
             stash: [None, None, None],
@@ -158,6 +161,8 @@ impl HoopApp {
             ctx.request_repaint();
         });
         app.font_scan = Some(rx);
+        let ctx = cc.egui_ctx.clone();
+        app.theme.watch(move || ctx.request_repaint());
         load_ui_font(&cc.egui_ctx);
         app.apply_theme(&cc.egui_ctx);
         if let Some(path) = file {
@@ -246,6 +251,7 @@ impl HoopApp {
             return;
         }
         let (tx, rx) = channel();
+        let ctx = self.ctx.clone();
         // The portal dialog blocks until the user answers, so it runs off the UI thread.
         std::thread::spawn(move || {
             let file = rfd::FileDialog::new()
@@ -253,6 +259,7 @@ impl HoopApp {
                 .add_filter("Designs and artwork", &["jef", "dst", "exp", "pes", "pec", "svg", "svgz", "JEF", "DST", "EXP", "PES", "PEC", "SVG"])
                 .pick_file();
             let _ = tx.send(file);
+            ctx.request_repaint();
         });
         self.picker = Some(rx);
     }
@@ -1081,6 +1088,7 @@ impl HoopApp {
             .find(|p| p.is_dir())
             .unwrap_or_default();
         let (tx, rx) = channel();
+        let ctx = self.ctx.clone();
         std::thread::spawn(move || {
             let file = rfd::FileDialog::new()
                 .set_title("Save as JEF")
@@ -1089,6 +1097,7 @@ impl HoopApp {
                 .add_filter("Janome JEF", &["jef"])
                 .save_file();
             let _ = tx.send(file);
+            ctx.request_repaint();
         });
         self.saver = Some((rx, bytes));
     }
@@ -1142,8 +1151,6 @@ impl eframe::App for HoopApp {
         if self.theme.refresh() {
             self.apply_theme(ctx);
         }
-        // Pick up theme switches even when the window is idle.
-        ctx.request_repaint_after(std::time::Duration::from_secs(1));
 
         if let Some(rx) = &self.picker {
             match rx.try_recv() {
@@ -1153,7 +1160,7 @@ impl eframe::App for HoopApp {
                         self.open(ctx, &path);
                     }
                 }
-                Err(std::sync::mpsc::TryRecvError::Empty) => ctx.request_repaint_after(std::time::Duration::from_millis(100)),
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
                 Err(_) => self.picker = None,
             }
         }
@@ -1171,7 +1178,8 @@ impl eframe::App for HoopApp {
             if self.shown >= self.total() {
                 self.playing = false;
             }
-            ctx.request_repaint();
+            // Without vsync this caps playback at about 60 frames a second.
+            ctx.request_repaint_after(std::time::Duration::from_millis(16));
         }
 
         if let Some(rx) = &self.font_scan {
@@ -1188,7 +1196,7 @@ impl eframe::App for HoopApp {
                         self.write_file(path, &bytes);
                     }
                 }
-                Err(std::sync::mpsc::TryRecvError::Empty) => ctx.request_repaint_after(std::time::Duration::from_millis(100)),
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
                 Err(_) => self.saver = None,
             }
         }

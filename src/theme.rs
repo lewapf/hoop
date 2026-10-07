@@ -62,6 +62,24 @@ impl Theme {
         Theme::new(home.join(".local/state/omarchy/current"))
     }
 
+    /// Calls `wake` from a background thread whenever colors.toml changes,
+    /// so an idle window doesn't have to redraw just to check.
+    pub fn watch(&self, wake: impl Fn() + Send + 'static) {
+        let file = self.file.clone();
+        std::thread::spawn(move || {
+            let stamp = |f: &PathBuf| std::fs::metadata(f).and_then(|m| m.modified()).ok();
+            let mut last = stamp(&file);
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(1));
+                let now = stamp(&file);
+                if now != last {
+                    last = now;
+                    wake();
+                }
+            }
+        });
+    }
+
     /// Re-reads the colors when the file changed. Returns true when they did.
     pub fn refresh(&mut self) -> bool {
         let stamp = std::fs::metadata(&self.file).and_then(|m| m.modified()).ok();
