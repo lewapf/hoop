@@ -16,6 +16,23 @@ pub enum FillKind {
     None,
     Tatami,
     Satin,
+    Wave,
+    Zigzag,
+    Crosshatch,
+    Gradient,
+    Open,
+}
+
+impl FillKind {
+    /// Row spacing that suits the style, used when the user switches to it.
+    pub fn default_rows_mm(self) -> f32 {
+        match self {
+            FillKind::Crosshatch => 1.6,
+            FillKind::Open => 1.2,
+            FillKind::Satin => 0.4,
+            _ => 0.45,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -38,6 +55,9 @@ pub struct Settings {
     pub fill_angle: f32,
     pub density_mm: f32,
     pub stitch_mm: f32,
+    pub wave_amp_mm: f32,
+    pub wave_len_mm: f32,
+    pub fade_mm: f32,
     pub underlay: bool,
     pub edge: EdgeKind,
     pub edge_width_mm: f32,
@@ -59,6 +79,9 @@ impl Default for Settings {
             fill_angle: 45.0,
             density_mm: 0.4,
             stitch_mm: 3.5,
+            wave_amp_mm: 2.0,
+            wave_len_mm: 12.0,
+            fade_mm: 2.5,
             underlay: true,
             edge: EdgeKind::Satin,
             edge_width_mm: 1.6,
@@ -424,18 +447,42 @@ fn satin_contour(st: &mut Stitcher, c: &Contour, width: f32) {
 
 /// Fill rows across a glyph at `angle`, using the nonzero winding rule so
 /// overlapping contours in script fonts fill correctly.
-fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, s: &Settings) {
-    let a = s.fill_angle.to_radians();
+fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+    let a = angle.to_radians();
     let (cos, sin) = (a.cos(), a.sin());
     let rot = |p: Pt| (p.0 * cos + p.1 * sin, -p.0 * sin + p.1 * cos);
     let unrot = |p: Pt| (p.0 * cos - p.1 * sin, p.0 * sin + p.1 * cos);
-    let rc: Vec<Contour> = glyph.iter().map(|c| c.iter().map(|&p| rot(p)).collect()).collect();
+    // Wave and zigzag rows are straight rows in a space sheared by the wave,
+    // so the outline is warped the same way before scanning and the stitches
+    // are unwarped afterwards.
+    let (amp, len) = (s.wave_amp_mm * 10.0, s.wave_len_mm.max(1.0) * 10.0);
+    let warp = move |x: f32| match kind {
+        FillKind::Wave => amp * (x / len * std::f32::consts::TAU).sin(),
+        FillKind::Zigzag => {
+            let u = x / len;
+            amp * (4.0 * (u - (u + 0.5).floor()).abs() - 1.0)
+        }
+        _ => 0.0,
+    };
+    let warped = matches!(kind, FillKind::Wave | FillKind::Zigzag);
+    let rc: Vec<Contour> = glyph
+        .iter()
+        .map(|c| {
+            let r: Contour = c.iter().map(|&p| rot(p)).collect();
+            if warped { densify(&r, 5.0).into_iter().map(|(x, y)| (x, y - warp(x))).collect() } else { r }
+        })
+        .collect();
     let (mut y0, mut y1) = (f32::MAX, f32::MIN);
     for p in rc.iter().flatten() {
         y0 = y0.min(p.1);
         y1 = y1.max(p.1);
     }
     let spacing = s.density_mm * 10.0;
+    let fade = s.fade_mm.max(s.density_mm) * 10.0;
+    let spacing_at = |y: f32| match kind {
+        FillKind::Gradient => spacing + (fade - spacing) * ((y - y0) / (y1 - y0).max(1.0)).clamp(0.0, 1.0),
+        _ => spacing,
+    };
     let mut rows: Vec<(f32, Vec<(f32, f32, bool)>)> = Vec::new();
     let mut y = y0 + spacing / 2.0;
     while y < y1 {
@@ -463,12 +510,13 @@ fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, s: &Settings
             }
         }
         rows.push((y, segs));
-        y += spacing;
+        y += spacing_at(y);
     }
 
     // Group rows into columns of overlapping segments so the needle works
     // through each part of the letter before jumping to the next.
-    let stitch_len = s.stitch_mm * 10.0;
+    // Curved rows need shorter stitches to follow the curve.
+    let stitch_len = if warped { (s.stitch_mm * 10.0).min(len / 8.0).max(12.0) } else { s.stitch_mm * 10.0 };
     loop {
         let Some(first) = rows.iter().position(|r| r.1.iter().any(|s| !s.2)) else { break };
         let mut ri = first;
@@ -506,6 +554,18 @@ fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, s: &Settings
                         }
                         g += stitch_len;
                     }
+                    if kind == FillKind::Zigzag {
+                        // Put a needle point on every chevron corner, or the
+                        // stitches cut across the points and leave gaps.
+                        let half = len / 2.0;
+                        let mut c = (x0.min(x1) / half).ceil() * half;
+                        while c < x0.max(x1) {
+                            inner.retain(|g: &f32| (g - c).abs() > 4.0);
+                            inner.push(c);
+                            c += half;
+                        }
+                        inner.sort_by(|a, b| a.total_cmp(b));
+                    }
                     if !forward {
                         inner.reverse();
                     }
@@ -513,7 +573,7 @@ fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, s: &Settings
                 }
             }
             xs.push(b);
-            let pts: Vec<Pt> = xs.iter().map(|&x| unrot((x, yy))).collect();
+            let pts: Vec<Pt> = xs.iter().map(|&x| unrot((x, yy + warp(x)))).collect();
             if !started {
                 st.travel(pts[0], pts[1]);
                 started = true;
@@ -572,7 +632,10 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
                 run_contour(st, c, 25.0, false);
             }
         }
-        fill_glyph(st, g, s.fill, s);
+        fill_glyph(st, g, s.fill, s.fill_angle, s);
+        if s.fill == FillKind::Crosshatch {
+            fill_glyph(st, g, s.fill, s.fill_angle + 90.0, s);
+        }
     };
     let two_threads = s.fill != FillKind::None && s.edge != EdgeKind::None && s.fill_thread != s.edge_thread;
     let mut threads = vec![formats::jef_thread(if s.fill == FillKind::None { s.edge_thread } else { s.fill_thread }, 0)];
@@ -623,6 +686,20 @@ mod tests {
     }
 
     #[test]
+    fn every_fill_style_stitches_inside_the_letters() {
+        let font = &bundled_fonts()[1];
+        for fill in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient, FillKind::Open] {
+            let s = Settings { text: "HO".into(), fill, density_mm: fill.default_rows_mm(), edge: EdgeKind::None, underlay: false, ..Default::default() };
+            let p = generate(font, &s).unwrap();
+            let solid = generate(font, &Settings { fill: FillKind::Tatami, ..s.clone() }).unwrap().bounds();
+            let b = p.bounds();
+            assert!(p.count(Cmd::Stitch) > 100, "{fill:?}");
+            // Stitches stay within the letters (allowing for rounding at the edge).
+            assert!(b.0 >= solid.0 - 5.0 && b.2 <= solid.2 + 5.0 && b.1 >= solid.1 - 5.0 && b.3 <= solid.3 + 5.0, "{fill:?} {b:?} {solid:?}");
+        }
+    }
+
+    #[test]
     fn empty_text_is_reported() {
         let s = Settings { text: "  ".into(), ..Default::default() };
         assert!(generate(&bundled_fonts()[0], &s).is_err());
@@ -648,10 +725,11 @@ mod samples {
     fn write_samples() {
         let Some(out) = std::env::var_os("HOOP_OUT") else { return };
         let fonts = bundled_fonts();
-        let cases = [
-            ("lobster", 5, Settings { text: "Hoop".into(), height_mm: 40.0, ..Default::default() }),
-            ("anton_arc", 1, Settings { text: "BREMEN".into(), height_mm: 22.0, arc_deg: 60.0, fill: FillKind::Satin, fill_angle: 90.0, edge: EdgeKind::None, fill_thread: 12, ..Default::default() }),
-        ];
+        let base = Settings { text: "HOOP".into(), height_mm: 45.0, spacing_mm: 1.5, ..Default::default() };
+        let cases: Vec<(String, usize, Settings)> = [FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient]
+            .into_iter()
+            .map(|fill| (format!("{fill:?}").to_lowercase(), 1, Settings { fill, density_mm: fill.default_rows_mm(), fill_angle: 0.0, ..base.clone() }))
+            .collect();
         for (name, font, s) in cases {
             let p = generate(&fonts[font], &s).unwrap();
             let threads: Vec<i32> = (0..p.blocks().len()).map(|i| if i == 0 { s.fill_thread } else { s.edge_thread }).collect();

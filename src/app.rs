@@ -855,15 +855,36 @@ impl HoopApp {
                 .on_hover_text("Bend the text into an arch (positive) or a smile (negative)");
         });
         card(ui, "Fill", accent, |ui| {
-            segmented(ui, &mut s.fill, &[(FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::None, "None")], accent);
+            let before = s.fill;
+            fill_tiles(ui, &mut s.fill, accent);
+            if s.fill != before {
+                s.density_mm = s.fill.default_rows_mm();
+                // An outline under an open fill would show, so it starts off there.
+                s.underlay = !matches!(s.fill, FillKind::Open | FillKind::Crosshatch);
+            }
             if s.fill != FillKind::None {
                 ui.add_space(4.0);
                 slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0);
-                slider_row(ui, "Rows", &mut s.density_mm, 0.25..=1.0, " mm", 2).on_hover_text("Distance between fill rows");
-                if s.fill == FillKind::Tatami {
+                slider_row(ui, "Rows", &mut s.density_mm, 0.25..=3.0, " mm", 2).on_hover_text("Distance between fill rows");
+                if s.fill == FillKind::Gradient {
+                    slider_row(ui, "Fade", &mut s.fade_mm, 0.5..=6.0, " mm", 1).on_hover_text("Row spacing at the light end");
+                }
+                if matches!(s.fill, FillKind::Wave | FillKind::Zigzag) {
+                    slider_row(ui, "Swing", &mut s.wave_amp_mm, 0.5..=8.0, " mm", 1).on_hover_text("How far the rows swing up and down");
+                    slider_row(ui, "Length", &mut s.wave_len_mm, 3.0..=40.0, " mm", 1).on_hover_text("Distance from one wave to the next");
+                }
+                if s.fill != FillKind::Satin {
                     slider_row(ui, "Stitch", &mut s.stitch_mm, 2.0..=6.0, " mm", 1).on_hover_text("Stitch length");
-                } else {
-                    ui.label(RichText::new("Satin looks best on strokes under 8 mm wide.").size(12.0).color(muted));
+                }
+                let note = match s.fill {
+                    FillKind::Satin => "Satin looks best on strokes under 8 mm wide.",
+                    FillKind::Wave | FillKind::Zigzag => "The pattern shows in how the thread catches the light.",
+                    FillKind::Crosshatch | FillKind::Open => "Open fills let the fabric show through. Nice on felt and canvas.",
+                    FillKind::Gradient => "Rows thin out across each letter. Turn the angle to set the direction.",
+                    _ => "",
+                };
+                if !note.is_empty() {
+                    ui.label(RichText::new(note).size(12.0).color(muted));
                 }
                 ui.checkbox(&mut s.underlay, "Underlay around each letter");
                 jef_picker(ui, "fill", &mut s.fill_thread);
@@ -1139,10 +1160,108 @@ fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fits: bool, s
     resp.on_hover_text(format!("Hoop {} · key {}", h.name, i + 1))
 }
 
+/// Fill style picker: tiles with a small drawing of each pattern.
+fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
+    use egui::{Pos2, Shape, Stroke, pos2};
+    const STYLES: [(FillKind, &str); 8] = [
+        (FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::Wave, "Wave"), (FillKind::Zigzag, "Zigzag"),
+        (FillKind::Crosshatch, "Hatch"), (FillKind::Gradient, "Gradient"), (FillKind::Open, "Open"), (FillKind::None, "None"),
+    ];
+    let w = (ui.available_width() - 18.0) / 4.0;
+    for row in STYLES.chunks(4) {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
+            for &(kind, name) in row {
+                let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), Sense::click());
+                let v = ui.visuals();
+                let on = *value == kind;
+                let fill = if on { accent.gamma_multiply(0.2) } else if resp.hovered() { v.widgets.hovered.weak_bg_fill } else { v.extreme_bg_color };
+                let p = ui.painter();
+                p.rect(rect, 8, fill, if on { Stroke::new(1.5, accent) } else { Stroke::NONE }, egui::StrokeKind::Inside);
+                let icon = egui::Rect::from_min_size(rect.min + vec2(8.0, 7.0), vec2(w - 16.0, 30.0));
+                let ink = if on { accent } else { v.text_color().gamma_multiply(0.75) };
+                let p = p.with_clip_rect(icon);
+                let line = |a: Pos2, b: Pos2, width: f32| p.line_segment([a, b], Stroke::new(width, ink));
+                let (l, r, t, bt) = (icon.left(), icon.right(), icon.top(), icon.bottom());
+                match kind {
+                    FillKind::Tatami | FillKind::Satin => {
+                        let step = if kind == FillKind::Satin { 2.5 } else { 4.0 };
+                        let mut x = l - 40.0;
+                        let mut k = 0;
+                        while x < r {
+                            if kind == FillKind::Tatami {
+                                // Short stitches with staggered needle points.
+                                let mut y = t - 10.0 + (k % 3) as f32 * 3.0;
+                                while y < bt {
+                                    line(pos2(x + (y - t), y), pos2(x + (y - t) + 6.0, y + 6.0), 1.2);
+                                    y += 8.0;
+                                }
+                            } else {
+                                line(pos2(x, t), pos2(x + 30.0, bt), 1.2);
+                            }
+                            x += step;
+                            k += 1;
+                        }
+                    }
+                    FillKind::Wave | FillKind::Zigzag | FillKind::Open | FillKind::Gradient => {
+                        let mut y = t + 2.0;
+                        let mut gap = 4.0;
+                        while y < bt + 4.0 {
+                            let pts: Vec<Pos2> = (0..=40)
+                                .map(|i| {
+                                    let x = l + (r - l) * i as f32 / 40.0;
+                                    let u = (x - l) / 16.0;
+                                    let dy = match kind {
+                                        FillKind::Wave => 2.5 * (u * std::f32::consts::TAU).sin(),
+                                        FillKind::Zigzag => 2.5 * (4.0 * (u - (u + 0.5).floor()).abs() - 1.0),
+                                        _ => 0.0,
+                                    };
+                                    pos2(x, y + dy)
+                                })
+                                .collect();
+                            p.add(Shape::line(pts, Stroke::new(1.2, ink)));
+                            y += match kind {
+                                FillKind::Open => 7.0,
+                                FillKind::Gradient => {
+                                    gap += 1.2;
+                                    gap - 1.2
+                                }
+                                _ => 4.0,
+                            };
+                        }
+                    }
+                    FillKind::Crosshatch => {
+                        let mut x = l - 40.0;
+                        while x < r {
+                            line(pos2(x, t), pos2(x + 30.0, bt), 1.0);
+                            line(pos2(x + 30.0, t), pos2(x, bt), 1.0);
+                            x += 7.0;
+                        }
+                    }
+                    FillKind::None => {
+                        line(pos2(l + 6.0, bt - 4.0), pos2(r - 6.0, t + 4.0), 1.2);
+                    }
+                }
+                ui.painter().text(
+                    pos2(rect.center().x, rect.bottom() - 13.0),
+                    egui::Align2::CENTER_CENTER,
+                    name,
+                    egui::FontId::proportional(12.0),
+                    if on { accent } else { v.text_color() },
+                );
+                if resp.clicked() {
+                    *value = kind;
+                }
+            }
+        });
+    }
+}
+
 /// The chosen Janome thread as a full-width button that opens the chart.
 fn jef_picker(ui: &mut egui::Ui, id: &str, value: &mut i32) {
     let current = formats::jef_thread(*value, 0);
-    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+    let row = vec2(ui.available_width(), 26.0);
+    ui.allocate_ui_with_layout(row, egui::Layout::left_to_right(egui::Align::Center), |ui| {
         ui.allocate_ui_with_layout(vec2(62.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
             ui.set_min_width(62.0);
             ui.label("Thread");
