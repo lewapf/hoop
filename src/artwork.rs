@@ -540,3 +540,26 @@ mod samples {
         }
     }
 }
+
+/// One-click looks for artwork, changing only how shapes are stitched.
+pub const PRESETS: [(&str, &str, fn(&mut ArtSettings)); 4] = [
+    ("Solid", "Dense tatami, hidden parts cut away, satin lines", |s| {
+        lettering::style(&mut s.style, FillKind::Tatami, 45.0, EdgeKind::None);
+        s.knockout = true;
+        s.stroke = EdgeKind::Satin;
+    }),
+    ("Patch", "Dense fill with a satin border on every shape", |s| {
+        lettering::style(&mut s.style, FillKind::Tatami, 45.0, EdgeKind::Satin);
+        s.style.edge_width_mm = 1.4;
+        s.knockout = true;
+        s.stroke = EdgeKind::Satin;
+    }),
+    ("Light", "Open fill with a running outline, soft on thin fabric", |s| {
+        lettering::style(&mut s.style, FillKind::Open, 45.0, EdgeKind::Running);
+        s.stroke = EdgeKind::Running;
+    }),
+    ("Line art", "Outlines only, no fills", |s| {
+        lettering::style(&mut s.style, FillKind::None, 45.0, EdgeKind::Triple);
+        s.stroke = EdgeKind::Triple;
+    }),
+];

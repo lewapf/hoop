@@ -7,7 +7,8 @@ use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings};
-use crate::lettering::{self, EdgeKind, FillKind, FontSource, Settings};
+use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, Settings};
+use crate::prefs::Prefs;
 use crate::theme::Theme;
 
 const FABRICS: [(&str, [u8; 3]); 8] = [
@@ -34,7 +35,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("1 – 4", "Pick a hoop"),
     ("F / D", "Show the whole hoop / zoom to the design"),
     ("G / J / T", "Grid / jump stitches / thread texture"),
-    ("Ctrl+Z / Ctrl+Shift+Z", "Undo / redo a move"),
+    ("Ctrl+Z / Ctrl+Shift+Z", "Undo / redo any change"),
     ("?", "Show these shortcuts"),
     ("Q", "Quit"),
 ];
@@ -60,6 +61,23 @@ enum Mode {
 }
 
 #[derive(Clone, Copy, PartialEq)]
+enum FitFix {
+    Rotate,
+    Hoop(usize),
+    Scale,
+    Center,
+}
+
+/// Everything undo covers: hoop and placement plus the lettering and
+/// artwork settings.
+#[derive(Clone, PartialEq)]
+struct Snapshot {
+    setup: Setup,
+    letter: Settings,
+    art: Option<ArtSettings>,
+}
+
+#[derive(Clone, Copy, PartialEq)]
 struct Setup {
     hoop: usize,
     at: Placement,
@@ -75,8 +93,12 @@ pub struct HoopApp {
     design: Option<Loaded>,
     error: Option<String>,
     setup: Setup,
-    undo: Vec<Setup>,
-    redo: Vec<Setup>,
+    undo: Vec<Snapshot>,
+    redo: Vec<Snapshot>,
+    /// The state the last undo step was taken from.
+    committed: Snapshot,
+    /// When the current, not yet committed change started.
+    pending_since: Option<std::time::Instant>,
     view: View,
     fit_pending: bool,
     drag: Option<Drag>,
@@ -90,6 +112,7 @@ pub struct HoopApp {
     grid: bool,
     jumps: bool,
     textured: bool,
+    sizes: bool,
     help: bool,
     picker: Option<Receiver<Option<PathBuf>>>,
     weave: Option<egui::TextureHandle>,
@@ -112,7 +135,12 @@ pub struct HoopApp {
     font_scan: Option<Receiver<Vec<FontSource>>>,
     font_filter: String,
     saver: Option<(Receiver<Option<PathBuf>>, Vec<u8>)>,
-    status: Option<String>,
+    status: Option<(String, std::time::Instant)>,
+    prefs: Prefs,
+    /// Font name from the last session, waiting for the font list to load.
+    want_font: Option<String>,
+    /// A recent file picked in the panel, opened once the panel is drawn.
+    open_later: Option<PathBuf>,
 }
 
 impl HoopApp {
@@ -124,6 +152,8 @@ impl HoopApp {
             setup: Setup { hoop: 0, at: Placement::default() },
             undo: Vec::new(),
             redo: Vec::new(),
+            committed: Snapshot { setup: Setup { hoop: 0, at: Placement::default() }, letter: Settings::default(), art: None },
+            pending_since: None,
             view: View::default(),
             fit_pending: true,
             drag: None,
@@ -137,6 +167,7 @@ impl HoopApp {
             grid: true,
             jumps: false,
             textured: true,
+            sizes: true,
             help: false,
             picker: None,
             weave: None,
@@ -158,6 +189,9 @@ impl HoopApp {
             font_filter: String::new(),
             saver: None,
             status: None,
+            prefs: Prefs::load(),
+            want_font: None,
+            open_later: None,
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -168,6 +202,8 @@ impl HoopApp {
         app.font_scan = Some(rx);
         let ctx = cc.egui_ctx.clone();
         app.theme.watch(move || ctx.request_repaint());
+        app.restore();
+        app.reset_history();
         load_ui_font(&cc.egui_ctx);
         app.apply_theme(&cc.egui_ctx);
         if let Some(path) = file {
@@ -212,7 +248,9 @@ impl HoopApp {
     fn open(&mut self, ctx: &egui::Context, path: &Path) {
         let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
         if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg") || e.eq_ignore_ascii_case("svgz")) {
-            self.use_artwork(artwork::load(path));
+            if self.use_artwork(artwork::load(path)) {
+                self.prefs.add_recent(path);
+            }
             return;
         }
         self.set_mode(Mode::Viewer);
@@ -225,14 +263,14 @@ impl HoopApp {
                 let bounds = pattern.bounds();
                 let loaded = Loaded { name: name.clone(), pattern, blocks, bounds };
                 self.setup = Setup { hoop: hoops::smallest_fitting(loaded.size()), at: Placement::default() };
-                self.undo.clear();
-                self.redo.clear();
+                self.reset_history();
                 self.shown = loaded.pattern.points.len();
                 self.playing = false;
                 self.focus = None;
                 self.design = Some(loaded);
                 self.error = None;
                 self.fit_pending = true;
+                self.prefs.add_recent(path);
                 ctx.send_viewport_cmd(egui::ViewportCommand::Title(format!("{name} — Hoop")));
             }
             Err(e) => self.error = Some(e),
@@ -258,11 +296,68 @@ impl HoopApp {
     }
 
     fn change(&mut self, f: impl FnOnce(&mut Setup)) {
-        let before = self.setup;
         f(&mut self.setup);
-        if self.setup != before {
-            self.undo.push(before);
+    }
+
+    fn snapshot(&self) -> Snapshot {
+        Snapshot { setup: self.setup, letter: self.letter.clone(), art: self.art.clone() }
+    }
+
+    fn restore_snapshot(&mut self, s: Snapshot) {
+        self.setup = s.setup;
+        self.letter = s.letter.clone();
+        if s.art.as_ref().map(|a| a.layers.len()) == self.art.as_ref().map(|a| a.layers.len()) {
+            self.art = s.art.clone();
+        }
+        self.committed = self.snapshot();
+        self.pending_since = None;
+    }
+
+    /// Starts a fresh history, for a newly opened design.
+    fn reset_history(&mut self) {
+        self.undo.clear();
+        self.redo.clear();
+        self.committed = self.snapshot();
+        self.pending_since = None;
+    }
+
+    /// Turns settled changes into undo steps. A change counts once the
+    /// mouse is up and nothing changed for half a second, so dragging a
+    /// slider or typing a word is one step.
+    fn track_history(&mut self, ctx: &egui::Context, force: bool) {
+        let now = self.snapshot();
+        if now == self.committed {
+            self.pending_since = None;
+            return;
+        }
+        let since = *self.pending_since.get_or_insert_with(std::time::Instant::now);
+        let settled = since.elapsed().as_millis() > 500 && !ctx.input(|i| i.pointer.any_down());
+        if force || settled {
+            self.undo.push(std::mem::replace(&mut self.committed, now));
             self.redo.clear();
+            self.pending_since = None;
+            if self.undo.len() > 200 {
+                self.undo.remove(0);
+            }
+        } else {
+            ctx.request_repaint_after(std::time::Duration::from_millis(550));
+        }
+    }
+
+    fn undo_step(&mut self, ctx: &egui::Context) {
+        self.track_history(ctx, true);
+        if let Some(s) = self.undo.pop() {
+            self.redo.push(self.snapshot());
+            self.restore_snapshot(s);
+            self.toast("Undone".into());
+        }
+    }
+
+    fn redo_step(&mut self) {
+        if let Some(s) = self.redo.pop() {
+            self.undo.push(self.snapshot());
+            self.restore_snapshot(s);
+            self.toast("Redone".into());
         }
     }
 
@@ -345,17 +440,11 @@ impl HoopApp {
         if press(Modifiers::NONE, Key::V) {
             self.set_mode(Mode::Viewer);
         }
-        if press(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) {
-            if let Some(s) = self.redo.pop() {
-                self.undo.push(self.setup);
-                self.setup = s;
-            }
+        if press(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || press(Modifiers::COMMAND, Key::Y) {
+            self.redo_step();
         }
         if press(Modifiers::COMMAND, Key::Z) {
-            if let Some(s) = self.undo.pop() {
-                self.redo.push(self.setup);
-                self.setup = s;
-            }
+            self.undo_step(ctx);
         }
         if press(Modifiers::NONE, Key::Space) {
             self.toggle_play();
@@ -459,6 +548,17 @@ impl HoopApp {
                         ui.label(RichText::new("Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop.").color(muted));
                     }
                 }
+                let recent: Vec<PathBuf> = self.prefs.recent().into_iter().filter(|p| p.exists()).take(5).collect();
+                if !recent.is_empty() {
+                    egui::CollapsingHeader::new(RichText::new("Recent").color(muted)).default_open(self.design.is_none()).show(ui, |ui| {
+                        for p in recent {
+                            let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                            if ui.add(egui::Button::new(&name).frame(false)).on_hover_text(p.display().to_string()).clicked() {
+                                self.open_later = Some(p);
+                            }
+                        }
+                    });
+                }
                 ui.add_space(4.0);
                 let w = (ui.available_width() - 8.0) / 2.0;
                 ui.horizontal(|ui| {
@@ -470,9 +570,6 @@ impl HoopApp {
                     }
                 });
             });
-        }
-        if let Some(st) = &self.status {
-            ui.label(RichText::new(st).color(OK));
         }
         if let Some(e) = &self.error {
             ui.label(RichText::new(e).color(BAD));
@@ -492,6 +589,27 @@ impl HoopApp {
                 Fit::OffEdge { side, by } => (false, "Off the sewing area".into(), format!("Sticks out {by:.1} mm on the {side}. Press C to center.")),
             };
             let color = if ok { OK } else { BAD };
+            // One-click ways out of a bad fit.
+            let mut actions: Vec<(String, FitFix)> = Vec::new();
+            let size = d.size();
+            match fit {
+                Fit::TooBig { fits_turned, .. } => {
+                    if fits_turned {
+                        actions.push(("Rotate 90°".into(), FitFix::Rotate));
+                    }
+                    let unturned = Placement::default();
+                    if let Some(i) = (0..3).find(|&i| matches!(hoops::fit((HOOPS[i].w, HOOPS[i].h), size, &unturned), Fit::Inside(_))) {
+                        actions.push((format!("Use {}", HOOPS[i].name), FitFix::Hoop(i)));
+                    }
+                    if self.mode != Mode::Viewer {
+                        actions.push(("Shrink to fit".into(), FitFix::Scale));
+                    }
+                }
+                Fit::OffEdge { .. } => actions.push(("Center".into(), FitFix::Center)),
+                Fit::Inside(m) if self.mode != Mode::Viewer && m > 15.0 => actions.push(("Grow to fill hoop".into(), FitFix::Scale)),
+                Fit::Inside(_) => {}
+            }
+            let mut chosen = None;
             egui::Frame::new().fill(color.gamma_multiply(0.12)).stroke(egui::Stroke::new(1.0, color.gamma_multiply(0.5))).corner_radius(10).inner_margin(12).show(ui, |ui| {
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
@@ -500,8 +618,20 @@ impl HoopApp {
                     ui.label(RichText::new(title).color(color).strong());
                 });
                 ui.label(RichText::new(detail).color(muted));
+                if !actions.is_empty() {
+                    ui.horizontal_wrapped(|ui| {
+                        for (label, fix) in &actions {
+                            if ui.button(label).clicked() {
+                                chosen = Some(*fix);
+                            }
+                        }
+                    });
+                }
             });
             ui.add_space(10.0);
+            if let Some(fix) = chosen {
+                self.apply_fix(fix, canvas_rect);
+            }
         }
 
         card(ui, "Hoop", accent, |ui| {
@@ -555,6 +685,8 @@ impl HoopApp {
             let focus = self.focus;
             let mut toggle = None;
             let d = self.design.as_mut().unwrap();
+            let meters: Vec<f32> = d.blocks.iter().map(|b| d.pattern.thread_meters(b)).collect();
+            let mut copied = false;
             card(ui, "Threads", accent, |ui| {
                 for (k, b) in d.blocks.iter_mut().enumerate() {
                     let selected = focus == Some(k);
@@ -574,7 +706,8 @@ impl HoopApp {
                                 ui.label(RichText::new(&b.thread.code).monospace().color(muted));
                             }
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                ui.label(RichText::new(b.stitches.to_string()).monospace().color(muted));
+                                ui.label(RichText::new(format!("{:.1} m", meters[k])).monospace().color(muted))
+                                    .on_hover_text(format!("{} stitches, about {:.1} m of thread", b.stitches, meters[k]));
                             });
                         });
                     });
@@ -585,7 +718,20 @@ impl HoopApp {
                 if !d.pattern.format.stores_colors() {
                     ui.label(RichText::new(format!("{} files don't store thread colors. Click a swatch to set the real ones.", d.pattern.format)).size(12.0).color(muted));
                 }
+                if ui.small_button("Copy thread list").on_hover_text("For shopping or notes").clicked() {
+                    let list: Vec<String> = d
+                        .blocks
+                        .iter()
+                        .enumerate()
+                        .map(|(k, b)| format!("{}. {} {} — {} stitches, about {:.1} m", k + 1, b.thread.name, b.thread.code, b.stitches, meters[k]))
+                        .collect();
+                    ui.ctx().copy_text(format!("{}\n{}", d.name, list.join("\n")));
+                    copied = true;
+                }
             });
+            if copied {
+                self.toast("Thread list copied".into());
+            }
             if let Some(k) = toggle {
                 self.focus = if self.focus == Some(k) { None } else { Some(k) };
             }
@@ -637,7 +783,14 @@ impl HoopApp {
                 ("Jumps", if trims > 0 { format!("{} · {trims} trims", p.count(Cmd::Jump)) } else { p.count(Cmd::Jump).to_string() }),
                 ("Sewing time", time),
             ];
+            let warnings = p.warnings();
             card(ui, "Details", accent, |ui| {
+                for w in &warnings {
+                    egui::Frame::new().fill(WARN.gamma_multiply(0.12)).corner_radius(6).inner_margin(8).show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.label(RichText::new(w).color(WARN).size(12.5));
+                    });
+                }
                 for (k, v) in rows {
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(k).color(muted));
@@ -675,6 +828,7 @@ impl HoopApp {
             ui.checkbox(&mut self.textured, "Thread texture  T");
             ui.checkbox(&mut self.grid, "Template grid, 10 mm  G");
             ui.checkbox(&mut self.jumps, "Jump stitches  J");
+            ui.checkbox(&mut self.sizes, "Size label under the design");
         });
         ui.label(RichText::new("Press ? for every shortcut.").size(12.0).color(muted));
         ui.add_space(14.0);
@@ -728,14 +882,7 @@ impl HoopApp {
             }
         }
         if response.drag_stopped() {
-            if let Some(Drag::Move { from, .. }) = self.drag.take() {
-                if from != self.setup.at {
-                    let mut before = self.setup;
-                    before.at = from;
-                    self.undo.push(before);
-                    self.redo.clear();
-                }
-            }
+            self.drag = None;
         }
         if response.double_clicked() {
             self.fit_view(rect, false);
@@ -777,6 +924,14 @@ impl HoopApp {
             } else if matches!(self.drag, Some(Drag::Move { .. })) {
                 canvas::draw_bounds(&frame, size, &self.setup.at, self.accent());
             }
+            if self.sizes && !self.playing {
+                // Finished size just under the design, like a dimension on a drawing.
+                let at = self.setup.at;
+                let below = frame.to_screen(at.dx, at.dy + size.1 / 2.0) + vec2(0.0, 14.0);
+                let text = format!("{:.1} × {:.1} mm", size.0 / 10.0, size.1 / 10.0);
+                let ink = if canvas::luminance(self.fabric) < 0.45 { Color32::from_white_alpha(200) } else { Color32::from_black_alpha(170) };
+                painter.text(below, egui::Align2::CENTER_CENTER, text, egui::FontId::monospace(12.0), ink);
+            }
         } else {
             painter.text(
                 rect.center_bottom() - vec2(0.0, 28.0),
@@ -785,6 +940,19 @@ impl HoopApp {
                 egui::FontId::proportional(15.0),
                 Color32::from_white_alpha(230),
             );
+        }
+
+        if let Some((text, at)) = &self.status {
+            let age = at.elapsed().as_secs_f32();
+            if age < 4.0 {
+                let alpha = ((4.0 - age) / 0.5).min(1.0);
+                let galley = painter.layout_no_wrap(text.clone(), egui::FontId::proportional(14.0), Color32::WHITE.gamma_multiply(alpha));
+                let pos = rect.center_top() + vec2(-galley.size().x / 2.0, 16.0);
+                let bg = egui::Rect::from_min_size(pos - vec2(14.0, 8.0), galley.size() + vec2(28.0, 16.0));
+                painter.rect_filled(bg, 8, Color32::from_black_alpha((190.0 * alpha) as u8));
+                painter.galley(pos, galley, Color32::WHITE);
+                ui.ctx().request_repaint_after(std::time::Duration::from_millis(if age > 3.5 { 30 } else { 500 }));
+            }
         }
 
         // Overlay controls in the canvas corners.
@@ -808,6 +976,93 @@ impl HoopApp {
         if bg.right() < br.x - 252.0 {
             painter.rect_filled(bg, 7, Color32::from_black_alpha(140));
             painter.galley(at + vec2(10.0, 6.0), galley, Color32::WHITE);
+        }
+    }
+
+    fn toast(&mut self, text: String) {
+        self.status = Some((text, std::time::Instant::now()));
+        self.ctx.request_repaint();
+    }
+
+    fn apply_fix(&mut self, fix: FitFix, canvas_rect: egui::Rect) {
+        let Some(d) = &self.design else { return };
+        let (hw, hh) = self.hoop_size();
+        let (dw, dh) = self.setup.at.size(d.size().0, d.size().1);
+        // Leave 5 mm on every side.
+        let factor = ((hw * 10.0 - 100.0) / dw).min((hh * 10.0 - 100.0) / dh).max(0.05);
+        match fix {
+            FitFix::Rotate => self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4),
+            FitFix::Hoop(i) => {
+                self.change(|s| s.hoop = i);
+                self.fit_view(canvas_rect, false);
+            }
+            FitFix::Center => self.change(|s| {
+                s.at.dx = 0.0;
+                s.at.dy = 0.0;
+            }),
+            FitFix::Scale => {
+                self.change(|s| {
+                    s.at.dx = 0.0;
+                    s.at.dy = 0.0;
+                });
+                match self.mode {
+                    Mode::Lettering => self.letter.height_mm = (self.letter.height_mm * factor * 10.0).floor() / 10.0,
+                    Mode::Artwork => {
+                        if let Some(a) = &mut self.art {
+                            a.width_mm = (a.width_mm * factor).floor();
+                        }
+                    }
+                    Mode::Viewer => {}
+                }
+            }
+        }
+    }
+
+    /// Settings from the last session.
+    fn restore(&mut self) {
+        let p = &self.prefs;
+        if let Some(c) = p.get("fabric").and_then(|v| u32::from_str_radix(v, 16).ok()) {
+            self.fabric = [(c >> 16) as u8, (c >> 8) as u8, c as u8];
+        }
+        for (key, flag) in [("grid", &mut self.grid), ("jumps", &mut self.jumps), ("texture", &mut self.textured), ("sizes", &mut self.sizes)] {
+            if let Some(v) = p.num(key) {
+                *flag = v;
+            }
+        }
+        if let Some(v) = p.num::<usize>("speed").filter(|v| *v < SPEEDS.len()) {
+            self.speed = v;
+        }
+        if let Some(v) = p.num::<usize>("playback").filter(|v| *v < PLAYBACK.len()) {
+            self.play_rate = v;
+        }
+        self.letter = p.lettering();
+        self.want_font = p.get("letter.font").map(str::to_string);
+        self.resolve_font();
+    }
+
+    /// Picks the remembered font once it shows up in the font list.
+    fn resolve_font(&mut self) {
+        if let Some(name) = &self.want_font {
+            if let Some(i) = self.fonts.iter().position(|f| &f.name == name) {
+                self.letter.font = i;
+                self.want_font = None;
+            }
+        }
+    }
+
+    fn store(&mut self) {
+        let f = self.fabric;
+        self.prefs.set("fabric", format!("{:02x}{:02x}{:02x}", f[0], f[1], f[2]));
+        self.prefs.set("grid", self.grid);
+        self.prefs.set("jumps", self.jumps);
+        self.prefs.set("texture", self.textured);
+        self.prefs.set("sizes", self.sizes);
+        self.prefs.set("speed", self.speed);
+        self.prefs.set("playback", self.play_rate);
+        let font = self.fonts.get(self.letter.font).map_or("", |f| f.name.as_str()).to_string();
+        self.prefs.store_lettering(&self.letter, &font);
+        if let Err(e) = self.prefs.save() {
+            eprintln!("hoop: couldn't save settings: {e}");
         }
     }
 
@@ -877,14 +1132,21 @@ impl HoopApp {
                 }
             });
         });
-        card(ui, "Size", accent, |ui| {
-            slider_row(ui, "Height", &mut s.height_mm, 5.0..=120.0, " mm", 1);
-            slider_row(ui, "Spacing", &mut s.spacing_mm, -5.0..=15.0, " mm", 1);
-            if s.text.lines().count() > 1 {
-                slider_row(ui, "Lines", &mut s.line_spacing, 0.8..=2.5, "×", 2);
+        card(ui, "Quick styles", accent, |ui| {
+            if let Some(i) = preset_chips(ui, &lettering::PRESETS.map(|p| (p.0, p.1))) {
+                (lettering::PRESETS[i].2)(s);
             }
-            slider_row(ui, "Arc", &mut s.arc_deg, -180.0..=180.0, "°", 0)
-                .on_hover_text("Bend the text into an arch (positive) or a smile (negative)");
+        });
+        card(ui, "Shape", accent, |ui| {
+            slider_row(ui, "Height", &mut s.height_mm, 5.0..=120.0, " mm", 1).on_hover_text("Height of capital letters");
+            slider_row(ui, "Spacing", &mut s.spacing_mm, -5.0..=15.0, " mm", 1).on_hover_text("Extra space between letters");
+            slider_row(ui, "Arc", &mut s.arc_deg, -360.0..=360.0, "°", 0)
+                .on_hover_text("Bend the text into an arch (positive) or a smile (negative). 360° closes the circle.");
+            slider_row(ui, "Slant", &mut s.slant_deg, -30.0..=30.0, "°", 0).on_hover_text("Lean the letters like italics");
+            if s.text.lines().count() > 1 {
+                slider_row(ui, "Lines", &mut s.line_spacing, 0.8..=2.5, "×", 2).on_hover_text("Distance between lines, in letter heights");
+                segmented(ui, &mut s.align, &[(Align::Left, "Left"), (Align::Center, "Center"), (Align::Right, "Right")], accent);
+            }
         });
         fill_card(ui, s, muted, accent, true);
         edge_card(ui, s, accent, "Edge", true);
@@ -907,6 +1169,7 @@ impl HoopApp {
         match result {
             Ok(art) => {
                 self.art = Some(ArtSettings::for_artwork(&art));
+                self.reset_history();
                 self.art_built = None;
                 self.artwork = Some(art);
                 self.design = None;
@@ -1084,6 +1347,11 @@ impl HoopApp {
                 .on_hover_text("Off: stitch in the drawing's own order, changing thread whenever it changes");
         });
 
+        card(ui, "Quick styles", accent, |ui| {
+            if let Some(i) = preset_chips(ui, &artwork::PRESETS.map(|p| (p.0, p.1))) {
+                (artwork::PRESETS[i].2)(s);
+            }
+        });
         fill_card(ui, &mut s.style, muted, accent, false);
         card(ui, "Clean-up", accent, |ui| {
             ui.checkbox(&mut s.knockout, "Cut hidden parts").on_hover_text("Leave areas covered by shapes on top unstitched, so layers don't pile up");
@@ -1160,7 +1428,7 @@ impl HoopApp {
         let result = std::fs::write(&tmp, bytes).and_then(|_| std::fs::rename(&tmp, &path));
         match result {
             Ok(()) => {
-                self.status = Some(format!("Saved {}", path.display()));
+                self.toast(format!("Saved {}", path.display()));
                 self.error = None;
             }
             Err(e) => {
@@ -1195,6 +1463,10 @@ impl HoopApp {
 }
 
 impl eframe::App for HoopApp {
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.store();
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = &ui.ctx().clone();
         if self.theme.refresh() {
@@ -1249,6 +1521,7 @@ impl eframe::App for HoopApp {
             if let Ok(found) = rx.try_recv() {
                 self.fonts.extend(found);
                 self.font_scan = None;
+                self.resolve_font();
             }
         }
         if let Some((rx, _)) = &self.saver {
@@ -1272,6 +1545,9 @@ impl eframe::App for HoopApp {
         if self.mode == Mode::Artwork && self.art.is_some() && self.art_built != self.art && !(self.art_slow && dragging) {
             self.regenerate_art(ctx);
         }
+        if let Some(p) = self.open_later.take() {
+            self.open(ctx, &p);
+        }
         let canvas_rect = self.canvas_rect;
         self.keys(ctx, canvas_rect);
 
@@ -1284,6 +1560,7 @@ impl eframe::App for HoopApp {
             });
         });
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
+        self.track_history(ctx, false);
         self.help_overlay(ctx);
     }
 }
@@ -1299,6 +1576,7 @@ fn contrast(c: Color32) -> Color32 {
 
 const OK: Color32 = Color32::from_rgb(0x55, 0xc2, 0x8c);
 const BAD: Color32 = Color32::from_rgb(0xf0, 0x6b, 0x5f);
+const WARN: Color32 = Color32::from_rgb(0xe2, 0xa6, 0x4a);
 
 /// A rounded section with a small heading; every panel section uses one.
 fn card(ui: &mut egui::Ui, title: &str, accent: Color32, add: impl FnOnce(&mut egui::Ui)) {
@@ -1372,6 +1650,20 @@ fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fits: bool, s
     let (note, c) = if fits { (h.note, muted) } else { ("Too small", BAD) };
     p.text(egui::pos2(x, rect.top() + 43.0), egui::Align2::LEFT_TOP, note, egui::FontId::proportional(11.0), c);
     resp.on_hover_text(format!("Hoop {} · key {}", h.name, i + 1))
+}
+
+/// A wrapping row of named style buttons; returns the one clicked.
+fn preset_chips(ui: &mut egui::Ui, presets: &[(&str, &str)]) -> Option<usize> {
+    let mut picked = None;
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+        for (i, (name, about)) in presets.iter().enumerate() {
+            if ui.add(egui::Button::new(*name).corner_radius(12)).on_hover_text(*about).clicked() {
+                picked = Some(i);
+            }
+        }
+    });
+    picked
 }
 
 /// A small button naming a Janome thread that opens the chart.
@@ -1567,39 +1859,47 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
             // An outline under an open fill would show, so it starts off there.
             s.underlay = !matches!(s.fill, FillKind::Open | FillKind::Crosshatch);
         }
-        if s.fill != FillKind::None {
-            ui.add_space(4.0);
-            slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0);
+        if s.fill == FillKind::None {
+            return;
+        }
+        ui.add_space(4.0);
+        if with_thread {
+            jef_picker(ui, "fill", &mut s.fill_thread);
+        }
+        slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0).on_hover_text("Direction of the stitch rows");
+        if matches!(s.fill, FillKind::Crosshatch | FillKind::Open | FillKind::Gradient) {
             slider_row(ui, "Rows", &mut s.density_mm, 0.25..=3.0, " mm", 2).on_hover_text("Distance between fill rows");
-            if s.fill == FillKind::Gradient {
-                slider_row(ui, "Fade", &mut s.fade_mm, 0.5..=6.0, " mm", 1).on_hover_text("Row spacing at the light end");
-            }
-            if matches!(s.fill, FillKind::Wave | FillKind::Zigzag) {
-                slider_row(ui, "Swing", &mut s.wave_amp_mm, 0.5..=8.0, " mm", 1).on_hover_text("How far the rows swing up and down");
-                slider_row(ui, "Length", &mut s.wave_len_mm, 3.0..=40.0, " mm", 1).on_hover_text("Distance from one wave to the next");
+        }
+        if s.fill == FillKind::Gradient {
+            slider_row(ui, "Fade", &mut s.fade_mm, 0.5..=6.0, " mm", 1).on_hover_text("Row spacing at the light end");
+        }
+        if matches!(s.fill, FillKind::Wave | FillKind::Zigzag) {
+            slider_row(ui, "Swing", &mut s.wave_amp_mm, 0.5..=8.0, " mm", 1).on_hover_text("How far the rows swing up and down");
+            slider_row(ui, "Length", &mut s.wave_len_mm, 3.0..=40.0, " mm", 1).on_hover_text("Distance from one wave to the next");
+        }
+        let note = match s.fill {
+            FillKind::Satin => "Satin looks best on strokes under 8 mm wide.",
+            FillKind::Wave | FillKind::Zigzag => "The pattern shows in how the thread catches the light.",
+            FillKind::Crosshatch | FillKind::Open => "Open fills let the fabric show through. Nice on felt and canvas.",
+            FillKind::Gradient => "Rows thin out across each shape. Turn the angle to set the direction.",
+            _ => "",
+        };
+        if !note.is_empty() {
+            ui.label(RichText::new(note).size(12.0).color(muted));
+        }
+        egui::CollapsingHeader::new(RichText::new("More settings").color(muted)).id_salt(("fill-more", with_thread)).show(ui, |ui| {
+            if !matches!(s.fill, FillKind::Crosshatch | FillKind::Open | FillKind::Gradient) {
+                slider_row(ui, "Rows", &mut s.density_mm, 0.25..=3.0, " mm", 2).on_hover_text("Distance between fill rows. Smaller is denser.");
             }
             if s.fill != FillKind::Satin {
-                slider_row(ui, "Stitch", &mut s.stitch_mm, 2.0..=6.0, " mm", 1).on_hover_text("Stitch length");
+                slider_row(ui, "Stitch", &mut s.stitch_mm, 2.0..=6.0, " mm", 1).on_hover_text("Stitch length along each row");
             }
-            let note = match s.fill {
-                FillKind::Satin => "Satin looks best on strokes under 8 mm wide.",
-                FillKind::Wave | FillKind::Zigzag => "The pattern shows in how the thread catches the light.",
-                FillKind::Crosshatch | FillKind::Open => "Open fills let the fabric show through. Nice on felt and canvas.",
-                FillKind::Gradient => "Rows thin out across each letter. Turn the angle to set the direction.",
-                _ => "",
-            };
-            if !note.is_empty() {
-                ui.label(RichText::new(note).size(12.0).color(muted));
-            }
-            ui.checkbox(&mut s.underlay, "Underlay around each letter");
-            if with_thread {
-                jef_picker(ui, "fill", &mut s.fill_thread);
-            }
-        }
+            slider_row(ui, "Pull", &mut s.pull_mm, 0.0..=1.0, " mm", 2)
+                .on_hover_text("Stitches pull the fabric in, so rows are made this much longer at each end");
+            ui.checkbox(&mut s.underlay, "Underlay outline").on_hover_text("A running stitch around each shape first, to hold the fabric");
+        });
     });
 }
-
-/// Edge style for filled shapes.
 fn edge_card(ui: &mut egui::Ui, s: &mut Settings, accent: Color32, title: &str, with_thread: bool) {
     card(ui, title, accent, |ui| {
         segmented(ui, &mut s.edge, &[(EdgeKind::Satin, "Satin"), (EdgeKind::Running, "Run"), (EdgeKind::Triple, "Triple"), (EdgeKind::None, "None")], accent);

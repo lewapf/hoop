@@ -4,6 +4,7 @@ mod canvas;
 mod formats;
 mod hoops;
 mod lettering;
+mod prefs;
 mod theme;
 
 fn main() -> eframe::Result {

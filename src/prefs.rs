@@ -1,0 +1,210 @@
+//! Remembers settings between sessions in ~/.local/state/hoop/prefs as plain
+//! `key = value` lines, so a damaged or old file only loses the bad lines.
+
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+use crate::lettering::{Align, EdgeKind, FillKind, Settings};
+
+pub struct Prefs {
+    file: PathBuf,
+    values: HashMap<String, String>,
+}
+
+impl Prefs {
+    pub fn load() -> Self {
+        let state = std::env::var_os("XDG_STATE_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/state")))
+            .unwrap_or_default();
+        Prefs::at(state.join("hoop/prefs"))
+    }
+
+    pub fn at(file: PathBuf) -> Self {
+        let mut values = HashMap::new();
+        if let Ok(text) = std::fs::read_to_string(&file) {
+            for line in text.lines() {
+                if let Some((k, v)) = line.split_once(" = ") {
+                    values.insert(k.to_string(), unescape(v));
+                }
+            }
+        }
+        Prefs { file, values }
+    }
+
+    pub fn get(&self, key: &str) -> Option<&str> {
+        self.values.get(key).map(|s| s.as_str())
+    }
+
+    pub fn num<T: std::str::FromStr>(&self, key: &str) -> Option<T> {
+        self.get(key)?.parse().ok()
+    }
+
+    pub fn set(&mut self, key: &str, value: impl ToString) {
+        self.values.insert(key.to_string(), value.to_string());
+    }
+
+    /// Writes beside the file and renames, so a crash never leaves half a file.
+    pub fn save(&self) -> std::io::Result<()> {
+        if let Some(dir) = self.file.parent() {
+            std::fs::create_dir_all(dir)?;
+        }
+        let mut keys: Vec<&String> = self.values.keys().collect();
+        keys.sort();
+        let text: String = keys.into_iter().map(|k| format!("{k} = {}\n", escape(&self.values[k]))).collect();
+        let tmp = self.file.with_extension("tmp");
+        std::fs::write(&tmp, text)?;
+        std::fs::rename(&tmp, &self.file)
+    }
+
+    pub fn recent(&self) -> Vec<PathBuf> {
+        self.get("recent").map(|r| r.split('\n').filter(|s| !s.is_empty()).map(PathBuf::from).collect()).unwrap_or_default()
+    }
+
+    pub fn add_recent(&mut self, path: &std::path::Path) {
+        let path = &path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+        let mut list = self.recent();
+        list.retain(|p| p != path);
+        list.insert(0, path.to_path_buf());
+        list.truncate(8);
+        let joined: Vec<String> = list.iter().map(|p| p.to_string_lossy().into_owned()).collect();
+        self.set("recent", joined.join("\n"));
+    }
+
+    pub fn store_lettering(&mut self, s: &Settings, font_name: &str) {
+        self.set("letter.text", &s.text);
+        self.set("letter.font", font_name);
+        for (k, v) in [
+            ("height", s.height_mm), ("spacing", s.spacing_mm), ("lines", s.line_spacing), ("arc", s.arc_deg),
+            ("angle", s.fill_angle), ("rows", s.density_mm), ("stitch", s.stitch_mm), ("swing", s.wave_amp_mm),
+            ("wave", s.wave_len_mm), ("fade", s.fade_mm), ("pull", s.pull_mm), ("slant", s.slant_deg), ("edge_width", s.edge_width_mm),
+        ] {
+            self.set(&format!("letter.{k}"), v);
+        }
+        self.set("letter.fill", format!("{:?}", s.fill));
+        self.set("letter.edge", format!("{:?}", s.edge));
+        self.set("letter.align", format!("{:?}", s.align));
+        self.set("letter.underlay", s.underlay);
+        self.set("letter.fill_thread", s.fill_thread);
+        self.set("letter.edge_thread", s.edge_thread);
+    }
+
+    /// Lettering settings from the last session; the font is looked up by
+    /// name by the caller, since font numbers change as fonts are installed.
+    pub fn lettering(&self) -> Settings {
+        let mut s = Settings::default();
+        if let Some(t) = self.get("letter.text") {
+            s.text = t.to_string();
+        }
+        let f = |k: &str, v: &mut f32| {
+            if let Some(n) = self.num::<f32>(&format!("letter.{k}")).filter(|n| n.is_finite()) {
+                *v = n;
+            }
+        };
+        f("height", &mut s.height_mm);
+        f("spacing", &mut s.spacing_mm);
+        f("lines", &mut s.line_spacing);
+        f("arc", &mut s.arc_deg);
+        f("angle", &mut s.fill_angle);
+        f("rows", &mut s.density_mm);
+        f("stitch", &mut s.stitch_mm);
+        f("swing", &mut s.wave_amp_mm);
+        f("wave", &mut s.wave_len_mm);
+        f("fade", &mut s.fade_mm);
+        f("pull", &mut s.pull_mm);
+        f("slant", &mut s.slant_deg);
+        f("edge_width", &mut s.edge_width_mm);
+        if let Some(v) = self.get("letter.fill").and_then(fill_kind) {
+            s.fill = v;
+        }
+        if let Some(v) = self.get("letter.edge").and_then(edge_kind) {
+            s.edge = v;
+        }
+        s.align = match self.get("letter.align") {
+            Some("Left") => Align::Left,
+            Some("Right") => Align::Right,
+            _ => Align::Center,
+        };
+        if let Some(v) = self.num("letter.underlay") {
+            s.underlay = v;
+        }
+        if let Some(v) = self.num("letter.fill_thread") {
+            s.fill_thread = v;
+        }
+        if let Some(v) = self.num("letter.edge_thread") {
+            s.edge_thread = v;
+        }
+        s
+    }
+}
+
+pub fn fill_kind(v: &str) -> Option<FillKind> {
+    Some(match v {
+        "None" => FillKind::None,
+        "Tatami" => FillKind::Tatami,
+        "Satin" => FillKind::Satin,
+        "Wave" => FillKind::Wave,
+        "Zigzag" => FillKind::Zigzag,
+        "Crosshatch" => FillKind::Crosshatch,
+        "Gradient" => FillKind::Gradient,
+        "Open" => FillKind::Open,
+        _ => return None,
+    })
+}
+
+pub fn edge_kind(v: &str) -> Option<EdgeKind> {
+    Some(match v {
+        "None" => EdgeKind::None,
+        "Running" => EdgeKind::Running,
+        "Triple" => EdgeKind::Triple,
+        "Satin" => EdgeKind::Satin,
+        _ => return None,
+    })
+}
+
+fn escape(v: &str) -> String {
+    v.replace('\\', "\\\\").replace('\n', "\\n")
+}
+
+fn unescape(v: &str) -> String {
+    let mut out = String::new();
+    let mut chars = v.chars();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            match chars.next() {
+                Some('n') => out.push('\n'),
+                Some(o) => out.push(o),
+                None => {}
+            }
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lettering_and_recent_files_survive_a_round_trip() {
+        let file = std::env::temp_dir().join(format!("hoop-prefs-{}", std::process::id()));
+        let mut p = Prefs::at(file.clone());
+        let s = Settings { text: "Two\nlines \\ ok".into(), fill: FillKind::Wave, align: Align::Right, height_mm: 33.5, ..Default::default() };
+        p.store_lettering(&s, "Lobster");
+        p.add_recent(std::path::Path::new("/a.jef"));
+        p.add_recent(std::path::Path::new("/b.svg"));
+        p.add_recent(std::path::Path::new("/a.jef"));
+        p.save().unwrap();
+        let q = Prefs::at(file.clone());
+        let back = q.lettering();
+        assert_eq!(back.text, s.text);
+        assert_eq!(back.fill, FillKind::Wave);
+        assert_eq!(back.align, Align::Right);
+        assert_eq!(back.height_mm, 33.5);
+        assert_eq!(q.get("letter.font"), Some("Lobster"));
+        assert_eq!(q.recent(), vec![PathBuf::from("/a.jef"), PathBuf::from("/b.svg")]);
+        std::fs::remove_file(file).unwrap();
+    }
+}

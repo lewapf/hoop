@@ -36,6 +36,13 @@ impl FillKind {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Align {
+    Left,
+    Center,
+    Right,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EdgeKind {
     None,
     Running,
@@ -58,6 +65,12 @@ pub struct Settings {
     pub wave_amp_mm: f32,
     pub wave_len_mm: f32,
     pub fade_mm: f32,
+    /// Extra length added to both ends of every fill row, because stitches
+    /// pull the fabric in and fills come out narrower than drawn.
+    pub pull_mm: f32,
+    /// Italic slant in degrees.
+    pub slant_deg: f32,
+    pub align: Align,
     pub underlay: bool,
     pub edge: EdgeKind,
     pub edge_width_mm: f32,
@@ -82,6 +95,9 @@ impl Default for Settings {
             wave_amp_mm: 2.0,
             wave_len_mm: 12.0,
             fade_mm: 2.5,
+            pull_mm: 0.2,
+            slant_deg: 0.0,
+            align: Align::Center,
             underlay: true,
             edge: EdgeKind::Satin,
             edge_width_mm: 1.6,
@@ -244,30 +260,53 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
     let k = s.height_mm * 10.0 / cap;
     let pitch = s.height_mm * 10.0 * s.line_spacing;
     let lines: Vec<&str> = s.text.lines().collect();
-    let mut glyphs = Vec::new();
+    let slant = s.slant_deg.to_radians().tan();
+    let kern = |a: ttf_parser::GlyphId, b: ttf_parser::GlyphId| -> f32 {
+        let Some(table) = face.tables().kern else { return 0.0 };
+        table
+            .subtables
+            .into_iter()
+            .filter(|t| t.horizontal && !t.variable)
+            .find_map(|t| t.glyphs_kerning(a, b))
+            .unwrap_or(0) as f32
+    };
+    let mut rows: Vec<(f32, Vec<Vec<Contour>>)> = Vec::new();
     for (row, line) in lines.iter().enumerate() {
         let mut pen = 0.0;
+        let mut prev = None;
         let mut line_glyphs = Vec::new();
+        let y0 = row as f32 * pitch;
         for ch in line.chars() {
             let Some(id) = face.glyph_index(ch) else { continue };
+            if let Some(p) = prev {
+                pen += kern(p, id) * k;
+            }
+            prev = Some(id);
             let mut o = Outline { contours: Vec::new(), current: Vec::new() };
             face.outline_glyph(id, &mut o);
             o.close();
-            let y0 = row as f32 * pitch;
-            let contours: Vec<Contour> =
-                o.contours.into_iter().map(|c| c.into_iter().map(|(x, y)| (pen + x * k, y0 - y * k)).collect()).collect();
+            let contours: Vec<Contour> = o
+                .contours
+                .into_iter()
+                .map(|c| c.into_iter().map(|(x, y)| (pen + x * k + y * k * slant, y0 - y * k)).collect())
+                .collect();
             if !contours.is_empty() {
                 line_glyphs.push(contours);
             }
             pen += face.glyph_hor_advance(id).unwrap_or(0) as f32 * k + s.spacing_mm * 10.0;
         }
-        let width = pen - s.spacing_mm * 10.0;
-        for g in &mut line_glyphs {
-            for c in g.iter_mut() {
-                for p in c.iter_mut() {
-                    p.0 -= width / 2.0;
-                }
-            }
+        rows.push((pen - s.spacing_mm * 10.0, line_glyphs));
+    }
+    let widest = rows.iter().map(|r| r.0).fold(0.0, f32::max);
+    let mut glyphs = Vec::new();
+    for (width, mut line_glyphs) in rows {
+        let shift = match s.align {
+            Align::Left => -widest / 2.0,
+            Align::Center => -width / 2.0,
+            Align::Right => widest / 2.0 - width,
+        };
+        for p in line_glyphs.iter_mut().flatten().flatten() {
+            p.0 += shift;
         }
         glyphs.extend(line_glyphs);
     }
@@ -665,7 +704,9 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
         if !rm.is_empty() {
             spans = subtract(spans, &row_spans(&rm, y, false));
         }
-        let segs: Vec<(f32, f32, bool)> = spans.into_iter().filter(|(a, b)| b - a > 2.0).map(|(a, b)| (a, b, false)).collect();
+        let pull = s.pull_mm * 10.0;
+        let segs: Vec<(f32, f32, bool)> =
+            spans.into_iter().filter(|(a, b)| b - a > 2.0).map(|(a, b)| (a - pull, b + pull, false)).collect();
         rows.push((y, segs));
         y += spacing_at(y);
     }
@@ -911,4 +952,39 @@ mod samples {
             std::fs::write(std::path::Path::new(&out).join(format!("{name}.jef")), formats::write_jef(&pts, &p.cmds, &threads)).unwrap();
         }
     }
+}
+
+/// One-click looks for lettering. They change only the stitch style, never
+/// the text, font, size or threads.
+pub const PRESETS: [(&str, &str, fn(&mut Settings)); 7] = [
+    ("Classic", "Tatami fill with a satin border", |s| {
+        style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
+        s.edge_width_mm = 1.6;
+    }),
+    ("Satin", "Smooth, shiny satin letters. Best for small text", |s| style(s, FillKind::Satin, 90.0, EdgeKind::None)),
+    ("Outline", "Only a triple-run outline", |s| style(s, FillKind::None, 45.0, EdgeKind::Triple)),
+    ("Bold", "Tatami with a wide satin border", |s| {
+        style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
+        s.edge_width_mm = 2.8;
+    }),
+    ("Vintage", "Open crosshatch inside a thin border", |s| {
+        style(s, FillKind::Crosshatch, 45.0, EdgeKind::Satin);
+        s.edge_width_mm = 1.2;
+    }),
+    ("Wavy", "Wave fill with a satin border", |s| {
+        style(s, FillKind::Wave, 0.0, EdgeKind::Satin);
+        s.edge_width_mm = 1.4;
+    }),
+    ("Shaded", "Gradient fill with a running outline", |s| {
+        style(s, FillKind::Gradient, 90.0, EdgeKind::Running);
+        s.fade_mm = 3.0;
+    }),
+];
+
+pub fn style(s: &mut Settings, fill: FillKind, angle: f32, edge: EdgeKind) {
+    s.fill = fill;
+    s.fill_angle = angle;
+    s.edge = edge;
+    s.density_mm = fill.default_rows_mm();
+    s.underlay = !matches!(fill, FillKind::Open | FillKind::Crosshatch);
 }

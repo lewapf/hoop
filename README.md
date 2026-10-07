@@ -14,6 +14,12 @@ color becomes a Janome thread, shapes are filled with any fill style, strokes
 become running or satin lines, hidden parts are cut away so layers don't pile
 up, and the colors can be merged down to a few threads.
 
+Quick styles set up a whole look in one click, the fit card offers fixes
+(rotate, a bigger hoop, scale to fit), the Threads card shows how much thread
+each color needs and copies the list, and Details warns about stitches likely
+to sew badly. Settings, the last lettering and recent files are remembered in
+`~/.local/state/hoop/prefs`.
+
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.
 
@@ -45,7 +51,7 @@ you pick that file in the save dialog yourself.
 | `1` – `4`               | Pick a hoop                                |
 | `F` / `D`               | Show the whole hoop / zoom to the design   |
 | `G` / `J` / `T`         | Grid / jump stitches / thread texture      |
-| `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / redo a move                       |
+| `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / redo any change                   |
 | `?`                     | Show the shortcuts                         |
 | `Q`                     | Quit                                       |
 

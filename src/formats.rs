@@ -391,6 +391,51 @@ impl Pattern {
         blocks
     }
 
+    /// Approximate top thread used by a block, in meters. Thread runs a bit
+    /// longer than the stitches because it goes down into the fabric.
+    pub fn thread_meters(&self, b: &Block) -> f32 {
+        let mut sum = 0.0;
+        for i in b.start.max(1)..b.end {
+            if self.cmds[i] == Cmd::Stitch {
+                let (p, q) = (self.points[i - 1], self.points[i]);
+                sum += ((p.0 - q.0).powi(2) + (p.1 - q.1).powi(2)).sqrt();
+            }
+        }
+        sum / 10_000.0 * 1.2
+    }
+
+    /// Things likely to stitch badly, as short sentences.
+    pub fn warnings(&self) -> Vec<String> {
+        let mut long = 0;
+        let mut tiny = 0;
+        let mut stitches = 0;
+        for i in 1..self.cmds.len() {
+            if self.cmds[i] != Cmd::Stitch || self.cmds[i - 1] == Cmd::ColorChange {
+                continue;
+            }
+            stitches += 1;
+            let (p, q) = (self.points[i - 1], self.points[i]);
+            let d = ((p.0 - q.0).powi(2) + (p.1 - q.1).powi(2)).sqrt();
+            if d > 80.0 {
+                long += 1;
+            } else if d > 0.0 && d < 3.0 {
+                tiny += 1;
+            }
+        }
+        let mut out = Vec::new();
+        if long > 0 {
+            out.push(format!("{long} stitches are longer than 8 mm and may snag. Use tatami or a narrower satin."));
+        }
+        if tiny * 50 > stitches.max(1) {
+            out.push(format!("{tiny} stitches are under 0.3 mm, which can break the thread. Make small details bigger."));
+        }
+        let jumps = self.count(Cmd::Jump);
+        if jumps > 60 {
+            out.push(format!("{jumps} jumps mean a lot of trimming. Fewer, larger shapes stitch faster."));
+        }
+        out
+    }
+
     pub fn count(&self, cmd: Cmd) -> usize {
         self.cmds.iter().filter(|c| **c == cmd).count()
     }
