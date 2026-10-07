@@ -405,59 +405,50 @@ impl HoopApp {
         let muted = self.muted();
         let accent = self.accent();
         let viewer = self.mode == Mode::Viewer;
-        let heading = |ui: &mut egui::Ui, t: &str| {
-            ui.add_space(10.0);
-            ui.label(RichText::new(t.to_uppercase()).size(11.0).color(accent).strong());
-            ui.add_space(2.0);
-        };
 
         ui.add_space(14.0);
-        ui.horizontal(|ui| {
-            ui.label(RichText::new("Hoop").size(24.0).strong());
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                for (mode, name, key) in [(Mode::Lettering, "Lettering", "L"), (Mode::Viewer, "Viewer", "V")] {
-                    let on = self.mode == mode;
-                    let text = RichText::new(name).color(if on { contrast(accent) } else { ui.visuals().text_color() });
-                    let b = egui::Button::new(text).fill(if on { accent } else { Color32::TRANSPARENT }).corner_radius(12);
-                    if ui.add(b).on_hover_text(key).clicked() {
-                        self.set_mode(mode);
-                    }
-                }
-            });
-        });
-        ui.add_space(6.0);
+        ui.label(RichText::new("Hoop").size(26.0).strong());
+        ui.add_space(4.0);
+        let mut mode = self.mode;
+        segmented(ui, &mut mode, &[(Mode::Viewer, "Viewer  V"), (Mode::Lettering, "Lettering  L")], accent);
+        self.set_mode(mode);
+        ui.add_space(10.0);
+
         if self.mode == Mode::Lettering {
             self.lettering_panel(ui);
         } else {
-            ui.horizontal(|ui| {
-                if ui.add(egui::Button::new(RichText::new("Open…").color(contrast(accent))).fill(accent)).on_hover_text("O").clicked() {
-                    self.pick_file();
+            card(ui, "Design", accent, |ui| {
+                match &self.design {
+                    Some(d) => {
+                        ui.label(RichText::new(&d.name).strong().size(15.0));
+                        let (w, h) = d.size();
+                        ui.label(RichText::new(format!("{} · {:.1} × {:.1} mm", d.pattern.format, w / 10.0, h / 10.0)).color(muted));
+                    }
+                    None => {
+                        ui.label(RichText::new("Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop.").color(muted));
+                    }
                 }
-                if self.design.is_some() && ui.button("Save as JEF…").on_hover_text("Ctrl+S").clicked() {
-                    self.save_jef();
-                }
+                ui.add_space(4.0);
+                let w = (ui.available_width() - 8.0) / 2.0;
+                ui.horizontal(|ui| {
+                    if ui.add(primary("Open…", accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
+                        self.pick_file();
+                    }
+                    if ui.add_enabled(self.design.is_some(), egui::Button::new("Save as JEF…").min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
+                        self.save_jef();
+                    }
+                });
             });
         }
         if let Some(st) = &self.status {
-            ui.label(RichText::new(st).color(Color32::from_rgb(0x55, 0xc2, 0x8c)));
+            ui.label(RichText::new(st).color(OK));
         }
-        if self.mode == Mode::Lettering {
-        } else { match &self.design {
-            Some(d) => {
-                ui.label(RichText::new(&d.name).monospace());
-            }
-            None => {
-                ui.label(RichText::new("No design open. Press O or drop a JEF, DST, EXP, PES or PEC file here.").color(muted));
-            }
-        } }
         if let Some(e) = &self.error {
-            ui.colored_label(Color32::from_rgb(0xf0, 0x6b, 0x5f), e);
+            ui.label(RichText::new(e).color(BAD));
         }
 
         if let Some(d) = &self.design {
-            ui.add_space(8.0);
-            let size = d.size();
-            let fit = hoops::fit(self.hoop_size(), size, &self.setup.at);
+            let fit = hoops::fit(self.hoop_size(), d.size(), &self.setup.at);
             let (ok, title, detail) = match fit {
                 Fit::Inside(m) => (true, format!("Fits the {}", HOOPS[self.setup.hoop].name), format!("Closest edge is {m:.1} mm away.")),
                 Fit::TooBig { over_w, over_h, fits_turned } => {
@@ -469,123 +460,134 @@ impl HoopApp {
                 }
                 Fit::OffEdge { side, by } => (false, "Off the sewing area".into(), format!("Sticks out {by:.1} mm on the {side}. Press C to center.")),
             };
-            let color = if ok { Color32::from_rgb(0x55, 0xc2, 0x8c) } else { Color32::from_rgb(0xf0, 0x6b, 0x5f) };
-            egui::Frame::new().fill(ui.visuals().extreme_bg_color).corner_radius(6).inner_margin(10).show(ui, |ui| {
+            let color = if ok { OK } else { BAD };
+            egui::Frame::new().fill(color.gamma_multiply(0.12)).stroke(egui::Stroke::new(1.0, color.gamma_multiply(0.5))).corner_radius(10).inner_margin(12).show(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.label(RichText::new(title).color(color).strong());
+                ui.horizontal(|ui| {
+                    let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
+                    ui.painter().circle_filled(r.center(), 5.0, color);
+                    ui.label(RichText::new(title).color(color).strong());
+                });
                 ui.label(RichText::new(detail).color(muted));
             });
+            ui.add_space(10.0);
         }
 
-        heading(ui, "Hoop size");
-        let design_size = self.design.as_ref().map(|d| d.size());
-        egui::Grid::new("hoops").num_columns(2).spacing([6.0, 6.0]).show(ui, |ui| {
-            for (i, h) in HOOPS.iter().enumerate() {
-                let fits = design_size.is_none_or(|s| {
-                    !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. })
-                });
-                let text = format!("{}  {}\n{} × {} mm\n{}", i + 1, h.name, h.w, h.h, if fits { h.note } else { "Too small" });
-                let selected = self.setup.hoop == i;
-                let mut button = egui::Button::new(RichText::new(text).size(12.5)).min_size(vec2(148.0, 54.0));
-                if selected {
-                    button = button.fill(accent.gamma_multiply(0.25)).stroke(egui::Stroke::new(1.0, accent));
-                }
-                if ui.add(button).clicked() {
-                    self.change(|s| s.hoop = i);
-                    self.fit_view(canvas_rect, false);
-                }
-                if i % 2 == 1 {
-                    ui.end_row();
-                }
-            }
-        });
-
-        heading(ui, "Position");
-        ui.horizontal_wrapped(|ui| {
-            if ui.button("⟲ 90°").on_hover_text("Shift+R").clicked() {
-                self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 3) % 4);
-            }
-            if ui.button("⟳ 90°").on_hover_text("R").clicked() {
-                self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
-            }
-            if ui.button("Mirror").on_hover_text("M").clicked() {
-                self.change(|s| s.at.mirror = !s.at.mirror);
-            }
-            if ui.button("Center").on_hover_text("C").clicked() {
-                self.change(|s| { s.at.dx = 0.0; s.at.dy = 0.0; });
-            }
-        });
-        let at = self.setup.at;
-        let signed = |v: f32| format!("{}{:.1}", if v > 0.0 { "+" } else if v < 0.0 { "−" } else { "" }, (v / 10.0).abs());
-        ui.label(RichText::new(format!(
-            "Rotation {}°{} · X {} Y {} mm",
-            at.quarter_turns as u32 * 90,
-            if at.mirror { ", mirrored" } else { "" },
-            signed(at.dx),
-            signed(-at.dy)
-        )).monospace().size(11.5).color(muted));
-
-        if let Some(d) = &mut self.design {
-            heading(ui, "Thread order");
-            let mut toggle = None;
-            for (k, b) in d.blocks.iter_mut().enumerate() {
+        card(ui, "Hoop", accent, |ui| {
+            let design_size = self.design.as_ref().map(|d| d.size());
+            let w = (ui.available_width() - 8.0) / 2.0;
+            for row in HOOPS.chunks(2).enumerate() {
                 ui.horizontal(|ui| {
-                    if viewer {
-                        ui.color_edit_button_srgb(&mut b.thread.color);
-                    } else {
-                        let (r, _) = ui.allocate_exact_size(vec2(40.0, 18.0), Sense::hover());
-                        ui.painter().rect_filled(r, 4, rgb(b.thread.color));
+                    for (j, h) in row.1.iter().enumerate() {
+                        let i = row.0 * 2 + j;
+                        let fits = design_size.is_none_or(|s| {
+                            !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. })
+                        });
+                        if hoop_tile(ui, w, i, h, fits, self.setup.hoop == i, accent, muted).clicked() {
+                            self.change(|s| s.hoop = i);
+                            self.fit_view(canvas_rect, false);
+                        }
                     }
-                    let selected = self.focus == Some(k);
-                    let code = if b.thread.code.is_empty() { String::new() } else { format!(" {}", b.thread.code) };
-                    let label = RichText::new(format!("{}. {}{}", k + 1, b.thread.name, code));
-                    if ui.selectable_label(selected, label).on_hover_text("Show this thread on its own").clicked() {
+                });
+            }
+        });
+
+        card(ui, "Position", accent, |ui| {
+            let w = (ui.available_width() - 18.0) / 4.0;
+            ui.horizontal(|ui| {
+                let b = |t: &str| egui::Button::new(t).min_size(vec2(w, 28.0));
+                if ui.add(b("⟲ 90°")).on_hover_text("Rotate left · Shift+R").clicked() {
+                    self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 3) % 4);
+                }
+                if ui.add(b("⟳ 90°")).on_hover_text("Rotate right · R").clicked() {
+                    self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
+                }
+                if ui.add(b("Mirror")).on_hover_text("M").clicked() {
+                    self.change(|s| s.at.mirror = !s.at.mirror);
+                }
+                if ui.add(b("Center")).on_hover_text("C").clicked() {
+                    self.change(|s| { s.at.dx = 0.0; s.at.dy = 0.0; });
+                }
+            });
+            let at = self.setup.at;
+            let signed = |v: f32| format!("{}{:.1}", if v > 0.0 { "+" } else if v < 0.0 { "−" } else { "" }, (v / 10.0).abs());
+            ui.label(RichText::new(format!(
+                "{}°{}  ·  X {}  Y {} mm",
+                at.quarter_turns as u32 * 90,
+                if at.mirror { " mirrored" } else { "" },
+                signed(at.dx),
+                signed(-at.dy)
+            )).monospace().size(12.0).color(muted));
+        });
+
+        if self.design.is_some() {
+            let focus = self.focus;
+            let mut toggle = None;
+            let d = self.design.as_mut().unwrap();
+            card(ui, "Threads", accent, |ui| {
+                for (k, b) in d.blocks.iter_mut().enumerate() {
+                    let selected = focus == Some(k);
+                    let fill = if selected { accent.gamma_multiply(0.18) } else { Color32::TRANSPARENT };
+                    let r = egui::Frame::new().fill(fill).corner_radius(6).inner_margin(egui::Margin::symmetric(6, 3)).show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.horizontal(|ui| {
+                            if viewer {
+                                ui.color_edit_button_srgb(&mut b.thread.color);
+                            } else {
+                                let (r, _) = ui.allocate_exact_size(vec2(28.0, 18.0), Sense::hover());
+                                ui.painter().rect_filled(r, 9, rgb(b.thread.color));
+                            }
+                            ui.label(RichText::new(format!("{}", k + 1)).monospace().color(muted));
+                            ui.label(&b.thread.name);
+                            if !b.thread.code.is_empty() {
+                                ui.label(RichText::new(&b.thread.code).monospace().color(muted));
+                            }
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                ui.label(RichText::new(b.stitches.to_string()).monospace().color(muted));
+                            });
+                        });
+                    });
+                    if ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text("Click to show this thread on its own").clicked() {
                         toggle = Some(k);
                     }
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label(RichText::new(format!("{}", b.stitches)).monospace().color(muted));
-                    });
-                });
-            }
+                }
+                if !d.pattern.format.stores_colors() {
+                    ui.label(RichText::new(format!("{} files don't store thread colors. Click a swatch to set the real ones.", d.pattern.format)).size(12.0).color(muted));
+                }
+            });
             if let Some(k) = toggle {
                 self.focus = if self.focus == Some(k) { None } else { Some(k) };
             }
-            if !d.pattern.format.stores_colors() {
-                ui.label(RichText::new(format!("{} files don't store thread colors, so these are placeholders.", d.pattern.format)).size(12.0).color(muted));
-            }
-        }
 
-        if self.design.is_some() {
-            heading(ui, "Stitch-out");
             let total = self.total();
-            ui.horizontal(|ui| {
-                let label = if self.playing { "Pause" } else if self.shown >= total { "Replay" } else { "Play" };
-                if ui.add(egui::Button::new(label).min_size(vec2(64.0, 0.0))).on_hover_text("Space").clicked() {
-                    self.toggle_play();
-                }
-                ui.spacing_mut().slider_width = ui.available_width() - 8.0;
-                let mut n = self.shown;
-                if ui.add(egui::Slider::new(&mut n, 0..=total).show_value(false)).changed() {
-                    self.playing = false;
-                    self.shown = n;
-                }
-            });
-            ui.horizontal(|ui| {
-                let thread = self.design.as_ref().and_then(|d| d.blocks.iter().position(|b| self.shown <= b.end)).unwrap_or(0) + 1;
-                let text = if self.shown >= total { format!("All {total} stitches") } else { format!("{} / {total} · thread {thread}", self.shown) };
-                ui.label(RichText::new(text).monospace().size(11.5).color(muted));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    egui::ComboBox::from_id_salt("rate").selected_text(PLAYBACK[self.play_rate].1).width(90.0).show_ui(ui, |ui| {
-                        for (i, (_, name)) in PLAYBACK.iter().enumerate() {
-                            ui.selectable_value(&mut self.play_rate, i, *name);
-                        }
+            card(ui, "Stitch-out", accent, |ui| {
+                ui.horizontal(|ui| {
+                    let label = if self.playing { "Pause" } else if self.shown >= total { "Replay" } else { "Play" };
+                    if ui.add(primary(label, accent).min_size(vec2(72.0, 28.0))).on_hover_text("Space").clicked() {
+                        self.toggle_play();
+                    }
+                    ui.spacing_mut().slider_width = (ui.available_width() - 4.0).max(40.0);
+                    let mut n = self.shown;
+                    if ui.add(egui::Slider::new(&mut n, 0..=total).show_value(false)).changed() {
+                        self.playing = false;
+                        self.shown = n;
+                    }
+                });
+                ui.horizontal(|ui| {
+                    let thread = self.design.as_ref().and_then(|d| d.blocks.iter().position(|b| self.shown <= b.end)).unwrap_or(0) + 1;
+                    let text = if self.shown >= total { format!("All {total} stitches") } else { format!("{} / {total} · thread {thread}", self.shown) };
+                    ui.label(RichText::new(text).monospace().size(12.0).color(muted));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        egui::ComboBox::from_id_salt("rate").selected_text(PLAYBACK[self.play_rate].1).width(84.0).show_ui(ui, |ui| {
+                            for (i, (_, name)) in PLAYBACK.iter().enumerate() {
+                                ui.selectable_value(&mut self.play_rate, i, *name);
+                            }
+                        });
                     });
                 });
             });
-        }
 
-        if let Some(d) = &self.design {
-            heading(ui, "Details");
+            let d = self.design.as_ref().unwrap();
             let p = &d.pattern;
             let stitches = p.count(Cmd::Stitch);
             let changes = d.blocks.len().saturating_sub(1);
@@ -594,7 +596,7 @@ impl HoopApp {
             let time = format!(
                 "≈ {} min{}",
                 if minutes < 1.0 { "<1".into() } else { format!("{}", minutes.round()) },
-                if changes > 0 { format!(" + {changes} thread change{}", if changes > 1 { "s" } else { "" }) } else { String::new() }
+                if changes > 0 { format!(" + {changes} change{}", if changes > 1 { "s" } else { "" }) } else { String::new() }
             );
             let trims = p.count(Cmd::Trim);
             let rows = [
@@ -603,42 +605,48 @@ impl HoopApp {
                 ("Colors", d.blocks.len().to_string()),
                 ("Jumps", if trims > 0 { format!("{} · {trims} trims", p.count(Cmd::Jump)) } else { p.count(Cmd::Jump).to_string() }),
                 ("Sewing time", time),
-                ("Format", p.format.to_string()),
             ];
-            egui::Grid::new("details").num_columns(2).spacing([14.0, 3.0]).show(ui, |ui| {
+            card(ui, "Details", accent, |ui| {
                 for (k, v) in rows {
-                    ui.label(RichText::new(k).color(muted));
-                    ui.label(RichText::new(v).monospace());
-                    ui.end_row();
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new(k).color(muted));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| ui.label(RichText::new(v).monospace()));
+                    });
                 }
-                ui.label(RichText::new("Machine speed").color(muted));
-                egui::ComboBox::from_id_salt("spm").selected_text(format!("{} spm", SPEEDS[self.speed])).show_ui(ui, |ui| {
-                    for (i, s) in SPEEDS.iter().enumerate() {
-                        ui.selectable_value(&mut self.speed, i, format!("{s} spm"));
-                    }
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Machine speed").color(muted));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        egui::ComboBox::from_id_salt("spm").selected_text(format!("{} spm", SPEEDS[self.speed])).width(96.0).show_ui(ui, |ui| {
+                            for (i, s) in SPEEDS.iter().enumerate() {
+                                ui.selectable_value(&mut self.speed, i, format!("{s} spm"));
+                            }
+                        });
+                    });
                 });
-                ui.end_row();
             });
         }
 
-        heading(ui, "Display");
-        ui.horizontal_wrapped(|ui| {
-            for (name, c) in FABRICS {
-                let selected = self.fabric == c;
-                let (rect, resp) = ui.allocate_exact_size(vec2(24.0, 24.0), Sense::click());
-                ui.painter().circle(rect.center(), 11.0, rgb(c), egui::Stroke::new(if selected { 2.5 } else { 1.0 }, if selected { accent } else { muted }));
-                if resp.on_hover_text(name).clicked() {
-                    self.fabric = c;
+        card(ui, "Display", accent, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                for (name, c) in FABRICS {
+                    let selected = self.fabric == c;
+                    let (rect, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
+                    if selected {
+                        ui.painter().circle_stroke(rect.center(), 12.5, egui::Stroke::new(2.0, accent));
+                    }
+                    ui.painter().circle(rect.center(), 10.0, rgb(c), egui::Stroke::new(1.0, Color32::from_black_alpha(90)));
+                    if resp.on_hover_text(name).clicked() {
+                        self.fabric = c;
+                    }
                 }
-            }
-            ui.color_edit_button_srgb(&mut self.fabric).on_hover_text("Other fabric color");
+                ui.color_edit_button_srgb(&mut self.fabric).on_hover_text("Other fabric color");
+            });
+            ui.checkbox(&mut self.textured, "Thread texture  T");
+            ui.checkbox(&mut self.grid, "Template grid, 10 mm  G");
+            ui.checkbox(&mut self.jumps, "Jump stitches  J");
         });
-        ui.checkbox(&mut self.textured, "Thread texture (T)");
-        ui.checkbox(&mut self.grid, "Template grid, 10 mm (G)");
-        ui.checkbox(&mut self.jumps, "Jump stitches (J)");
-        ui.add_space(10.0);
         ui.label(RichText::new("Press ? for every shortcut.").size(12.0).color(muted));
-        ui.add_space(12.0);
+        ui.add_space(14.0);
     }
 
     fn canvas(&mut self, ui: &mut egui::Ui) {
@@ -747,6 +755,29 @@ impl HoopApp {
                 Color32::from_white_alpha(230),
             );
         }
+
+        // Overlay controls in the canvas corners.
+        let chip = |t: &str| {
+            egui::Button::new(RichText::new(t.to_string()).color(Color32::WHITE).size(12.5))
+                .fill(Color32::from_black_alpha(165))
+                .stroke(egui::Stroke::NONE)
+                .corner_radius(7)
+        };
+        let br = rect.right_bottom() - vec2(12.0, 12.0);
+        if ui.put(egui::Rect::from_min_max(br - vec2(132.0, 30.0), br), chip("Whole hoop  F")).clicked() {
+            self.fit_view(rect, false);
+        }
+        if self.design.is_some() && ui.put(egui::Rect::from_min_max(br - vec2(240.0, 30.0), br - vec2(140.0, 0.0)), chip("Design  D")).clicked() {
+            self.fit_view(rect, true);
+        }
+        let hint = "Drag design to move · scroll to zoom · ? for keys";
+        let galley = painter.layout_no_wrap(hint.into(), egui::FontId::proportional(12.0), Color32::WHITE);
+        let at = rect.left_bottom() + vec2(12.0, -12.0 - galley.size().y - 12.0);
+        let bg = egui::Rect::from_min_size(at, galley.size() + vec2(20.0, 12.0));
+        if bg.right() < br.x - 252.0 {
+            painter.rect_filled(bg, 7, Color32::from_black_alpha(140));
+            painter.galley(at + vec2(10.0, 6.0), galley, Color32::WHITE);
+        }
     }
 
     fn set_mode(&mut self, mode: Mode) {
@@ -791,86 +822,74 @@ impl HoopApp {
     fn lettering_panel(&mut self, ui: &mut egui::Ui) {
         let muted = self.muted();
         let accent = self.accent();
-        let heading = |ui: &mut egui::Ui, t: &str| {
-            ui.add_space(10.0);
-            ui.label(RichText::new(t.to_uppercase()).size(11.0).color(accent).strong());
-            ui.add_space(2.0);
-        };
         let s = &mut self.letter;
-        heading(ui, "Text");
-        ui.add(egui::TextEdit::multiline(&mut s.text).desired_rows(2).desired_width(f32::INFINITY).font(egui::TextStyle::Heading));
-
-        heading(ui, "Font");
-        let current = self.fonts.get(s.font).map_or("", |f| f.name.as_str()).to_string();
-        egui::ComboBox::from_id_salt("font").selected_text(current).width(ui.available_width()).height(380.0).show_ui(ui, |ui| {
-            ui.add(egui::TextEdit::singleline(&mut self.font_filter).hint_text("Search fonts"));
-            let filter = self.font_filter.to_lowercase();
-            let mut was_featured = true;
-            for (i, f) in self.fonts.iter().enumerate() {
-                if !filter.is_empty() && !f.name.to_lowercase().contains(&filter) {
-                    continue;
+        card(ui, "Text", accent, |ui| {
+            ui.add(egui::TextEdit::multiline(&mut s.text).desired_rows(2).desired_width(f32::INFINITY).font(egui::TextStyle::Heading));
+            let current = self.fonts.get(s.font).map_or("", |f| f.name.as_str()).to_string();
+            egui::ComboBox::from_id_salt("font").selected_text(current).width(ui.available_width()).height(380.0).show_ui(ui, |ui| {
+                ui.add(egui::TextEdit::singleline(&mut self.font_filter).hint_text("Search fonts"));
+                let filter = self.font_filter.to_lowercase();
+                let mut was_featured = true;
+                for (i, f) in self.fonts.iter().enumerate() {
+                    if !filter.is_empty() && !f.name.to_lowercase().contains(&filter) {
+                        continue;
+                    }
+                    if was_featured && !f.featured {
+                        ui.separator();
+                        was_featured = false;
+                    }
+                    ui.selectable_value(&mut s.font, i, &f.name);
                 }
-                if was_featured && !f.featured {
-                    ui.separator();
-                    was_featured = false;
+                if self.font_scan.is_some() {
+                    ui.label(RichText::new("Looking for installed fonts…").color(muted));
                 }
-                ui.selectable_value(&mut s.font, i, &f.name);
+            });
+        });
+        card(ui, "Size", accent, |ui| {
+            slider_row(ui, "Height", &mut s.height_mm, 5.0..=120.0, " mm", 1);
+            slider_row(ui, "Spacing", &mut s.spacing_mm, -5.0..=15.0, " mm", 1);
+            if s.text.lines().count() > 1 {
+                slider_row(ui, "Lines", &mut s.line_spacing, 0.8..=2.5, "×", 2);
             }
-            if self.font_scan.is_some() {
-                ui.label(RichText::new("Looking for installed fonts…").color(muted));
+            slider_row(ui, "Arc", &mut s.arc_deg, -180.0..=180.0, "°", 0)
+                .on_hover_text("Bend the text into an arch (positive) or a smile (negative)");
+        });
+        card(ui, "Fill", accent, |ui| {
+            segmented(ui, &mut s.fill, &[(FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::None, "None")], accent);
+            if s.fill != FillKind::None {
+                ui.add_space(4.0);
+                slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0);
+                slider_row(ui, "Rows", &mut s.density_mm, 0.25..=1.0, " mm", 2).on_hover_text("Distance between fill rows");
+                if s.fill == FillKind::Tatami {
+                    slider_row(ui, "Stitch", &mut s.stitch_mm, 2.0..=6.0, " mm", 1).on_hover_text("Stitch length");
+                } else {
+                    ui.label(RichText::new("Satin looks best on strokes under 8 mm wide.").size(12.0).color(muted));
+                }
+                ui.checkbox(&mut s.underlay, "Underlay around each letter");
+                jef_picker(ui, "fill", &mut s.fill_thread);
             }
         });
-        let slider = |ui: &mut egui::Ui, v: &mut f32, r: std::ops::RangeInclusive<f32>, text: &str, suffix: &str| {
-            ui.add(egui::Slider::new(v, r).text(text).suffix(suffix).fixed_decimals(1));
-        };
-        slider(ui, &mut s.height_mm, 5.0..=120.0, "Height", " mm");
-        slider(ui, &mut s.spacing_mm, -5.0..=15.0, "Letter spacing", " mm");
-        if s.text.lines().count() > 1 {
-            slider(ui, &mut s.line_spacing, 0.8..=2.5, "Line spacing", "×");
-        }
-        ui.add(egui::Slider::new(&mut s.arc_deg, -180.0..=180.0).text("Arc").suffix("°").fixed_decimals(0))
-            .on_hover_text("Bend the text into an arch (positive) or a smile (negative)");
-
-        heading(ui, "Fill");
-        ui.horizontal(|ui| {
-            for (k, name) in [(FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::None, "None")] {
-                ui.selectable_value(&mut s.fill, k, name);
+        card(ui, "Edge", accent, |ui| {
+            segmented(ui, &mut s.edge, &[(EdgeKind::Satin, "Satin"), (EdgeKind::Running, "Run"), (EdgeKind::Triple, "Triple"), (EdgeKind::None, "None")], accent);
+            if s.edge == EdgeKind::Satin {
+                ui.add_space(4.0);
+                slider_row(ui, "Width", &mut s.edge_width_mm, 0.8..=5.0, " mm", 1);
+            }
+            if s.edge != EdgeKind::None {
+                jef_picker(ui, "edge", &mut s.edge_thread);
             }
         });
-        if s.fill != FillKind::None {
-            ui.add(egui::Slider::new(&mut s.fill_angle, 0.0..=180.0).text("Angle").suffix("°").fixed_decimals(0));
-            slider(ui, &mut s.density_mm, 0.25..=1.0, "Row spacing", " mm");
-            if s.fill == FillKind::Tatami {
-                slider(ui, &mut s.stitch_mm, 2.0..=6.0, "Stitch length", " mm");
-            } else {
-                ui.label(RichText::new("Satin looks best on strokes under 8 mm wide. Wider rows get split.").size(12.0).color(muted));
-            }
-            ui.checkbox(&mut s.underlay, "Underlay (runs around each letter first)");
-            jef_picker(ui, "Fill thread", &mut s.fill_thread);
-        }
-
-        heading(ui, "Edge");
+        let w = ui.available_width();
         ui.horizontal(|ui| {
-            for (k, name) in [(EdgeKind::Satin, "Satin"), (EdgeKind::Running, "Run"), (EdgeKind::Triple, "Triple run"), (EdgeKind::None, "None")] {
-                ui.selectable_value(&mut s.edge, k, name);
-            }
-        });
-        if s.edge == EdgeKind::Satin {
-            slider(ui, &mut s.edge_width_mm, 0.8..=5.0, "Width", " mm");
-        }
-        if s.edge != EdgeKind::None {
-            jef_picker(ui, "Edge thread", &mut s.edge_thread);
-        }
-        ui.add_space(8.0);
-        ui.horizontal(|ui| {
-            if ui.add(egui::Button::new(RichText::new("Save as JEF…").color(contrast(accent))).fill(accent)).on_hover_text("Ctrl+S").clicked() {
+            if ui.add(primary("Save as JEF…", accent).min_size(vec2(w - 88.0, 32.0))).on_hover_text("Ctrl+S").clicked() {
                 self.save_jef();
             }
-            if ui.button("Reset").clicked() {
+            if ui.add(egui::Button::new("Reset").min_size(vec2(80.0, 32.0))).clicked() {
                 let font = self.letter.font;
                 self.letter = Settings { font, ..Default::default() };
             }
         });
+        ui.add_space(10.0);
     }
 
     fn save_jef(&mut self) {
@@ -1021,9 +1040,13 @@ impl eframe::App for HoopApp {
         let canvas_rect = self.canvas_rect;
         self.keys(ctx, canvas_rect);
 
-        let panel = egui::Frame::new().fill(ui.visuals().panel_fill).inner_margin(egui::Margin::symmetric(16, 0));
-        egui::Panel::right("controls").resizable(false).exact_size(340.0).frame(panel).show(ui, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| self.side_panel(ui, canvas_rect));
+        let panel = egui::Frame::new().fill(ui.visuals().panel_fill).inner_margin(egui::Margin { left: 14, right: 6, top: 0, bottom: 0 });
+        egui::Panel::right("controls").resizable(false).exact_size(370.0).frame(panel).show(ui, |ui| {
+            egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+                // Leave room for the scroll bar and never grow past the panel.
+                ui.set_max_width(ui.available_width() - 10.0);
+                self.side_panel(ui, canvas_rect);
+            });
         });
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
         self.help_overlay(ctx);
@@ -1039,19 +1062,99 @@ fn contrast(c: Color32) -> Color32 {
     if canvas::luminance([c.r(), c.g(), c.b()]) > 0.55 { Color32::from_rgb(0x14, 0x12, 0x13) } else { Color32::WHITE }
 }
 
-/// A button showing the chosen Janome thread that opens the whole chart.
-fn jef_picker(ui: &mut egui::Ui, label: &str, value: &mut i32) {
-    let current = formats::jef_thread(*value, 0);
+const OK: Color32 = Color32::from_rgb(0x55, 0xc2, 0x8c);
+const BAD: Color32 = Color32::from_rgb(0xf0, 0x6b, 0x5f);
+
+/// A rounded section with a small heading; every panel section uses one.
+fn card(ui: &mut egui::Ui, title: &str, accent: Color32, add: impl FnOnce(&mut egui::Ui)) {
+    let v = ui.visuals();
+    let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.05);
+    egui::Frame::new().fill(fill).corner_radius(10).inner_margin(12).show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        ui.label(RichText::new(title.to_uppercase()).size(11.0).color(accent).strong());
+        ui.add_space(2.0);
+        add(ui);
+    });
+    ui.add_space(10.0);
+}
+
+fn primary(text: &str, accent: Color32) -> egui::Button<'static> {
+    egui::Button::new(RichText::new(text.to_string()).color(contrast(accent)).strong()).fill(accent)
+}
+
+/// Equal-width options in one row, the chosen one filled with the accent.
+fn segmented<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], accent: Color32) {
+    let track = ui.visuals().extreme_bg_color;
+    egui::Frame::new().fill(track).corner_radius(8).inner_margin(3).show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        let w = (ui.available_width() - 4.0 * (options.len() - 1) as f32) / options.len() as f32;
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 4.0;
+            for (v, name) in options {
+                let on = *value == *v;
+                let text = RichText::new(*name).color(if on { contrast(accent) } else { ui.visuals().text_color() });
+                let b = egui::Button::new(text)
+                    .fill(if on { accent } else { Color32::TRANSPARENT })
+                    .stroke(egui::Stroke::NONE)
+                    .corner_radius(6)
+                    .min_size(vec2(w, 26.0));
+                if ui.add(b).clicked() {
+                    *value = *v;
+                }
+            }
+        });
+    });
+}
+
+/// Label, slider and an editable value, lined up the same in every row.
+fn slider_row(ui: &mut egui::Ui, label: &str, v: &mut f32, range: std::ops::RangeInclusive<f32>, suffix: &str, decimals: usize) -> egui::Response {
     ui.horizontal(|ui| {
-        ui.label(label);
-        let (r, _) = ui.allocate_exact_size(vec2(18.0, 18.0), Sense::hover());
-        ui.painter().circle_filled(r.center(), 8.0, rgb(current.color));
-        ui.menu_button(format!("{} {}", current.name, current.code), |ui| {
-            egui::Grid::new(label).spacing([4.0, 4.0]).show(ui, |ui| {
+        ui.allocate_ui_with_layout(vec2(62.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.set_min_width(62.0);
+            ui.label(label);
+        });
+        ui.spacing_mut().slider_width = (ui.available_width() - 86.0).max(40.0);
+        let r = ui.add(egui::Slider::new(v, range.clone()).show_value(false));
+        let d = ui.add_sized([78.0, 22.0], egui::DragValue::new(v).range(range).suffix(suffix).fixed_decimals(decimals).speed(0.1));
+        r | d
+    })
+    .inner
+}
+
+#[allow(clippy::too_many_arguments)]
+fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fits: bool, selected: bool, accent: Color32, muted: Color32) -> egui::Response {
+    let (rect, resp) = ui.allocate_exact_size(vec2(w, 58.0), Sense::click());
+    let v = ui.visuals();
+    let fill = if selected { accent.gamma_multiply(0.2) } else if resp.hovered() { v.widgets.hovered.weak_bg_fill } else { v.extreme_bg_color };
+    let stroke = if selected { egui::Stroke::new(1.5, accent) } else { egui::Stroke::NONE };
+    let p = ui.painter();
+    p.rect(rect, 8, fill, stroke, egui::StrokeKind::Inside);
+    let text = v.text_color();
+    let x = rect.left() + 10.0;
+    p.text(egui::pos2(x, rect.top() + 9.0), egui::Align2::LEFT_TOP, h.name, egui::FontId::proportional(15.0), text);
+    p.text(egui::pos2(rect.right() - 10.0, rect.top() + 10.0), egui::Align2::RIGHT_TOP, (i + 1).to_string(), egui::FontId::monospace(11.0), muted);
+    p.text(egui::pos2(x, rect.top() + 28.0), egui::Align2::LEFT_TOP, format!("{} × {} mm", h.w, h.h), egui::FontId::monospace(12.0), muted);
+    let (note, c) = if fits { (h.note, muted) } else { ("Too small", BAD) };
+    p.text(egui::pos2(x, rect.top() + 43.0), egui::Align2::LEFT_TOP, note, egui::FontId::proportional(11.0), c);
+    resp.on_hover_text(format!("Hoop {} · key {}", h.name, i + 1))
+}
+
+/// The chosen Janome thread as a full-width button that opens the chart.
+fn jef_picker(ui: &mut egui::Ui, id: &str, value: &mut i32) {
+    let current = formats::jef_thread(*value, 0);
+    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        ui.allocate_ui_with_layout(vec2(62.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.set_min_width(62.0);
+            ui.label("Thread");
+        });
+        let (r, _) = ui.allocate_exact_size(vec2(20.0, 20.0), Sense::hover());
+        ui.painter().circle(r.center(), 9.0, rgb(current.color), egui::Stroke::new(1.0, Color32::from_black_alpha(90)));
+        ui.menu_button(format!("{}  {}", current.name, current.code), |ui| {
+            egui::Grid::new(("chart", id)).spacing([4.0, 4.0]).show(ui, |ui| {
                 for (n, (i, t)) in formats::jef_palette().enumerate() {
-                    let (r, resp) = ui.allocate_exact_size(vec2(22.0, 22.0), Sense::click());
-                    let stroke = if i == *value { egui::Stroke::new(2.0, ui.visuals().selection.bg_fill) } else { egui::Stroke::new(1.0, Color32::from_black_alpha(80)) };
-                    ui.painter().rect(r, 4, rgb(t.color), stroke, egui::StrokeKind::Inside);
+                    let (r, resp) = ui.allocate_exact_size(vec2(24.0, 24.0), Sense::click());
+                    let stroke = if i == *value { egui::Stroke::new(2.5, ui.visuals().selection.bg_fill) } else { egui::Stroke::new(1.0, Color32::from_black_alpha(80)) };
+                    ui.painter().rect(r, 5, rgb(t.color), stroke, egui::StrokeKind::Inside);
                     if resp.on_hover_text(format!("{} {}", t.name, t.code)).clicked() {
                         *value = i;
                         ui.close();
