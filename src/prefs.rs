@@ -92,6 +92,7 @@ impl Prefs {
         self.set("letter.patch_fill", format!("{:?}", s.patch_fill));
         self.set("letter.patch_thread", s.patch_thread);
         self.set("letter.patch_border_thread", s.patch_border_thread);
+        self.set("letter.patch_applique", s.patch_applique);
     }
 
     /// Lettering settings from the last session; the font is looked up by
@@ -137,6 +138,9 @@ impl Prefs {
         if let Some(v) = self.num("letter.patch_border_thread") {
             s.patch_border_thread = v;
         }
+        if let Some(v) = self.num("letter.patch_applique") {
+            s.patch_applique = v;
+        }
         if let Some(v) = self.get("letter.fill").and_then(fill_kind) {
             s.fill = v;
         }
@@ -171,6 +175,7 @@ pub fn fill_kind(v: &str) -> Option<FillKind> {
         "Crosshatch" => FillKind::Crosshatch,
         "Gradient" => FillKind::Gradient,
         "Open" => FillKind::Open,
+        "Contour" => FillKind::Contour,
         _ => return None,
     })
 }

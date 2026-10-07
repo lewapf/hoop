@@ -1187,13 +1187,25 @@ impl HoopApp {
                 ui.add_space(4.0);
                 slider_row(ui, "Padding", &mut s.patch_pad_mm, 1.0..=25.0, " mm", 1).on_hover_text("Space between the text and the patch edge");
                 slider_row(ui, "Border", &mut s.patch_border_mm, 0.0..=6.0, " mm", 1).on_hover_text("Satin border width; 0 for none");
-                ui.horizontal(|ui| {
+                ui.horizontal_wrapped(|ui| {
                     ui.label(RichText::new("Background").color(muted));
-                    for (k, name) in [(FillKind::Tatami, "Filled"), (FillKind::Open, "Light"), (FillKind::None, "Fabric")] {
-                        ui.selectable_value(&mut s.patch_fill, k, name);
+                    for (k, app, name, about) in [
+                        (FillKind::Tatami, false, "Filled", "Stitched solid"),
+                        (FillKind::Open, false, "Light", "An open fill, the fabric shows through"),
+                        (FillKind::None, false, "Fabric", "No background stitching"),
+                        (FillKind::None, true, "Appliqué", "A piece of fabric sewn on: placement line, stop, tack-down, stop, then the cover stitch"),
+                    ] {
+                        let on = s.patch_fill == k && s.patch_applique == app;
+                        if ui.selectable_label(on, name).on_hover_text(about).clicked() {
+                            s.patch_fill = k;
+                            s.patch_applique = app;
+                        }
                     }
                 });
-                if s.patch_fill != FillKind::None {
+                if s.patch_applique {
+                    ui.label(RichText::new("The machine stops twice: lay the fabric over the placement line, then trim it close to the tack-down.").size(12.0).color(muted));
+                    jef_picker_labeled(ui, "patch-bg", "Guide", &mut s.patch_thread);
+                } else if s.patch_fill != FillKind::None {
                     jef_picker_labeled(ui, "patch-bg", "Fill", &mut s.patch_thread);
                 }
                 if s.patch_border_mm > 0.0 {
@@ -1383,6 +1395,7 @@ impl HoopApp {
                     Look::Default => "Auto".to_string(),
                     Look::Fill(k) => format!("{k:?}"),
                     Look::Outline => "Outline".into(),
+                    Look::Applique => "Appliqué".into(),
                 };
                 egui::ComboBox::from_id_salt(("look", g)).selected_text(name).width(78.0).show_ui(ui, |ui| {
                     ui.selectable_value(&mut look, Look::Default, "Auto").on_hover_text("Use the Fill card below");
@@ -1390,6 +1403,8 @@ impl HoopApp {
                         ui.selectable_value(&mut look, Look::Fill(k), format!("{k:?}"));
                     }
                     ui.selectable_value(&mut look, Look::Outline, "Outline").on_hover_text("Only the shape's outline");
+                    ui.selectable_value(&mut look, Look::Applique, "Appliqué")
+                        .on_hover_text("Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover");
                 });
                 for &i in members {
                     s.layers[i].look = look;
@@ -1831,12 +1846,13 @@ fn thread_menu(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug + C
 /// Fill style picker: tiles with a small drawing of each pattern.
 fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
     use egui::{Pos2, Shape, Stroke, pos2};
-    const STYLES: [(FillKind, &str); 8] = [
-        (FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::Wave, "Wave"), (FillKind::Zigzag, "Zigzag"),
-        (FillKind::Crosshatch, "Hatch"), (FillKind::Gradient, "Gradient"), (FillKind::Open, "Open"), (FillKind::None, "None"),
+    const STYLES: [(FillKind, &str); 9] = [
+        (FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::Contour, "Contour"),
+        (FillKind::Wave, "Wave"), (FillKind::Zigzag, "Zigzag"), (FillKind::Crosshatch, "Hatch"),
+        (FillKind::Gradient, "Gradient"), (FillKind::Open, "Open"), (FillKind::None, "None"),
     ];
-    let w = (ui.available_width() - 18.0) / 4.0;
-    for row in STYLES.chunks(4) {
+    let w = (ui.available_width() - 12.0) / 3.0;
+    for row in STYLES.chunks(3) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 6.0;
             for &(kind, name) in row {
@@ -1908,6 +1924,16 @@ fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
                     }
                     FillKind::None => {
                         line(pos2(l + 6.0, bt - 4.0), pos2(r - 6.0, t + 4.0), 1.2);
+                    }
+                    FillKind::Contour => {
+                        let c = icon.center();
+                        for k in 0..6 {
+                            let inset = k as f32 * 3.5;
+                            let rr = egui::Rect::from_center_size(c, icon.size() - vec2(2.0 * inset, 2.0 * inset));
+                            if rr.width() > 2.0 && rr.height() > 2.0 {
+                                p.rect_stroke(rr, 8.0 - inset.min(7.0), Stroke::new(1.1, ink), egui::StrokeKind::Middle);
+                            }
+                        }
                     }
                 }
                 ui.painter().text(
@@ -2009,7 +2035,9 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
         if with_thread {
             jef_picker(ui, "fill", &mut s.fill_thread);
         }
-        slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0).on_hover_text("Direction of the stitch rows");
+        if s.fill != FillKind::Contour {
+            slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0).on_hover_text("Direction of the stitch rows");
+        }
         if matches!(s.fill, FillKind::Crosshatch | FillKind::Open | FillKind::Gradient) {
             slider_row(ui, "Rows", &mut s.density_mm, 0.25..=3.0, " mm", 2).on_hover_text("Distance between fill rows");
         }
@@ -2025,6 +2053,7 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
             FillKind::Wave | FillKind::Zigzag => "The pattern shows in how the thread catches the light.",
             FillKind::Crosshatch | FillKind::Open => "Open fills let the fabric show through. Nice on felt and canvas.",
             FillKind::Gradient => "Rows thin out across each shape. Turn the angle to set the direction.",
+            FillKind::Contour => "Rings follow the outline inward. Lovely on round shapes and bold letters.",
             _ => "",
         };
         if !note.is_empty() {

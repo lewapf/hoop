@@ -21,6 +21,7 @@ pub enum FillKind {
     Crosshatch,
     Gradient,
     Open,
+    Contour,
 }
 
 impl FillKind {
@@ -87,6 +88,8 @@ pub struct Settings {
     pub patch_border_mm: f32,
     pub patch_thread: i32,
     pub patch_border_thread: i32,
+    /// Fabric appliqué instead of a stitched background.
+    pub patch_applique: bool,
     pub underlay: bool,
     pub edge: EdgeKind,
     pub edge_width_mm: f32,
@@ -120,6 +123,7 @@ impl Default for Settings {
             patch_border_mm: 3.0,
             patch_thread: 2,
             patch_border_thread: 30,
+            patch_applique: false,
             underlay: true,
             edge: EdgeKind::Satin,
             edge_width_mm: 1.6,
@@ -679,6 +683,10 @@ pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f
 /// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
 /// left unstitched so layers don't pile up.
 pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+    if kind == FillKind::Contour {
+        contour_fill(st, glyph, even_odd, mask, s);
+        return;
+    }
     let a = angle.to_radians();
     let (cos, sin) = (a.cos(), a.sin());
     let rot = |p: Pt| (p.0 * cos + p.1 * sin, -p.0 * sin + p.1 * cos);
@@ -857,23 +865,38 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             fill_glyph(st, g, s.fill, s.fill_angle + 90.0, s);
         }
     };
-    // Thread changes happen only when the thread really changes.
+    // Thread changes happen only when the thread really changes, except for
+    // appliqué stops, where the machine must halt even in the same thread.
     let mut threads: Vec<crate::formats::Thread> = Vec::new();
     let mut current: Option<i32> = None;
-    let mut use_thread = |st: &mut Stitcher, t: i32| {
-        if current != Some(t) {
-            if current.is_some() {
+    let mut use_thread = |st: &mut Stitcher, t: i32, stop_as: Option<&str>| {
+        if current != Some(t) || stop_as.is_some() {
+            if !threads.is_empty() {
                 st.color_change();
             }
-            threads.push(formats::jef_thread(t, threads.len()));
-            current = Some(t);
+            let mut thread = formats::jef_thread(t, threads.len());
+            if let Some(name) = stop_as {
+                thread.name = name.to_string();
+                thread.code = String::new();
+            }
+            threads.push(thread);
+            current = if stop_as.is_some() { None } else { Some(t) };
         }
     };
 
     let patch = patch_outline(&glyphs, s);
     if let Some(outline) = &patch {
-        if s.patch_fill != FillKind::None {
-            use_thread(&mut st, s.patch_thread);
+        if s.patch_applique {
+            // Placement line shows where the fabric goes; the machine stops,
+            // the fabric is laid on, the tack-down holds it, and the machine
+            // stops again so the extra can be trimmed before the cover stitch.
+            use_thread(&mut st, s.patch_thread, Some("Placement line"));
+            run_contour(&mut st, outline, 25.0, false);
+            use_thread(&mut st, s.patch_thread, Some("Tack-down (lay the fabric first)"));
+            run_contour(&mut st, outline, 20.0, false);
+            run_contour(&mut st, outline, 20.0, false);
+        } else if s.patch_fill != FillKind::None {
+            use_thread(&mut st, s.patch_thread, None);
             let mask: Vec<Contour> = glyphs.iter().flatten().cloned().collect();
             run_contour(&mut st, outline, 25.0, false);
             let bg = Settings { density_mm: s.patch_fill.default_rows_mm(), underlay: false, ..s.clone() };
@@ -884,16 +907,16 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
     let text_fill = s.fill != FillKind::None;
     let text_edge = s.edge != EdgeKind::None;
     if text_fill && text_edge && s.fill_thread != s.edge_thread {
-        use_thread(&mut st, s.fill_thread);
+        use_thread(&mut st, s.fill_thread, None);
         for g in &glyphs {
             fill(&mut st, g);
         }
-        use_thread(&mut st, s.edge_thread);
+        use_thread(&mut st, s.edge_thread, None);
         for g in &glyphs {
             edge(&mut st, g);
         }
     } else if text_fill || text_edge {
-        use_thread(&mut st, if text_fill { s.fill_thread } else { s.edge_thread });
+        use_thread(&mut st, if text_fill { s.fill_thread } else { s.edge_thread }, None);
         for g in &glyphs {
             fill(&mut st, g);
             edge(&mut st, g);
@@ -902,9 +925,11 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
 
     // The border goes on last so it covers the edge of the background fill.
     if let Some(outline) = &patch {
-        if s.patch_border_mm > 0.0 {
-            use_thread(&mut st, s.patch_border_thread);
-            satin_contour(&mut st, outline, s.patch_border_mm * 10.0);
+        // Appliqué needs a border wide enough to cover the trimmed fabric edge.
+        let border = if s.patch_applique { s.patch_border_mm.max(2.5) } else { s.patch_border_mm };
+        if border > 0.0 {
+            use_thread(&mut st, s.patch_border_thread, None);
+            satin_contour(&mut st, outline, border * 10.0);
         }
     }
     st.finish();
@@ -983,7 +1008,7 @@ mod tests {
     #[test]
     fn every_fill_style_stitches_inside_the_letters() {
         let font = &bundled_fonts()[1];
-        for fill in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient, FillKind::Open] {
+        for fill in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient, FillKind::Open, FillKind::Contour] {
             let s = Settings { text: "HO".into(), fill, density_mm: fill.default_rows_mm(), edge: EdgeKind::None, underlay: false, ..Default::default() };
             let p = generate(font, &s).unwrap();
             let solid = generate(font, &Settings { fill: FillKind::Tatami, ..s.clone() }).unwrap().bounds();
@@ -1026,9 +1051,29 @@ mod tests {
     }
 
     #[test]
+    fn applique_adds_two_stops_before_the_text() {
+        let font = &bundled_fonts()[1];
+        let s = Settings { text: "AB".into(), patch: PatchShape::Oval, patch_applique: true, patch_thread: 1, edge_thread: 1, fill_thread: 1, patch_border_thread: 1, ..Default::default() };
+        let p = generate(font, &s).unwrap();
+        let names: Vec<&str> = p.threads.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(names[0], "Placement line");
+        assert!(names[1].starts_with("Tack-down"));
+        // The rest is one thread, so no further stops.
+        assert_eq!(p.blocks().len(), 3, "{names:?}");
+    }
+
+    #[test]
     fn empty_text_is_reported() {
         let s = Settings { text: "  ".into(), ..Default::default() };
         assert!(generate(&bundled_fonts()[0], &s).is_err());
+    }
+
+    #[test]
+    fn distance_transform_is_exact_on_a_line() {
+        let f = [0.0, 1e12, 1e12, 1e12, 0.0, 1e12];
+        let mut out = [0.0; 6];
+        edt_1d(&f, &mut out);
+        assert_eq!(out, [0.0, 1.0, 4.0, 1.0, 0.0, 1.0]);
     }
 
     #[test]
@@ -1052,8 +1097,7 @@ mod samples {
         let Some(out) = std::env::var_os("HOOP_OUT") else { return };
         let fonts = bundled_fonts();
         let cases: Vec<(String, usize, Settings)> = vec![
-            ("patch_round".into(), 1, Settings { text: "BREMEN".into(), height_mm: 18.0, spacing_mm: 1.0, patch: PatchShape::Rounded, fill_thread: 2, edge: EdgeKind::None, patch_thread: 12, ..Default::default() }),
-            ("patch_circle".into(), 5, Settings { text: "Hoop".into(), height_mm: 22.0, patch: PatchShape::Circle, patch_fill: FillKind::Open, arc_deg: 0.0, ..Default::default() }),
+            ("contour".into(), 0, Settings { text: "GO".into(), height_mm: 45.0, fill: FillKind::Contour, density_mm: 0.5, edge: EdgeKind::None, ..Default::default() }),
         ];
         for (name, font, s) in cases {
             let p = generate(&fonts[font], &s).unwrap();
@@ -1098,4 +1142,204 @@ pub fn style(s: &mut Settings, fill: FillKind, angle: f32, edge: EdgeKind) {
     s.edge = edge;
     s.density_mm = fill.default_rows_mm();
     s.underlay = !matches!(fill, FillKind::Open | FillKind::Crosshatch);
+}
+
+/// Rings that follow the outline inward, one row spacing apart. The shape is
+/// rasterized, every inside cell gets its distance to the edge, and the rings
+/// are the lines of equal distance, traced with marching squares.
+fn contour_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], s: &Settings) {
+    let spacing = (s.density_mm * 10.0).max(2.0);
+    let cell = (spacing / 3.0).clamp(1.0, 3.0);
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for p in glyph.iter().flatten() {
+        b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
+    }
+    if b.2 <= b.0 || b.3 <= b.1 {
+        return;
+    }
+    // One empty cell of border keeps every ring closed.
+    let (x0, y0) = (b.0 - 2.0 * cell, b.1 - 2.0 * cell);
+    let w = ((b.2 - b.0) / cell) as usize + 5;
+    let h = ((b.3 - b.1) / cell) as usize + 5;
+    let mut field = vec![0.0f32; w * h];
+    for j in 0..h {
+        let y = y0 + (j as f32 + 0.5) * cell;
+        let mut spans = row_spans(glyph, y, even_odd);
+        if !mask.is_empty() {
+            spans = subtract(spans, &row_spans(mask, y, false));
+        }
+        for (a, bb) in spans {
+            let i0 = (((a - x0) / cell) - 0.5).ceil().max(0.0) as usize;
+            let i1 = ((((bb - x0) / cell) - 0.5).floor() as isize).min(w as isize - 1);
+            for i in i0..=(i1.max(-1) as usize).min(w - 1) {
+                if (i as isize) <= i1 {
+                    field[j * w + i] = f32::MAX;
+                }
+            }
+        }
+    }
+    // Exact distance to the nearest outside cell, in cells (Felzenszwalb and
+    // Huttenlocher's squared distance transform, columns then rows).
+    for v in field.iter_mut() {
+        *v = if *v > 0.0 { 1e12 } else { 0.0 };
+    }
+    let mut buf = vec![0.0f32; w.max(h)];
+    let mut out = vec![0.0f32; w.max(h)];
+    for i in 0..w {
+        for j in 0..h {
+            buf[j] = field[j * w + i];
+        }
+        edt_1d(&buf[..h], &mut out[..h]);
+        for j in 0..h {
+            field[j * w + i] = out[j];
+        }
+    }
+    for j in 0..h {
+        buf[..w].copy_from_slice(&field[j * w..j * w + w]);
+        edt_1d(&buf[..w], &mut out[..w]);
+        for i in 0..w {
+            field[j * w + i] = out[i].sqrt();
+        }
+    }
+    let deepest = field.iter().copied().fold(0.0, f32::max) * cell;
+    let center = |i: usize, j: usize| (x0 + (i as f32 + 0.5) * cell, y0 + (j as f32 + 0.5) * cell);
+    // Rings curve tightly, so stitches stay short enough to follow them.
+    let stitch_len = (s.stitch_mm * 10.0).min(20.0);
+    let mut level = spacing / 2.0;
+    while level < deepest {
+        let lv = level / cell;
+        let mut rings = iso_lines(&field, w, h, lv, &center);
+        // Nearest ring first, so the needle moves inward without long jumps.
+        while !rings.is_empty() {
+            let from = st.last().unwrap_or(rings[0][0]);
+            let (ri, pi) = rings
+                .iter()
+                .enumerate()
+                .flat_map(|(r, ring)| ring.iter().enumerate().map(move |(p, pt)| (r, p, dist(*pt, from))))
+                .min_by(|a, b| a.2.total_cmp(&b.2))
+                .map(|(r, p, _)| (r, p))
+                .unwrap();
+            let ring = rings.swap_remove(ri);
+            if ring.len() < 3 {
+                continue;
+            }
+            let pts = walk(&ring, pi, stitch_len);
+            st.travel(pts[0], pts.get(1).copied().unwrap_or(pts[0]));
+            for p in &pts[1..] {
+                st.stitch(*p);
+            }
+        }
+        level += spacing;
+    }
+}
+
+/// One dimension of the squared Euclidean distance transform: `out[q]` is the
+/// smallest `(q - p)² + f[p]`.
+fn edt_1d(f: &[f32], out: &mut [f32]) {
+    let n = f.len();
+    let mut v = vec![0usize; n];
+    let mut z = vec![0.0f32; n + 1];
+    let mut k = 0;
+    z[0] = f32::NEG_INFINITY;
+    z[1] = f32::INFINITY;
+    for q in 1..n {
+        loop {
+            let p = v[k];
+            let sx = ((f[q] + (q * q) as f32) - (f[p] + (p * p) as f32)) / (2.0 * (q as f32 - p as f32));
+            if sx <= z[k] && k > 0 {
+                k -= 1;
+                continue;
+            }
+            if sx <= z[k] {
+                // k == 0: replace the only parabola.
+                v[0] = q;
+                z[1] = f32::INFINITY;
+                break;
+            }
+            k += 1;
+            v[k] = q;
+            z[k] = sx;
+            z[k + 1] = f32::INFINITY;
+            break;
+        }
+    }
+    k = 0;
+    for (q, o) in out.iter_mut().enumerate() {
+        while z[k + 1] < q as f32 {
+            k += 1;
+        }
+        let d = q as f32 - v[k] as f32;
+        *o = d * d + f[v[k]];
+    }
+}
+
+/// Closed lines where `field` equals `level`, from marching squares over cell
+/// centers. Points come back in world units through `center`.
+fn iso_lines(field: &[f32], w: usize, h: usize, level: f32, center: &dyn Fn(usize, usize) -> Pt) -> Vec<Contour> {
+    use std::collections::HashMap;
+    let v = |i: usize, j: usize| field[j * w + i].min(1e6);
+    // An edge point is keyed by the cell edge it lies on, so neighbors agree.
+    type Key = (usize, usize, bool);
+    let lerp = |a: Pt, b: Pt, fa: f32, fb: f32| {
+        let t = ((level - fa) / (fb - fa)).clamp(0.0, 1.0);
+        (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t)
+    };
+    let mut next: HashMap<Key, Key> = HashMap::new();
+    let mut pos: HashMap<Key, Pt> = HashMap::new();
+    for j in 0..h - 1 {
+        for i in 0..w - 1 {
+            let (a, b, c, d) = (v(i, j), v(i + 1, j), v(i + 1, j + 1), v(i, j + 1));
+            let idx = (a > level) as u8 | ((b > level) as u8) << 1 | ((c > level) as u8) << 2 | ((d > level) as u8) << 3;
+            if idx == 0 || idx == 15 {
+                continue;
+            }
+            // Edges: top (i,j)-(i+1,j), right, bottom, left.
+            let top: Key = (i, j, true);
+            let bottom: Key = (i, j + 1, true);
+            let left: Key = (i, j, false);
+            let right: Key = (i + 1, j, false);
+            let (pa, pb, pc, pd) = (center(i, j), center(i + 1, j), center(i + 1, j + 1), center(i, j + 1));
+            pos.entry(top).or_insert_with(|| lerp(pa, pb, a, b));
+            pos.entry(right).or_insert_with(|| lerp(pb, pc, b, c));
+            pos.entry(bottom).or_insert_with(|| lerp(pd, pc, d, c));
+            pos.entry(left).or_insert_with(|| lerp(pa, pd, a, d));
+            // Segments oriented with the inside on a consistent side.
+            let segs: &[(Key, Key)] = match idx {
+                1 => &[(left, top)],
+                2 => &[(top, right)],
+                3 => &[(left, right)],
+                4 => &[(right, bottom)],
+                5 => &[(left, top), (right, bottom)],
+                6 => &[(top, bottom)],
+                7 => &[(left, bottom)],
+                8 => &[(bottom, left)],
+                9 => &[(bottom, top)],
+                10 => &[(top, right), (bottom, left)],
+                11 => &[(bottom, right)],
+                12 => &[(right, left)],
+                13 => &[(right, top)],
+                14 => &[(top, left)],
+                _ => &[],
+            };
+            for &(p, q) in segs {
+                next.insert(p, q);
+            }
+        }
+    }
+    let mut rings = Vec::new();
+    while let Some(&start) = next.keys().next() {
+        let mut ring = Vec::new();
+        let mut k = start;
+        while let Some(n) = next.remove(&k) {
+            ring.push(pos[&k]);
+            k = n;
+            if k == start {
+                break;
+            }
+        }
+        if ring.len() > 2 {
+            rings.push(ring);
+        }
+    }
+    rings
 }

@@ -59,6 +59,8 @@ pub enum Look {
     Default,
     Fill(FillKind),
     Outline,
+    /// Sewn on as a piece of fabric: placement line, stop, tack-down, stop, satin cover.
+    Applique,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -394,7 +396,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     lettering::style(&mut style, k, s.style.fill_angle, s.style.edge);
                 }
             }
-            Look::Outline => {
+            Look::Outline | Look::Applique => {
                 style.fill = FillKind::None;
                 if style.edge == EdgeKind::None {
                     style.edge = EdgeKind::Triple;
@@ -409,6 +411,33 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     for &i in &order {
         let it = &items[i];
         let thread = thread_of(it.layer);
+        let applique = matches!(it.kind, Kind::Fill { .. }) && look_of(it.layer) == Look::Applique;
+        if applique {
+            // Two machine stops even within one thread: lay the fabric, then trim it.
+            let outlines: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
+            for (name, passes) in [("Placement line", 1), ("Tack-down (lay the fabric first)", 2)] {
+                if !threads.is_empty() {
+                    st.color_change();
+                }
+                let mut t = formats::jef_thread(thread, threads.len());
+                t.name = name.to_string();
+                t.code = String::new();
+                threads.push(t);
+                for _ in 0..passes {
+                    for c in &outlines {
+                        lettering::run_contour(&mut st, c, 20.0, false);
+                    }
+                }
+            }
+            st.color_change();
+            threads.push(formats::jef_thread(thread, threads.len()));
+            current = Some(thread);
+            let width = s.style.edge_width_mm.max(2.5) * 10.0;
+            for c in &outlines {
+                lettering::satin_contour(&mut st, c, width);
+            }
+            continue;
+        }
         if current != Some(thread) {
             if current.is_some() {
                 st.color_change();
@@ -425,7 +454,11 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 let mask: Vec<Contour> = if s.knockout {
                     items
                         .iter()
-                        .filter(|o| o.doc > it.doc && matches!(o.kind, Kind::Fill { .. }) && styled(o.layer).fill != FillKind::None)
+                        .filter(|o| {
+                            o.doc > it.doc
+                                && matches!(o.kind, Kind::Fill { .. })
+                                && (styled(o.layer).fill != FillKind::None || look_of(o.layer) == Look::Applique)
+                        })
                         .flat_map(|o| o.lines.iter().map(|l| l.0.clone()))
                         .collect()
                 } else {
@@ -547,6 +580,17 @@ mod tests {
         s.layers[1].look = Look::Outline;
         let outline = generate(&art, &s).unwrap().blocks()[0].stitches;
         assert!(outline * 2 < filled, "{outline} vs {filled}");
+    }
+
+    #[test]
+    fn applique_thread_stops_twice_and_covers_with_satin() {
+        let art = parse("logo.svg", LOGO.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        s.layers[1].look = Look::Applique;
+        let p = generate(&art, &s).unwrap();
+        assert_eq!(p.threads[0].name, "Placement line");
+        assert!(p.threads[1].name.starts_with("Tack-down"));
+        assert_eq!(p.blocks().len(), 5);
     }
 
     #[test]
