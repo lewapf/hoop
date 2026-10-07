@@ -11,7 +11,7 @@ an opened DST, EXP or PES file, with any rotation or mirroring baked in.
 
 The Artwork tab turns SVG files and pictures (PNG, JPG, WebP; logos and clip
 art, not photos) into designs. Pictures are reduced to a few flat colors and
-traced into smooth outlines first. Every artwork every
+traced into smooth outlines first. Every
 color becomes a Janome thread, shapes are filled with any fill style, strokes
 become running or satin lines, hidden parts are cut away so layers don't pile
 up, and the colors can be merged down to a few threads.
