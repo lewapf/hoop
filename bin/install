@@ -1,0 +1,6 @@
+#!/bin/bash
+# Builds and installs the package, so Hoop shows up in the app launcher.
+set -e
+cd "$(dirname "$0")/../pkgbuild"
+makepkg -fsi --noconfirm
+rm -rf src pkg ./*.pkg.tar.zst

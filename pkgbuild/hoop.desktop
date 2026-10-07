@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Hoop
+GenericName=Embroidery Viewer
+Comment=Preview embroidery files on Janome hoops
+Exec=hoop %f
+Icon=hoop
+Terminal=false
+StartupWMClass=hoop
+Categories=Graphics;Viewer;
+MimeType=application/embroidery;
+Keywords=embroidery;janome;jef;dst;pes;hoop;

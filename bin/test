@@ -1,0 +1,5 @@
+#!/bin/bash
+# Runs the file reader, fit, theme and transform tests.
+set -e
+cd "$(dirname "$0")/.."
+cargo test --locked "$@"

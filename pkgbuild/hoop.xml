@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/embroidery">
+    <comment>Embroidery design</comment>
+    <glob pattern="*.jef"/>
+    <glob pattern="*.dst"/>
+    <glob pattern="*.exp"/>
+    <glob pattern="*.pes"/>
+    <glob pattern="*.pec"/>
+  </mime-type>
+</mime-info>
