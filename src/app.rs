@@ -22,6 +22,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("O", "Open a file"),
     ("V / L / A", "Viewer / lettering / artwork"),
     ("Ctrl+S", "Save as JEF"),
+    ("Ctrl+V", "Paste SVG code as artwork"),
     ("Space", "Play or pause the stitch-out"),
     ("Home / End", "Back to the first stitch / show everything"),
     ("[ / ]", "Previous / next thread"),
@@ -96,6 +97,8 @@ pub struct HoopApp {
     /// Lets background threads wake the window when their work is done.
     ctx: egui::Context,
     user_view: bool,
+    paste_open: bool,
+    paste_text: String,
     mode: Mode,
     /// The other mode's design, kept while this one is shown.
     stash: [Option<Loaded>; 3],
@@ -140,6 +143,8 @@ impl HoopApp {
             canvas_rect: egui::Rect::NOTHING,
             ctx: cc.egui_ctx.clone(),
             user_view: false,
+            paste_open: false,
+            paste_text: String::new(),
             mode: Mode::Viewer,
             stash: [None, None, None],
             artwork: None,
@@ -207,19 +212,7 @@ impl HoopApp {
     fn open(&mut self, ctx: &egui::Context, path: &Path) {
         let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
         if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("svg") || e.eq_ignore_ascii_case("svgz")) {
-            self.set_mode(Mode::Artwork);
-            match artwork::load(path) {
-                Ok(art) => {
-                    self.art = Some(ArtSettings::for_artwork(&art));
-                    self.art_built = None;
-                    self.artwork = Some(art);
-                    self.design = None;
-                    self.error = None;
-                    self.fit_pending = true;
-                    self.user_view = false;
-                }
-                Err(e) => self.error = Some(e),
-            }
+            self.use_artwork(artwork::load(path));
             return;
         }
         self.set_mode(Mode::Viewer);
@@ -908,6 +901,31 @@ impl HoopApp {
         ui.add_space(10.0);
     }
 
+    /// Shows freshly read artwork in the Artwork tab, or the reason it failed.
+    fn use_artwork(&mut self, result: Result<artwork::Artwork, String>) -> bool {
+        self.set_mode(Mode::Artwork);
+        match result {
+            Ok(art) => {
+                self.art = Some(ArtSettings::for_artwork(&art));
+                self.art_built = None;
+                self.artwork = Some(art);
+                self.design = None;
+                self.error = None;
+                self.fit_pending = true;
+                self.user_view = false;
+                true
+            }
+            Err(e) => {
+                self.error = Some(e);
+                false
+            }
+        }
+    }
+
+    fn paste_svg(&mut self, text: &str) -> bool {
+        self.use_artwork(artwork::parse("Pasted SVG", text.trim().as_bytes()))
+    }
+
     fn regenerate_art(&mut self, ctx: &egui::Context) {
         let (Some(art), Some(s)) = (&self.artwork, &self.art) else { return };
         self.art_built = Some(s.clone());
@@ -955,15 +973,46 @@ impl HoopApp {
                 }
             }
             ui.add_space(4.0);
-            let w = (ui.available_width() - 8.0) / 2.0;
+            let w = (ui.available_width() - 12.0) / 3.0;
             ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
                 if ui.add(primary("Open SVG…", accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
                     self.pick_file();
                 }
-                if ui.add_enabled(self.design.is_some(), egui::Button::new("Save as JEF…").min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
+                if ui.add(egui::Button::new("Paste SVG").selected(self.paste_open).min_size(vec2(w, 30.0)))
+                    .on_hover_text("Paste SVG code, or press Ctrl+V anywhere with SVG code copied")
+                    .clicked()
+                {
+                    self.paste_open = !self.paste_open;
+                }
+                if ui.add_enabled(self.design.is_some(), egui::Button::new("Save JEF…").min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
                     self.save_jef();
                 }
             });
+            if self.paste_open {
+                ui.add_space(4.0);
+                egui::ScrollArea::vertical().id_salt("svg-text").max_height(220.0).show(ui, |ui| {
+                    ui.add(
+                        egui::TextEdit::multiline(&mut self.paste_text)
+                            .code_editor()
+                            .desired_rows(8)
+                            .desired_width(f32::INFINITY)
+                            .hint_text("<svg xmlns=\"http://www.w3.org/2000/svg\" …>\n  …\n</svg>"),
+                    );
+                });
+                ui.horizontal(|ui| {
+                    let ready = !self.paste_text.trim().is_empty();
+                    if ui.add_enabled(ready, primary("Use this SVG", accent)).clicked() {
+                        let text = self.paste_text.clone();
+                        if self.paste_svg(&text) {
+                            self.paste_open = false;
+                        }
+                    }
+                    if ui.button("Clear").clicked() {
+                        self.paste_text.clear();
+                    }
+                });
+            }
         });
         if !has_art {
             return;
@@ -1162,6 +1211,20 @@ impl eframe::App for HoopApp {
                 }
                 Err(std::sync::mpsc::TryRecvError::Empty) => {}
                 Err(_) => self.picker = None,
+            }
+        }
+        // Ctrl+V with SVG code on the clipboard opens it as artwork, unless a
+        // text field has the focus and takes the paste itself.
+        if !ctx.egui_wants_keyboard_input() {
+            let pasted = ctx.input(|i| {
+                i.events.iter().find_map(|e| match e {
+                    egui::Event::Paste(t) if t.contains("<svg") => Some(t.clone()),
+                    _ => None,
+                })
+            });
+            if let Some(text) = pasted {
+                self.paste_text = text.clone();
+                self.paste_svg(&text);
             }
         }
         let dropped = ctx.input(|i| i.raw.dropped_files.iter().next().map(|f| f.path().to_path_buf()));

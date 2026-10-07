@@ -33,6 +33,7 @@ you pick that file in the save dialog yourself.
 | `O`                     | Open a file                                |
 | `V` / `L` / `A`         | Viewer / lettering / artwork               |
 | `Ctrl+S`                | Save as JEF                                |
+| `Ctrl+V`                | Paste SVG code as artwork                  |
 | `Space`                 | Play or pause the stitch-out               |
 | `Home` / `End`          | Back to the first stitch / show everything |
 | `[` / `]`               | Previous / next thread                     |
