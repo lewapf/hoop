@@ -10,7 +10,7 @@ and creates machine embroidery for a **Janome MC9900**. It replaces paid
 digitizing software for the owner's needs. Three tabs:
 
 - **Viewer (V):** opens JEF, DST, EXP, PES, PEC; shows the design on the MC9900
-  hoops (SQ14b 140×140, RE20b 140×200, SQ20b 200×200, FA10a 100×40) with a fit
+  hoops (SQ14b 140×140, RE20b 170×200, SQ20b 200×200, FA10a 100×40) with a fit
   check, rotate/mirror/move, thread colors, stitch-out playback, details.
 - **Lettering (L):** text from bundled or system fonts into stitches. Fill
   styles, edges, arc, slant, alignment, quick styles, patches (incl. appliqué).

@@ -34,7 +34,7 @@ you pick that file in the save dialog yourself.
 | Hoop  | Sewing area   |          |
 |-------|---------------|----------|
 | SQ14b | 140 × 140 mm  | Standard |
-| RE20b | 140 × 200 mm  | Standard |
+| RE20b | 170 × 200 mm  | Standard |
 | SQ20b | 200 × 200 mm  | Optional |
 | FA10a | 100 × 40 mm   | Free arm |
 

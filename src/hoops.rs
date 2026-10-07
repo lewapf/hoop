@@ -11,7 +11,7 @@ pub struct Hoop {
 
 pub const HOOPS: [Hoop; 4] = [
     Hoop { name: "SQ14b", w: 140.0, h: 140.0, note: "Standard" },
-    Hoop { name: "RE20b", w: 140.0, h: 200.0, note: "Standard" },
+    Hoop { name: "RE20b", w: 170.0, h: 200.0, note: "Standard" },
     Hoop { name: "SQ20b", w: 200.0, h: 200.0, note: "Optional" },
     Hoop { name: "FA10a", w: 100.0, h: 40.0, note: "Free arm" },
 ];
@@ -97,6 +97,12 @@ mod tests {
     fn moved_design_reports_the_edge() {
         let at = Placement { dx: 100.0, ..Default::default() };
         assert_eq!(fit((140.0, 140.0), (1300.0, 500.0), &at), Fit::OffEdge { side: "right", by: 5.0 });
+    }
+
+    #[test]
+    fn re20b_takes_designs_wider_than_the_square_hoop() {
+        // 160 mm wide is too wide for SQ14b but fits the 170 × 200 mm RE20b.
+        assert_eq!(smallest_fitting((1600.0, 1000.0)), 1);
     }
 
     #[test]
