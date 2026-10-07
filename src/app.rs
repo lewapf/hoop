@@ -32,6 +32,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("Arrows", "Move the design 1 mm (Shift: 10 mm)"),
     ("R / Shift+R", "Rotate 90° right / left"),
     ("M", "Mirror"),
+    ("P", "Pin the design to the hoop to combine it with the next"),
     ("C", "Center in the hoop"),
     ("1 – 4", "Pick a hoop"),
     ("F / D", "Show the whole hoop / zoom to the design"),
@@ -40,6 +41,15 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("?", "Show these shortcuts"),
     ("Q", "Quit"),
 ];
+
+/// A finished part fixed on the hoop, in hoop coordinates (0.1 mm, hoop
+/// center at the origin), with rotation and position already applied.
+struct Pinned {
+    name: String,
+    pattern: Pattern,
+    blocks: Vec<Block>,
+    bounds: (f32, f32, f32, f32),
+}
 
 struct Loaded {
     name: String,
@@ -147,6 +157,7 @@ pub struct HoopApp {
     /// A save dialog in progress: its answer, the bytes, and the extension.
     saver: Option<(Receiver<Option<PathBuf>>, Vec<u8>, &'static str)>,
     capture: Capture,
+    pinned: Vec<Pinned>,
     status: Option<(String, std::time::Instant)>,
     prefs: Prefs,
     /// Font name from the last session, waiting for the font list to load.
@@ -201,6 +212,7 @@ impl HoopApp {
             font_filter: String::new(),
             saver: None,
             capture: Capture::Idle,
+            pinned: Vec::new(),
             status: None,
             prefs: Prefs::load(),
             want_font: None,
@@ -275,7 +287,13 @@ impl HoopApp {
                 let blocks = pattern.blocks();
                 let bounds = pattern.bounds();
                 let loaded = Loaded { name: name.clone(), pattern, blocks, bounds };
-                self.setup = Setup { hoop: hoops::smallest_fitting(loaded.size()), at: Placement::default() };
+                if self.pinned.is_empty() {
+                    self.setup = Setup { hoop: hoops::smallest_fitting(loaded.size()), at: Placement::default() };
+                } else {
+                    // Keep the spot below the pinned parts; only reset turning.
+                    self.setup.at.quarter_turns = 0;
+                    self.setup.at.mirror = false;
+                }
                 self.reset_history();
                 self.shown = loaded.pattern.points.len();
                 self.playing = false;
@@ -447,6 +465,9 @@ impl HoopApp {
         if press(Modifiers::COMMAND, Key::S) {
             self.save_jef();
         }
+        if press(Modifiers::NONE, Key::P) {
+            self.pin();
+        }
         if press(Modifiers::NONE, Key::A) {
             self.set_mode(Mode::Artwork);
         }
@@ -592,7 +613,13 @@ impl HoopApp {
         }
 
         if let Some(d) = &self.design {
-            let fit = hoops::fit(self.hoop_size(), d.size(), &self.setup.at);
+            let fit = match (self.pinned.is_empty(), self.hoop_bounds()) {
+                (false, Some(b)) => {
+                    let at = Placement { dx: (b.0 + b.2) / 2.0, dy: (b.1 + b.3) / 2.0, ..Default::default() };
+                    hoops::fit(self.hoop_size(), (b.2 - b.0, b.3 - b.1), &at)
+                }
+                _ => hoops::fit(self.hoop_size(), d.size(), &self.setup.at),
+            };
             let (ok, title, detail) = match fit {
                 Fit::Inside(m) => (true, format!("Fits the {}", HOOPS[self.setup.hoop].name), format!("Closest edge is {m:.1} mm away.")),
                 Fit::TooBig { over_w, over_h, fits_turned } => {
@@ -647,6 +674,46 @@ impl HoopApp {
             ui.add_space(10.0);
             if let Some(fix) = chosen {
                 self.apply_fix(fix, canvas_rect);
+            }
+        }
+
+        if self.design.is_some() || !self.pinned.is_empty() {
+            let mut remove = None;
+            let mut clear = false;
+            let mut pin = false;
+            card(ui, "Combine", accent, |ui| {
+                if self.pinned.is_empty() {
+                    ui.label(RichText::new("Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file.").size(12.0).color(muted));
+                }
+                for (i, p) in self.pinned.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new(format!("{}", i + 1)).monospace().color(muted));
+                        ui.label(&p.name);
+                        ui.label(RichText::new(format!("{:.0} × {:.0} mm", (p.bounds.2 - p.bounds.0) / 10.0, (p.bounds.3 - p.bounds.1) / 10.0)).size(12.0).color(muted));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.small_button("Remove").clicked() {
+                                remove = Some(i);
+                            }
+                        });
+                    });
+                }
+                ui.horizontal(|ui| {
+                    if ui.add_enabled(self.design.is_some(), egui::Button::new("Pin to hoop")).on_hover_text("P · keep this design where it is and start the next part").clicked() {
+                        pin = true;
+                    }
+                    if !self.pinned.is_empty() && ui.button("Clear pinned").clicked() {
+                        clear = true;
+                    }
+                });
+            });
+            if let Some(i) = remove {
+                self.pinned.remove(i);
+            }
+            if clear {
+                self.pinned.clear();
+            }
+            if pin {
+                self.pin();
             }
         }
 
@@ -932,6 +999,11 @@ impl HoopApp {
         let hoop = HOOPS[self.setup.hoop];
         canvas::draw_hoop(&frame, hoop.w * 10.0, hoop.h * 10.0, &format!("{}  {} × {} mm", hoop.name, hoop.w, hoop.h), self.fabric, self.grid);
 
+        let pinned_style = DesignStyle { textured: self.textured, show_jumps: false, focus: None, fabric: self.fabric };
+        let identity = Transform::new((0.0, 0.0, 0.0, 0.0), &Placement::default());
+        for p in &self.pinned {
+            canvas::draw_design(&frame, &p.pattern, &p.blocks, &identity, p.pattern.points.len(), &pinned_style);
+        }
         if let Some(d) = &self.design {
             let t = Transform::new(d.bounds, &self.setup.at);
             let style = DesignStyle { textured: self.textured, show_jumps: self.jumps, focus: self.focus, fabric: self.fabric };
@@ -1115,7 +1187,7 @@ impl HoopApp {
                 let first = self.design.is_none();
                 let name = self.letter.text.lines().next().unwrap_or("").trim().to_string();
                 self.design = Some(Loaded { name, pattern, blocks, bounds });
-                if first {
+                if first && self.pinned.is_empty() {
                     let size = self.design.as_ref().unwrap().size();
                     self.setup.hoop = hoops::smallest_fitting(size);
                 }
@@ -1264,7 +1336,7 @@ impl HoopApp {
                 let bounds = pattern.bounds();
                 let first = self.design.is_none();
                 self.design = Some(Loaded { name: art.name.clone(), pattern, blocks, bounds });
-                if first {
+                if first && self.pinned.is_empty() {
                     self.setup.hoop = hoops::smallest_fitting(self.design.as_ref().unwrap().size());
                     self.fit_pending = !self.user_view;
                 }
@@ -1460,7 +1532,48 @@ impl HoopApp {
         ui.add_space(10.0);
     }
 
+    /// Fixes the current design on the hoop as part of a combined design.
+    fn pin(&mut self) {
+        let Some(d) = &self.design else { return };
+        let t = Transform::new(d.bounds, &self.setup.at);
+        let points: Vec<(f32, f32)> = d.pattern.points.iter().map(|&p| t.apply(p)).collect();
+        let mut pattern = d.pattern.clone();
+        pattern.points = points;
+        pattern.threads = d.blocks.iter().map(|b| b.thread.clone()).collect();
+        let blocks = pattern.blocks();
+        let bounds = pattern.bounds();
+        let height = bounds.3 - bounds.1;
+        self.pinned.push(Pinned { name: d.name.clone(), pattern, blocks, bounds });
+        // Start the next part just below, so the two don't sit on top of each other.
+        self.change(|s| s.at.dy += height + 50.0);
+        self.toast("Pinned to the hoop. Make or open the next part.".into());
+    }
+
+    /// World-space bounds of everything on the hoop, pinned parts included.
+    fn hoop_bounds(&self) -> Option<(f32, f32, f32, f32)> {
+        let mut b: Option<(f32, f32, f32, f32)> = None;
+        let mut add = |r: (f32, f32, f32, f32)| {
+            b = Some(match b {
+                None => r,
+                Some(o) => (o.0.min(r.0), o.1.min(r.1), o.2.max(r.2), o.3.max(r.3)),
+            });
+        };
+        for p in &self.pinned {
+            add(p.bounds);
+        }
+        if let Some(d) = &self.design {
+            let (w, h) = self.setup.at.size(d.size().0, d.size().1);
+            let at = self.setup.at;
+            add((at.dx - w / 2.0, at.dy - h / 2.0, at.dx + w / 2.0, at.dy + h / 2.0));
+        }
+        b
+    }
+
     fn save_jef(&mut self) {
+        if !self.pinned.is_empty() {
+            self.save_combined();
+            return;
+        }
         let Some(d) = &self.design else { return };
         if self.saver.is_some() {
             return;
@@ -1479,6 +1592,54 @@ impl HoopApp {
         let bytes = formats::write_jef(&points, &d.pattern.cmds, &threads);
         let name = format!("{}.jef", self.design_stem());
         self.ask_save("Save as JEF", name, "Janome JEF", "jef", bytes);
+    }
+
+    /// Saves the pinned parts and the current design as one JEF, keeping their
+    /// places relative to each other and centering the whole on the hoop.
+    fn save_combined(&mut self) {
+        let mut points: Vec<(f32, f32)> = Vec::new();
+        let mut cmds: Vec<Cmd> = Vec::new();
+        let mut threads: Vec<formats::Thread> = Vec::new();
+        let mut parts: Vec<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>)> =
+            self.pinned.iter().map(|p| (p.pattern.points.clone(), p.pattern.cmds.clone(), p.blocks.iter().map(|b| b.thread.clone()).collect())).collect();
+        if let Some(d) = &self.design {
+            let t = Transform::new(d.bounds, &self.setup.at);
+            parts.push((d.pattern.points.iter().map(|&p| t.apply(p)).collect(), d.pattern.cmds.clone(), d.blocks.iter().map(|b| b.thread.clone()).collect()));
+        }
+        for (pts, cs, ts) in parts {
+            if ts.is_empty() || pts.is_empty() {
+                continue;
+            }
+            // A thread change between parts unless the next part starts in the
+            // thread the last one ended with.
+            if let Some(last) = threads.last() {
+                if *last != ts[0] {
+                    let at = *points.last().unwrap();
+                    points.push(at);
+                    cmds.push(Cmd::ColorChange);
+                    threads.push(ts[0].clone());
+                }
+                threads.extend(ts.into_iter().skip(1));
+            } else {
+                threads.extend(ts);
+            }
+            // Each part starts by moving to its first point.
+            points.push(pts[0]);
+            cmds.push(Cmd::Jump);
+            points.extend(pts.into_iter().skip(1));
+            cmds.extend(cs.into_iter().skip(1));
+        }
+        let Some(b) = self.hoop_bounds() else { return };
+        let (cx, cy) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
+        let centered: Vec<(f32, f32)> = points.iter().map(|&(x, y)| (x - cx, y - cy)).collect();
+        let palette: Vec<(i32, formats::Thread)> = formats::jef_palette().collect();
+        let numbers: Vec<i32> = threads
+            .iter()
+            .map(|t| palette.iter().find(|(_, p)| p == t).map_or_else(|| formats::nearest_jef(t.color), |(i, _)| *i))
+            .collect();
+        let bytes = formats::write_jef(&centered, &cmds, &numbers);
+        let name = format!("{}-combined.jef", self.design_stem());
+        self.ask_save("Save combined design as JEF", name, "Janome JEF", "jef", bytes);
     }
 
     /// A file name for the shown design, without extension.

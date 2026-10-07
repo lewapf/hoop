@@ -20,6 +20,10 @@ each color needs and copies the list, and Details warns about stitches likely
 to sew badly. Settings, the last lettering and recent files are remembered in
 `~/.local/state/hoop/prefs`.
 
+To combine designs, say a name under a logo, press Pin to hoop (`P`), then
+make or open the next part and move it into place. Save as JEF saves every
+pinned part and the current design as one file.
+
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.
 
@@ -48,6 +52,7 @@ you pick that file in the save dialog yourself.
 | Arrows                  | Move the design 1 mm (`Shift`: 10 mm)      |
 | `R` / `Shift+R`         | Rotate 90° right / left                    |
 | `M`                     | Mirror                                     |
+| `P`                     | Pin the design to combine it with the next |
 | `C`                     | Center in the hoop                         |
 | `1` – `4`               | Pick a hoop                                |
 | `F` / `D`               | Show the whole hoop / zoom to the design   |
@@ -73,6 +78,9 @@ change by clicking a swatch.
 
 ## Lettering tips
 
+- Contour fill stitches rings that follow each letter's outline inward.
+- Appliqué patches stop the machine twice: lay the fabric on the placement
+  line, then trim it next to the tack-down before the satin cover.
 - The Patch card puts a box, rounded box, oval or circle behind the text with
   a satin border, for badges and name patches.
 
