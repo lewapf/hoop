@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hoop Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen workbench. Fabric-and-hoop stage fills the left; a narrow control rail on the right. Stacks on phones. */
+:root {
+  --bg: #f3f1f2;
+  --panel: #fbfafa;
+  --ink: #1d1a1c;
+  --muted: #6c6469;
+  --line: #e2dde0;
+  --accent: #a8326e;
+  --accent-ink: #ffffff;
+  --accent-soft: #f4e3ec;
+  --ok: #1f7a4d;
+  --warn: #9a5c00;
+  --bad: #b8322a;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161416; --panel: #1f1c1e; --ink: #efeaed; --muted: #a59ba1; --line: #363036;
+    --accent: #e57aac; --accent-ink: #1a0f15; --accent-soft: #3a2230;
+    --ok: #55c28c; --warn: #e2a64a; --bad: #f0796d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161416; --panel: #1f1c1e; --ink: #efeaed; --muted: #a59ba1; --line: #363036;
+  --accent: #e57aac; --accent-ink: #1a0f15; --accent-soft: #3a2230;
+  --ok: #55c28c; --warn: #e2a64a; --bad: #f0796d; color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+  margin: 0; padding-inline: 16px; padding-block: 16px; box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: border-box; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; height: 100%; }
+.stage {
+  position: relative; min-width: 0; min-height: 360px; border-radius: 10px; overflow: hidden;
+  background: #cfc6b4; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+#canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; outline: none; }
+#canvas:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }
+#canvas.dragging { cursor: grabbing; }
+#canvas.over-design { cursor: move; }
+.stage-tools { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+.stage-tools button {
+  font: 500 12px var(--font-body); padding: 6px 10px; border-radius: 6px; border: 0;
+  background: rgba(20, 18, 19, .72); color: #fff; cursor: pointer; backdrop-filter: blur(4px);
+}
+.stage-tools button:hover { background: rgba(20, 18, 19, .9); }
+.stage-hint {
+  position: absolute; left: 10px; bottom: 10px; font-size: 12px; color: #fff; padding: 5px 9px; border-radius: 6px;
+  background: rgba(20, 18, 19, .6); pointer-events: none; max-width: calc(100% - 180px);
+}
+.drop {
+  position: absolute; inset: 0; display: grid; place-items: center; background: rgba(168, 50, 110, .82);
+  color: #fff; font: 600 22px var(--font-display); pointer-events: none;
+}
+
+.rail {
+  min-width: 0; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  display: flex; flex-direction: column;
+}
+.rail > section { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.rail > section:first-child { border-top: 0; }
+h1 { font: 700 22px/1.1 var(--font-display); letter-spacing: -.01em; margin: 0; }
+h2 {
+  font: 600 11px var(--font-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0;
+}
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.brand small { color: var(--muted); font-size: 12px; }
+.file { display: flex; gap: 8px; align-items: center; }
+.filename { font: 500 13px var(--font-mono); overflow-wrap: anywhere; min-width: 0; flex: 1; }
+.filename .tag {
+  font: 600 10px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); padding: 1px 5px; border-radius: 4px; margin-left: 4px; white-space: nowrap;
+}
+.btn {
+  font: 600 13px var(--font-body); border-radius: 7px; padding: 7px 12px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:focus-visible, select:focus-visible, input:focus-visible, .thread:focus-visible, .swatch:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.error { color: var(--bad); font-size: 13px; margin: 0; }
+.notice { color: var(--muted); font-size: 12.5px; margin: 0; }
+
+.fit { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--bg); }
+.fit .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; }
+.fit strong { display: block; font-weight: 600; }
+.fit span { color: var(--muted); font-size: 12.5px; }
+.fit.ok .dot { background: var(--ok); } .fit.ok strong { color: var(--ok); }
+.fit.bad .dot { background: var(--bad); } .fit.bad strong { color: var(--bad); }
+
+.hoops { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.hoop-opt {
+  text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+  color: var(--ink); cursor: pointer; font: inherit; display: grid; gap: 1px;
+}
+.hoop-opt b { font: 600 14px var(--font-display); }
+.hoop-opt span { font: 400 11.5px var(--font-mono); color: var(--muted); }
+.hoop-opt em { font-style: normal; font-size: 11px; color: var(--muted); }
+.hoop-opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hoop-opt.nofit span { color: var(--bad); }
+.custom { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.custom input { width: 72px; font: 13px var(--font-mono); padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+
+.row { display: flex; gap: 6px; flex-wrap: wrap; }
+.row .btn { flex: 1; padding-inline: 8px; }
+.readout { font: 12.5px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.threads { display: grid; gap: 4px; }
+.thread {
+  display: grid; grid-template-columns: 28px 18px 1fr auto; align-items: center; gap: 8px; padding: 5px 8px 5px 6px;
+  border-radius: 7px; border: 1px solid transparent; cursor: pointer; background: transparent; color: inherit; font: inherit; text-align: left;
+}
+.thread:hover { background: var(--bg); }
+.thread[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.thread .num { font: 500 11px var(--font-mono); color: var(--muted); text-align: right; }
+.thread .name { min-width: 0; overflow-wrap: anywhere; }
+.thread .name small { color: var(--muted); font-family: var(--font-mono); margin-left: 4px; }
+.thread .count { font: 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.swatch {
+  position: relative; width: 28px; height: 20px; border-radius: 10px; overflow: hidden; display: block;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+  background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.22) 0 2px, rgba(0,0,0,.1) 2px 4px);
+}
+.swatch input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: 0; padding: 0; }
+
+.play { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+#progress { width: 100%; accent-color: var(--accent); }
+.play-meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+select {
+  font: 13px var(--font-body); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+}
+
+dl.stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; }
+dl.stats dt { color: var(--muted); }
+dl.stats dd { margin: 0; font: 13px var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+
+.fabrics { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.fabric {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--panel); cursor: pointer;
+  box-shadow: 0 0 0 1px var(--line); padding: 0;
+}
+.fabric[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+.fabric-custom { position: relative; width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line);
+  background: conic-gradient(#e55, #ec5, #5c7, #5ae, #a6e, #e55); overflow: hidden; }
+.fabric-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.toggles { display: grid; gap: 6px; }
+.toggles label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.toggles input { accent-color: var(--accent); width: 16px; height: 16px; }
+.foot { color: var(--muted); font-size: 12px; margin-top: auto; }
+
+@media (max-width: 860px) {
+  html, body { height: auto; }
+  .app { grid-template-columns: 1fr; height: auto; }
+  .stage { height: 62vh; min-height: 320px; }
+  .rail { overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <div class="stage" id="stage">
+    <canvas id="canvas" tabindex="0" aria-label="Embroidery design shown in the hoop. Drag the design to move it, scroll to zoom, arrow keys nudge by 1 mm."></canvas>
+    <div class="stage-hint" id="hint">Drag the design to move it · scroll to zoom</div>
+    <div class="stage-tools">
+      <button type="button" id="zoomDesign">Zoom to design</button>
+      <button type="button" id="zoomFit">Whole hoop</button>
+    </div>
+    <div class="drop" id="drop" hidden>Drop to open</div>
+  </div>
+
+  <aside class="rail">
+    <section>
+      <div class="brand"><h1>Hoop Preview</h1><small>Janome MC9900</small></div>
+      <div class="file">
+        <div class="filename" id="filename"></div>
+        <button type="button" class="btn primary" id="openBtn">Open file</button>
+        <input type="file" id="fileInput" accept=".jef,.dst,.exp,.pes,.pec" hidden>
+      </div>
+      <p class="notice">JEF, DST, EXP, PES or PEC. You can also drop a file onto the hoop. Files stay in your browser.</p>
+      <p class="error" id="error" role="alert" hidden></p>
+    </section>
+
+    <section>
+      <div class="fit" id="fit" aria-live="polite"><div class="dot"></div><div><strong id="fitTitle"></strong><span id="fitDetail"></span></div></div>
+    </section>
+
+    <section>
+      <h2>Hoop</h2>
+      <div class="hoops" id="hoops"></div>
+      <div class="custom" id="customBox" hidden>
+        <label>W <input type="number" id="customW" min="20" max="400" step="1" value="160"></label>
+        <label>H <input type="number" id="customH" min="20" max="400" step="1" value="260"></label> mm
+      </div>
+    </section>
+
+    <section>
+      <h2>Position</h2>
+      <div class="row">
+        <button type="button" class="btn" id="rotL">Rotate ⟲ 90°</button>
+        <button type="button" class="btn" id="rotR">Rotate ⟳ 90°</button>
+      </div>
+      <div class="row">
+        <button type="button" class="btn" id="mirror">Mirror</button>
+        <button type="button" class="btn" id="center">Center in hoop</button>
+      </div>
+      <div class="readout" id="posReadout"></div>
+    </section>
+
+    <section>
+      <h2>Thread order</h2>
+      <div class="threads" id="threads"></div>
+      <p class="notice" id="threadNote" hidden></p>
+    </section>
+
+    <section>
+      <h2>Stitch-out</h2>
+      <div class="play">
+        <button type="button" class="btn" id="playBtn" style="min-width:72px">Play</button>
+        <input type="range" id="progress" min="0" max="1" value="1" aria-label="Stitch-out progress">
+      </div>
+      <div class="play-meta">
+        <span class="readout" id="progressReadout"></span>
+        <label class="readout">Playback
+          <select id="playRate">
+            <option value="1">Real time</option>
+            <option value="10">10×</option>
+            <option value="30" selected>30×</option>
+            <option value="120">120×</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Details</h2>
+      <dl class="stats" id="stats"></dl>
+      <label class="readout">Machine speed
+        <select id="spm">
+          <option value="400">400 spm</option>
+          <option value="600">600 spm</option>
+          <option value="800" selected>800 spm</option>
+          <option value="860">860 spm</option>
+        </select>
+      </label>
+    </section>
+
+    <section>
+      <h2>Display</h2>
+      <div class="fabrics" id="fabrics"></div>
+      <div class="toggles">
+        <label><input type="checkbox" id="optReal" checked> Thread texture</label>
+        <label><input type="checkbox" id="optGrid" checked> Template grid (10 mm)</label>
+        <label><input type="checkbox" id="optJumps"> Jump stitches</label>
+      </div>
+    </section>
+
+    <section class="foot">
+      Hoop sizes are the sewing area. Thread colors come from the file's JEF or Brother chart; click a swatch to change one.
+    </section>
+  </aside>
+</div>
+
+<script>
+// ---- Embroidery file readers -------------------------------------------
+// All readers return { xs, ys, cmds, threads, hoopHint } in 0.1 mm units,
+// y pointing down (screen orientation). cmds: 0 stitch, 1 jump, 2 trim, 3 color change.
+const CMD = { STITCH: 0, JUMP: 1, TRIM: 2, COLOR: 3 };
+
+// Janome JEF thread chart (index from the file header). Unknown indexes fall back to a stock palette.
+const JEF_THREADS = [
+  null,
+  ["#000000", "Black", "002"], ["#ffffff", "White", "001"], ["#ffff17", "Yellow", "204"],
+  ["#ff6600", "Orange", "203"], ["#2f5933", "Olive Green", "219"], ["#237336", "Green", "226"],
+  ["#65c2c8", "Sky", "217"], ["#ab5a96", "Purple", "208"], ["#f669a0", "Pink", "201"],
+  ["#ff0000", "Red", "225"], ["#b1704e", "Brown", "214"], ["#0b2f84", "Blue", "207"],
+  ["#e4c35d", "Gold", "003"], ["#481a05", "Dark Brown", "205"], ["#ac9cc7", "Pale Violet", "209"],
+  ["#fcf294", "Pale Yellow", "210"], ["#f999b7", "Pale Pink", "211"], ["#fab381", "Peach", "212"],
+  ["#c9a480", "Beige", "213"], ["#970533", "Wine Red", "215"], ["#a0b8cc", "Pale Sky", "216"],
+  ["#7fc21c", "Yellow Green", "218"], ["#e5e5e5", "Silver Gray", "220"], ["#889b9b", "Gray", "221"],
+  ["#98d6bd", "Pale Aqua", "227"], ["#b2e1e3", "Baby Blue", "228"], ["#368ba0", "Powder Blue", "229"],
+  ["#4f83ab", "Bright Blue", "230"], ["#386a91", "Slate Blue", "231"], ["#071650", "Navy Blue", "232"],
+  ["#f99990", "Salmon Pink", "233"], ["#f9676b", "Coral", "234"], ["#e3311f", "Burnt Orange", "235"],
+  ["#e2a188", "Cinnamon", "236"], ["#b59474", "Umber", "237"], ["#e4cf99", "Blond", "238"],
+  ["#ffcb00", "Sunflower", "239"], ["#e1add4", "Orchid Pink", "240"], ["#c3007e", "Peony Purple", "241"],
+  ["#80004b", "Burgundy", "242"], ["#540571", "Royal Purple", "243"], ["#b10525", "Cardinal Red", "244"],
+  ["#cae0c0", "Opal Green", "245"], ["#899856", "Moss Green", "246"], ["#00aa00", "Meadow Green", "247"],
+  ["#21613f", "Dark Green", "248"], ["#5dae94", "Aquamarine", "249"], ["#4cbf8f", "Emerald Green", "250"],
+  ["#007372", "Peacock Green", "251"], ["#595b61", "Dark Gray", "252"], ["#fffff2", "Ivory White", "253"],
+  ["#b15818", "Hazel", "254"], ["#cb8a07", "Toast", "255"],
+];
+
+// Brother PEC thread chart.
+const PEC_THREADS = [
+  null,
+  ["#1a0a94", "Prussian Blue"], ["#0f75ff", "Blue"], ["#00934c", "Teal Green"], ["#babdfe", "Cornflower Blue"],
+  ["#ec0000", "Red"], ["#e4995a", "Reddish Brown"], ["#cc48ab", "Magenta"], ["#fdc4fa", "Light Lilac"],
+  ["#dd84cd", "Lilac"], ["#6bd38a", "Mint Green"], ["#e4a945", "Deep Gold"], ["#ffbd42", "Orange"],
+  ["#ffe600", "Yellow"], ["#6cd900", "Lime Green"], ["#c1a941", "Brass"], ["#b5ad97", "Silver"],
+  ["#ba9c5f", "Russet Brown"], ["#faf59e", "Cream Brown"], ["#808080", "Pewter"], ["#000000", "Black"],
+  ["#001cdf", "Ultramarine"], ["#df00b8", "Royal Purple"], ["#626262", "Dark Gray"], ["#69260d", "Dark Brown"],
+  ["#ff0060", "Deep Rose"], ["#bf8200", "Light Brown"], ["#f39178", "Salmon Pink"], ["#ff6805", "Vermilion"],
+  ["#f0f0f0", "White"], ["#c832cd", "Violet"], ["#b0bf9b", "Seacrest"], ["#65bfeb", "Sky Blue"],
+  ["#ffba04", "Pumpkin"], ["#fff06c", "Cream Yellow"], ["#feca15", "Khaki"], ["#f38101", "Clay Brown"],
+  ["#37a923", "Leaf Green"], ["#23465f", "Peacock Blue"], ["#a6a6a6", "Gray"], ["#cebfa6", "Warm Gray"],
+  ["#96aa02", "Dark Olive"], ["#ffe3c6", "Linen"], ["#ff99d7", "Pink"],
+];
+
+// Used when a format carries no colors (DST, EXP) or an unknown index.
+const STOCK = ["#1f4fbf", "#d4202a", "#1d8a3c", "#f2b705", "#7b2fa8", "#f07c1a", "#111111", "#1aa6b7",
+  "#e05a9a", "#6b4a2b", "#8fbf2a", "#5a5a5a"];
+
+function stockThread(i) { return { color: STOCK[i % STOCK.length], name: `Thread ${i + 1}`, code: "" }; }
+
+function makeBuilder() {
+  const xs = [], ys = [], cmds = [];
+  let x = 0, y = 0;
+  return {
+    add(dx, dy, cmd) { x += dx; y += dy; xs.push(x); ys.push(y); cmds.push(cmd); },
+    done(threads, hoopHint = null) {
+      return { xs: Float32Array.from(xs), ys: Float32Array.from(ys), cmds: Uint8Array.from(cmds), threads, hoopHint };
+    },
+  };
+}
+
+const s8 = (b) => (b > 127 ? b - 256 : b);
+
+function readJEF(buf) {
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  const offset = dv.getInt32(0, true);
+  const nColors = dv.getInt32(24, true);
+  const hoopCode = dv.getInt32(32, true);
+  const threads = [];
+  for (let i = 0; i < nColors && 116 + i * 4 + 4 <= offset; i++) {
+    const idx = Math.abs(dv.getInt32(116 + i * 4, true));
+    const t = JEF_THREADS[idx];
+    threads.push(t ? { color: t[0], name: t[1], code: t[2] } : stockThread(i));
+  }
+  const b = makeBuilder();
+  let p = offset;
+  while (p + 1 < u8.length) {
+    const b0 = u8[p], b1 = u8[p + 1];
+    p += 2;
+    if (b0 !== 0x80) { b.add(s8(b0), -s8(b1), CMD.STITCH); continue; }
+    if (b1 === 0x10 || p + 1 >= u8.length) break;
+    const dx = s8(u8[p]), dy = -s8(u8[p + 1]);
+    p += 2;
+    if (b1 === 0x01) b.add(dx, dy, CMD.COLOR);
+    else b.add(dx, dy, CMD.JUMP);
+  }
+  const hoops = { 0: [110, 110], 1: [50, 50], 2: [140, 200], 3: [126, 110], 4: [200, 200] };
+  return b.done(threads, hoops[hoopCode] || null);
+}
+
+function readDST(buf) {
+  const u8 = new Uint8Array(buf);
+  const bit = (v, n) => (v >> n) & 1;
+  const b = makeBuilder();
+  for (let p = 512; p + 2 < u8.length; p += 3) {
+    const b0 = u8[p], b1 = u8[p + 1], b2 = u8[p + 2];
+    if ((b2 & 0xf3) === 0xf3) break;
+    const dx = bit(b2, 2) * 81 - bit(b2, 3) * 81 + bit(b1, 2) * 27 - bit(b1, 3) * 27 + bit(b0, 2) * 9
+      - bit(b0, 3) * 9 + bit(b1, 0) * 3 - bit(b1, 1) * 3 + bit(b0, 0) - bit(b0, 1);
+    const dy = bit(b2, 5) * 81 - bit(b2, 4) * 81 + bit(b1, 5) * 27 - bit(b1, 4) * 27 + bit(b0, 5) * 9
+      - bit(b0, 4) * 9 + bit(b1, 7) * 3 - bit(b1, 6) * 3 + bit(b0, 7) - bit(b0, 6);
+    let cmd = CMD.STITCH;
+    if ((b2 & 0xc3) === 0xc3) cmd = CMD.COLOR;
+    else if (b2 & 0x80) cmd = CMD.JUMP;
+    b.add(dx, -dy, cmd);
+  }
+  return withStockThreads(b);
+}
+
+function readEXP(buf) {
+  const u8 = new Uint8Array(buf);
+  const b = makeBuilder();
+  let p = 0;
+  while (p + 1 < u8.length) {
+    const b0 = u8[p], b1 = u8[p + 1];
+    p += 2;
+    if (b0 !== 0x80) { b.add(s8(b0), -s8(b1), CMD.STITCH); continue; }
+    if (p + 1 >= u8.length) break;
+    const dx = s8(u8[p]), dy = -s8(u8[p + 1]);
+    p += 2;
+    if (b1 & 0x01) b.add(dx, dy, CMD.COLOR);
+    else if (b1 === 0x80) b.add(0, 0, CMD.TRIM);
+    else if (b1 === 0x04) b.add(dx, dy, CMD.JUMP);
+    else b.add(dx, dy, CMD.STITCH);
+  }
+  return withStockThreads(b);
+}
+
+function withStockThreads(b) {
+  const pat = b.done([]);
+  let n = 1;
+  for (const c of pat.cmds) if (c === CMD.COLOR) n++;
+  pat.threads = Array.from({ length: n }, (_, i) => stockThread(i));
+  return pat;
+}
+
+function readPECStitches(u8, start) {
+  const b = makeBuilder();
+  let p = start, clean = false;
+  while (p + 1 < u8.length) {
+    let v1 = u8[p++], v2 = u8[p++];
+    if (v1 === 0xff && v2 === 0x00) { clean = true; break; }
+    if (v1 === 0xfe && v2 === 0xb0) { p++; b.add(0, 0, CMD.COLOR); continue; }
+    let cmd = CMD.STITCH, dx, dy;
+    if (v1 & 0x80) {
+      if (v1 & 0x20) cmd = CMD.TRIM;
+      if (v1 & 0x10) cmd = CMD.JUMP;
+      dx = ((v1 & 0x0f) << 8) | v2;
+      if (dx & 0x800) dx -= 0x1000;
+      v2 = u8[p++];
+    } else dx = v1 > 0x3f ? v1 - 0x80 : v1;
+    if (v2 & 0x80) {
+      if (v2 & 0x20) cmd = CMD.TRIM;
+      if (v2 & 0x10) cmd = CMD.JUMP;
+      dy = ((v2 & 0x0f) << 8) | u8[p++];
+      if (dy & 0x800) dy -= 0x1000;
+    } else dy = v2 > 0x3f ? v2 - 0x80 : v2;
+    // A trim in PEC still moves the needle; draw it as a jump.
+    b.add(dx, dy, cmd === CMD.TRIM ? CMD.JUMP : cmd);
+  }
+  return { b, clean };
+}
+
+function readPEC(buf, pec) {
+  const u8 = new Uint8Array(buf);
+  const nColors = u8[pec + 48] + 1;
+  const threads = [];
+  for (let i = 0; i < nColors; i++) {
+    const t = PEC_THREADS[u8[pec + 49 + i]];
+    threads.push(t ? { color: t[0], name: t[1], code: String(u8[pec + 49 + i]) } : stockThread(i));
+  }
+  let r = readPECStitches(u8, pec + 532);
+  if (!r.clean) {
+    const alt = readPECStitches(u8, pec + 528);
+    if (alt.clean) r = alt;
+  }
+  return r.b.done(threads);
+}
+
+function readPES(buf) {
+  const dv = new DataView(buf);
+  return readPEC(buf, dv.getUint32(8, true));
+}
+
+function detectFormat(name, buf) {
+  const u8 = new Uint8Array(buf, 0, Math.min(8, buf.byteLength));
+  const magic = String.fromCharCode(...u8);
+  if (magic.startsWith("#PES")) return "PES";
+  if (magic.startsWith("#PEC")) return "PEC";
+  const ext = (name.split(".").pop() || "").toUpperCase();
+  if (["JEF", "DST", "EXP", "PES", "PEC"].includes(ext)) return ext;
+  if (magic.startsWith("LA:")) return "DST";
+  return null;
+}
+
+function readPattern(name, buf) {
+  const fmt = detectFormat(name, buf);
+  if (!fmt) throw new Error(`Can't read "${name}". Supported formats are JEF, DST, EXP, PES and PEC.`);
+  const pat = { JEF: readJEF, DST: readDST, EXP: readEXP, PES: readPES, PEC: (b) => readPEC(b, 8) }[fmt](buf);
+  if (pat.xs.length === 0) throw new Error(`"${name}" has no stitches in it.`);
+  pat.format = fmt;
+  pat.name = name;
+  return pat;
+}
+
+
+</script>
+<script>
+const SAMPLE = { name: "heart_5x5_fill.jef", b64: "fAAAABQAAAAyMDI2MTAwNzEyMDcxMwAAAQAAAGgkAAACAAAAfAIAAH0CAAB8AgAAfQIAAP//////////////////////////////////////////QAAAAGsBAABAAAAAawEAAEAAAABrAQAAQAAAAGsBAAAqAAAADQAAAIACCWmAAghogAIJaYACCWkAAP78/vz//P/8/v3//P/8//3//P79APz//f/9//3//QD9//4A/f/9AP7//gD9AP7//gD/AP4A/v//AP8A/wD+AAAA/wD/AAAA/wAAAAAAAAD/AP///gD/AP////////8AAP//////AP4A////AP8A/wD/AP8B/gD/AP8B/wEAAP8B/wH/AQABAAH/AgABAAEAAAAAAAAAAQAAAAEAAQAAAAIAAQAB/wEAAgACAAH/AgACAAP/AgAC/wMAA/8CAAP/A/8D/wP/AwAE/gP/BP8D/wT/BP4D/wT/BP4E/gT/BP4F/gT+BP4E/gX9BP4E/gX9BP4E/QX9BP4F/QT9Bf0E/AT9Bf0E/AT9BfwE/AT9BPwF/AT8BPwE/AP7BPwE+wT8A/sE/AP7BPsD+wP7A/sD+wP7A/sD+wL6A/sC+gP7AvoC+wL6AfoC+wL6AfoB+gL6AfoA+gH6AfoA+gH6APoA+gD6APr/+gD6//oA+f/6//r++v/6//r++v76/vr++v76/vr9+v76/fr9+v37/fr9+v37/Pr9+/z6/Pv8+/z7/Pr7+/z7+/v8/Pv7+/v7/Pv7+/z7/Pr8+/z6/Pv8+vz6/Pr9+v36/Pr9+v36/fr++f36/fr++f76/vn++f76/vn++f/5//r++f/5APn/+f/5APn/+QD5APkA+QD5AfkA+QH5AfkA+QH4AvkB+QH5AvkC+QL5AvkC+QL5AvkD+AP5AvkD+QP5BPkD+QP5BPkE+gP5BPkE+QT5BPkF+QT6BfkE+QX5BfoF+QX5BfoF+QX5BvoF+QX6BvkG+gX5BvoG+Qb6BvkG+gb6BvkG+gb6BvkG+gf6BvoG+Qb6B/oG+gb6B/oG+gf6BvkG+gf6BvoH+gb6BvoG+wf6BvoG+gAABvoAAAf6AAAG+gAABvoAAAb7AAAG+gAABvoAAAb6AAAG+wD/BvsAAAX6AAAG+gAABvsAAAX6AAAG+gAABfsAAAb6AAAF+wAABfoAAAX7AQAF+gAABfsAAAX6AAAE+wEABPoAAAX7AAAF+wAABPsA/wX7AAAE+wAABPsBAAT7AAAE+wD/BPsAAAT7AAAE+wAABPsAAAP7AAAE/AAAA/sAAAT7AAAD+wAAA/wA/wT8AAAD+wAAA/wAAAL7AAAD/AAAA/sAAAP8AAAC/AAAA/wA/wL8AAAC/AAAAvwAAAL8AAAC/AAAAv0A/wL9AAAC/AAAAvwAAAH9AAAC/AAAAf0AAAL9AAAB/QD/Af0AAAH+AQIAAAEDAAEBAwAAAgMAAAEDAAACBAAAAQMAAAIEAAACBAAAAgMAAQIDAAACBAAAAgQAAAIEAAACBAAAAgQAAQMEAAACBAAAAwQAAAMFAAADBAAAAgUAAAMEAAADBQAABAQAAQMEAAADBQAABAUAAAMFAAAEBAAAAwUAAAQFAAAEBQAABAUAAAQFAAEEBQAABAUBAAQFAAAEBQAABQUAAQQFAAAFBQAABQUAAAQGAQAEBQAABQYAAAUFAAAFBgEABQUAAAUGAAAFBQAABgYAAAUFAAAGBgAABQYAAAYFAAAGBgAABQYAAAYFAAEGBQAABgYAAAYGAAAGBgAABgUAAAYGAAAGBgAABwYAAAYGAAAGBgYGBwYGBQYGBgYHBgYGBwYGBgYHBwYGBgcGBgYGBgcGBgYGBwYGBwYGBgYHBgYGBgYHBgYGBgYHBgYGBwYGBQcGBgYHBQYFBwYGBQcFBwUGBQcFBwUGBQcEBwUHBAYFBwQHBAcEBwQHAwcEBgQHAwcDBwQHAwcDBwIHAwcDCAIHAgcCBwIHAgcCBwIHAQcBBwIHAQgABwEHAQcABwEHAAcABwAHAAf/BwAH/wf/BwAH/wf+B/8G/wf+B/4H/gb+B/4H/gb+B/0G/Qb+B/0G/Qb9BvwG/Qb9BvwG/Ab8BvwF/Ab8BfwG/AX7BfwF+wX7BfwF+wT7BfsE+gX7BPsE+wT6BPsE+gP7BPoD+gP7A/oD+gP6A/oC+gP6AvoC+gL6AvoC+gL6AfoB+gL6AfkB+gD6AfoA+gH6APoA+gD6APr/+gD6//r/+gD6//r++v/6//v++v76//v++v77/vr9+/76/fv++/37/fv9+/37/fv9+/37/Pz9+/z8/fv8/Pz7/Pz9/Pz8/Pz8/Pv9/Pz8/Pz9+/z8/fz9+/z8/fz9+/38/vv9/P37/vz9/P77/vz9/P77/vz+/P78/vv//BMTFBMUExMTFBIUExMTFBMUExMSIAAhACAAIAAgABP4FPgT994A3QDeAN4A3QDeAN4A3gDu9O7zIwAiACMAIwAjACIAIwAjACMAIwAO9A7z3wDeAN4A3wDeAN4A3wDeAN4A3wDeAN4A9fT18yMAIgAjACMAIgAjACIAIwAiACMAIwAiACMACfQK890A3QDdAN4A3QDdAN0A3gDdAN0A3QDdAN4A3QDx5yIAIwAiACMAIgAjACIAIwAiACMAIwAiACMAIgAjAA3n3gDeAN4A3gDeAN4A3gDeAN4A3gDeAN4A3gDeAN4A3gD15yEAIgAhACEAIQAiACEAIQAhACIAIQAhACEAIgAhACEAIQAJ590A3gDeAN4A3QDeAN4A3gDeAN0A3gDeAN4A3QDeAN4A3gD65yMAIgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAE598A3gDfAN4A3wDeAN8A3gDfAN8A3gDfAN4A3wDeAN8A3wDeAPHnIgAjACIAIwAiACIAIwAiACMAIgAjACIAIgAjACIAIwAiACIAAefeAN0A3gDdAN4A3QDeAN0A3gDeAN0A3gDdAN4A3QDeAN0A3gAA5yIAIwAiACIAIwAiACMAIgAiACMAIgAiACMAIgAjACIAIgAjAP3n3gDdAN4A3gDeAN4A3QDeAN4A3gDdAN4A3gDeAN4A3QDeAN4AAOciACIAIgAiACIAIgAiACIAIgAhACIAIgAiACIAIgAiACIAIgD6594A3wDeAN4A3wDeAN8A3gDeAN8A3gDfAN4A3gDfAN4A3wDeAADnIQAhACEAIgAhACEAIQAhACEAIQAiACEAIQAhACEAIQAhACIA9ufdAN4A3QDeAN0A3gDdAN4A3QDeAN0A3gDdAN4A3QDeAN0AAOciACIAIgAhACIAIgAiACIAIgAhACIAIgAiACIAIgAhACIA8+ffAN8A3wDfAN8A3wDfAN8A3wDeAN8A3wDfAN8A3wDfAN8AAOciACIAIwAiACIAIgAjACIAIgAiACIAIwAiACIAIgAiAPDn3wDfAN8A3gDfAN8A3wDfAN4A3wDfAN8A3wDeAN8A3wAA5yIAIgAjACIAIgAiACMAIgAiACIAIgAjACIAIgAiAPf09vPfAN8A3wDfAN8A3wDfAN8A4ADfAN8A3wDfAN8A3wAA5yIAIgAhACIAIgAiACIAIQAiACIAIgAiACEAIgD19PXz3QDeAN0A3QDeAN0A3QDeAN0A3QDdAN4A3QAA5yEAIQAhACEAIQAhACAAIQAhACEAIQAhACEA9PT0894A3gDfAN4A3wDeAN4A3wDeAN4A3wDeAADnIgAjACIAIwAiACMAIgAiACMAIgAjAPP08/PgAOAA4ADgAOAA3wDgAOAA4ADgAOAAAOchACAAIQAhACAAIQAhACAAIQAhAPP08vPfAN8A3gDfAN4A3wDfAN4A3wAA5yIAIgAjACIAIgAiACMAIgDz9PLz4QDiAOEA4QDhAOEA4QDhAADnIAAfACAAHwAgACAAHwD09PPz3wDgAN8A3wDgAN8AAOciACIAIwAiACIA9PT08+MA4gDjAOIA4wAA5x8AHwAfAB8A9fT2890A3gDeAADnGwAcABsA9/T28+EA4AAA5xcAFwDw5+IAAOcQAPAA8ADyGR4AABnpAOkA+A33DB8AIAAAGeUA5ADlAPYN9QwjACIAIgAAGeEA4QDhAOEA9A31DB0AHgAdAB4AHQAAGd4A3gDdAN4A3gD0DfMMIQAgACEAIQAgACEAABngAOEA4ADhAOAA4ADhAPMN8wwfAB4AHwAfAB8AHwAfAB8AABneAN4A3QDeAN4A3gDdAN4A8w3zDCEAIQAiACEAIgAhACEAIgAhAAAZ3wDgAN8A3wDgAN8A3wDgAN8A3wDzDfMMIAAgACAAIAAgACEAIAAgACAAIAAgAAAZ3gDdAN4A3QDeAN0A3gDeAN0A3gDdAPQN8wwiACIAIQAiACEAIgAiACEAIgAiACEAIgAAGd8A3wDfAN8A3wDfAOAA3wDfAN8A3wDfAN8A9A31DCMAIgAjACMAIgAjACMAIgAjACMAIwAiACMAABneAN4A3wDeAN4A3gDeAN8A3gDeAN4A3gDfAN4A9Q32DCEAIQAhACEAIQAhACEAIQAgACEAIQAhACEAIQAhAAAZ3gDeAN0A3gDeAN4A3QDeAN4A3gDeAN0A3gDeAN4A9w33DCEAIQAhACIAIQAhACEAIQAiACEAIQAhACEAIgAhACEAABneAN4A3QDeAN4A3gDdAN4A3gDeAN4A3QDeAN4A3gDeAPEZIQAhACEAIQAhACEAIQAhACEAIgAhACEAIQAhACEAIQAhAAAZ3gDeAN4A3wDeAN4A3gDeAN4A3wDeAN4A3gDeAN4A3wDeAPQZIwAiACMAIgAjACIAIwAiACMAIgAjACIAIwAiACMAIgAjAAAZ3wDfAN8A3gDfAN8A3wDfAN8A3wDeAN8A3wDfAN8A3wDfAN4A+BkiACEAIgAiACEAIgAhACIAIgAhACIAIQAiACIAIQAiACEAIgAAGd4A3gDeAN4A3gDeAN4A3gDeAN8A3gDeAN4A3gDeAN4A3gDeAPsZIgAjACIAIgAiACIAIwAiACIAIgAjACIAIgAiACIAIwAiACIAABneAN0A3gDeAN0A3gDdAN4A3gDdAN4A3gDdAN4A3QDeAN4A3QD/GSIAIwAiACMAIgAjACIAIwAiACIAIwAiACMAIgAjACIAIwAiAAAZ3gDdAN4A3QDeAN4A3QDeAN0A3gDdAN4A3gDdAN4A3QDeAN4AAhkhACIAIQAiACEAIgAhACIAIQAhACIAIQAiACEAIgAhACEAIgD8Gd0A3gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QAGGSMAIgAiACIAIwAiACIAIgAiACMAIgAiACIAIwAiACIAIgD4Gd8A3gDfAN8A3wDeAN8A3wDfAN4A3wDfAN8A3gDfAN8A3wAKGSIAIgAiACIAIgAiACIAIgAiACIAIgAiACIAIgAiACIA8xneAN0A3gDdAN4A3QDeAN0A3gDdAN0A3gDdAN4A3QAQGSMAIwAjACIAIwAjACMAIgAjACMAIwAjACIAIwD3DfcM3QDeAN0A3QDeAN0A3gDdAN4A3QDdAN4A3QAMDQwMIQAiACIAIQAiACIAIQAiACIAIQAiACIA8g3yDN0A3gDdAN0A3QDeAN0A3QDdAN0AEw0TDCIAIwAiACIAIwAiACIAIgDuCe0I7gjgAN8A4ADgAOAA7evt6u7r7ert6u7r7ert6u3r7urt6u3r7uoA9QDdAOAE4wAOACMAIwAjABAEFAD0AN0A3QDdAN0A6ATwABwAIwAjACMAIwAnBA0A4wDdAN0A3QDdAN0A4gXzACAAIwAjACMAIwAjACMAEQQLANgA3QDdAN0A3QDdAN0A4QT1AB4AIwAjACMAIwAjACMAIwAbBAkA9ADdAN0A3QDdAN0A3QDdAN0A4wT3ABoAIwAjACMAIwAjACMAIwAjACAFCADvAN0A3QDdAN0A3QDdAN0A3QDdAOkE9wAVACMAIwAjACMAIwAjACMAIwAjACMEBwDtAN0A3QDdAN0A3QDdAN0A3QDdAN0A7wT4AA0AIwAjACMAIwAjACMAIwAjACMAIwAmBAcA6wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A9gX5ACgAIwAjACMAIwAjACMAIwAjACMAIwAnBAYA6gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QT5AB8AIwAjACMAIwAjACMAIwAjACMAIwAjACYEBgDrAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOYE+gAUACMAIwAjACMAIwAjACMAIwAjACMAIwAjACYFBQDtAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A8AT6AAoAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAkBAQA7wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANkE+gAiACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIQQEAPIA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOQF+gAWACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAeBAQA9gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDwBPoACgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAaBAQA1gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A2gT6ACEAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAFgUDANsA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A5gT7ABMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwASBAMA4ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPIE+wAqACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADQQDAOQA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdBfsAHQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACoEAwDqAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDrBPsADgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAJAQDAPEA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANUE+wAkACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAeBQMA9gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDjBPwAFgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAXBAIA2wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDxBPwAKgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwARBAIA4gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDcBfwAHAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAAkEAgDpAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A6wT8AA4AIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAkBAIA8QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANYE/AAiACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAHQUCANYA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDlBPsAFAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAFQQBAN4A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPQE/AAoACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAMBAEA5wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A4AX7ABkAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACcEAQDwAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAO4E/AAKACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAB4EAQDVAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDbBPwAHgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAUBQEA3wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDqBPwADgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAAsEAQDpAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANUE/AAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACQEAQDyAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A5QX8ABQAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAaBAEA2QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPQE/AAnACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEAQBAOQA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDgBPwAGAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACgFAQDuAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDwBPwACQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAHQQBANYA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDcBPwAHAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEwQAAOIA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOsF/AANACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAqBAAA7QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A2AT8ACEAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAB4EAADWAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDnBP0AEAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwATBQAA4gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QD3BPwAJAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAKgQAAO0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A5AT8ABUAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAHQQAANcA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A8wX8ACgAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEgT/AOQA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3wT8ABkAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAJwQAAPAA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDvBPwACgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABoF/wDbAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANsE/AAdACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADQT/AOkA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDqBPwADgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACIE/wD2AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1wX8ACIAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAUBP8A4QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOYE/AASACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAKgT+APAA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPQE/AAnACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAGwX/ANoA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDhBPwAGAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADAT+AOoA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPAE/AAIACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAhBP4A1gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANwF+wAdACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwARBP4A5QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A6wT8AA4AIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACQE/gD1AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDWBPwAIgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAFQX9AOMA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOUE+wAUACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAnBP4A8gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QD0BPsAKQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAFgT9AOEA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN8F+wAaACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwApBP0A8gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDtBPsADAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAXBP0A4ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A2QT7ACEAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACgF/ADzAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOYE+wATACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABYE/ADjAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPQE+wAoACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAmBPwA9QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDfBfsAGwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwASBPwA5gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDsBPoADgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAiBPwA1wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1QT7ACQAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADQX8AOsA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A4gT7ABgAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAGwT7AN4A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A7gT7AAsAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAKQT6APUA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1wX6ACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEgT6AOgA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A4wT5ABkAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAHQT6AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A7QT5AA4AIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAKAX6APYA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QD3BPkAJwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAOBPkA7QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdBPkAHwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAWBPgA5gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDlBfgAFwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAdBPYA4gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDrBPYAEwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAgBPQA4ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDuBPQAEwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAfBfEA5ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDqBOwAHgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAWBAgA1wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QD1BBMADwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjBA0A5wDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDoBQsAJQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwANBAsA3ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDxBAkAHQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAXBAkA+ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPcECAAYACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAB0FCADyAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANkECAAUACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACEECADuAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANwEBwARACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACUEBgDtAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0FBwAQACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACYEBgDrAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN8EBgAQACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACYEBQDsAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN8EBgAPACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACYFBQDtAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN8EBgAPACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACQEBQDuAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN8EBgAQACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACIEBADxAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN4FBQARACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACAEBAD0AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0EBQASACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABwEBAD3AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANwEBQAUACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABgFAwDZAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDaBAUAFQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAUBAMA3gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1wQFABgAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADwQDAOIA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANYFBQAaACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAAkEAwDoAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPYEBQAcACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAnBAMA7gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDzBAUAHwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIAUDAPQA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A8QQFACIAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABoEAgDYAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDuBAUAJAAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEwQDAN8A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOsFBAAoACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAMBAIA5gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A6QQEACsAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAnBAIA7gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A5QQEAAsAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACAFAQD3AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDiBAQADgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAFwQCANsA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDfBAQAEgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADgQCAOQA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDbBQQAFQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACkEAQDuAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1wQEABkAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAgBAEA9gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A9wQEAB0AIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAWBQEA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPQEBAAfACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADQQBAOcA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDwBAQAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAmBAAA8QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAO0FBAAnACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABsEAQDYAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOkEBAAqACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABEEAQDjAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOQEBAAMACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACkFAQDtAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOEEBAAQACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAB4EAADWAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdBAQAEwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwATBAAA4gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A2QUEABcAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACoEAADtAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDWBAQAGwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAHgQAANYA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPUEBAAeACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwATBQAA4gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A8QQEACIAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwApBAAA7gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A7gQEACYAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAdBP8A2ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOoFBAApACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEQT/AOUA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDmBAQACgAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACYE/wDyAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A4wQEAA4AIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAZBf8A3ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDfBAQAEQAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjAAwE/wDqAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANsEBAAVACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACEE/wD3AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANgFBQAYACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABIE/wDjAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPgEBAAbACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAoBP4A8gDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QD0BAQAHwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAGQX+AN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAPIEBAAiACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAKBP4A7ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A7gQEACUAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAeBP4A2QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOsFBAAoACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMADgT+AOgA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDpBAQAKwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAhBP4A+ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAOUEBQAKACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEgX+AOUA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A4wQEAA0AIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAJAT+APUA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A4QQEABAAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEwT+AOMA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN4FBQARACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAmBP0A9QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3AQFABMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjABQE/QDjAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A2wQFABUAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAlBf0A9QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANkEBQAWACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAFAT8AOUA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1wQFABgAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAJAT8APcA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1gUGABkAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEQT8AOcA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANUEBgAZACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAhBPwA2ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANUEBgAZACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAIwAMBfwA7ADdAN0A3QDdAN0A3QDdAN0A3QDdAN0A3QDdANUEBwAZACMAIwAjACMAIwAjACMAIwAjACMAIwAjACMAGgT8AN4A3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1gQGABgAIwAjACMAIwAjACMAIwAjACMAIwAjACMAKQT7APQA3QDdAN0A3QDdAN0A3QDdAN0A3QDdAN0A1gUHABcAIwAjACMAIwAjACMAIwAjACMAIwAjACMAEgT7AOcA3QDdAN0A3QDdAN0A3QDdAN0A3QDdANkEBwAVACMAIwAjACMAIwAjACMAIwAjACMAIwAeBPoA3ADdAN0A3QDdAN0A3QDdAN0A3QDdANsECAARACMAIwAjACMAIwAjACMAIwAjACMAKgX5APUA3QDdAN0A3QDdAN0A3QDdAN0A3QDeBAgADgAjACMAIwAjACMAIwAjACMAIwAjABAE+QDrAN0A3QDdAN0A3QDdAN0A3QDdAOQECAAJACMAIwAjACMAIwAjACMAIwAjABkE9wDkAN0A3QDdAN0A3QDdAN0A3QDqBQkAJAAjACMAIwAjACMAIwAjACAE9gDfAN0A3QDdAN0A3QDdAN0A8gQLABoAIwAjACMAIwAjACMAIwT1ANwA3QDdAN0A3QDdANsEDQANACMAIwAjACMAIwAjBfIA3wDdAN0A3QDdAOsEEQAbACMAIwAjABwE6gDvAN0A3QDkAhYCFQAegBA=" };
+
+const HOOPS = [
+  { id: "SQ14b", w: 140, h: 140, note: "Standard" },
+  { id: "RE20b", w: 140, h: 200, note: "Standard" },
+  { id: "SQ20b", w: 200, h: 200, note: "Optional" },
+  { id: "FA10a", w: 100, h: 40, note: "Free arm" },
+  { id: "Custom", w: 160, h: 260, note: "Any size" },
+];
+const FABRICS = [
+  ["Natural linen", "#d6c9b0"], ["White cotton", "#f6f5f0"], ["Heather gray", "#9c9b9d"], ["Denim", "#3e5778"],
+  ["Navy", "#1e2a44"], ["Black", "#1c1b1d"], ["Brick red", "#9e2a2b"], ["Sage", "#9aab8d"],
+];
+
+const $ = (id) => document.getElementById(id);
+const canvas = $("canvas"), ctx = canvas.getContext("2d");
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("hoop." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("hoop." + k, JSON.stringify(v)); } catch {} },
+};
+
+const state = {
+  pat: null, blocks: [], jumpPath: null, cx: 0, cy: 0, dw: 0, dh: 0,
+  hoopId: "SQ14b", custom: store.get("custom", { w: 160, h: 260 }),
+  rot: 0, mirror: false, off: { x: 0, y: 0 },
+  view: { s: 1, px: 0, py: 0 }, n: 0, playing: false, focus: -1,
+  fabric: store.get("fabric", FABRICS[0][1]),
+  real: store.get("real", true), grid: store.get("grid", true), jumps: store.get("jumps", false),
+  dirty: false,
+};
+
+// ---------- geometry ----------
+function hoopSize(id = state.hoopId) {
+  const h = id === "Custom" ? state.custom : HOOPS.find((x) => x.id === id);
+  return { w: h.w * 10, h: h.h * 10 };
+}
+function designSize(rot = state.rot) {
+  return rot % 180 === 0 ? { w: state.dw, h: state.dh } : { w: state.dh, h: state.dw };
+}
+function margins(hoop, rot = state.rot, off = state.off) {
+  const d = designSize(rot);
+  return {
+    left: hoop.w / 2 + (off.x - d.w / 2), right: hoop.w / 2 - (off.x + d.w / 2),
+    top: hoop.h / 2 + (off.y - d.h / 2), bottom: hoop.h / 2 - (off.y + d.h / 2),
+  };
+}
+const fitsIn = (hoop, rot = 0) => { const d = designSize(rot); return d.w <= hoop.w && d.h <= hoop.h; };
+const mm = (u, digits = 1) => (u / 10).toFixed(digits);
+
+// ---------- loading ----------
+function load(name, buf, isSample = false) {
+  let pat;
+  try { pat = readPattern(name, buf); }
+  catch (e) { showError(e.message); return; }
+  showError("");
+  state.pat = pat;
+  state.isSample = isSample;
+  let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+  for (let i = 0; i < pat.xs.length; i++) {
+    if (pat.cmds[i] !== CMD.STITCH) continue;
+    const x = pat.xs[i], y = pat.ys[i];
+    if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+  }
+  if (!isFinite(minx)) { minx = maxx = miny = maxy = 0; }
+  state.cx = (minx + maxx) / 2; state.cy = (miny + maxy) / 2;
+  state.dw = maxx - minx; state.dh = maxy - miny;
+  buildBlocks();
+  state.rot = 0; state.mirror = false; state.off = { x: 0, y: 0 }; state.focus = -1;
+  state.n = pat.xs.length; stopPlay();
+  // Pick the smallest standard hoop the design fits as-is.
+  const order = ["SQ14b", "RE20b", "SQ20b"];
+  state.hoopId = order.find((id) => fitsIn(hoopSize(id))) || "SQ20b";
+  $("filename").replaceChildren(document.createTextNode(name));
+  const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = isSample ? "Sample" : pat.format;
+  $("filename").append(tag);
+  document.title = isSample ? "Hoop Preview" : `${name} · Hoop Preview`;
+  renderHoops(); renderThreads(); renderStats(); syncProgress(); fitView("hoop"); update();
+}
+
+function buildBlocks() {
+  const { xs, ys, cmds, threads } = state.pat;
+  const blocks = [];
+  let start = 0;
+  for (let i = 1; i <= cmds.length; i++) {
+    if (i === cmds.length || cmds[i] === CMD.COLOR) {
+      const k = blocks.length;
+      const t = threads[k] || stockThread(k);
+      blocks.push({ start, end: i, thread: { ...t }, stitches: 0, path: null });
+      start = i;
+    }
+  }
+  for (const b of blocks) {
+    for (let i = b.start; i < b.end; i++) if (cmds[i] === CMD.STITCH) b.stitches++;
+    b.path = segmentPath(b.start, b.end, CMD.STITCH);
+  }
+  // Drop empty blocks (a trailing color change with nothing after it).
+  state.blocks = blocks.filter((b) => b.stitches > 0);
+  state.jumpPath = segmentPath(0, cmds.length, CMD.JUMP);
+}
+
+function segmentPath(from, to, kind) {
+  const { xs, ys, cmds } = state.pat;
+  const p = new Path2D();
+  let pen = -1;
+  for (let i = Math.max(from, 1); i < to; i++) {
+    if (cmds[i] !== kind) continue;
+    if (pen !== i - 1) p.moveTo(xs[i - 1], ys[i - 1]);
+    p.lineTo(xs[i], ys[i]);
+    pen = i;
+  }
+  return p;
+}
+
+function showError(msg) { $("error").textContent = msg; $("error").hidden = !msg; }
+
+async function openFile(file) {
+  if (!file) return;
+  load(file.name, await file.arrayBuffer());
+}
+
+// ---------- drawing ----------
+let fabricPattern = null, fabricFor = null;
+function luminance(hex) {
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const t = amt < 0 ? 0 : 255, a = Math.abs(amt);
+  r = Math.round(r + (t - r) * a); g = Math.round(g + (t - g) * a); b = Math.round(b + (t - b) * a);
+  return `rgb(${r},${g},${b})`;
+}
+function getFabricPattern() {
+  if (fabricFor === state.fabric) return fabricPattern;
+  const c = document.createElement("canvas"); c.width = c.height = 6;
+  const g = c.getContext("2d");
+  g.fillStyle = state.fabric; g.fillRect(0, 0, 6, 6);
+  // plain weave: alternating warp/weft highlights
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) {
+    const v = ((x >> 1) + (y >> 1)) % 2 ? 0.07 : -0.06;
+    g.fillStyle = v > 0 ? `rgba(255,255,255,${v})` : `rgba(0,0,0,${-v})`;
+    g.fillRect(x, y, 1, 1);
+  }
+  fabricPattern = ctx.createPattern(c, "repeat"); fabricFor = state.fabric;
+  return fabricPattern;
+}
+
+function rrect(x, y, w, h, r) { const p = new Path2D(); p.roundRect(x, y, w, h, r); return p; }
+
+function drawHoop(hoop) {
+  const s = state.view.s, px = 1 / s;
+  const W = hoop.w, H = hoop.h, m = 90, ring = 150;
+  const iw = W + 2 * m, ih = H + 2 * m, ow = iw + 2 * ring, oh = ih + 2 * ring;
+  const ri = Math.min(150, iw / 4, ih / 4), ro = ri + ring * 0.9;
+
+  const frame = new Path2D();
+  frame.addPath(rrect(-ow / 2, -oh / 2, ow, oh, ro));
+  // Mounting bracket on the left, where the hoop clips onto the carriage.
+  const bh = Math.max(300, Math.min(oh * 0.45, 900)), bw = 260;
+  const bracket = rrect(-ow / 2 - bw + 60, -bh / 2, bw, bh, 50);
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+  const plastic = ctx.createLinearGradient(0, -oh / 2, 0, oh / 2);
+  plastic.addColorStop(0, "#fcfcfa"); plastic.addColorStop(1, "#d9dad5");
+  ctx.fillStyle = plastic;
+  ctx.fill(bracket);
+  const ringPath = new Path2D();
+  ringPath.addPath(frame);
+  ringPath.addPath(rrect(-iw / 2, -ih / 2, iw, ih, ri));
+  ctx.fill(ringPath, "evenodd");
+  ctx.restore();
+
+  ctx.lineWidth = px;
+  ctx.strokeStyle = "rgba(0,0,0,.28)";
+  ctx.stroke(frame); ctx.stroke(bracket);
+  // inner lip and a groove line around the ring
+  ctx.lineWidth = 2 * px; ctx.strokeStyle = "rgba(0,0,0,.22)";
+  ctx.stroke(rrect(-iw / 2, -ih / 2, iw, ih, ri));
+  ctx.lineWidth = px; ctx.strokeStyle = "rgba(0,0,0,.12)";
+  ctx.stroke(rrect(-iw / 2 - ring * 0.45, -ih / 2 - ring * 0.45, iw + ring * 0.9, ih + ring * 0.9, ri + ring * 0.45));
+  // bracket holes
+  ctx.fillStyle = "#6d6f69";
+  for (const dy of [-bh / 4, bh / 4]) { ctx.beginPath(); ctx.arc(-ow / 2 - bw / 2 + 50, dy, 32, 0, 7); ctx.fill(); }
+  // tightening screw on the frame, front right
+  ctx.fillStyle = "#b9bbb4";
+  ctx.beginPath(); ctx.arc(ow / 2 - ring * 0.5, oh / 2 - ring * 0.5, 55, 0, 7); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.stroke();
+
+  // Label printed on the frame
+  const h = state.hoopId === "Custom" ? state.custom : HOOPS.find((x) => x.id === state.hoopId);
+  const fs = Math.min(ring * 0.42, 22 * px);
+  ctx.fillStyle = "rgba(40,40,40,.62)";
+  ctx.font = `600 ${fs}px "Bricolage Grotesque", sans-serif`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(`${state.hoopId === "Custom" ? "Custom" : h.id}  ${h.w} × ${h.h} mm`, 0, -ih / 2 - ring / 2);
+
+  // Sewing area: template grid and outline
+  const dark = luminance(state.fabric) < 0.45;
+  const gridInk = dark ? "255,255,255" : "20,20,40";
+  if (state.grid) {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(-W / 2, -H / 2, W, H); ctx.clip();
+    ctx.lineWidth = px; ctx.strokeStyle = `rgba(${gridInk},.16)`;
+    ctx.beginPath();
+    for (let x = 100; x <= W / 2; x += 100) { ctx.moveTo(x, -H / 2); ctx.lineTo(x, H / 2); ctx.moveTo(-x, -H / 2); ctx.lineTo(-x, H / 2); }
+    for (let y = 100; y <= H / 2; y += 100) { ctx.moveTo(-W / 2, y); ctx.lineTo(W / 2, y); ctx.moveTo(-W / 2, -y); ctx.lineTo(W / 2, -y); }
+    ctx.stroke();
+    ctx.lineWidth = 1.5 * px; ctx.strokeStyle = `rgba(${gridInk},.4)`;
+    ctx.beginPath(); ctx.moveTo(0, -H / 2); ctx.lineTo(0, H / 2); ctx.moveTo(-W / 2, 0); ctx.lineTo(W / 2, 0); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.lineWidth = 1.5 * px; ctx.strokeStyle = `rgba(${gridInk},.55)`;
+  ctx.setLineDash([6 * px, 5 * px]);
+  ctx.strokeRect(-W / 2, -H / 2, W, H);
+  ctx.setLineDash([]);
+}
+
+function strokeThread(path, color, w) {
+  if (state.real) {
+    ctx.strokeStyle = shade(color, -0.45); ctx.lineWidth = w * 1.15; ctx.stroke(path);
+    ctx.strokeStyle = color; ctx.lineWidth = w * 0.8; ctx.stroke(path);
+    ctx.save(); ctx.translate(-w * 0.12, -w * 0.12);
+    ctx.strokeStyle = shade(color, 0.5); ctx.globalAlpha *= 0.55; ctx.lineWidth = w * 0.22; ctx.stroke(path);
+    ctx.restore();
+  } else {
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke(path);
+  }
+}
+
+function drawDesign() {
+  const pat = state.pat; if (!pat) return;
+  const s = state.view.s, px = 1 / s;
+  const w = Math.max(4, 1.3 * px);
+  ctx.save();
+  ctx.translate(state.off.x, state.off.y);
+  ctx.rotate((state.rot * Math.PI) / 180);
+  ctx.scale(state.mirror ? -1 : 1, 1);
+  ctx.translate(-state.cx, -state.cy);
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const n = state.n;
+  state.blocks.forEach((b, k) => {
+    if (b.start >= n) return;
+    const path = b.end <= n ? b.path : segmentPath(b.start, n, CMD.STITCH);
+    ctx.globalAlpha = state.focus >= 0 && state.focus !== k ? 0.15 : 1;
+    strokeThread(path, b.thread.color, w);
+  });
+  ctx.globalAlpha = 1;
+  if (state.jumps) {
+    const jp = n >= pat.xs.length ? state.jumpPath : segmentPath(0, n, CMD.JUMP);
+    ctx.lineWidth = 1.2 * px; ctx.setLineDash([4 * px, 3 * px]);
+    ctx.strokeStyle = luminance(state.fabric) < 0.45 ? "rgba(255,255,255,.75)" : "rgba(0,0,0,.6)";
+    ctx.stroke(jp); ctx.setLineDash([]);
+  }
+  if (n > 0 && n < pat.xs.length) {
+    const x = pat.xs[n - 1], y = pat.ys[n - 1], r = 7 * px;
+    ctx.lineWidth = 2 * px; ctx.strokeStyle = "#ff2d7a";
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.moveTo(x - r * 1.8, y); ctx.lineTo(x + r * 1.8, y);
+    ctx.moveTo(x, y - r * 1.8); ctx.lineTo(x, y + r * 1.8); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBounds(hoop) {
+  if (!state.pat) return;
+  const m = margins(hoop), d = designSize();
+  const out = Math.min(m.left, m.right, m.top, m.bottom) < 0;
+  if (!out && !dragging) return;
+  const px = 1 / state.view.s;
+  ctx.lineWidth = 1.5 * px; ctx.setLineDash([5 * px, 4 * px]);
+  ctx.strokeStyle = out ? "#e0362c" : "#ff2d7a";
+  ctx.strokeRect(state.off.x - d.w / 2, state.off.y - d.h / 2, d.w, d.h);
+  ctx.setLineDash([]);
+}
+
+function draw() {
+  state.dirty = false;
+  const dpr = window.devicePixelRatio || 1;
+  const cw = canvas.clientWidth, ch = canvas.clientHeight;
+  if (canvas.width !== Math.round(cw * dpr) || canvas.height !== Math.round(ch * dpr)) {
+    canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = getFabricPattern(); ctx.fillRect(0, 0, cw, ch);
+  const vig = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.3, cw / 2, ch / 2, Math.max(cw, ch) * 0.75);
+  vig.addColorStop(0, "rgba(0,0,0,0)"); vig.addColorStop(1, "rgba(0,0,0,.22)");
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, cw, ch);
+
+  const v = state.view, hoop = hoopSize();
+  ctx.save();
+  ctx.translate(cw / 2 + v.px, ch / 2 + v.py);
+  ctx.scale(v.s, v.s);
+  drawHoop(hoop);
+  drawDesign();
+  drawBounds(hoop);
+  ctx.restore();
+}
+function requestDraw() { if (!state.dirty) { state.dirty = true; requestAnimationFrame(draw); } }
+
+function fitView(what) {
+  const cw = canvas.clientWidth, ch = canvas.clientHeight, hoop = hoopSize();
+  let w, h, cx = 0, cy = 0;
+  if (what === "design" && state.pat) {
+    const d = designSize(); w = d.w * 1.15 + 40; h = d.h * 1.15 + 40; cx = state.off.x; cy = state.off.y;
+  } else { w = hoop.w + 2 * (90 + 150) + 500; h = hoop.h + 2 * (90 + 150) + 80; }
+  const s = Math.min(cw / w, ch / h);
+  state.view = { s, px: -cx * s, py: -cy * s };
+  requestDraw();
+}
+
+// ---------- panel ----------
+function renderHoops() {
+  const box = $("hoops"); box.replaceChildren();
+  for (const h of HOOPS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "hoop-opt"; b.setAttribute("aria-pressed", String(h.id === state.hoopId));
+    const size = h.id === "Custom" ? state.custom : h;
+    const fits = !state.pat || fitsIn({ w: size.w * 10, h: size.h * 10 }) || fitsIn({ w: size.w * 10, h: size.h * 10 }, 90);
+    if (!fits) b.classList.add("nofit");
+    b.innerHTML = `<b></b><span></span><em></em>`;
+    b.querySelector("b").textContent = h.id;
+    b.querySelector("span").textContent = `${size.w} × ${size.h} mm`;
+    b.querySelector("em").textContent = fits ? h.note : "Too small";
+    b.onclick = () => { state.hoopId = h.id; renderHoops(); fitView("hoop"); update(); };
+    box.append(b);
+  }
+  $("customBox").hidden = state.hoopId !== "Custom";
+}
+
+function renderThreads() {
+  const box = $("threads"); box.replaceChildren();
+  state.blocks.forEach((b, k) => {
+    const row = document.createElement("div");
+    row.className = "thread"; row.tabIndex = 0; row.setAttribute("role", "button");
+    row.setAttribute("aria-pressed", String(state.focus === k));
+    row.title = "Click to show this color on its own";
+    row.innerHTML = `<label class="swatch"><input type="color" aria-label="Thread color"></label><span class="num"></span><span class="name"></span><span class="count"></span>`;
+    const sw = row.querySelector(".swatch"), input = row.querySelector("input");
+    sw.style.backgroundColor = b.thread.color; input.value = toHex(b.thread.color);
+    input.oninput = () => { b.thread.color = input.value; sw.style.backgroundColor = input.value; requestDraw(); };
+    input.onclick = (e) => e.stopPropagation();
+    sw.onclick = (e) => e.stopPropagation();
+    row.querySelector(".num").textContent = k + 1;
+    const name = row.querySelector(".name"); name.textContent = b.thread.name;
+    if (b.thread.code) { const sm = document.createElement("small"); sm.textContent = b.thread.code; name.append(sm); }
+    row.querySelector(".count").textContent = b.stitches.toLocaleString();
+    const toggle = () => { state.focus = state.focus === k ? -1 : k; renderThreads(); requestDraw(); };
+    row.onclick = toggle;
+    row.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+    box.append(row);
+  });
+  const fmt = state.pat && state.pat.format;
+  const note = $("threadNote");
+  note.hidden = !(fmt === "DST" || fmt === "EXP");
+  note.textContent = `${fmt} files don't store thread colors, so these are placeholders. Click a swatch to set the real ones.`;
+}
+function toHex(c) {
+  if (c.startsWith("#")) return c.length === 7 ? c : "#000000";
+  const m = c.match(/\d+/g); return "#" + m.slice(0, 3).map((v) => (+v).toString(16).padStart(2, "0")).join("");
+}
+
+function renderStats() {
+  const pat = state.pat; if (!pat) return;
+  let st = 0, jumps = 0, trims = 0;
+  for (const c of pat.cmds) { if (c === CMD.STITCH) st++; else if (c === CMD.JUMP) jumps++; else if (c === CMD.TRIM) trims++; }
+  const spm = +$("spm").value;
+  const changes = Math.max(0, state.blocks.length - 1);
+  const minutes = st / spm;
+  const rows = [
+    ["Size", `${mm(state.dw)} × ${mm(state.dh)} mm`],
+    ["Stitches", st.toLocaleString()],
+    ["Colors", `${state.blocks.length}`],
+    ["Jumps", jumps.toLocaleString() + (trims ? ` · ${trims} trims` : "")],
+    ["Sewing time", `≈ ${minutes < 1 ? "<1" : Math.round(minutes)} min` + (changes ? ` + ${changes} thread change${changes > 1 ? "s" : ""}` : "")],
+    ["Format", pat.format],
+  ];
+  const dl = $("stats"); dl.replaceChildren();
+  for (const [k, v] of rows) { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); }
+}
+
+function update() {
+  const hoop = hoopSize(), pat = state.pat;
+  const fit = $("fit");
+  if (!pat) return;
+  const m = margins(hoop);
+  const minM = Math.min(m.left, m.right, m.top, m.bottom);
+  const d = designSize();
+  fit.className = "fit " + (minM >= 0 ? "ok" : "bad");
+  if (minM >= 0) {
+    $("fitTitle").textContent = `Fits the ${state.hoopId === "Custom" ? "custom hoop" : state.hoopId}`;
+    $("fitDetail").textContent = `${mm(d.w)} × ${mm(d.h)} mm, closest edge ${mm(minM)} mm away.`;
+  } else if (d.w > hoop.w || d.h > hoop.h) {
+    const rotFits = fitsIn(hoop, state.rot + 90);
+    const over = [d.w > hoop.w ? `${mm(d.w - hoop.w)} mm too wide` : "", d.h > hoop.h ? `${mm(d.h - hoop.h)} mm too tall` : ""].filter(Boolean).join(", ");
+    $("fitTitle").textContent = "Doesn't fit this hoop";
+    $("fitDetail").textContent = `${over}.` + (rotFits ? " Rotate it 90° and it fits." : " Pick a bigger hoop.");
+  } else {
+    const side = Object.entries(m).sort((a, b) => a[1] - b[1])[0];
+    $("fitTitle").textContent = "Off the sewing area";
+    $("fitDetail").textContent = `Sticks out ${mm(-side[1])} mm on the ${side[0]}. Move it back or press Center.`;
+  }
+  const deg = state.rot === 0 ? "0°" : state.rot + "°";
+  $("posReadout").textContent = `Rotation ${deg}${state.mirror ? ", mirrored" : ""} · offset X ${fmtSigned(state.off.x)} Y ${fmtSigned(-state.off.y)} mm`;
+  requestDraw();
+}
+const fmtSigned = (u) => (u > 0 ? "+" : u < 0 ? "−" : "") + Math.abs(u / 10).toFixed(1);
+
+// ---------- stitch-out playback ----------
+function syncProgress() {
+  const total = state.pat ? state.pat.xs.length : 1;
+  const r = $("progress"); r.max = total; r.value = state.n;
+  let k = state.blocks.findIndex((b) => state.n <= b.end);
+  if (k < 0) k = state.blocks.length - 1;
+  $("progressReadout").textContent = state.n >= total
+    ? `All ${total.toLocaleString()} stitches`
+    : `${state.n.toLocaleString()} / ${total.toLocaleString()} · thread ${k + 1}`;
+  $("playBtn").textContent = state.playing ? "Pause" : state.n >= total ? "Replay" : "Play";
+}
+let lastT = 0, acc = 0;
+function tick(t) {
+  if (!state.playing) return;
+  const dt = Math.min(0.1, (t - lastT) / 1000); lastT = t;
+  acc += dt * (+$("spm").value / 60) * +$("playRate").value;
+  const step = Math.floor(acc); acc -= step;
+  state.n = Math.min(state.pat.xs.length, state.n + step);
+  if (state.n >= state.pat.xs.length) state.playing = false;
+  syncProgress(); requestDraw();
+  if (state.playing) requestAnimationFrame(tick);
+}
+function startPlay() {
+  if (!state.pat) return;
+  if (state.n >= state.pat.xs.length) state.n = 0;
+  state.playing = true; acc = 0; lastT = performance.now(); syncProgress(); requestAnimationFrame(tick);
+}
+function stopPlay() { state.playing = false; syncProgress(); }
+
+// ---------- interaction ----------
+let dragging = null;
+function toWorld(e) {
+  const r = canvas.getBoundingClientRect(), v = state.view;
+  return { x: (e.clientX - r.left - r.width / 2 - v.px) / v.s, y: (e.clientY - r.top - r.height / 2 - v.py) / v.s };
+}
+function overDesign(w) {
+  if (!state.pat) return false;
+  const d = designSize();
+  return Math.abs(w.x - state.off.x) <= d.w / 2 + 20 && Math.abs(w.y - state.off.y) <= d.h / 2 + 20;
+}
+canvas.addEventListener("pointerdown", (e) => {
+  canvas.focus();
+  const w = toWorld(e);
+  canvas.setPointerCapture(e.pointerId);
+  dragging = overDesign(w)
+    ? { mode: "move", sx: w.x, sy: w.y, ox: state.off.x, oy: state.off.y }
+    : { mode: "pan", sx: e.clientX, sy: e.clientY, px: state.view.px, py: state.view.py };
+  canvas.classList.add("dragging");
+});
+canvas.addEventListener("pointermove", (e) => {
+  if (!dragging) { canvas.classList.toggle("over-design", overDesign(toWorld(e))); return; }
+  if (dragging.mode === "move") {
+    const w = toWorld(e);
+    state.off.x = Math.round((dragging.ox + w.x - dragging.sx) / 5) * 5; // 0.5 mm steps
+    state.off.y = Math.round((dragging.oy + w.y - dragging.sy) / 5) * 5;
+    update();
+  } else {
+    state.view.px = dragging.px + e.clientX - dragging.sx;
+    state.view.py = dragging.py + e.clientY - dragging.sy;
+    requestDraw();
+  }
+});
+const endDrag = () => { dragging = null; canvas.classList.remove("dragging"); requestDraw(); };
+canvas.addEventListener("pointerup", endDrag);
+canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect(), v = state.view;
+  const mx = e.clientX - r.left - r.width / 2, my = e.clientY - r.top - r.height / 2;
+  const f = Math.exp(-e.deltaY * 0.0015);
+  const s = Math.min(Math.max(v.s * f, 0.05), 40);
+  v.px = mx - ((mx - v.px) * s) / v.s; v.py = my - ((my - v.py) * s) / v.s; v.s = s;
+  requestDraw();
+}, { passive: false });
+canvas.addEventListener("dblclick", () => fitView("hoop"));
+canvas.addEventListener("keydown", (e) => {
+  const step = e.shiftKey ? 100 : 10;
+  const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (!d || !state.pat) return;
+  e.preventDefault(); state.off.x += d[0]; state.off.y += d[1]; update();
+});
+
+$("openBtn").onclick = () => $("fileInput").click();
+$("fileInput").onchange = (e) => { openFile(e.target.files[0]); e.target.value = ""; };
+let dragDepth = 0;
+window.addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; $("drop").hidden = false; });
+window.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("drop").hidden = true; } });
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("drop", (e) => { e.preventDefault(); dragDepth = 0; $("drop").hidden = true; openFile(e.dataTransfer.files[0]); });
+
+$("rotL").onclick = () => { state.rot = (state.rot + 270) % 360; update(); };
+$("rotR").onclick = () => { state.rot = (state.rot + 90) % 360; update(); };
+$("mirror").onclick = () => { state.mirror = !state.mirror; update(); };
+$("center").onclick = () => { state.off = { x: 0, y: 0 }; update(); };
+$("zoomFit").onclick = () => fitView("hoop");
+$("zoomDesign").onclick = () => fitView("design");
+for (const id of ["customW", "customH"]) {
+  $(id).value = state.custom[id === "customW" ? "w" : "h"];
+  $(id).oninput = () => {
+    const w = +$("customW").value, h = +$("customH").value;
+    if (w >= 20 && h >= 20) { state.custom = { w, h }; store.set("custom", state.custom); renderHoops(); update(); }
+  };
+}
+$("playBtn").onclick = () => (state.playing ? stopPlay() : startPlay());
+$("progress").oninput = (e) => { stopPlay(); state.n = +e.target.value; syncProgress(); requestDraw(); };
+$("spm").onchange = renderStats;
+
+function renderFabrics() {
+  const box = $("fabrics"); box.replaceChildren();
+  for (const [name, color] of FABRICS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "fabric"; b.style.background = color; b.title = name; b.setAttribute("aria-label", `${name} fabric`);
+    b.setAttribute("aria-pressed", String(state.fabric === color));
+    b.onclick = () => setFabric(color);
+    box.append(b);
+  }
+  const custom = document.createElement("label");
+  custom.className = "fabric-custom"; custom.title = "Other fabric color";
+  custom.innerHTML = `<input type="color" aria-label="Other fabric color">`;
+  const inp = custom.querySelector("input"); inp.value = toHex(state.fabric);
+  inp.oninput = () => setFabric(inp.value);
+  box.append(custom);
+}
+function setFabric(c) { state.fabric = c; store.set("fabric", c); renderFabrics(); requestDraw(); }
+for (const [id, key] of [["optReal", "real"], ["optGrid", "grid"], ["optJumps", "jumps"]]) {
+  $(id).checked = state[key];
+  $(id).onchange = (e) => { state[key] = e.target.checked; store.set(key, state[key]); requestDraw(); };
+}
+
+new ResizeObserver(() => fitView("hoop")).observe(canvas);
+renderFabrics();
+renderHoops();
+const bin = atob(SAMPLE.b64), bytes = new Uint8Array(bin.length);
+for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+// The desktop launcher passes a file as ?file=/abs/path (needs --allow-file-access-from-files).
+const launchPath = new URLSearchParams(location.search).get("file");
+if (launchPath) {
+  const name = launchPath.split("/").pop();
+  fetch("file://" + launchPath.split("/").map(encodeURIComponent).join("/"))
+    .then((r) => r.arrayBuffer())
+    .then((buf) => load(name, buf))
+    .catch(() => { load(SAMPLE.name, bytes.buffer, true); showError(`Couldn't read ${launchPath}. Use Open file instead.`); });
+} else {
+  load(SAMPLE.name, bytes.buffer, true);
+}
+if (document.fonts) document.fonts.ready.then(requestDraw);
+</script>
+
+</body>
+</html>
