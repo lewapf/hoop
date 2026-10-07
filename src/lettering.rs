@@ -36,6 +36,15 @@ impl FillKind {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PatchShape {
+    None,
+    Rect,
+    Rounded,
+    Oval,
+    Circle,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Align {
     Left,
     Center,
@@ -71,6 +80,13 @@ pub struct Settings {
     /// Italic slant in degrees.
     pub slant_deg: f32,
     pub align: Align,
+    /// A background shape behind the text, for badges and name patches.
+    pub patch: PatchShape,
+    pub patch_pad_mm: f32,
+    pub patch_fill: FillKind,
+    pub patch_border_mm: f32,
+    pub patch_thread: i32,
+    pub patch_border_thread: i32,
     pub underlay: bool,
     pub edge: EdgeKind,
     pub edge_width_mm: f32,
@@ -98,6 +114,12 @@ impl Default for Settings {
             pull_mm: 0.2,
             slant_deg: 0.0,
             align: Align::Center,
+            patch: PatchShape::None,
+            patch_pad_mm: 5.0,
+            patch_fill: FillKind::Tatami,
+            patch_border_mm: 3.0,
+            patch_thread: 2,
+            patch_border_thread: 30,
             underlay: true,
             edge: EdgeKind::Satin,
             edge_width_mm: 1.6,
@@ -835,21 +857,54 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             fill_glyph(st, g, s.fill, s.fill_angle + 90.0, s);
         }
     };
-    let two_threads = s.fill != FillKind::None && s.edge != EdgeKind::None && s.fill_thread != s.edge_thread;
-    let mut threads = vec![formats::jef_thread(if s.fill == FillKind::None { s.edge_thread } else { s.fill_thread }, 0)];
-    if two_threads {
+    // Thread changes happen only when the thread really changes.
+    let mut threads: Vec<crate::formats::Thread> = Vec::new();
+    let mut current: Option<i32> = None;
+    let mut use_thread = |st: &mut Stitcher, t: i32| {
+        if current != Some(t) {
+            if current.is_some() {
+                st.color_change();
+            }
+            threads.push(formats::jef_thread(t, threads.len()));
+            current = Some(t);
+        }
+    };
+
+    let patch = patch_outline(&glyphs, s);
+    if let Some(outline) = &patch {
+        if s.patch_fill != FillKind::None {
+            use_thread(&mut st, s.patch_thread);
+            let mask: Vec<Contour> = glyphs.iter().flatten().cloned().collect();
+            run_contour(&mut st, outline, 25.0, false);
+            let bg = Settings { density_mm: s.patch_fill.default_rows_mm(), underlay: false, ..s.clone() };
+            fill_shape(&mut st, std::slice::from_ref(outline), false, &mask, s.patch_fill, s.fill_angle + 90.0, &bg);
+        }
+    }
+
+    let text_fill = s.fill != FillKind::None;
+    let text_edge = s.edge != EdgeKind::None;
+    if text_fill && text_edge && s.fill_thread != s.edge_thread {
+        use_thread(&mut st, s.fill_thread);
         for g in &glyphs {
             fill(&mut st, g);
         }
-        st.color_change();
-        threads.push(formats::jef_thread(s.edge_thread, 1));
+        use_thread(&mut st, s.edge_thread);
         for g in &glyphs {
             edge(&mut st, g);
         }
-    } else {
+    } else if text_fill || text_edge {
+        use_thread(&mut st, if text_fill { s.fill_thread } else { s.edge_thread });
         for g in &glyphs {
             fill(&mut st, g);
             edge(&mut st, g);
+        }
+    }
+
+    // The border goes on last so it covers the edge of the background fill.
+    if let Some(outline) = &patch {
+        if s.patch_border_mm > 0.0 {
+            use_thread(&mut st, s.patch_border_thread);
+            satin_contour(&mut st, outline, s.patch_border_mm * 10.0);
         }
     }
     st.finish();
@@ -857,6 +912,48 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
         return Err("Pick a fill or an edge so there is something to stitch.".into());
     }
     Ok(Pattern { format: Format::Lettering, points: st.points, cmds: st.cmds, threads })
+}
+
+/// The patch shape around the laid-out text, if one is chosen.
+fn patch_outline(glyphs: &[Vec<Contour>], s: &Settings) -> Option<Contour> {
+    if s.patch == PatchShape::None {
+        return None;
+    }
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for p in glyphs.iter().flatten().flatten() {
+        b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
+    }
+    let pad = s.patch_pad_mm * 10.0;
+    let (cx, cy) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
+    let (hw, hh) = ((b.2 - b.0) / 2.0, (b.3 - b.1) / 2.0);
+    let ellipse = |a: f32, bb: f32| -> Contour {
+        (0..96).map(|i| {
+            let t = i as f32 / 96.0 * std::f32::consts::TAU;
+            (cx + a * t.cos(), cy + bb * t.sin())
+        }).collect()
+    };
+    Some(match s.patch {
+        PatchShape::None => return None,
+        PatchShape::Rect | PatchShape::Rounded => {
+            let (w, h) = (hw + pad, hh + pad);
+            let r = if s.patch == PatchShape::Rounded { (pad * 1.6).min(w).min(h) } else { 0.0 };
+            let mut c = Vec::new();
+            for (qx, qy, start) in [(w - r, -h + r, -90.0f32), (w - r, h - r, 0.0), (-w + r, h - r, 90.0), (-w + r, -h + r, 180.0)] {
+                for i in 0..=12 {
+                    let t = (start + i as f32 * 7.5).to_radians();
+                    c.push((cx + qx + r * t.cos(), cy + qy + r * t.sin()));
+                }
+            }
+            c.dedup_by(|a, b| dist(*a, *b) < 0.5);
+            c
+        }
+        // An ellipse with the text box's proportions that passes outside its corners.
+        PatchShape::Oval => ellipse(hw * std::f32::consts::SQRT_2 + pad, hh * std::f32::consts::SQRT_2 + pad),
+        PatchShape::Circle => {
+            let r = (hw * hw + hh * hh).sqrt() + pad;
+            ellipse(r, r)
+        }
+    })
 }
 
 #[cfg(test)]
@@ -914,6 +1011,21 @@ mod tests {
     }
 
     #[test]
+    fn patch_adds_background_and_border_threads_around_the_text() {
+        let font = &bundled_fonts()[1];
+        let s = Settings { text: "AB".into(), patch: PatchShape::Rounded, ..Default::default() };
+        let p = generate(font, &s).unwrap();
+        // background, text fill, text edge, border
+        assert_eq!(p.blocks().len(), 4);
+        let plain = generate(font, &Settings { patch: PatchShape::None, ..s.clone() }).unwrap().bounds();
+        let b = p.bounds();
+        assert!(b.2 - b.0 > plain.2 - plain.0 + 2.0 * 50.0, "patch is wider than text plus padding");
+        // A border in the same thread as the edge doesn't add a change.
+        let same = Settings { patch_border_thread: s.edge_thread, patch_fill: FillKind::None, ..s.clone() };
+        assert_eq!(generate(font, &same).unwrap().blocks().len(), 2);
+    }
+
+    #[test]
     fn empty_text_is_reported() {
         let s = Settings { text: "  ".into(), ..Default::default() };
         assert!(generate(&bundled_fonts()[0], &s).is_err());
@@ -939,14 +1051,13 @@ mod samples {
     fn write_samples() {
         let Some(out) = std::env::var_os("HOOP_OUT") else { return };
         let fonts = bundled_fonts();
-        let base = Settings { text: "HOOP".into(), height_mm: 45.0, spacing_mm: 1.5, ..Default::default() };
-        let cases: Vec<(String, usize, Settings)> = [FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient]
-            .into_iter()
-            .map(|fill| (format!("{fill:?}").to_lowercase(), 1, Settings { fill, density_mm: fill.default_rows_mm(), fill_angle: 0.0, ..base.clone() }))
-            .collect();
+        let cases: Vec<(String, usize, Settings)> = vec![
+            ("patch_round".into(), 1, Settings { text: "BREMEN".into(), height_mm: 18.0, spacing_mm: 1.0, patch: PatchShape::Rounded, fill_thread: 2, edge: EdgeKind::None, patch_thread: 12, ..Default::default() }),
+            ("patch_circle".into(), 5, Settings { text: "Hoop".into(), height_mm: 22.0, patch: PatchShape::Circle, patch_fill: FillKind::Open, arc_deg: 0.0, ..Default::default() }),
+        ];
         for (name, font, s) in cases {
             let p = generate(&fonts[font], &s).unwrap();
-            let threads: Vec<i32> = (0..p.blocks().len()).map(|i| if i == 0 { s.fill_thread } else { s.edge_thread }).collect();
+            let threads: Vec<i32> = p.threads.iter().map(|t| formats::nearest_jef(t.color)).collect();
             let b = p.bounds();
             let pts: Vec<Pt> = p.points.iter().map(|&(x, y)| (x - (b.0 + b.2) / 2.0, y - (b.1 + b.3) / 2.0)).collect();
             std::fs::write(std::path::Path::new(&out).join(format!("{name}.jef")), formats::write_jef(&pts, &p.cmds, &threads)).unwrap();

@@ -40,6 +40,7 @@ you pick that file in the save dialog yourself.
 | `V` / `L` / `A`         | Viewer / lettering / artwork               |
 | `Ctrl+S`                | Save as JEF                                |
 | `Ctrl+V`                | Paste SVG code as artwork                  |
+| `Ctrl+Shift+S`          | Save a picture of the preview              |
 | `Space`                 | Play or pause the stitch-out               |
 | `Home` / `End`          | Back to the first stitch / show everything |
 | `[` / `]`               | Previous / next thread                     |
@@ -71,6 +72,9 @@ files. DST and EXP files don't store colors, so Hoop shows placeholders you can
 change by clicking a swatch.
 
 ## Lettering tips
+
+- The Patch card puts a box, rounded box, oval or circle behind the text with
+  a satin border, for badges and name patches.
 
 - Satin fill suits strokes up to about 8 mm wide; use tatami for bolder letters.
 - Keep text at least 8–10 mm tall for clean small letters, and use a running

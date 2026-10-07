@@ -7,7 +7,7 @@ use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings};
-use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, Settings};
+use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
 use crate::prefs::Prefs;
 use crate::theme::Theme;
 
@@ -23,6 +23,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("O", "Open a file"),
     ("V / L / A", "Viewer / lettering / artwork"),
     ("Ctrl+S", "Save as JEF"),
+    ("Ctrl+Shift+S", "Save a picture of the preview"),
     ("Ctrl+V", "Paste SVG code as artwork"),
     ("Space", "Play or pause the stitch-out"),
     ("Home / End", "Back to the first stitch / show everything"),
@@ -58,6 +59,15 @@ enum Mode {
     Viewer,
     Lettering,
     Artwork,
+}
+
+/// Saving a picture of the canvas takes a frame drawn without overlays,
+/// then a screenshot of it.
+#[derive(Clone, Copy, PartialEq)]
+enum Capture {
+    Idle,
+    Requested,
+    Waiting(egui::Rect, std::time::Instant),
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -134,7 +144,9 @@ pub struct HoopApp {
     fonts: Vec<FontSource>,
     font_scan: Option<Receiver<Vec<FontSource>>>,
     font_filter: String,
-    saver: Option<(Receiver<Option<PathBuf>>, Vec<u8>)>,
+    /// A save dialog in progress: its answer, the bytes, and the extension.
+    saver: Option<(Receiver<Option<PathBuf>>, Vec<u8>, &'static str)>,
+    capture: Capture,
     status: Option<(String, std::time::Instant)>,
     prefs: Prefs,
     /// Font name from the last session, waiting for the font list to load.
@@ -188,6 +200,7 @@ impl HoopApp {
             font_scan: None,
             font_filter: String::new(),
             saver: None,
+            capture: Capture::Idle,
             status: None,
             prefs: Prefs::load(),
             want_font: None,
@@ -427,6 +440,9 @@ impl HoopApp {
         }
         if press(Modifiers::NONE, Key::O) || press(Modifiers::COMMAND, Key::O) {
             self.pick_file();
+        }
+        if press(Modifiers::COMMAND | Modifiers::SHIFT, Key::S) {
+            self.save_picture();
         }
         if press(Modifiers::COMMAND, Key::S) {
             self.save_jef();
@@ -829,6 +845,9 @@ impl HoopApp {
             ui.checkbox(&mut self.grid, "Template grid, 10 mm  G");
             ui.checkbox(&mut self.jumps, "Jump stitches  J");
             ui.checkbox(&mut self.sizes, "Size label under the design");
+            if ui.add_enabled(self.design.is_some(), egui::Button::new("Save picture…")).on_hover_text("A PNG of the hoop preview, to share · Ctrl+Shift+S").clicked() {
+                self.save_picture();
+            }
         });
         ui.label(RichText::new("Press ? for every shortcut.").size(12.0).color(muted));
         ui.add_space(14.0);
@@ -942,6 +961,12 @@ impl HoopApp {
             );
         }
 
+        if self.capture == Capture::Requested {
+            // This frame has no overlays; grab it once it is on screen.
+            self.capture = Capture::Waiting(rect, std::time::Instant::now());
+            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
+            return;
+        }
         if let Some((text, at)) = &self.status {
             let age = at.elapsed().as_secs_f32();
             if age < 4.0 {
@@ -1150,6 +1175,32 @@ impl HoopApp {
         });
         fill_card(ui, s, muted, accent, true);
         edge_card(ui, s, accent, "Edge", true);
+        card(ui, "Patch", accent, |ui| {
+            ui.label(RichText::new("A background shape for badges and name patches").size(12.0).color(muted));
+            segmented(
+                ui,
+                &mut s.patch,
+                &[(PatchShape::None, "Off"), (PatchShape::Rect, "Box"), (PatchShape::Rounded, "Round"), (PatchShape::Oval, "Oval"), (PatchShape::Circle, "Circle")],
+                accent,
+            );
+            if s.patch != PatchShape::None {
+                ui.add_space(4.0);
+                slider_row(ui, "Padding", &mut s.patch_pad_mm, 1.0..=25.0, " mm", 1).on_hover_text("Space between the text and the patch edge");
+                slider_row(ui, "Border", &mut s.patch_border_mm, 0.0..=6.0, " mm", 1).on_hover_text("Satin border width; 0 for none");
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Background").color(muted));
+                    for (k, name) in [(FillKind::Tatami, "Filled"), (FillKind::Open, "Light"), (FillKind::None, "Fabric")] {
+                        ui.selectable_value(&mut s.patch_fill, k, name);
+                    }
+                });
+                if s.patch_fill != FillKind::None {
+                    jef_picker_labeled(ui, "patch-bg", "Fill", &mut s.patch_thread);
+                }
+                if s.patch_border_mm > 0.0 {
+                    jef_picker_labeled(ui, "patch-border", "Border", &mut s.patch_border_thread);
+                }
+            }
+        });
         let w = ui.available_width();
         ui.horizontal(|ui| {
             if ui.add(primary("Save as JEF…", accent).min_size(vec2(w - 88.0, 32.0))).on_hover_text("Ctrl+S").clicked() {
@@ -1390,6 +1441,13 @@ impl HoopApp {
             .map(|b| palette.iter().find(|(_, t)| *t == b.thread).map_or_else(|| formats::nearest_jef(b.thread.color), |(i, _)| *i))
             .collect();
         let bytes = formats::write_jef(&points, &d.pattern.cmds, &threads);
+        let name = format!("{}.jef", self.design_stem());
+        self.ask_save("Save as JEF", name, "Janome JEF", "jef", bytes);
+    }
+
+    /// A file name for the shown design, without extension.
+    fn design_stem(&self) -> String {
+        let Some(d) = &self.design else { return "design".into() };
         let stem: String = match self.mode {
             Mode::Lettering => d.name.chars().filter(|c| c.is_alphanumeric() || *c == ' ').take(24).collect::<String>().trim().replace(' ', "_"),
             Mode::Artwork => d.name.rsplit_once('.').map_or(d.name.as_str(), |(s, _)| s).to_string(),
@@ -1398,7 +1456,13 @@ impl HoopApp {
                 if d.pattern.format == formats::Format::Jef { format!("{stem}-hoop") } else { stem }
             }
         };
-        let name = format!("{}.jef", if stem.is_empty() { "lettering" } else { &stem });
+        if stem.is_empty() { "lettering".into() } else { stem }
+    }
+
+    fn ask_save(&mut self, title: &'static str, name: String, filter: &'static str, ext: &'static str, bytes: Vec<u8>) {
+        if self.saver.is_some() {
+            return;
+        }
         let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
         let dir = [home.join("Documents/Embroidery Designs"), home.join("Documents"), home]
             .into_iter()
@@ -1407,21 +1471,54 @@ impl HoopApp {
         let (tx, rx) = channel();
         let ctx = self.ctx.clone();
         std::thread::spawn(move || {
-            let file = rfd::FileDialog::new()
-                .set_title("Save as JEF")
-                .set_directory(dir)
-                .set_file_name(name)
-                .add_filter("Janome JEF", &["jef"])
-                .save_file();
+            let file = rfd::FileDialog::new().set_title(title).set_directory(dir).set_file_name(name).add_filter(filter, &[ext]).save_file();
             let _ = tx.send(file);
             ctx.request_repaint();
         });
-        self.saver = Some((rx, bytes));
+        self.saver = Some((rx, bytes, ext));
     }
 
-    fn write_file(&mut self, mut path: PathBuf, bytes: &[u8]) {
-        if !path.extension().is_some_and(|e| e.eq_ignore_ascii_case("jef")) {
-            path.set_extension("jef");
+    fn save_picture(&mut self) {
+        if self.design.is_some() && self.capture == Capture::Idle && self.saver.is_none() {
+            self.capture = Capture::Requested;
+            self.ctx.request_repaint();
+        }
+    }
+
+    /// Crops the screenshot to the canvas and asks where to save it as PNG.
+    fn finish_picture(&mut self, image: &egui::ColorImage, rect: egui::Rect, ppp: f32) {
+        let [iw, ih] = image.size;
+        let x0 = ((rect.min.x * ppp).round() as usize).min(iw);
+        let y0 = ((rect.min.y * ppp).round() as usize).min(ih);
+        let x1 = ((rect.max.x * ppp).round() as usize).min(iw);
+        let y1 = ((rect.max.y * ppp).round() as usize).min(ih);
+        let (w, h) = (x1.saturating_sub(x0), y1.saturating_sub(y0));
+        if w == 0 || h == 0 {
+            return;
+        }
+        let mut rgba = Vec::with_capacity(w * h * 4);
+        for y in y0..y1 {
+            for p in &image.pixels[y * iw + x0..y * iw + x1] {
+                rgba.extend_from_slice(&[p.r(), p.g(), p.b(), 255]);
+            }
+        }
+        let mut png_bytes = Vec::new();
+        let mut enc = png::Encoder::new(&mut png_bytes, w as u32, h as u32);
+        enc.set_color(png::ColorType::Rgba);
+        enc.set_depth(png::BitDepth::Eight);
+        let written = enc.write_header().and_then(|mut wr| wr.write_image_data(&rgba));
+        match written {
+            Ok(()) => {
+                let name = format!("{}.png", self.design_stem());
+                self.ask_save("Save picture", name, "PNG picture", "png", png_bytes);
+            }
+            Err(e) => self.error = Some(format!("Couldn't make the picture: {e}.")),
+        }
+    }
+
+    fn write_file(&mut self, mut path: PathBuf, bytes: &[u8], ext: &str) {
+        if !path.extension().is_some_and(|e| e.eq_ignore_ascii_case(ext)) {
+            path.set_extension(ext);
         }
         // Write beside the target and rename, so a failed save never leaves half a file.
         let tmp = path.with_file_name(format!(".{}.tmp", path.file_name().unwrap_or_default().to_string_lossy()));
@@ -1524,12 +1621,33 @@ impl eframe::App for HoopApp {
                 self.resolve_font();
             }
         }
-        if let Some((rx, _)) = &self.saver {
+        if let Capture::Waiting(_, since) = self.capture {
+            if since.elapsed().as_secs() >= 3 {
+                self.capture = Capture::Idle;
+                self.error = Some("The picture couldn't be taken. Try again.".into());
+            } else {
+                ctx.request_repaint_after(std::time::Duration::from_millis(100));
+            }
+        }
+        if let Capture::Waiting(rect, _) = self.capture {
+            let shot = ctx.input(|i| {
+                i.raw.events.iter().find_map(|e| match e {
+                    egui::Event::Screenshot { image, .. } => Some(image.clone()),
+                    _ => None,
+                })
+            });
+            if let Some(image) = shot {
+                self.capture = Capture::Idle;
+                let ppp = ctx.pixels_per_point();
+                self.finish_picture(&image, rect, ppp);
+            }
+        }
+        if let Some((rx, _, _)) = &self.saver {
             match rx.try_recv() {
                 Ok(target) => {
-                    let (_, bytes) = self.saver.take().unwrap();
+                    let (_, bytes, ext) = self.saver.take().unwrap();
                     if let Some(path) = target {
-                        self.write_file(path, &bytes);
+                        self.write_file(path, &bytes, ext);
                     }
                 }
                 Err(std::sync::mpsc::TryRecvError::Empty) => {}
@@ -1788,12 +1906,16 @@ fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
 
 /// The chosen Janome thread as a full-width button that opens the chart.
 fn jef_picker(ui: &mut egui::Ui, id: &str, value: &mut i32) {
+    jef_picker_labeled(ui, id, "Thread", value);
+}
+
+fn jef_picker_labeled(ui: &mut egui::Ui, id: &str, label: &str, value: &mut i32) {
     let current = formats::jef_thread(*value, 0);
     let row = vec2(ui.available_width(), 26.0);
     ui.allocate_ui_with_layout(row, egui::Layout::left_to_right(egui::Align::Center), |ui| {
         ui.allocate_ui_with_layout(vec2(62.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
             ui.set_min_width(62.0);
-            ui.label("Thread");
+            ui.label(label);
         });
         let (r, _) = ui.allocate_exact_size(vec2(20.0, 20.0), Sense::hover());
         ui.painter().circle(r.center(), 9.0, rgb(current.color), egui::Stroke::new(1.0, Color32::from_black_alpha(90)));

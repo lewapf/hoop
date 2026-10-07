@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::lettering::{Align, EdgeKind, FillKind, Settings};
+use crate::lettering::{Align, EdgeKind, FillKind, PatchShape, Settings};
 
 pub struct Prefs {
     file: PathBuf,
@@ -78,6 +78,7 @@ impl Prefs {
             ("height", s.height_mm), ("spacing", s.spacing_mm), ("lines", s.line_spacing), ("arc", s.arc_deg),
             ("angle", s.fill_angle), ("rows", s.density_mm), ("stitch", s.stitch_mm), ("swing", s.wave_amp_mm),
             ("wave", s.wave_len_mm), ("fade", s.fade_mm), ("pull", s.pull_mm), ("slant", s.slant_deg), ("edge_width", s.edge_width_mm),
+            ("patch_pad", s.patch_pad_mm), ("patch_border", s.patch_border_mm),
         ] {
             self.set(&format!("letter.{k}"), v);
         }
@@ -87,6 +88,10 @@ impl Prefs {
         self.set("letter.underlay", s.underlay);
         self.set("letter.fill_thread", s.fill_thread);
         self.set("letter.edge_thread", s.edge_thread);
+        self.set("letter.patch", format!("{:?}", s.patch));
+        self.set("letter.patch_fill", format!("{:?}", s.patch_fill));
+        self.set("letter.patch_thread", s.patch_thread);
+        self.set("letter.patch_border_thread", s.patch_border_thread);
     }
 
     /// Lettering settings from the last session; the font is looked up by
@@ -114,6 +119,24 @@ impl Prefs {
         f("pull", &mut s.pull_mm);
         f("slant", &mut s.slant_deg);
         f("edge_width", &mut s.edge_width_mm);
+        f("patch_pad", &mut s.patch_pad_mm);
+        f("patch_border", &mut s.patch_border_mm);
+        s.patch = match self.get("letter.patch") {
+            Some("Rect") => PatchShape::Rect,
+            Some("Rounded") => PatchShape::Rounded,
+            Some("Oval") => PatchShape::Oval,
+            Some("Circle") => PatchShape::Circle,
+            _ => PatchShape::None,
+        };
+        if let Some(v) = self.get("letter.patch_fill").and_then(fill_kind) {
+            s.patch_fill = v;
+        }
+        if let Some(v) = self.num("letter.patch_thread") {
+            s.patch_thread = v;
+        }
+        if let Some(v) = self.num("letter.patch_border_thread") {
+            s.patch_border_thread = v;
+        }
         if let Some(v) = self.get("letter.fill").and_then(fill_kind) {
             s.fill = v;
         }
