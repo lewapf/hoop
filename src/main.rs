@@ -6,6 +6,7 @@ mod hoops;
 mod lettering;
 mod prefs;
 mod theme;
+mod usb;
 
 fn main() -> eframe::Result {
     let file = std::env::args_os().nth(1).map(std::path::PathBuf::from);

@@ -9,6 +9,7 @@ use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
 use crate::prefs::Prefs;
+use crate::usb;
 use crate::theme::Theme;
 
 const FABRICS: [(&str, [u8; 3]); 8] = [
@@ -23,6 +24,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("O", "Open a file"),
     ("V / L / A", "Viewer / lettering / artwork"),
     ("Ctrl+S", "Save as JEF"),
+    ("Ctrl+U", "Send to the USB stick for the machine"),
     ("Ctrl+Shift+S", "Save a picture of the preview"),
     ("Ctrl+V", "Paste SVG code as artwork"),
     ("Space", "Play or pause the stitch-out"),
@@ -41,6 +43,19 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("?", "Show these shortcuts"),
     ("Q", "Quit"),
 ];
+
+#[derive(Default)]
+struct UsbState {
+    open: bool,
+    drives: Vec<usb::Drive>,
+    chosen: usize,
+    name: String,
+    /// A send or eject running in the background, and what it reports.
+    job: Option<Receiver<Result<String, String>>>,
+    /// The drive last written to, offered for ejecting.
+    sent_to: Option<usb::Drive>,
+    message: Option<Result<String, String>>,
+}
 
 /// A finished part fixed on the hoop, in hoop coordinates (0.1 mm, hoop
 /// center at the origin), with rotation and position already applied.
@@ -158,6 +173,7 @@ pub struct HoopApp {
     saver: Option<(Receiver<Option<PathBuf>>, Vec<u8>, &'static str)>,
     capture: Capture,
     pinned: Vec<Pinned>,
+    usb: UsbState,
     status: Option<(String, std::time::Instant)>,
     prefs: Prefs,
     /// Font name from the last session, waiting for the font list to load.
@@ -213,6 +229,7 @@ impl HoopApp {
             saver: None,
             capture: Capture::Idle,
             pinned: Vec::new(),
+            usb: UsbState::default(),
             status: None,
             prefs: Prefs::load(),
             want_font: None,
@@ -462,6 +479,9 @@ impl HoopApp {
         if press(Modifiers::COMMAND | Modifiers::SHIFT, Key::S) {
             self.save_picture();
         }
+        if press(Modifiers::COMMAND, Key::U) {
+            self.open_usb();
+        }
         if press(Modifiers::COMMAND, Key::S) {
             self.save_jef();
         }
@@ -606,6 +626,12 @@ impl HoopApp {
                         self.save_jef();
                     }
                 });
+                if ui.add_enabled(self.design.is_some() || !self.pinned.is_empty(), egui::Button::new("Send to USB…").min_size(vec2(ui.available_width(), 28.0)))
+                    .on_hover_text("Write the JEF straight to the machine's USB stick · Ctrl+U")
+                    .clicked()
+                {
+                    self.open_usb();
+                }
             });
         }
         if let Some(e) = &self.error {
@@ -1295,6 +1321,13 @@ impl HoopApp {
                 self.letter = Settings { font, ..Default::default() };
             }
         });
+        ui.add_space(4.0);
+        if ui.add_enabled(self.design.is_some() || !self.pinned.is_empty(), egui::Button::new("Send to USB…").min_size(vec2(ui.available_width(), 28.0)))
+            .on_hover_text("Write the JEF straight to the machine's USB stick · Ctrl+U")
+            .clicked()
+        {
+            self.open_usb();
+        }
         ui.add_space(10.0);
     }
 
@@ -1387,6 +1420,12 @@ impl HoopApp {
                     self.save_jef();
                 }
             });
+            if ui.add_enabled(self.design.is_some() || !self.pinned.is_empty(), egui::Button::new("Send to USB…").min_size(vec2(ui.available_width(), 28.0)))
+                .on_hover_text("Write the JEF straight to the machine's USB stick · Ctrl+U")
+                .clicked()
+            {
+                self.open_usb();
+            }
             if self.paste_open {
                 ui.add_space(4.0);
                 egui::ScrollArea::vertical().id_salt("svg-text").max_height(220.0).show(ui, |ui| {
@@ -1570,14 +1609,17 @@ impl HoopApp {
     }
 
     fn save_jef(&mut self) {
+        let Some(bytes) = self.jef_bytes() else { return };
+        let name = if self.pinned.is_empty() { format!("{}.jef", self.design_stem()) } else { format!("{}-combined.jef", self.design_stem()) };
+        self.ask_save("Save as JEF", name, "Janome JEF", "jef", bytes);
+    }
+
+    /// The JEF for what's on the hoop: the design, or every pinned part with it.
+    fn jef_bytes(&self) -> Option<Vec<u8>> {
         if !self.pinned.is_empty() {
-            self.save_combined();
-            return;
+            return self.combined_bytes();
         }
-        let Some(d) = &self.design else { return };
-        if self.saver.is_some() {
-            return;
-        }
+        let d = self.design.as_ref()?;
         // Rotation and mirroring are baked in; the offset isn't, because the
         // machine positions designs from the hoop center itself.
         let at = Placement { dx: 0.0, dy: 0.0, ..self.setup.at };
@@ -1589,14 +1631,12 @@ impl HoopApp {
             .iter()
             .map(|b| palette.iter().find(|(_, t)| *t == b.thread).map_or_else(|| formats::nearest_jef(b.thread.color), |(i, _)| *i))
             .collect();
-        let bytes = formats::write_jef(&points, &d.pattern.cmds, &threads);
-        let name = format!("{}.jef", self.design_stem());
-        self.ask_save("Save as JEF", name, "Janome JEF", "jef", bytes);
+        Some(formats::write_jef(&points, &d.pattern.cmds, &threads))
     }
 
     /// Saves the pinned parts and the current design as one JEF, keeping their
     /// places relative to each other and centering the whole on the hoop.
-    fn save_combined(&mut self) {
+    fn combined_bytes(&self) -> Option<Vec<u8>> {
         let mut points: Vec<(f32, f32)> = Vec::new();
         let mut cmds: Vec<Cmd> = Vec::new();
         let mut threads: Vec<formats::Thread> = Vec::new();
@@ -1629,7 +1669,7 @@ impl HoopApp {
             points.extend(pts.into_iter().skip(1));
             cmds.extend(cs.into_iter().skip(1));
         }
-        let Some(b) = self.hoop_bounds() else { return };
+        let b = self.hoop_bounds()?;
         let (cx, cy) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
         let centered: Vec<(f32, f32)> = points.iter().map(|&(x, y)| (x - cx, y - cy)).collect();
         let palette: Vec<(i32, formats::Thread)> = formats::jef_palette().collect();
@@ -1637,9 +1677,112 @@ impl HoopApp {
             .iter()
             .map(|t| palette.iter().find(|(_, p)| p == t).map_or_else(|| formats::nearest_jef(t.color), |(i, _)| *i))
             .collect();
-        let bytes = formats::write_jef(&centered, &cmds, &numbers);
-        let name = format!("{}-combined.jef", self.design_stem());
-        self.ask_save("Save combined design as JEF", name, "Janome JEF", "jef", bytes);
+        Some(formats::write_jef(&centered, &cmds, &numbers))
+    }
+
+    fn open_usb(&mut self) {
+        if self.design.is_none() && self.pinned.is_empty() {
+            return;
+        }
+        self.usb.open = true;
+        self.usb.drives = usb::drives();
+        self.usb.chosen = 0;
+        self.usb.message = None;
+        self.usb.name = usb::short_name(&self.design_stem());
+    }
+
+    fn usb_window(&mut self, ctx: &egui::Context) {
+        if !self.usb.open {
+            return;
+        }
+        if let Some(rx) = &self.usb.job {
+            if let Ok(result) = rx.try_recv() {
+                self.usb.job = None;
+                if let Ok(msg) = &result {
+                    self.toast(msg.clone());
+                }
+                self.usb.message = Some(result);
+                self.usb.drives = usb::drives();
+            }
+        }
+        let accent = self.accent();
+        let muted = self.muted();
+        let mut open = true;
+        let mut send = false;
+        let mut eject = None;
+        egui::Window::new("Send to USB").open(&mut open).collapsible(false).resizable(false).anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO).show(ctx, |ui| {
+            ui.set_width(360.0);
+            let busy = self.usb.job.is_some();
+            if self.usb.drives.is_empty() {
+                ui.label("Plug in the USB stick for the machine.");
+                ui.label(RichText::new("Hoop looks for removable FAT, exFAT and NTFS drives.").size(12.0).color(muted));
+            } else {
+                for (i, d) in self.usb.drives.iter().enumerate() {
+                    let state = if d.mount.is_some() { "ready" } else { "will be opened" };
+                    ui.radio_value(&mut self.usb.chosen, i, format!("{} · {state}", d.title()));
+                }
+            }
+            ui.horizontal(|ui| {
+                ui.label("Name");
+                let r = ui.add(egui::TextEdit::singleline(&mut self.usb.name).desired_width(110.0).char_limit(8));
+                if r.changed() {
+                    self.usb.name = usb::short_name(&self.usb.name);
+                }
+                ui.label(RichText::new(".jef").monospace().color(muted));
+            });
+            ui.label(RichText::new("Saved into EMB/Embf, where the MC9900 looks for designs. Up to 8 letters shows best on the machine.").size(12.0).color(muted));
+            if let Some(msg) = &self.usb.message {
+                match msg {
+                    Ok(m) => ui.label(RichText::new(m).color(OK)),
+                    Err(e) => ui.label(RichText::new(e).color(BAD)),
+                };
+            }
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                let can_send = !busy && !self.usb.drives.is_empty();
+                if ui.add_enabled(can_send, primary(if busy { "Working…" } else { "Send" }, accent)).clicked() {
+                    send = true;
+                }
+                if ui.add_enabled(!busy, egui::Button::new("Look again")).clicked() {
+                    self.usb.drives = usb::drives();
+                    self.usb.chosen = 0;
+                }
+                if let Some(d) = &self.usb.sent_to {
+                    if ui.add_enabled(!busy, egui::Button::new("Eject")).on_hover_text("Close the drive so it can be pulled out safely").clicked() {
+                        eject = Some(d.clone());
+                    }
+                }
+            });
+        });
+        if !open {
+            self.usb.open = false;
+        }
+        if send {
+            if let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.jef_bytes()) {
+                let file = format!("{}.jef", usb::short_name(&self.usb.name));
+                let (tx, rx) = channel();
+                let ctx = ctx.clone();
+                self.usb.sent_to = Some(drive.clone());
+                std::thread::spawn(move || {
+                    let r = usb::send(&drive, &file, &bytes).map(|p| format!("Sent {} to {}", file, p.parent().map(|d| d.display().to_string()).unwrap_or_default()));
+                    let _ = tx.send(r);
+                    ctx.request_repaint();
+                });
+                self.usb.job = Some(rx);
+                self.usb.message = None;
+            }
+        }
+        if let Some(drive) = eject {
+            let (tx, rx) = channel();
+            let ctx = ctx.clone();
+            std::thread::spawn(move || {
+                let r = usb::eject(&drive).map(|_| format!("{} is ejected. You can pull it out.", drive.title()));
+                let _ = tx.send(r);
+                ctx.request_repaint();
+            });
+            self.usb.sent_to = None;
+            self.usb.job = Some(rx);
+        }
     }
 
     /// A file name for the shown design, without extension.
@@ -1877,6 +2020,7 @@ impl eframe::App for HoopApp {
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
         self.track_history(ctx, false);
         self.help_overlay(ctx);
+        self.usb_window(ctx);
     }
 }
 
