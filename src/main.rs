@@ -1,4 +1,5 @@
 mod app;
+mod artwork;
 mod canvas;
 mod formats;
 mod hoops;

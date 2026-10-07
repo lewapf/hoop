@@ -27,6 +27,7 @@ pub enum Format {
     Pes,
     Pec,
     Lettering,
+    Svg,
 }
 
 impl fmt::Display for Format {
@@ -38,6 +39,7 @@ impl fmt::Display for Format {
             Format::Pes => "PES",
             Format::Pec => "PEC",
             Format::Lettering => "Lettering",
+            Format::Svg => "SVG artwork",
         };
         f.write_str(s)
     }
@@ -345,7 +347,7 @@ pub fn read(name: &str, d: &[u8]) -> Result<Pattern, ReadError> {
         Format::Exp => read_exp(d)?,
         Format::Pes => read_pec(d, i32_le(d, 8)?.max(0) as usize, Format::Pes)?,
         Format::Pec => read_pec(d, 8, Format::Pec)?,
-        Format::Lettering => return Err(ReadError::UnknownFormat),
+        Format::Lettering | Format::Svg => return Err(ReadError::UnknownFormat),
     };
     if !pattern.cmds.contains(&Cmd::Stitch) {
         return Err(ReadError::Empty);

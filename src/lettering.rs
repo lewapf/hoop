@@ -8,8 +8,8 @@ use ttf_parser::OutlineBuilder;
 
 use crate::formats::{self, Cmd, Format, Pattern};
 
-type Pt = (f32, f32);
-type Contour = Vec<Pt>;
+pub type Pt = (f32, f32);
+pub type Contour = Vec<Pt>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FillKind {
@@ -218,13 +218,13 @@ impl ttf_parser::OutlineBuilder for Outline {
     }
 }
 
-fn dist(a: Pt, b: Pt) -> f32 {
+pub fn dist(a: Pt, b: Pt) -> f32 {
     ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt()
 }
 
 /// Adds points so no edge is longer than `max`, which keeps straight edges
 /// round once they are bent onto an arc.
-fn densify(c: &Contour, max: f32) -> Contour {
+pub fn densify(c: &Contour, max: f32) -> Contour {
     let mut out = Vec::with_capacity(c.len() * 2);
     for i in 0..c.len() {
         let (a, b) = (c[i], c[(i + 1) % c.len()]);
@@ -311,17 +311,21 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
 }
 
 /// Builds the stitch list with absolute positions.
-struct Stitcher {
-    points: Vec<Pt>,
-    cmds: Vec<Cmd>,
+pub struct Stitcher {
+    pub points: Vec<Pt>,
+    pub cmds: Vec<Cmd>,
 }
 
 impl Stitcher {
-    fn last(&self) -> Option<Pt> {
+    pub fn new() -> Self {
+        Stitcher { points: Vec::new(), cmds: Vec::new() }
+    }
+
+    pub fn last(&self) -> Option<Pt> {
         self.points.last().copied()
     }
 
-    fn stitch(&mut self, p: Pt) {
+    pub fn stitch(&mut self, p: Pt) {
         match self.last() {
             None => {
                 self.points.push(p);
@@ -347,7 +351,7 @@ impl Stitcher {
 
     /// Moves to `p` without sewing. Short hops are stitched instead, and real
     /// jumps get tie stitches on both ends.
-    fn travel(&mut self, p: Pt, next: Pt) {
+    pub fn travel(&mut self, p: Pt, next: Pt) {
         match self.last() {
             None => {
                 self.points.push(p);
@@ -365,7 +369,7 @@ impl Stitcher {
         }
     }
 
-    fn color_change(&mut self) {
+    pub fn color_change(&mut self) {
         if let Some(l) = self.last() {
             let prev = self.points.len().checked_sub(2).map(|i| self.points[i]).unwrap_or(l);
             self.tie(l, prev);
@@ -374,7 +378,7 @@ impl Stitcher {
         }
     }
 
-    fn finish(&mut self) {
+    pub fn finish(&mut self) {
         if let Some(l) = self.last() {
             let prev = self.points.len().checked_sub(2).map(|i| self.points[i]).unwrap_or(l);
             self.tie(l, prev);
@@ -406,7 +410,7 @@ fn nearest_index(c: &Contour, to: Option<Pt>) -> usize {
     (0..c.len()).min_by(|&a, &b| dist(c[a], to).total_cmp(&dist(c[b], to))).unwrap_or(0)
 }
 
-fn run_contour(st: &mut Stitcher, c: &Contour, step: f32, triple: bool) {
+pub fn run_contour(st: &mut Stitcher, c: &Contour, step: f32, triple: bool) {
     let start = nearest_index(c, st.last());
     let pts = walk(c, start, step);
     st.travel(pts[0], pts.get(1).copied().unwrap_or(pts[0]));
@@ -419,7 +423,83 @@ fn run_contour(st: &mut Stitcher, c: &Contour, step: f32, triple: bool) {
     }
 }
 
-fn satin_contour(st: &mut Stitcher, c: &Contour, width: f32) {
+/// Points along an open polyline every `step`, ending exactly at its end.
+fn walk_open(c: &[Pt], step: f32) -> Vec<Pt> {
+    let mut out = vec![c[0]];
+    let mut carry = 0.0;
+    for w in c.windows(2) {
+        let (a, b) = (w[0], w[1]);
+        let len = dist(a, b);
+        let mut t = step - carry;
+        while t < len {
+            out.push((a.0 + (b.0 - a.0) * t / len, a.1 + (b.1 - a.1) * t / len));
+            t += step;
+        }
+        carry = len - (t - step);
+    }
+    if out.last().is_some_and(|l| dist(*l, c[c.len() - 1]) > 1.0) {
+        out.push(c[c.len() - 1]);
+    }
+    out
+}
+
+/// Runs along an open line, starting from whichever end is closer.
+pub fn run_path(st: &mut Stitcher, c: &[Pt], step: f32, triple: bool) {
+    if c.len() < 2 {
+        return;
+    }
+    let mut c = c.to_vec();
+    if let Some(l) = st.last() {
+        if dist(l, c[c.len() - 1]) < dist(l, c[0]) {
+            c.reverse();
+        }
+    }
+    let pts = walk_open(&c, step);
+    st.travel(pts[0], pts.get(1).copied().unwrap_or(pts[0]));
+    for w in pts.windows(2) {
+        if triple {
+            st.stitch(w[1]);
+            st.stitch(w[0]);
+        }
+        st.stitch(w[1]);
+    }
+}
+
+/// A satin column along an open line, for strokes.
+pub fn satin_path(st: &mut Stitcher, c: &[Pt], width: f32) {
+    if c.len() < 2 {
+        return;
+    }
+    let mut c = c.to_vec();
+    if let Some(l) = st.last() {
+        if dist(l, c[c.len() - 1]) < dist(l, c[0]) {
+            c.reverse();
+        }
+    }
+    let pts = walk_open(&c, 4.0);
+    let n = pts.len();
+    if n < 2 {
+        return;
+    }
+    // A running pass along the line first holds the satin in place.
+    st.travel(pts[0], pts[1]);
+    for p in walk_open(&c, 25.0).into_iter().skip(1) {
+        st.stitch(p);
+    }
+    for p in walk_open(&c, 25.0).into_iter().rev().skip(1) {
+        st.stitch(p);
+    }
+    for i in 0..n {
+        let (a, b) = (pts[i.saturating_sub(1)], pts[(i + 1).min(n - 1)]);
+        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+        let len = (dx * dx + dy * dy).sqrt().max(0.01);
+        let (nx, ny) = (-dy / len * width / 2.0, dx / len * width / 2.0);
+        let side = if i % 2 == 0 { 1.0 } else { -1.0 };
+        st.stitch((pts[i].0 + nx * side, pts[i].1 + ny * side));
+    }
+}
+
+pub fn satin_contour(st: &mut Stitcher, c: &Contour, width: f32) {
     let start = nearest_index(c, st.last());
     let pts = walk(c, start, 4.0);
     let n = pts.len();
@@ -447,7 +527,63 @@ fn satin_contour(st: &mut Stitcher, c: &Contour, width: f32) {
 
 /// Fill rows across a glyph at `angle`, using the nonzero winding rule so
 /// overlapping contours in script fonts fill correctly.
-fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+/// Spans along the row at height `y` that lie inside the contours.
+fn row_spans(contours: &[Contour], y: f32, even_odd: bool) -> Vec<(f32, f32)> {
+    let mut hits: Vec<(f32, i32)> = Vec::new();
+    for c in contours {
+        for i in 0..c.len() {
+            let (p, q) = (c[i], c[(i + 1) % c.len()]);
+            if (p.1 <= y && q.1 > y) || (q.1 <= y && p.1 > y) {
+                let x = p.0 + (y - p.1) / (q.1 - p.1) * (q.0 - p.0);
+                hits.push((x, if q.1 > p.1 { 1 } else { -1 }));
+            }
+        }
+    }
+    hits.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let inside = |w: i32| if even_odd { w % 2 != 0 } else { w != 0 };
+    let mut spans = Vec::new();
+    let mut winding = 0;
+    let mut start = 0.0;
+    for (x, d) in hits {
+        let was = inside(winding);
+        winding += d;
+        let now = inside(winding);
+        if !was && now {
+            start = x;
+        } else if was && !now {
+            spans.push((start, x));
+        }
+    }
+    spans
+}
+
+/// Removes the parts of `spans` covered by `cut`. Both are sorted and disjoint.
+fn subtract(spans: Vec<(f32, f32)>, cut: &[(f32, f32)]) -> Vec<(f32, f32)> {
+    let mut out = Vec::new();
+    for (mut a, b) in spans {
+        for &(c0, c1) in cut {
+            if c1 <= a || c0 >= b {
+                continue;
+            }
+            if c0 > a {
+                out.push((a, c0));
+            }
+            a = a.max(c1);
+        }
+        if b > a {
+            out.push((a, b));
+        }
+    }
+    out
+}
+
+pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+    fill_shape(st, glyph, false, &[], kind, angle, s);
+}
+
+/// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
+/// left unstitched so layers don't pile up.
+pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
     let a = angle.to_radians();
     let (cos, sin) = (a.cos(), a.sin());
     let rot = |p: Pt| (p.0 * cos + p.1 * sin, -p.0 * sin + p.1 * cos);
@@ -465,6 +601,11 @@ fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, 
         _ => 0.0,
     };
     let warped = matches!(kind, FillKind::Wave | FillKind::Zigzag);
+    let to_row_space = |c: &Contour| -> Contour {
+        let r: Contour = c.iter().map(|&p| rot(p)).collect();
+        if warped { densify(&r, 5.0).into_iter().map(|(x, y)| (x, y - warp(x))).collect() } else { r }
+    };
+    let rm: Vec<Contour> = mask.iter().map(to_row_space).collect();
     let rc: Vec<Contour> = glyph
         .iter()
         .map(|c| {
@@ -486,29 +627,11 @@ fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, 
     let mut rows: Vec<(f32, Vec<(f32, f32, bool)>)> = Vec::new();
     let mut y = y0 + spacing / 2.0;
     while y < y1 {
-        let mut hits: Vec<(f32, i32)> = Vec::new();
-        for c in &rc {
-            for i in 0..c.len() {
-                let (p, q) = (c[i], c[(i + 1) % c.len()]);
-                if (p.1 <= y && q.1 > y) || (q.1 <= y && p.1 > y) {
-                    let x = p.0 + (y - p.1) / (q.1 - p.1) * (q.0 - p.0);
-                    hits.push((x, if q.1 > p.1 { 1 } else { -1 }));
-                }
-            }
+        let mut spans = row_spans(&rc, y, even_odd);
+        if !rm.is_empty() {
+            spans = subtract(spans, &row_spans(&rm, y, false));
         }
-        hits.sort_by(|a, b| a.0.total_cmp(&b.0));
-        let mut segs = Vec::new();
-        let mut winding = 0;
-        let mut start = 0.0;
-        for (x, d) in hits {
-            let was = winding;
-            winding += d;
-            if was == 0 && winding != 0 {
-                start = x;
-            } else if was != 0 && winding == 0 && x - start > 2.0 {
-                segs.push((start, x, false));
-            }
-        }
+        let segs: Vec<(f32, f32, bool)> = spans.into_iter().filter(|(a, b)| b - a > 2.0).map(|(a, b)| (a, b, false)).collect();
         rows.push((y, segs));
         y += spacing_at(y);
     }

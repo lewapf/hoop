@@ -9,6 +9,11 @@ spacing and arc, choose a tatami or satin fill and a satin or running edge,
 pick Janome threads, and save a JEF for the machine. Save as JEF also converts
 an opened DST, EXP or PES file, with any rotation or mirroring baked in.
 
+The Artwork tab turns SVG files (logos, clip art, icons) into designs: every
+color becomes a Janome thread, shapes are filled with any fill style, strokes
+become running or satin lines, hidden parts are cut away so layers don't pile
+up, and the colors can be merged down to a few threads.
+
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.
 
@@ -26,7 +31,7 @@ you pick that file in the save dialog yourself.
 | Key                     | Action                                     |
 |-------------------------|--------------------------------------------|
 | `O`                     | Open a file                                |
-| `L` / `V`               | Lettering / viewer                         |
+| `V` / `L` / `A`         | Viewer / lettering / artwork               |
 | `Ctrl+S`                | Save as JEF                                |
 | `Space`                 | Play or pause the stitch-out               |
 | `Home` / `End`          | Back to the first stitch / show everything |
@@ -71,3 +76,12 @@ change by clicking a swatch.
 Bundled display fonts (Alfa Slab One, Anton, Bebas Neue, Bungee, Dancing
 Script, Lobster, Pacifico, Righteous) come from Google Fonts under the SIL Open
 Font License (`assets/fonts/OFL.txt`). Installed system fonts are listed too.
+
+## Artwork tips
+
+- Flat-color logos work best. Gradients become one thread in their average
+  color; embedded pictures are skipped (trace them into paths first).
+- A full-size white rectangle behind the drawing is treated as background and
+  starts switched off.
+- Keep "Cut hidden parts" on for layered logos, and raise "Detail" to drop
+  specks too small to stitch cleanly.
