@@ -314,75 +314,109 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
 pub struct Stitcher {
     pub points: Vec<Pt>,
     pub cmds: Vec<Cmd>,
+    /// True until the current thread has sewn its first stitch, at the start
+    /// and after every thread change. A fresh thread must not tie off or
+    /// stitch from where the previous thread stopped.
+    fresh: bool,
+    /// The needle just jumped; tie in toward the next stitch.
+    tie_in: bool,
 }
+
+/// Length of tie stitches in 0.1 mm.
+const TIE: f32 = 5.0;
 
 impl Stitcher {
     pub fn new() -> Self {
-        Stitcher { points: Vec::new(), cmds: Vec::new() }
+        Stitcher { points: Vec::new(), cmds: Vec::new(), fresh: true, tie_in: false }
     }
 
     pub fn last(&self) -> Option<Pt> {
         self.points.last().copied()
     }
 
-    pub fn stitch(&mut self, p: Pt) {
-        match self.last() {
-            None => {
-                self.points.push(p);
-                self.cmds.push(Cmd::Jump);
-            }
-            Some(l) if dist(l, p) < 0.5 => {}
-            Some(_) => {
-                self.points.push(p);
-                self.cmds.push(Cmd::Stitch);
-            }
-        }
+    fn jump(&mut self, p: Pt) {
+        self.points.push(p);
+        self.cmds.push(Cmd::Jump);
+        self.tie_in = true;
+        // The needle is now where this thread starts.
+        self.fresh = false;
     }
 
-    /// Three tiny stitches back and forth so the thread can't pull out.
+    pub fn stitch(&mut self, p: Pt) {
+        let Some(l) = self.last() else {
+            self.jump(p);
+            return;
+        };
+        if self.fresh {
+            self.fresh = false;
+            if dist(l, p) >= 0.5 {
+                self.jump(p);
+            } else {
+                self.tie_in = true;
+            }
+            return;
+        }
+        if dist(l, p) < 0.5 {
+            return;
+        }
+        if self.tie_in {
+            self.tie_in = false;
+            self.tie(l, p);
+        }
+        self.points.push(p);
+        self.cmds.push(Cmd::Stitch);
+    }
+
+    /// Three tiny stitches back and forth along a stitch's own line, so the
+    /// thread can't pull out and the knot stays hidden under the stitching.
     fn tie(&mut self, at: Pt, toward: Pt) {
         let d = dist(at, toward);
-        let v = if d > 0.1 { ((toward.0 - at.0) / d * 8.0, (toward.1 - at.1) / d * 8.0) } else { (8.0, 0.0) };
+        let v = if d > 0.1 { ((toward.0 - at.0) / d * TIE, (toward.1 - at.1) / d * TIE) } else { (TIE, 0.0) };
         for p in [(at.0 + v.0, at.1 + v.1), at, (at.0 + v.0, at.1 + v.1), at] {
             self.points.push(p);
             self.cmds.push(Cmd::Stitch);
         }
     }
 
+    fn tie_off(&mut self) {
+        if self.fresh || self.tie_in {
+            return;
+        }
+        if let Some(l) = self.last() {
+            let prev = self.points.len().checked_sub(2).map(|i| self.points[i]).unwrap_or(l);
+            self.tie(l, prev);
+        }
+    }
+
     /// Moves to `p` without sewing. Short hops are stitched instead, and real
     /// jumps get tie stitches on both ends.
-    pub fn travel(&mut self, p: Pt, next: Pt) {
+    pub fn travel(&mut self, p: Pt, _next: Pt) {
         match self.last() {
-            None => {
-                self.points.push(p);
-                self.cmds.push(Cmd::Jump);
-                self.tie(p, next);
+            None => self.jump(p),
+            Some(_) if self.fresh => {
+                self.fresh = false;
+                self.jump(p);
             }
             Some(l) if dist(l, p) <= 25.0 => self.stitch(p),
-            Some(l) => {
-                let prev = self.points.len().checked_sub(2).map(|i| self.points[i]).unwrap_or(l);
-                self.tie(l, prev);
-                self.points.push(p);
-                self.cmds.push(Cmd::Jump);
-                self.tie(p, next);
+            Some(_) => {
+                self.tie_off();
+                self.jump(p);
             }
         }
     }
 
     pub fn color_change(&mut self) {
         if let Some(l) = self.last() {
-            let prev = self.points.len().checked_sub(2).map(|i| self.points[i]).unwrap_or(l);
-            self.tie(l, prev);
+            self.tie_off();
             self.points.push(l);
             self.cmds.push(Cmd::ColorChange);
+            self.fresh = true;
+            self.tie_in = false;
         }
     }
 
     pub fn finish(&mut self) {
-        if let Some(l) = self.last() {
-            let prev = self.points.len().checked_sub(2).map(|i| self.points[i]).unwrap_or(l);
-            self.tie(l, prev);
-        }
+        self.tie_off();
     }
 }
 
@@ -735,7 +769,7 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
     if glyphs.is_empty() {
         return Err("Type some text to stitch.".into());
     }
-    let mut st = Stitcher { points: Vec::new(), cmds: Vec::new() };
+    let mut st = Stitcher::new();
     let edge = |st: &mut Stitcher, g: &[Contour]| {
         for c in g {
             match s.edge {
@@ -820,6 +854,22 @@ mod tests {
             // Stitches stay within the letters (allowing for rounding at the edge).
             assert!(b.0 >= solid.0 - 5.0 && b.2 <= solid.2 + 5.0 && b.1 >= solid.1 - 5.0 && b.3 <= solid.3 + 5.0, "{fill:?} {b:?} {solid:?}");
         }
+    }
+
+    #[test]
+    fn a_new_thread_never_stitches_where_the_last_one_stopped() {
+        let mut st = Stitcher::new();
+        st.travel((0.0, 0.0), (100.0, 0.0));
+        st.stitch((100.0, 0.0));
+        st.color_change();
+        let end = st.points.len();
+        st.travel((300.0, 0.0), (400.0, 0.0));
+        st.stitch((400.0, 0.0));
+        // After the change: one jump to the new start, then stitches near it.
+        assert_eq!(st.cmds[end], Cmd::Jump);
+        assert!(st.points[end..].iter().all(|p| p.0 >= 300.0), "{:?}", &st.points[end..]);
+        // The first thread was tied off at its end before the change.
+        assert!(st.points[..end].iter().filter(|p| p.0 > 90.0).count() >= 3);
     }
 
     #[test]
