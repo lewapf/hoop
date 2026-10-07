@@ -50,6 +50,15 @@ impl Artwork {
 pub struct LayerChoice {
     pub thread: i32,
     pub enabled: bool,
+    pub look: Look,
+}
+
+/// How one thread's shapes are stitched, overriding the main fill style.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Look {
+    Default,
+    Fill(FillKind),
+    Outline,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -139,7 +148,7 @@ impl ArtSettings {
             layers: art
                 .layers
                 .iter()
-                .map(|l| LayerChoice { thread: formats::nearest_jef(l.color), enabled: !l.background })
+                .map(|l| LayerChoice { thread: formats::nearest_jef(l.color), enabled: !l.background, look: Look::Default })
                 .collect(),
         }
     }
@@ -374,7 +383,26 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         order.sort_by_key(|&i| (rank(thread_of(items[i].layer)), items[i].doc));
     }
 
-    let st_ref = &s.style;
+    // The fill and edge each shape gets after its thread's look is applied.
+    let look_of = |layer: usize| s.layers.get(layer).map_or(Look::Default, |l| l.look);
+    let styled = |layer: usize| -> Settings {
+        let mut style = s.style.clone();
+        match look_of(layer) {
+            Look::Default => {}
+            Look::Fill(k) => {
+                if k != style.fill {
+                    lettering::style(&mut style, k, s.style.fill_angle, s.style.edge);
+                }
+            }
+            Look::Outline => {
+                style.fill = FillKind::None;
+                if style.edge == EdgeKind::None {
+                    style.edge = EdgeKind::Triple;
+                }
+            }
+        }
+        style
+    };
     let mut st = Stitcher::new();
     let mut threads = Vec::new();
     let mut current: Option<i32> = None;
@@ -390,12 +418,14 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         }
         match it.kind {
             Kind::Fill { even_odd } => {
+                let own = styled(it.layer);
+                let st_ref = &own;
                 let contours: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
                 // Everything drawn above this shape and overlapping it.
                 let mask: Vec<Contour> = if s.knockout {
                     items
                         .iter()
-                        .filter(|o| o.doc > it.doc && matches!(o.kind, Kind::Fill { .. }))
+                        .filter(|o| o.doc > it.doc && matches!(o.kind, Kind::Fill { .. }) && styled(o.layer).fill != FillKind::None)
                         .flat_map(|o| o.lines.iter().map(|l| l.0.clone()))
                         .collect()
                 } else {
@@ -506,6 +536,17 @@ mod tests {
         reduce_threads(&art, &mut s, 1);
         assert_eq!(generate(&art, &s).unwrap().blocks().len(), 1);
         assert_eq!(thread_groups(&art, &s).len(), 2); // background stays apart
+    }
+
+    #[test]
+    fn a_thread_can_be_outline_only() {
+        let art = parse("logo.svg", LOGO.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        s.stroke = EdgeKind::None;
+        let filled = generate(&art, &s).unwrap().blocks()[0].stitches;
+        s.layers[1].look = Look::Outline;
+        let outline = generate(&art, &s).unwrap().blocks()[0].stitches;
+        assert!(outline * 2 < filled, "{outline} vs {filled}");
     }
 
     #[test]

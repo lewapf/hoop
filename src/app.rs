@@ -6,7 +6,7 @@ use egui::{Color32, Key, KeyboardShortcut, Modifiers, RichText, Sense, Vec2, vec
 use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
-use crate::artwork::{self, ArtSettings};
+use crate::artwork::{self, ArtSettings, Look};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
 use crate::prefs::Prefs;
 use crate::theme::Theme;
@@ -1370,9 +1370,30 @@ impl HoopApp {
                     ui.spacing_mut().item_spacing.x = 6.0;
                     ui.label(RichText::new("→").color(muted));
                     thread_menu(ui, ("group", g), &mut t);
+
                     if members.iter().any(|&i| art.layers[i].background) {
                         ui.label(RichText::new("background").size(11.0).color(muted));
                     }
+                });
+                ui.horizontal(|ui| {
+                    ui.add_space(28.0);
+                    ui.label(RichText::new("Stitch as").size(12.0).color(muted));
+                let mut look = s.layers[members[0]].look;
+                let name = match look {
+                    Look::Default => "Auto".to_string(),
+                    Look::Fill(k) => format!("{k:?}"),
+                    Look::Outline => "Outline".into(),
+                };
+                egui::ComboBox::from_id_salt(("look", g)).selected_text(name).width(78.0).show_ui(ui, |ui| {
+                    ui.selectable_value(&mut look, Look::Default, "Auto").on_hover_text("Use the Fill card below");
+                    for k in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Open] {
+                        ui.selectable_value(&mut look, Look::Fill(k), format!("{k:?}"));
+                    }
+                    ui.selectable_value(&mut look, Look::Outline, "Outline").on_hover_text("Only the shape's outline");
+                });
+                for &i in members {
+                    s.layers[i].look = look;
+                }
                 });
                 if t != *thread {
                     for &i in members {

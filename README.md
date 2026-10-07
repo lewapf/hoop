@@ -94,5 +94,7 @@ Font License (`assets/fonts/OFL.txt`). Installed system fonts are listed too.
   color; embedded pictures are skipped (trace them into paths first).
 - A full-size white rectangle behind the drawing is treated as background and
   starts switched off.
+- Each thread can be stitched its own way (Stitch as: satin, open, outline…),
+  so a logo's text can be satin while its background stays tatami.
 - Keep "Cut hidden parts" on for layered logos, and raise "Detail" to drop
   specks too small to stitch cleanly.
