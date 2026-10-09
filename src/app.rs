@@ -6,7 +6,12 @@ use egui::{Color32, Key, KeyboardShortcut, Modifiers, RichText, Sense, Vec2, vec
 use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
-use crate::artwork::{self, ArtSettings, Look, ShapeEdit};
+use crate::artwork::{self, ArtSettings, Look};
+
+mod shapes;
+mod shell;
+
+use shell::{Dock, Tab};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
 use crate::prefs::Prefs;
 use crate::trace::{self, TraceSettings};
@@ -59,65 +64,6 @@ struct UsbState {
     /// The drive last written to, offered for ejecting.
     sent_to: Option<usb::Drive>,
     message: Option<Result<String, String>>,
-}
-
-/// Artwork user units to stitch units to hoop coordinates and back.
-#[derive(Clone, Copy)]
-struct ShapeMap {
-    scale: f32,
-    mid: (f32, f32),
-    t: Transform,
-}
-
-impl ShapeMap {
-    fn to_stitch(self, u: (f32, f32)) -> (f32, f32) {
-        ((u.0 - self.mid.0) * self.scale, (u.1 - self.mid.1) * self.scale)
-    }
-
-    fn to_world(self, u: (f32, f32)) -> (f32, f32) {
-        self.t.apply(self.to_stitch(u))
-    }
-
-    fn to_user(self, w: (f32, f32)) -> (f32, f32) {
-        let p = self.t.invert(w);
-        (p.0 / self.scale + self.mid.0, p.1 / self.scale + self.mid.1)
-    }
-}
-
-#[derive(Clone, Copy)]
-enum Handle {
-    Corner,
-    Turn,
-}
-
-/// The selected shape's box on screen and the knob above it for turning.
-struct Handles {
-    rect: egui::Rect,
-    turn: egui::Pos2,
-}
-
-impl Handles {
-    fn corners(&self) -> [egui::Pos2; 4] {
-        [self.rect.left_top(), self.rect.right_top(), self.rect.right_bottom(), self.rect.left_bottom()]
-    }
-
-    fn hit(&self, p: egui::Pos2) -> Option<Handle> {
-        if (self.turn - p).length() <= 9.0 {
-            return Some(Handle::Turn);
-        }
-        self.corners().iter().any(|c| (*c - p).length() <= 9.0).then_some(Handle::Corner)
-    }
-}
-
-fn shape_handles(frame: &Frame, m: ShapeMap, art: &artwork::Artwork, e: &ShapeEdit) -> Option<Handles> {
-    let pts: Vec<egui::Pos2> = e.lines(art).iter().flat_map(|l| l.0.iter()).map(|&q| frame.to_screen_pt(m.to_world(q))).collect();
-    if pts.is_empty() {
-        return None;
-    }
-    // Keep tiny shapes grabbable: the box is at least 24 px across.
-    let rect = egui::Rect::from_points(&pts).expand(4.0);
-    let rect = egui::Rect::from_center_size(rect.center(), rect.size().max(vec2(24.0, 24.0)));
-    Some(Handles { rect, turn: rect.center_top() - vec2(0.0, 24.0) })
 }
 
 /// A finished part fixed on the hoop, in hoop coordinates (0.1 mm, hoop
@@ -184,8 +130,13 @@ struct Setup {
 enum Drag {
     Move { start: (f32, f32), from: Placement },
     Pan,
-    /// Moving the selected artwork shape; offsets in SVG user units.
-    Shape { start: (f32, f32), from: (f32, f32) },
+    /// Moving the picked artwork shapes: where the drag started and each
+    /// shape's offset then (SVG user units), the box of the moving shapes,
+    /// and the x and y lines they snap to.
+    Shape { start: (f32, f32), from: Vec<(usize, (f32, f32))>, moving: (f32, f32, f32, f32), snap: (Vec<f32>, Vec<f32>) },
+    /// Picking shapes with a rubber band, from this screen point; `add`
+    /// keeps the shapes already picked.
+    Band { start: egui::Pos2, add: bool },
     /// Moving one point of the selected shape: line and point index.
     Node { line: usize, point: usize },
     /// Resizing the selected shape by a corner: size and pointer distance
@@ -237,7 +188,23 @@ pub struct HoopApp {
     art_built: Option<ArtSettings>,
     art_slow: bool,
     /// The artwork shape picked in the Shapes list or on the hoop.
-    sel: Option<usize>,
+    sel: Vec<usize>,
+    /// Snap guides shown while shapes are dragged: vertical or not, and
+    /// where, in user units.
+    guides: Vec<(bool, f32)>,
+    /// A row of the Objects list being dragged to restack it.
+    list_drag: Option<usize>,
+    /// A built-in shape asked for from a panel, added once it is drawn.
+    list_add: Option<&'static str>,
+    /// Pointer position on the hoop, in 0.1 mm, for the status bar.
+    hover_at: Option<(f32, f32)>,
+    /// The zoom that shows the whole hoop; the status bar's 100 %.
+    hoop_scale: f32,
+    /// The panel tab shown in each mode, and the left dock's tab.
+    tab: [Tab; 3],
+    dock: Dock,
+    show_left: bool,
+    show_right: bool,
     edit_points: bool,
     /// Set by undo and redo so the next stitch-out doesn't shift the design
     /// to keep shapes in place (the restored placement already does).
@@ -302,7 +269,16 @@ impl HoopApp {
             artwork: None,
             art: None,
             art_built: None,
-            sel: None,
+            sel: Vec::new(),
+            guides: Vec::new(),
+            list_drag: None,
+            list_add: None,
+            hover_at: None,
+            hoop_scale: 1.0,
+            tab: [Tab::Design, Tab::Text, Tab::Source],
+            dock: Dock::Colors,
+            show_left: true,
+            show_right: true,
             edit_points: false,
             keep_anchor: false,
             art_slow: false,
@@ -363,6 +339,12 @@ impl HoopApp {
         }
         v.widgets.hovered.bg_stroke.color = accent;
         v.widgets.active.bg_stroke.color = accent;
+        // Squarer corners, closer to a desktop toolkit.
+        for w in [&mut v.widgets.noninteractive, &mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active, &mut v.widgets.open] {
+            w.corner_radius = egui::CornerRadius::same(3);
+        }
+        v.window_corner_radius = egui::CornerRadius::same(6);
+        v.menu_corner_radius = egui::CornerRadius::same(4);
         ctx.set_visuals(v);
     }
 
@@ -460,9 +442,8 @@ impl HoopApp {
         if s.art.as_ref().map(|a| a.layers.len()) == self.art.as_ref().map(|a| a.layers.len()) {
             self.keep_anchor = s.art != self.art;
             self.art = s.art.clone();
-            if self.sel.is_some_and(|i| self.art.as_ref().is_none_or(|a| i >= a.shapes.len())) {
-                self.sel = None;
-            }
+            let n = self.art.as_ref().map_or(0, |a| a.shapes.len());
+            self.sel.retain(|&i| i < n);
         }
         self.committed = self.snapshot();
         self.pending_since = None;
@@ -516,52 +497,6 @@ impl HoopApp {
         }
     }
 
-    /// Keys for the selected artwork shape; they take precedence over the
-    /// same keys for the whole design.
-    fn shape_keys(&mut self, ctx: &egui::Context) {
-        let Some(m) = self.shape_map() else { return };
-        let (Some(i), Some(s)) = (self.sel, &mut self.art) else { return };
-        if i >= s.shapes.len() {
-            return;
-        }
-        let press = |m: Modifiers, k: Key| ctx.input_mut(|inp| inp.consume_shortcut(&KeyboardShortcut::new(m, k)));
-        if press(Modifiers::NONE, Key::Escape) {
-            self.sel = None;
-            self.edit_points = false;
-            return;
-        }
-        if press(Modifiers::NONE, Key::Delete) || press(Modifiers::NONE, Key::Backspace) {
-            s.shapes.remove(i);
-            self.sel = None;
-            self.edit_points = false;
-            return;
-        }
-        if press(Modifiers::COMMAND, Key::D) {
-            duplicate_shape(s, i, m.scale);
-            self.sel = Some(i + 1);
-            return;
-        }
-        if press(Modifiers::NONE, Key::CloseBracket) && i + 1 < s.shapes.len() {
-            s.shapes.swap(i, i + 1);
-            self.sel = Some(i + 1);
-        }
-        if press(Modifiers::NONE, Key::OpenBracket) && i > 0 {
-            s.shapes.swap(i, i - 1);
-            self.sel = Some(i - 1);
-        }
-        for (key, dx, dy) in [(Key::ArrowLeft, -1.0, 0.0), (Key::ArrowRight, 1.0, 0.0), (Key::ArrowUp, 0.0, -1.0), (Key::ArrowDown, 0.0, 1.0)] {
-            for (mods, step) in [(Modifiers::NONE, 10.0), (Modifiers::SHIFT, 100.0)] {
-                if press(mods, key) {
-                    // Arrows move on the hoop, so undo the design's own turn first.
-                    let (ux, uy) = m.t.invert_delta((dx * step, dy * step));
-                    let e = &mut s.shapes[i];
-                    e.dx += ux / m.scale;
-                    e.dy += uy / m.scale;
-                }
-            }
-        }
-    }
-
     fn hoop_size(&self) -> (f32, f32) {
         let h = HOOPS[self.setup.hoop];
         (h.w, h.h)
@@ -580,6 +515,9 @@ impl HoopApp {
             }
         };
         let scale = (rect.width() / w).min(rect.height() / h);
+        if !design {
+            self.hoop_scale = scale;
+        }
         self.view = View { scale, pan: vec2(-cx, -cy) * scale };
         // Showing the whole hoop hands framing back to the window size.
         self.user_view = design;
@@ -732,24 +670,19 @@ impl HoopApp {
         }
     }
 
-    fn side_panel(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect) {
+    /// The right dock's page for the chosen tab.
+    fn side_panel(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect, tab: Tab) {
         let muted = self.muted();
         let accent = self.accent();
-        let viewer = self.mode == Mode::Viewer;
-
-        ui.add_space(14.0);
-        ui.label(RichText::new("Hoop").size(26.0).strong());
-        ui.add_space(4.0);
-        let mut mode = self.mode;
-        segmented(ui, &mut mode, &[(Mode::Viewer, "Viewer  V"), (Mode::Lettering, "Lettering  L"), (Mode::Artwork, "Artwork  A")], accent);
-        self.set_mode(mode);
-        ui.add_space(10.0);
+        if let Some(e) = &self.error {
+            ui.label(RichText::new(e).color(BAD));
+        }
 
         if self.mode == Mode::Lettering {
-            self.lettering_panel(ui);
+            self.lettering_panel(ui, tab);
         } else if self.mode == Mode::Artwork {
-            self.artwork_panel(ui, canvas_rect);
-        } else {
+            self.artwork_panel(ui, canvas_rect, tab);
+        } else if tab == Tab::Design {
             card(ui, "Design", accent, |ui| {
                 match &self.design {
                     Some(d) => {
@@ -782,19 +715,9 @@ impl HoopApp {
                         self.save_jef();
                     }
                 });
-                if ui.add_enabled(self.design.is_some() || !self.pinned.is_empty(), egui::Button::new("Send to USB…").min_size(vec2(ui.available_width(), 28.0)))
-                    .on_hover_text("Write the JEF straight to the machine's USB stick · Ctrl+U")
-                    .clicked()
-                {
-                    self.open_usb();
-                }
             });
         }
-        if let Some(e) = &self.error {
-            ui.label(RichText::new(e).color(BAD));
-        }
-
-        if let Some(d) = &self.design {
+        if tab == Tab::Hoop && let Some(d) = &self.design {
             let fit = match (self.pinned.is_empty(), self.hoop_bounds()) {
                 (false, Some(b)) => {
                     let at = Placement { dx: (b.0 + b.2) / 2.0, dy: (b.1 + b.3) / 2.0, ..Default::default() };
@@ -859,7 +782,7 @@ impl HoopApp {
             }
         }
 
-        if self.design.is_some() || !self.pinned.is_empty() {
+        if tab == Tab::Hoop && (self.design.is_some() || !self.pinned.is_empty()) {
             let mut remove = None;
             let mut clear = false;
             let mut pin = false;
@@ -899,108 +822,56 @@ impl HoopApp {
             }
         }
 
-        card(ui, "Hoop", accent, |ui| {
-            let design_size = self.design.as_ref().map(|d| d.size());
-            let w = (ui.available_width() - 8.0) / 2.0;
-            for row in HOOPS.chunks(2).enumerate() {
-                ui.horizontal(|ui| {
-                    for (j, h) in row.1.iter().enumerate() {
-                        let i = row.0 * 2 + j;
-                        let fits = design_size.is_none_or(|s| {
-                            !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. })
-                        });
-                        if hoop_tile(ui, w, i, h, fits, self.setup.hoop == i, accent, muted).clicked() {
-                            self.change(|s| s.hoop = i);
-                            self.fit_view(canvas_rect, false);
+        if tab == Tab::Hoop {
+            card(ui, "Hoop", accent, |ui| {
+                let design_size = self.design.as_ref().map(|d| d.size());
+                let w = (ui.available_width() - 8.0) / 2.0;
+                for row in HOOPS.chunks(2).enumerate() {
+                    ui.horizontal(|ui| {
+                        for (j, h) in row.1.iter().enumerate() {
+                            let i = row.0 * 2 + j;
+                            let fits = design_size.is_none_or(|s| {
+                                !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. })
+                            });
+                            if hoop_tile(ui, w, i, h, fits, self.setup.hoop == i, accent, muted).clicked() {
+                                self.change(|s| s.hoop = i);
+                                self.fit_view(canvas_rect, false);
+                            }
                         }
+                    });
+                }
+            });
+
+            card(ui, "Position", accent, |ui| {
+                let w = (ui.available_width() - 18.0) / 4.0;
+                ui.horizontal(|ui| {
+                    let b = |t: &str| egui::Button::new(t).min_size(vec2(w, 28.0));
+                    if ui.add(b("Left 90°")).on_hover_text("Rotate left · Shift+R").clicked() {
+                        self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 3) % 4);
+                    }
+                    if ui.add(b("Right 90°")).on_hover_text("Rotate right · R").clicked() {
+                        self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
+                    }
+                    if ui.add(b("Mirror")).on_hover_text("M").clicked() {
+                        self.change(|s| s.at.mirror = !s.at.mirror);
+                    }
+                    if ui.add(b("Center")).on_hover_text("C").clicked() {
+                        self.change(|s| { s.at.dx = 0.0; s.at.dy = 0.0; });
                     }
                 });
-            }
-        });
-
-        card(ui, "Position", accent, |ui| {
-            let w = (ui.available_width() - 18.0) / 4.0;
-            ui.horizontal(|ui| {
-                let b = |t: &str| egui::Button::new(t).min_size(vec2(w, 28.0));
-                if ui.add(b("⟲ 90°")).on_hover_text("Rotate left · Shift+R").clicked() {
-                    self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 3) % 4);
-                }
-                if ui.add(b("⟳ 90°")).on_hover_text("Rotate right · R").clicked() {
-                    self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
-                }
-                if ui.add(b("Mirror")).on_hover_text("M").clicked() {
-                    self.change(|s| s.at.mirror = !s.at.mirror);
-                }
-                if ui.add(b("Center")).on_hover_text("C").clicked() {
-                    self.change(|s| { s.at.dx = 0.0; s.at.dy = 0.0; });
-                }
+                let at = self.setup.at;
+                let signed = |v: f32| format!("{}{:.1}", if v > 0.0 { "+" } else if v < 0.0 { "−" } else { "" }, (v / 10.0).abs());
+                ui.label(RichText::new(format!(
+                    "{}°{}  ·  X {}  Y {} mm",
+                    at.quarter_turns as u32 * 90,
+                    if at.mirror { " mirrored" } else { "" },
+                    signed(at.dx),
+                    signed(-at.dy)
+                )).monospace().size(12.0).color(muted));
             });
-            let at = self.setup.at;
-            let signed = |v: f32| format!("{}{:.1}", if v > 0.0 { "+" } else if v < 0.0 { "−" } else { "" }, (v / 10.0).abs());
-            ui.label(RichText::new(format!(
-                "{}°{}  ·  X {}  Y {} mm",
-                at.quarter_turns as u32 * 90,
-                if at.mirror { " mirrored" } else { "" },
-                signed(at.dx),
-                signed(-at.dy)
-            )).monospace().size(12.0).color(muted));
-        });
+        }
 
-        if self.design.is_some() {
-            let focus = self.focus;
-            let mut toggle = None;
-            let d = self.design.as_mut().unwrap();
-            let meters: Vec<f32> = d.blocks.iter().map(|b| d.pattern.thread_meters(b)).collect();
-            let mut copied = false;
-            card(ui, "Threads", accent, |ui| {
-                for (k, b) in d.blocks.iter_mut().enumerate() {
-                    let selected = focus == Some(k);
-                    let fill = if selected { accent.gamma_multiply(0.18) } else { Color32::TRANSPARENT };
-                    let r = egui::Frame::new().fill(fill).corner_radius(6).inner_margin(egui::Margin::symmetric(6, 3)).show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        ui.horizontal(|ui| {
-                            if viewer {
-                                ui.color_edit_button_srgb(&mut b.thread.color);
-                            } else {
-                                let (r, _) = ui.allocate_exact_size(vec2(28.0, 18.0), Sense::hover());
-                                ui.painter().rect_filled(r, 9, rgb(b.thread.color));
-                            }
-                            ui.label(RichText::new(format!("{}", k + 1)).monospace().color(muted));
-                            ui.label(&b.thread.name);
-                            if !b.thread.code.is_empty() {
-                                ui.label(RichText::new(&b.thread.code).monospace().color(muted));
-                            }
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                ui.label(RichText::new(format!("{:.1} m", meters[k])).monospace().color(muted))
-                                    .on_hover_text(format!("{} stitches, about {:.1} m of thread", b.stitches, meters[k]));
-                            });
-                        });
-                    });
-                    if ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text("Click to show this thread on its own").clicked() {
-                        toggle = Some(k);
-                    }
-                }
-                if !d.pattern.format.stores_colors() {
-                    ui.label(RichText::new(format!("{} files don't store thread colors. Click a swatch to set the real ones.", d.pattern.format)).size(12.0).color(muted));
-                }
-                if ui.small_button("Copy thread list").on_hover_text("For shopping or notes").clicked() {
-                    let list: Vec<String> = d
-                        .blocks
-                        .iter()
-                        .enumerate()
-                        .map(|(k, b)| format!("{}. {} {} — {} stitches, about {:.1} m", k + 1, b.thread.name, b.thread.code, b.stitches, meters[k]))
-                        .collect();
-                    ui.ctx().copy_text(format!("{}\n{}", d.name, list.join("\n")));
-                    copied = true;
-                }
-            });
-            if copied {
-                self.toast("Thread list copied".into());
-            }
-            if let Some(k) = toggle {
-                self.focus = if self.focus == Some(k) { None } else { Some(k) };
-            }
-
+        if tab == Tab::Stitch && self.design.is_some() {
             let total = self.total();
             card(ui, "Stitch-out", accent, |ui| {
                 ui.horizontal(|ui| {
@@ -1075,6 +946,7 @@ impl HoopApp {
             });
         }
 
+        if tab == Tab::View {
         card(ui, "Display", accent, |ui| {
             ui.horizontal_wrapped(|ui| {
                 for (name, c) in FABRICS {
@@ -1098,8 +970,77 @@ impl HoopApp {
                 self.save_picture();
             }
         });
+        }
         ui.label(RichText::new("Press ? for every shortcut.").size(12.0).color(muted));
         ui.add_space(14.0);
+    }
+
+    /// The Colors list in the left dock: each thread of the design in sewing
+    /// order. Clicking one shows it on its own.
+    fn colors_list(&mut self, ui: &mut egui::Ui) {
+        let muted = self.muted();
+        let accent = self.accent();
+        let viewer = self.mode == Mode::Viewer;
+        let ui = &mut *ui;
+        let Some(_) = &self.design else {
+            ui.label(RichText::new("Thread colors of the design show here, in sewing order.").size(12.0).color(muted));
+            return;
+        };
+        {
+            let focus = self.focus;
+            let mut toggle = None;
+            let d = self.design.as_mut().unwrap();
+            let meters: Vec<f32> = d.blocks.iter().map(|b| d.pattern.thread_meters(b)).collect();
+            let mut copied = false;
+            {
+                for (k, b) in d.blocks.iter_mut().enumerate() {
+                    let selected = focus == Some(k);
+                    let fill = if selected { accent.gamma_multiply(0.18) } else { Color32::TRANSPARENT };
+                    let r = egui::Frame::new().fill(fill).corner_radius(6).inner_margin(egui::Margin::symmetric(6, 3)).show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.horizontal(|ui| {
+                            if viewer {
+                                ui.color_edit_button_srgb(&mut b.thread.color);
+                            } else {
+                                let (r, _) = ui.allocate_exact_size(vec2(28.0, 18.0), Sense::hover());
+                                ui.painter().rect_filled(r, 9, rgb(b.thread.color));
+                            }
+                            // Two lines so long thread names fit a narrow dock.
+                            ui.vertical(|ui| {
+                                ui.spacing_mut().item_spacing.y = 0.0;
+                                ui.add(egui::Label::new(format!("{}. {}", k + 1, b.thread.name)).truncate());
+                                let code = if b.thread.code.is_empty() { String::new() } else { format!("{} · ", b.thread.code) };
+                                ui.label(RichText::new(format!("{code}{:.1} m · {} st", meters[k], b.stitches)).size(11.5).color(muted))
+                                    .on_hover_text(format!("{} stitches, about {:.1} m of thread", b.stitches, meters[k]));
+                            });
+                        });
+                    });
+                    if ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text("Click to show this thread on its own").clicked() {
+                        toggle = Some(k);
+                    }
+                }
+                if !d.pattern.format.stores_colors() {
+                    ui.label(RichText::new(format!("{} files don't store thread colors. Click a swatch to set the real ones.", d.pattern.format)).size(12.0).color(muted));
+                }
+                if ui.small_button("Copy thread list").on_hover_text("For shopping or notes").clicked() {
+                    let list: Vec<String> = d
+                        .blocks
+                        .iter()
+                        .enumerate()
+                        .map(|(k, b)| format!("{}. {} {} — {} stitches, about {:.1} m", k + 1, b.thread.name, b.thread.code, b.stitches, meters[k]))
+                        .collect();
+                    ui.ctx().copy_text(format!("{}\n{}", d.name, list.join("\n")));
+                    copied = true;
+                }
+            }
+            if copied {
+                self.toast("Thread list copied".into());
+            }
+            if let Some(k) = toggle {
+                self.focus = if self.focus == Some(k) { None } else { Some(k) };
+            }
+
+        }
     }
 
     fn canvas(&mut self, ui: &mut egui::Ui) {
@@ -1116,175 +1057,16 @@ impl HoopApp {
         let painter = ui.painter_at(rect);
         let frame = Frame { painter: &painter, rect, view: self.view };
 
-        // Artwork shapes: click to select, drag the selected one, drag its points.
-        let shape_map = self.shape_map();
-        let mut handled_double = false;
-        if let (Some(m), Some(art), Some(s)) = (shape_map, &self.artwork, &mut self.art) {
-            let pointer = response.interact_pointer_pos();
-            let user = pointer.map(|p| m.to_user(frame.to_world(p)));
-            let slop = 6.0 / self.view.scale;
-            let node_under = |s: &ArtSettings, sel: Option<usize>, p: egui::Pos2| -> Option<(usize, usize)> {
-                let e = s.shapes.get(sel?)?;
-                let mut best = (64.0f32, None);
-                for (li, (c, _)) in e.lines(art).iter().enumerate() {
-                    for (pi, &q) in c.iter().enumerate() {
-                        let d = (frame.to_screen_pt(m.to_world(q)) - p).length_sq();
-                        if d < best.0 {
-                            best = (d, Some((li, pi)));
-                        }
-                    }
-                }
-                best.1
-            };
-            if response.clicked() {
-                if let Some(u) = user {
-                    let hit = artwork::shape_at(art, s, m.to_stitch(u), slop);
-                    if hit != self.sel && !(self.edit_points && node_under(s, self.sel, pointer.unwrap()).is_some()) {
-                        self.sel = hit;
-                        self.edit_points = false;
-                    }
-                }
-            }
-            if self.edit_points && response.secondary_clicked() {
-                if let (Some(i), Some((li, pi))) = (self.sel, pointer.and_then(|p| node_under(s, self.sel, p))) {
-                    let e = &mut s.shapes[i];
-                    e.bake(art);
-                    if let Some(own) = &mut e.own {
-                        let (c, closed) = &mut own.lines[li];
-                        if c.len() > if *closed { 3 } else { 2 } {
-                            c.remove(pi);
-                        }
-                    }
-                }
-            }
-            if self.edit_points && response.double_clicked() {
-                if let (Some(i), Some(u)) = (self.sel, user) {
-                    let e = &mut s.shapes[i];
-                    e.bake(art);
-                    if let Some(own) = &mut e.own {
-                        // Insert on the nearest segment, if the click was on the outline.
-                        let mut best = (slop / m.scale, None);
-                        for (li, (c, closed)) in own.lines.iter().enumerate() {
-                            let segs = if *closed { c.len() } else { c.len().saturating_sub(1) };
-                            for k in 0..segs {
-                                let d = artwork::near_line(&vec![c[k], c[(k + 1) % c.len()]], false, u);
-                                if d < best.0 {
-                                    best = (d, Some((li, k + 1)));
-                                }
-                            }
-                        }
-                        if let Some((li, at)) = best.1 {
-                            own.lines[li].0.insert(at, u);
-                            handled_double = true;
-                        }
-                    }
-                }
-            }
-            // Drags start where the button went down, not where the pointer
-            // is once it has moved far enough to count as a drag.
-            let (origin, shift) = ui.input(|i| (i.pointer.press_origin(), i.modifiers.shift));
-            if response.drag_started() && !shift {
-                if let Some(p) = origin {
-                    let u = m.to_user(frame.to_world(p));
-                    let handle = self.sel.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(&frame, m, art, e)).and_then(|h| h.hit(p));
-                    let center = |e: &ShapeEdit| {
-                        let c = artwork::middle(&e.base(art).lines);
-                        (c.0 + e.dx, c.1 + e.dy)
-                    };
-                    if let (Some(i), Some(h)) = (self.sel, handle) {
-                        let e = &s.shapes[i];
-                        let c = center(e);
-                        self.drag = Some(match h {
-                            Handle::Corner => Drag::Scale { from: e.scale, start: lettering::dist(c, u).max(1e-3) },
-                            Handle::Turn => Drag::Turn { from: e.rotate, start: (u.1 - c.1).atan2(u.0 - c.0).to_degrees() },
-                        });
-                    } else if let Some((line, point)) = node_under(s, self.sel, p).filter(|_| self.edit_points) {
-                        if let Some(i) = self.sel {
-                            s.shapes[i].bake(art);
-                            self.drag = Some(Drag::Node { line, point });
-                        }
-                    } else if let Some(i) = artwork::shape_at(art, s, m.to_stitch(u), slop) {
-                        // Press on any shape and drag: it is picked and moved in one go.
-                        if self.sel != Some(i) {
-                            self.sel = Some(i);
-                            self.edit_points = false;
-                        }
-                        self.drag = Some(Drag::Shape { start: u, from: (s.shapes[i].dx, s.shapes[i].dy) });
-                    }
-                }
-            }
-            if response.dragged() {
-                if let (Some(i), Some(u)) = (self.sel, user) {
-                    let c = {
-                        let e = &s.shapes[i];
-                        let c = artwork::middle(&e.base(art).lines);
-                        (c.0 + e.dx, c.1 + e.dy)
-                    };
-                    match self.drag {
-                        Some(Drag::Scale { from, start }) => {
-                            let k = from * lettering::dist(c, u) / start;
-                            // Whole percents read better in the panel.
-                            s.shapes[i].scale = (k * 100.0).round().clamp(10.0, 400.0) / 100.0;
-                        }
-                        Some(Drag::Turn { from, start }) => {
-                            let a = (u.1 - c.1).atan2(u.0 - c.0).to_degrees();
-                            let mut r = from + a - start;
-                            r = (r + 180.0).rem_euclid(360.0) - 180.0;
-                            // Shift snaps to 15°.
-                            s.shapes[i].rotate = if shift { (r / 15.0).round() * 15.0 } else { r.round() };
-                        }
-                        Some(Drag::Shape { start, from }) => {
-                            // Snap to 0.5 mm on the fabric.
-                            let snap = 5.0 / m.scale;
-                            let e = &mut s.shapes[i];
-                            e.dx = ((from.0 + u.0 - start.0) / snap).round() * snap;
-                            e.dy = ((from.1 + u.1 - start.1) / snap).round() * snap;
-                        }
-                        Some(Drag::Node { line, point }) => {
-                            if let Some(own) = &mut s.shapes[i].own {
-                                if let Some(q) = own.lines.get_mut(line).and_then(|l| l.0.get_mut(point)) {
-                                    *q = u;
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        }
-
-        // Show what a press would grab.
-        let mut hover_shape = None;
-        if let (Some(m), Some(art), Some(s)) = (shape_map, &self.artwork, &self.art) {
-            match self.drag {
-                Some(Drag::Shape { .. } | Drag::Node { .. }) => ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing),
-                Some(Drag::Scale { .. }) => ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeNwSe),
-                Some(Drag::Turn { .. }) => ui.ctx().set_cursor_icon(egui::CursorIcon::Alias),
-                _ if response.hovered() => {
-                    if let Some(p) = response.hover_pos() {
-                        let handle = self.sel.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(&frame, m, art, e)).and_then(|h| h.hit(p));
-                        let shift = ui.input(|i| i.modifiers.shift);
-                        match handle {
-                            Some(Handle::Corner) => ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeNwSe),
-                            Some(Handle::Turn) => ui.ctx().set_cursor_icon(egui::CursorIcon::Alias),
-                            None if !shift => {
-                                hover_shape = artwork::shape_at(art, s, m.to_stitch(m.to_user(frame.to_world(p))), 6.0 / self.view.scale);
-                                if hover_shape.is_some() {
-                                    ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
-                                }
-                            }
-                            None => {}
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
+        // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
+        let handled_double = self.shape_input(ui, &response, &frame);
+        let hover_shape = self.shape_hover(ui, &response, &frame);
 
         // Interaction: drag the design to move it, drag elsewhere to pan, scroll to zoom.
         if response.drag_started() && self.drag.is_none() {
             let over = response.interact_pointer_pos().map(|p| frame.to_world(p));
+            let middle = ui.input(|i| i.pointer.button_down(egui::PointerButton::Middle));
             self.drag = match (over, &self.design) {
+                _ if middle => Some(Drag::Pan),
                 (Some(w), Some(d)) => {
                     let (dw, dh) = self.setup.at.size(d.size().0, d.size().1);
                     let at = self.setup.at;
@@ -1399,92 +1181,9 @@ impl HoopApp {
             }
         }
 
-        // A faint outline on the shape under the pointer.
-        if let (Some(m), Some(art), Some(s), Some(h)) = (shape_map, &self.artwork, &self.art, hover_shape.filter(|&h| Some(h) != self.sel)) {
-            for (c, closed) in &s.shapes[h].lines(art) {
-                let mut pts: Vec<egui::Pos2> = c.iter().map(|&q| frame.to_screen_pt(m.to_world(q))).collect();
-                if *closed && !pts.is_empty() {
-                    pts.push(pts[0]);
-                }
-                painter.add(egui::Shape::line(pts, egui::Stroke::new(1.0, Color32::from_white_alpha(170))));
-            }
-        }
-        // The selected artwork shape with its resize and turn handles, or
-        // its points while editing them.
-        if let (Some(m), Some(art), Some(s), Some(i)) = (shape_map, &self.artwork, &self.art, self.sel) {
-            if let Some(e) = s.shapes.get(i) {
-                let accent = self.accent();
-                let lines = e.lines(art);
-                let count: usize = lines.iter().map(|l| l.0.len()).sum();
-                for (c, closed) in &lines {
-                    let mut pts: Vec<egui::Pos2> = c.iter().map(|&q| frame.to_screen_pt(m.to_world(q))).collect();
-                    if *closed && !pts.is_empty() {
-                        pts.push(pts[0]);
-                    }
-                    painter.add(egui::Shape::line(pts.clone(), egui::Stroke::new(3.0, Color32::from_black_alpha(120))));
-                    painter.add(egui::Shape::line(pts, egui::Stroke::new(1.5, accent)));
-                }
-                if self.edit_points && count <= 800 {
-                    for q in lines.iter().flat_map(|l| l.0.iter()) {
-                        let p = frame.to_screen_pt(m.to_world(*q));
-                        let r = egui::Rect::from_center_size(p, vec2(7.0, 7.0));
-                        painter.rect_filled(r, 1, Color32::WHITE);
-                        painter.rect_stroke(r, 1, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
-                    }
-                } else if !self.edit_points {
-                    if let Some(h) = shape_handles(&frame, m, art, e) {
-                        let dash = egui::Stroke::new(1.0, accent.gamma_multiply(0.8));
-                        painter.add(egui::Shape::dashed_line(&[h.rect.left_top(), h.rect.right_top(), h.rect.right_bottom(), h.rect.left_bottom(), h.rect.left_top()], dash, 4.0, 3.0));
-                        painter.line_segment([h.rect.center_top(), h.turn], dash);
-                        for c in h.corners() {
-                            let r = egui::Rect::from_center_size(c, vec2(9.0, 9.0));
-                            painter.rect_filled(r, 2, Color32::WHITE);
-                            painter.rect_stroke(r, 2, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
-                        }
-                        painter.circle(h.turn, 5.5, Color32::WHITE, egui::Stroke::new(1.5, accent));
-                    }
-                } else {
-                    painter.text(rect.center_top() + vec2(0.0, 56.0), egui::Align2::CENTER_CENTER, "Too many points to show. Press Simplify first.", egui::FontId::proportional(13.0), Color32::WHITE);
-                }
-            }
-        }
+        self.shape_overlay(&painter, &frame, hover_shape);
+        self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 
-        // Overlay controls in the canvas corners.
-        let chip = |t: &str| {
-            egui::Button::new(RichText::new(t.to_string()).color(Color32::WHITE).size(12.5))
-                .fill(Color32::from_black_alpha(165))
-                .stroke(egui::Stroke::NONE)
-                .corner_radius(7)
-        };
-        let br = rect.right_bottom() - vec2(12.0, 12.0);
-        if ui.put(egui::Rect::from_min_max(br - vec2(132.0, 30.0), br), chip("Whole hoop  F")).clicked() {
-            self.fit_view(rect, false);
-        }
-        if self.design.is_some() && ui.put(egui::Rect::from_min_max(br - vec2(240.0, 30.0), br - vec2(140.0, 0.0)), chip("Design  D")).clicked() {
-            self.fit_view(rect, true);
-        }
-        let hint = if shape_map.is_some() {
-            "Drag a shape to move it · Shift+drag moves the design · scroll to zoom"
-        } else {
-            "Drag design to move · scroll to zoom · ? for keys"
-        };
-        let galley = painter.layout_no_wrap(hint.into(), egui::FontId::proportional(12.0), Color32::WHITE);
-        let at = rect.left_bottom() + vec2(12.0, -12.0 - galley.size().y - 12.0);
-        let bg = egui::Rect::from_min_size(at, galley.size() + vec2(20.0, 12.0));
-        if bg.right() < br.x - 252.0 {
-            painter.rect_filled(bg, 7, Color32::from_black_alpha(140));
-            painter.galley(at + vec2(10.0, 6.0), galley, Color32::WHITE);
-        }
-    }
-
-    /// How artwork user units map onto the hoop, when an artwork design is shown.
-    fn shape_map(&self) -> Option<ShapeMap> {
-        if self.mode != Mode::Artwork || self.playing {
-            return None;
-        }
-        let (art, s, d) = (self.artwork.as_ref()?, self.art.as_ref()?, self.design.as_ref()?);
-        let (scale, mid) = artwork::frame(art, s);
-        Some(ShapeMap { scale, mid, t: Transform::new(d.bounds, &self.setup.at) })
     }
 
     fn toast(&mut self, text: String) {
@@ -1614,10 +1313,11 @@ impl HoopApp {
         }
     }
 
-    fn lettering_panel(&mut self, ui: &mut egui::Ui) {
+    fn lettering_panel(&mut self, ui: &mut egui::Ui, tab: Tab) {
         let muted = self.muted();
         let accent = self.accent();
         let s = &mut self.letter;
+        if tab == Tab::Text {
         card(ui, "Text", accent, |ui| {
             ui.add(egui::TextEdit::multiline(&mut s.text).desired_rows(2).desired_width(f32::INFINITY).font(egui::TextStyle::Heading));
             let current = self.fonts.get(s.font).map_or("", |f| f.name.as_str()).to_string();
@@ -1645,6 +1345,8 @@ impl HoopApp {
                 (lettering::PRESETS[i].2)(s);
             }
         });
+        }
+        if tab == Tab::Style {
         card(ui, "Shape", accent, |ui| {
             slider_row(ui, "Height", &mut s.height_mm, 5.0..=120.0, " mm", 1).on_hover_text("Height of capital letters");
             slider_row(ui, "Spacing", &mut s.spacing_mm, -5.0..=15.0, " mm", 1).on_hover_text("Extra space between letters");
@@ -1658,6 +1360,8 @@ impl HoopApp {
         });
         fill_card(ui, s, muted, accent, true);
         edge_card(ui, s, accent, "Edge", true);
+        }
+        if tab == Tab::Patch {
         card(ui, "Patch", accent, |ui| {
             ui.label(RichText::new("A background shape for badges and name patches").size(12.0).color(muted));
             segmented(
@@ -1696,22 +1400,10 @@ impl HoopApp {
                 }
             }
         });
-        let w = ui.available_width();
-        ui.horizontal(|ui| {
-            if ui.add(primary("Save as JEF…", accent).min_size(vec2(w - 88.0, 32.0))).on_hover_text("Ctrl+S").clicked() {
-                self.save_jef();
-            }
-            if ui.add(egui::Button::new("Reset").min_size(vec2(80.0, 32.0))).clicked() {
-                let font = self.letter.font;
-                self.letter = Settings { font, ..Default::default() };
-            }
-        });
-        ui.add_space(4.0);
-        if ui.add_enabled(self.design.is_some() || !self.pinned.is_empty(), egui::Button::new("Send to USB…").min_size(vec2(ui.available_width(), 28.0)))
-            .on_hover_text("Write the JEF straight to the machine's USB stick · Ctrl+U")
-            .clicked()
-        {
-            self.open_usb();
+        }
+        if tab == Tab::Text && ui.button("Reset lettering").on_hover_text("Back to the default style, keeping the font").clicked() {
+            let font = self.letter.font;
+            self.letter = Settings { font, ..Default::default() };
         }
         ui.add_space(10.0);
     }
@@ -1724,8 +1416,9 @@ impl HoopApp {
                 self.art = Some(ArtSettings::for_artwork(&art));
                 self.reset_history();
                 self.art_built = None;
-                self.sel = None;
+                self.sel.clear();
                 self.edit_points = false;
+                self.dock = Dock::Objects;
                 self.artwork = Some(art);
                 self.design = None;
                 self.error = None;
@@ -1800,10 +1493,15 @@ impl HoopApp {
         }
     }
 
-    fn artwork_panel(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect) {
+    fn artwork_panel(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect, tab: Tab) {
         let muted = self.muted();
         let accent = self.accent();
         let has_art = self.artwork.is_some();
+        if tab == Tab::Shape && has_art {
+            self.shape_tab(ui);
+            return;
+        }
+        if tab == Tab::Source || !has_art {
         card(ui, "Artwork", accent, |ui| {
             match &self.artwork {
                 Some(a) => {
@@ -1839,12 +1537,6 @@ impl HoopApp {
                     self.save_jef();
                 }
             });
-            if ui.add_enabled(self.design.is_some() || !self.pinned.is_empty(), egui::Button::new("Send to USB…").min_size(vec2(ui.available_width(), 28.0)))
-                .on_hover_text("Write the JEF straight to the machine's USB stick · Ctrl+U")
-                .clicked()
-            {
-                self.open_usb();
-            }
             if self.paste_open {
                 ui.add_space(4.0);
                 egui::ScrollArea::vertical().id_salt("svg-text").max_height(220.0).show(ui, |ui| {
@@ -1870,10 +1562,11 @@ impl HoopApp {
                 });
             }
         });
+        }
         if !has_art {
             return;
         }
-        if self.picture.is_some() {
+        if tab == Tab::Source && self.picture.is_some() {
             let mut t = self.trace_set;
             card(ui, "Trace", accent, |ui| {
                 ui.label(RichText::new("Pictures are reduced to a few flat colors and outlined. Logos and clip art work best; photos don't stitch well.").size(12.0).color(muted));
@@ -1896,6 +1589,7 @@ impl HoopApp {
         }
         let hoop = self.hoop_size();
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
+        if tab == Tab::Source {
         card(ui, "Size", accent, |ui| {
             slider_row(ui, "Width", &mut s.width_mm, 10.0..=360.0, " mm", 1);
             ui.horizontal(|ui| {
@@ -1910,8 +1604,8 @@ impl HoopApp {
             });
         });
 
-        card(ui, "Shapes", accent, |ui| shapes_card(ui, art, s, &mut self.sel, &mut self.edit_points, accent, muted));
-
+        }
+        if tab == Tab::Threads {
         card(ui, "Threads", accent, |ui| {
             // Colors no shape uses any more are left out.
             let used_layers: Vec<bool> = (0..art.layers.len()).map(|l| s.shapes.iter().any(|e| e.layer == l && !e.hidden)).collect();
@@ -1990,6 +1684,10 @@ impl HoopApp {
                 .on_hover_text("Off: stitch in the drawing's own order, changing thread whenever it changes");
         });
 
+        }
+        if tab != Tab::Style {
+            return;
+        }
         card(ui, "Quick styles", accent, |ui| {
             if let Some(i) = preset_chips(ui, &artwork::PRESETS.map(|p| (p.0, p.1))) {
                 (artwork::PRESETS[i].2)(s);
@@ -2011,9 +1709,9 @@ impl HoopApp {
         });
         if ui.button("Reset settings").on_hover_text("Also puts every shape back as it was in the drawing").clicked() {
             self.art = Some(ArtSettings::for_artwork(art));
-            self.sel = None;
+            self.sel.clear();
         }
-        let _ = canvas_rect;
+        let _ = (canvas_rect, muted);
         ui.add_space(10.0);
     }
 
@@ -2455,177 +2153,11 @@ impl eframe::App for HoopApp {
         let canvas_rect = self.canvas_rect;
         self.keys(ctx, canvas_rect);
 
-        let panel = egui::Frame::new().fill(ui.visuals().panel_fill).inner_margin(egui::Margin { left: 14, right: 6, top: 0, bottom: 0 });
-        egui::Panel::right("controls").resizable(false).exact_size(370.0).frame(panel).show(ui, |ui| {
-            egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-                // Leave room for the scroll bar and never grow past the panel.
-                ui.set_max_width(ui.available_width() - 10.0);
-                self.side_panel(ui, canvas_rect);
-            });
-        });
-        egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
+        self.layout(ui, canvas_rect);
         self.track_history(ctx, false);
         self.help_overlay(ctx);
         self.usb_window(ctx);
     }
-}
-
-/// The Shapes card: every shape of the artwork, topmost first, with what can
-/// be done to the selected one.
-fn shapes_card(ui: &mut egui::Ui, art: &artwork::Artwork, s: &mut ArtSettings, sel: &mut Option<usize>, edit_points: &mut bool, accent: Color32, muted: Color32) {
-    let (scale, frame_mid) = artwork::frame(art, s);
-    ui.horizontal(|ui| {
-        ui.menu_button("Add shape", |ui| {
-            for name in artwork::BUILT_IN {
-                if ui.button(name).clicked() {
-                    let layer = sel.and_then(|i| s.shapes.get(i)).map_or(0, |e| e.layer);
-                    let size = (art.bounds.2 - art.bounds.0).min(art.bounds.3 - art.bounds.1) * 0.5;
-                    let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
-                    let own = artwork::built_in(name, frame_mid, size, layer);
-                    s.shapes.push(ShapeEdit {
-                        source: usize::MAX,
-                        own: Some(own),
-                        name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
-                        layer,
-                        hidden: false,
-                        dx: 0.0,
-                        dy: 0.0,
-                        scale: 1.0,
-                        rotate: 0.0,
-                    });
-                    if let Some(l) = s.layers.get_mut(layer) {
-                        l.enabled = true;
-                    }
-                    *sel = Some(s.shapes.len() - 1);
-                    ui.close();
-                }
-            }
-        });
-        ui.label(RichText::new(format!("{} shape{}", s.shapes.len(), if s.shapes.len() == 1 { "" } else { "s" })).size(12.0).color(muted));
-    });
-    if s.shapes.is_empty() {
-        return;
-    }
-    ui.label(RichText::new("Top of the list is sewn last and lies on top. Click a shape here or on the hoop to edit it.").size(12.0).color(muted));
-    egui::ScrollArea::vertical().id_salt("shape-list").max_height(200.0).show(ui, |ui| {
-        let width = ui.available_width();
-        for i in (0..s.shapes.len()).rev() {
-            let e = &mut s.shapes[i];
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 5.0;
-                let mut shown = !e.hidden;
-                if ui.checkbox(&mut shown, "").on_hover_text("Stitch this shape").changed() {
-                    e.hidden = !shown;
-                }
-                let (r, _) = ui.allocate_exact_size(vec2(12.0, 18.0), Sense::hover());
-                ui.painter().rect_filled(r.shrink2(vec2(0.0, 2.0)), 3, rgb(art.layers[e.layer].color));
-                let name = if e.hidden { RichText::new(&e.name).color(muted) } else { RichText::new(&e.name) };
-                let w = (width - 60.0).max(40.0);
-                let kind = if e.source >= art.shapes.len() { "added" } else if e.own.is_some() { "edited" } else if e.moved() { "moved" } else { "" };
-                let row = egui::Button::selectable(*sel == Some(i), (name, egui::Atom::grow(), RichText::new(kind).size(11.0).color(muted))).min_size(vec2(w, 20.0));
-                if ui.add(row).clicked() {
-                    *sel = if *sel == Some(i) { None } else { Some(i) };
-                    *edit_points = false;
-                }
-            });
-        }
-    });
-    let Some(i) = sel.filter(|&i| i < s.shapes.len()) else { return };
-    ui.add_space(6.0);
-    let w = (ui.available_width() - 18.0) / 4.0;
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 6.0;
-        if ui.add_enabled(i + 1 < s.shapes.len(), egui::Button::new("Up").min_size(vec2(w, 24.0))).on_hover_text("Sew later, on top · ]").clicked() {
-            s.shapes.swap(i, i + 1);
-            *sel = Some(i + 1);
-        }
-        if ui.add_enabled(i > 0, egui::Button::new("Down").min_size(vec2(w, 24.0))).on_hover_text("Sew earlier, underneath · [").clicked() {
-            s.shapes.swap(i, i - 1);
-            *sel = Some(i - 1);
-        }
-        if ui.add(egui::Button::new("Copy").min_size(vec2(w, 24.0))).on_hover_text("Duplicate, a little to the side · Ctrl+D").clicked() {
-            duplicate_shape(s, i, scale);
-            *sel = Some(i + 1);
-        }
-        if ui.add(egui::Button::new("Delete").min_size(vec2(w, 24.0))).on_hover_text("Del").clicked() {
-            s.shapes.remove(i);
-            *sel = None;
-            *edit_points = false;
-        }
-    });
-    let Some(i) = *sel else { return };
-    let e = &mut s.shapes[i];
-    ui.add_space(4.0);
-    // Offsets are user units; show them as mm on the fabric.
-    let mm = scale / 10.0;
-    let (mut x, mut y) = (e.dx * mm, e.dy * mm);
-    slider_row(ui, "Move X", &mut x, -150.0..=150.0, " mm", 1).on_hover_text("Or drag the selected shape on the hoop, or nudge with the arrow keys");
-    slider_row(ui, "Move Y", &mut y, -150.0..=150.0, " mm", 1);
-    if (x - e.dx * mm).abs() > 1e-4 || (y - e.dy * mm).abs() > 1e-4 {
-        (e.dx, e.dy) = (x / mm, y / mm);
-    }
-    let mut size = e.scale * 100.0;
-    if slider_row(ui, "Size", &mut size, 10.0..=400.0, " %", 0).changed() {
-        e.scale = (size / 100.0).max(0.05);
-    }
-    slider_row(ui, "Turn", &mut e.rotate, -180.0..=180.0, "°", 0);
-    ui.horizontal(|ui| {
-        ui.label(RichText::new("Color").color(muted));
-        ui.spacing_mut().item_spacing.x = 3.0;
-        for (l, layer) in art.layers.iter().enumerate() {
-            let (r, resp) = ui.allocate_exact_size(vec2(18.0, 18.0), Sense::click());
-            ui.painter().rect_filled(r.shrink(2.0), 4, rgb(layer.color));
-            if e.layer == l {
-                ui.painter().rect_stroke(r, 4, egui::Stroke::new(2.0, accent), egui::StrokeKind::Inside);
-            }
-            if resp.on_hover_text("Stitch with this color's thread").clicked() {
-                e.layer = l;
-                if let Some(c) = s.layers.get_mut(l) {
-                    c.enabled = true;
-                }
-            }
-        }
-    });
-    let e = &mut s.shapes[i];
-    ui.add_space(4.0);
-    let points: usize = e.base(art).lines.iter().map(|l| l.0.len()).sum();
-    ui.horizontal(|ui| {
-        if ui.add(egui::Button::new("Edit points").selected(*edit_points)).on_hover_text("Drag points on the hoop. Right-click a point to remove it, double-click a line to add one.").clicked() {
-            *edit_points = !*edit_points;
-            if *edit_points {
-                e.bake(art);
-            }
-        }
-        if ui.button("Simplify").on_hover_text("Fewer points, smoother to edit; keeps the shape within 0.3 mm").clicked() {
-            e.bake(art);
-            if let Some(own) = &mut e.own {
-                let eps = 3.0 / scale;
-                for (c, closed) in &mut own.lines {
-                    let fewer = if *closed { trace::simplify_closed(c, eps) } else { trace::simplify(c, eps) };
-                    if fewer.len() >= if *closed { 3 } else { 2 } {
-                        *c = fewer;
-                    }
-                }
-            }
-        }
-        let can_reset = e.moved() || (e.own.is_some() && e.source < art.shapes.len());
-        if ui.add_enabled(can_reset, egui::Button::new("Reset")).on_hover_text("Back to the shape as drawn").clicked() {
-            (e.dx, e.dy, e.scale, e.rotate) = (0.0, 0.0, 1.0, 0.0);
-            if e.source < art.shapes.len() {
-                e.own = None;
-            }
-        }
-    });
-    ui.label(RichText::new(format!("{points} points")).size(12.0).color(muted));
-}
-
-fn duplicate_shape(s: &mut ArtSettings, i: usize, scale: f32) {
-    let mut copy = s.shapes[i].clone();
-    // 5 mm to the right and down.
-    copy.dx += 50.0 / scale;
-    copy.dy += 50.0 / scale;
-    copy.name = format!("{} copy", copy.name);
-    s.shapes.insert(i + 1, copy);
 }
 
 fn rgb(c: [u8; 3]) -> Color32 {
@@ -2644,14 +2176,17 @@ const WARN: Color32 = Color32::from_rgb(0xe2, 0xa6, 0x4a);
 /// A rounded section with a small heading; every panel section uses one.
 fn card(ui: &mut egui::Ui, title: &str, accent: Color32, add: impl FnOnce(&mut egui::Ui)) {
     let v = ui.visuals();
-    let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.05);
-    egui::Frame::new().fill(fill).corner_radius(10).inner_margin(12).show(ui, |ui| {
+    // A Qt-style group box: a thin frame with its title on top.
+    let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.025);
+    let stroke = egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color);
+    ui.label(RichText::new(title).size(12.5).strong().color(v.text_color()));
+    ui.add_space(-2.0);
+    egui::Frame::new().fill(fill).stroke(stroke).corner_radius(4).inner_margin(10).show(ui, |ui| {
         ui.set_width(ui.available_width());
-        ui.label(RichText::new(title.to_uppercase()).size(11.0).color(accent).strong());
-        ui.add_space(2.0);
         add(ui);
     });
-    ui.add_space(10.0);
+    let _ = accent;
+    ui.add_space(8.0);
 }
 
 fn primary(text: &str, accent: Color32) -> egui::Button<'static> {

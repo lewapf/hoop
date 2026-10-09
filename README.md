@@ -16,11 +16,21 @@ color becomes a Janome thread, shapes are filled with any fill style, strokes
 become running or satin lines, hidden parts are cut away so layers don't pile
 up, and the colors can be merged down to a few threads.
 
-The Shapes card lists every shape of the artwork. Pick one there or click it
-on the hoop to move, resize, turn, recolor, duplicate, hide, delete or
-restack it (the top of the list is sewn last). Press on any shape and drag to
-move it; drag a corner of the selected shape to resize it and the round knob
-above it to turn it (Shift snaps to 15°). Shift+drag moves the whole design. Edit points shows its outline points: drag them, right-click
+The window works like a desktop editor: a menu bar and tool bar on top, the
+Objects and Colors dock on the left, a tabbed properties dock on the right
+(Source, Shape, Style, Threads, Hoop, Stitch, View in the Artwork tab) and a
+status bar with the pointer position, size, stitches and fit. Both docks can
+be resized or hidden from the View menu.
+
+The Objects list shows every shape of the artwork, topmost first; drag a row
+to restack it, click the dot to hide a shape. Pick shapes there or on the
+hoop: click one, Ctrl+click to add, or drag over empty fabric to pick
+several with a band. Press on any shape and drag to move it; moving shapes
+snap to the edges and middles of the others (pink guides, Alt to turn it
+off). Drag a corner of a single picked shape to resize it and the round knob
+above it to turn it (Shift snaps to 15°). Shift+drag moves the whole design
+and the middle button pans. The Shape tab and Shape menu align, restack,
+duplicate, delete and recolor the picked shapes. Edit points shows its outline points: drag them, right-click
 one to remove it, double-click the outline to add one; Simplify thins out
 traced outlines first. Add shape puts in a circle, rounded square, heart,
 star, shield, banner or line, and Start from shapes begins an empty design
@@ -57,8 +67,10 @@ you pick that file in the save dialog yourself.
 | `Ctrl+S`                | Save as JEF                                |
 | `Ctrl+U`                | Send to the machine's USB stick            |
 | `Ctrl+V`                | Paste SVG code as artwork                  |
-| `Arrows` · `[` / `]`    | Selected artwork shape: move / restack     |
-| `Ctrl+D` · `Del` · `Esc`| Selected shape: duplicate / delete / deselect |
+| `Ctrl+A`                | Pick every artwork shape                   |
+| `Arrows` · `[` / `]`    | Picked shapes: move / one step up or down  |
+| `Shift+[` / `Shift+]`   | Picked shapes: to the back / front         |
+| `Ctrl+D` · `Del` · `Ctrl+H` · `Esc` | Picked shapes: duplicate / delete / hide / deselect |
 | `Ctrl+Shift+S`          | Save a picture of the preview              |
 | `Space`                 | Play or pause the stitch-out               |
 | `Home` / `End`          | Back to the first stitch / show everything |

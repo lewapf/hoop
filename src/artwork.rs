@@ -146,12 +146,19 @@ impl ShapeEdit {
     }
 }
 
-/// Middle of the bounding box of some lines.
-pub fn middle(lines: &[(Contour, bool)]) -> Pt {
+/// Bounding box of some lines: min x, min y, max x, max y. Empty lines give
+/// an inverted box.
+pub fn extent(lines: &[(Contour, bool)]) -> (f32, f32, f32, f32) {
     let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
     for p in lines.iter().flat_map(|l| l.0.iter()) {
         b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
     }
+    b
+}
+
+/// Middle of the bounding box of some lines.
+pub fn middle(lines: &[(Contour, bool)]) -> Pt {
+    let b = extent(lines);
     if b.0 > b.2 { (0.0, 0.0) } else { ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0) }
 }
 

@@ -37,7 +37,10 @@ Output: **Save as JEF** (Ctrl+S), **Send to USB** (Ctrl+U, writes to
 
 ```
 src/main.rs       eframe setup: app id "hoop", MSAA 4, vsync OFF (see Gotchas)
-src/app.rs        all UI and app state (big; egui immediate mode)
+src/app.rs        app state, canvas, panels' contents (big; egui immediate mode)
+src/app/shell.rs  menu bar, tool bar, status bar, left/right docks and tabs
+src/app/shapes.rs artwork shape editing: selection, drag/snap, handles,
+                  points, Arrange actions, Objects list, Shape tab
 src/canvas.rs     fabric, hoop and stitch drawing; Transform (rotate/mirror/offset)
 src/formats.rs    file readers, JEF writer, Pattern/Block, thread charts,
                   thread length, quality warnings
@@ -109,6 +112,10 @@ wrong). Commits end with the Claude co-author line; nothing is pushed anywhere.
   blocks in swap on Wayland, Hyprland shows "Application Not Responding" and the
   app gets killed. Nothing may repaint on a timer when idle; background threads
   call `ctx.request_repaint()` when they finish.
+- **UI layout (since 2026-10-09):** Qt-style shell. `side_panel(ui, rect, tab)`
+  draws one right-dock page; each mode's panel fn checks `tab`. `card` is
+  drawn as a group box. Unicode symbols like ↶ ▾ ⟲ are missing from the UI
+  font (they render as boxes), so tool buttons use words.
 - **Side panel overflow:** any row wider than the panel makes the canvas paint
   over the panel's left edge (text looks cut off). It happened twice. Size
   sliders as `available_width() - <value box>`; use `slider_row`/`int_row`.
