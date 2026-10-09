@@ -127,7 +127,7 @@ fn chaikin(c: &Contour) -> Contour {
 }
 
 /// Drops points that lie within `eps` of a straight line (Ramer-Douglas-Peucker).
-fn simplify(c: &[Pt], eps: f32) -> Vec<Pt> {
+pub fn simplify(c: &[Pt], eps: f32) -> Vec<Pt> {
     if c.len() < 3 {
         return c.to_vec();
     }
@@ -150,7 +150,7 @@ fn simplify(c: &[Pt], eps: f32) -> Vec<Pt> {
     left
 }
 
-fn simplify_closed(c: &Contour, eps: f32) -> Contour {
+pub fn simplify_closed(c: &Contour, eps: f32) -> Contour {
     // Split at the point farthest from the start so both halves are real lines.
     let far = (0..c.len()).max_by(|&a, &b| lettering::dist(c[0], c[a]).total_cmp(&lettering::dist(c[0], c[b]))).unwrap_or(0);
     if far == 0 {

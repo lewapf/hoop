@@ -16,6 +16,15 @@ color becomes a Janome thread, shapes are filled with any fill style, strokes
 become running or satin lines, hidden parts are cut away so layers don't pile
 up, and the colors can be merged down to a few threads.
 
+The Shapes card lists every shape of the artwork. Pick one there or click it
+on the hoop to move, resize, turn, recolor, duplicate, hide, delete or
+restack it (the top of the list is sewn last). Drag the selected shape on the
+hoop to move it. Edit points shows its outline points: drag them, right-click
+one to remove it, double-click the outline to add one; Simplify thins out
+traced outlines first. Add shape puts in a circle, rounded square, heart,
+star, shield, banner or line, and Start from shapes begins an empty design
+built only from those.
+
 Quick styles set up a whole look in one click, the fit card offers fixes
 (rotate, a bigger hoop, scale to fit), the Threads card shows how much thread
 each color needs and copies the list, and Details warns about stitches likely
@@ -47,6 +56,8 @@ you pick that file in the save dialog yourself.
 | `Ctrl+S`                | Save as JEF                                |
 | `Ctrl+U`                | Send to the machine's USB stick            |
 | `Ctrl+V`                | Paste SVG code as artwork                  |
+| `Arrows` · `[` / `]`    | Selected artwork shape: move / restack     |
+| `Ctrl+D` · `Del` · `Esc`| Selected shape: duplicate / delete / deselect |
 | `Ctrl+Shift+S`          | Save a picture of the preview              |
 | `Space`                 | Play or pause the stitch-out               |
 | `Home` / `End`          | Back to the first stitch / show everything |

@@ -151,6 +151,13 @@ chromium --headless=new --allow-file-access-from-files --user-data-dir=/tmp/x/ch
   only the current part, not pinned ones.
 - A combined JEF has not been saved and re-read in a test (logic is simple, but
   add a round-trip test).
+- Shape editing (Artwork → Shapes) lives in `ArtSettings::shapes` as
+  `ShapeEdit`s, so undo covers it. Moves keep the drawing's frame still on
+  the hoop (`regenerate_art` shifts the placement; `keep_anchor` skips that
+  after undo/redo). Point editing bakes the move into `own` geometry first.
+  Node drag/right-click/double-click were not exercised with a real mouse by
+  the agent (no pointer automation here); selection, outline and handles
+  were checked by screenshot.
 - Fills go one direction per shape (no shape-following satin columns); contour
   fill is the alternative.
 - SVG dashes are stitched solid; embedded images in SVGs are skipped.
@@ -160,8 +167,8 @@ chromium --headless=new --allow-file-access-from-files --user-data-dir=/tmp/x/ch
 
 ## Ideas queued with the owner
 
-Monogram templates, text on both halves of a circle (badge style), built-in
-shapes (heart, star, shield, banner), stitch-order list with drag to reorder,
+Monogram templates, text on both halves of a circle (badge style), drag to
+reorder in the Shapes list, per-shape fill style, Bezier handles in point editing,
 Madeira/Isacord thread charts, editable pinned parts.
 
 ## Owner preferences

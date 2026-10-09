@@ -6,7 +6,7 @@ use egui::{Color32, Key, KeyboardShortcut, Modifiers, RichText, Sense, Vec2, vec
 use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
-use crate::artwork::{self, ArtSettings, Look};
+use crate::artwork::{self, ArtSettings, Look, ShapeEdit};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
 use crate::prefs::Prefs;
 use crate::trace::{self, TraceSettings};
@@ -40,6 +40,9 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("1 – 4", "Pick a hoop"),
     ("F / D", "Show the whole hoop / zoom to the design"),
     ("G / J / T", "Grid / jump stitches / thread texture"),
+    ("Click shape", "Artwork: select a shape to move, resize or recolor it"),
+    ("Arrows · [ / ]", "Selected shape: move it / send it down or up"),
+    ("Ctrl+D · Del · Esc", "Selected shape: duplicate / delete / deselect"),
     ("Ctrl+Z / Ctrl+Shift+Z", "Undo / redo any change"),
     ("?", "Show these shortcuts"),
     ("Q", "Quit"),
@@ -56,6 +59,29 @@ struct UsbState {
     /// The drive last written to, offered for ejecting.
     sent_to: Option<usb::Drive>,
     message: Option<Result<String, String>>,
+}
+
+/// Artwork user units to stitch units to hoop coordinates and back.
+#[derive(Clone, Copy)]
+struct ShapeMap {
+    scale: f32,
+    mid: (f32, f32),
+    t: Transform,
+}
+
+impl ShapeMap {
+    fn to_stitch(self, u: (f32, f32)) -> (f32, f32) {
+        ((u.0 - self.mid.0) * self.scale, (u.1 - self.mid.1) * self.scale)
+    }
+
+    fn to_world(self, u: (f32, f32)) -> (f32, f32) {
+        self.t.apply(self.to_stitch(u))
+    }
+
+    fn to_user(self, w: (f32, f32)) -> (f32, f32) {
+        let p = self.t.invert(w);
+        (p.0 / self.scale + self.mid.0, p.1 / self.scale + self.mid.1)
+    }
 }
 
 /// A finished part fixed on the hoop, in hoop coordinates (0.1 mm, hoop
@@ -122,6 +148,10 @@ struct Setup {
 enum Drag {
     Move { start: (f32, f32), from: Placement },
     Pan,
+    /// Moving the selected artwork shape; offsets in SVG user units.
+    Shape { start: (f32, f32), from: (f32, f32) },
+    /// Moving one point of the selected shape: line and point index.
+    Node { line: usize, point: usize },
 }
 
 pub struct HoopApp {
@@ -165,6 +195,12 @@ pub struct HoopApp {
     art: Option<ArtSettings>,
     art_built: Option<ArtSettings>,
     art_slow: bool,
+    /// The artwork shape picked in the Shapes list or on the hoop.
+    sel: Option<usize>,
+    edit_points: bool,
+    /// Set by undo and redo so the next stitch-out doesn't shift the design
+    /// to keep shapes in place (the restored placement already does).
+    keep_anchor: bool,
     letter: Settings,
     letter_built: Option<Settings>,
     fonts: Vec<FontSource>,
@@ -225,6 +261,9 @@ impl HoopApp {
             artwork: None,
             art: None,
             art_built: None,
+            sel: None,
+            edit_points: false,
+            keep_anchor: false,
             art_slow: false,
             letter: Settings::default(),
             letter_built: None,
@@ -378,7 +417,11 @@ impl HoopApp {
         self.setup = s.setup;
         self.letter = s.letter.clone();
         if s.art.as_ref().map(|a| a.layers.len()) == self.art.as_ref().map(|a| a.layers.len()) {
+            self.keep_anchor = s.art != self.art;
             self.art = s.art.clone();
+            if self.sel.is_some_and(|i| self.art.as_ref().is_none_or(|a| i >= a.shapes.len())) {
+                self.sel = None;
+            }
         }
         self.committed = self.snapshot();
         self.pending_since = None;
@@ -429,6 +472,52 @@ impl HoopApp {
             self.undo.push(self.snapshot());
             self.restore_snapshot(s);
             self.toast("Redone".into());
+        }
+    }
+
+    /// Keys for the selected artwork shape; they take precedence over the
+    /// same keys for the whole design.
+    fn shape_keys(&mut self, ctx: &egui::Context) {
+        let Some(m) = self.shape_map() else { return };
+        let (Some(i), Some(s)) = (self.sel, &mut self.art) else { return };
+        if i >= s.shapes.len() {
+            return;
+        }
+        let press = |m: Modifiers, k: Key| ctx.input_mut(|inp| inp.consume_shortcut(&KeyboardShortcut::new(m, k)));
+        if press(Modifiers::NONE, Key::Escape) {
+            self.sel = None;
+            self.edit_points = false;
+            return;
+        }
+        if press(Modifiers::NONE, Key::Delete) || press(Modifiers::NONE, Key::Backspace) {
+            s.shapes.remove(i);
+            self.sel = None;
+            self.edit_points = false;
+            return;
+        }
+        if press(Modifiers::COMMAND, Key::D) {
+            duplicate_shape(s, i, m.scale);
+            self.sel = Some(i + 1);
+            return;
+        }
+        if press(Modifiers::NONE, Key::CloseBracket) && i + 1 < s.shapes.len() {
+            s.shapes.swap(i, i + 1);
+            self.sel = Some(i + 1);
+        }
+        if press(Modifiers::NONE, Key::OpenBracket) && i > 0 {
+            s.shapes.swap(i, i - 1);
+            self.sel = Some(i - 1);
+        }
+        for (key, dx, dy) in [(Key::ArrowLeft, -1.0, 0.0), (Key::ArrowRight, 1.0, 0.0), (Key::ArrowUp, 0.0, -1.0), (Key::ArrowDown, 0.0, 1.0)] {
+            for (mods, step) in [(Modifiers::NONE, 10.0), (Modifiers::SHIFT, 100.0)] {
+                if press(mods, key) {
+                    // Arrows move on the hoop, so undo the design's own turn first.
+                    let (ux, uy) = m.t.invert_delta((dx * step, dy * step));
+                    let e = &mut s.shapes[i];
+                    e.dx += ux / m.scale;
+                    e.dy += uy / m.scale;
+                }
+            }
         }
     }
 
@@ -489,6 +578,9 @@ impl HoopApp {
         let typed_question = ctx.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::Text(t) if t == "?")));
         if typed_question {
             self.help = !self.help;
+        }
+        if !self.help {
+            self.shape_keys(ctx);
         }
         if press(Modifiers::NONE, Key::Escape) {
             self.help = false;
@@ -983,8 +1075,105 @@ impl HoopApp {
         let painter = ui.painter_at(rect);
         let frame = Frame { painter: &painter, rect, view: self.view };
 
+        // Artwork shapes: click to select, drag the selected one, drag its points.
+        let shape_map = self.shape_map();
+        let mut handled_double = false;
+        if let (Some(m), Some(art), Some(s)) = (shape_map, &self.artwork, &mut self.art) {
+            let pointer = response.interact_pointer_pos();
+            let user = pointer.map(|p| m.to_user(frame.to_world(p)));
+            let slop = 6.0 / self.view.scale;
+            let node_under = |s: &ArtSettings, sel: Option<usize>, p: egui::Pos2| -> Option<(usize, usize)> {
+                let e = s.shapes.get(sel?)?;
+                let mut best = (64.0f32, None);
+                for (li, (c, _)) in e.lines(art).iter().enumerate() {
+                    for (pi, &q) in c.iter().enumerate() {
+                        let d = (frame.to_screen_pt(m.to_world(q)) - p).length_sq();
+                        if d < best.0 {
+                            best = (d, Some((li, pi)));
+                        }
+                    }
+                }
+                best.1
+            };
+            if response.clicked() {
+                if let Some(u) = user {
+                    let hit = artwork::shape_at(art, s, m.to_stitch(u), slop);
+                    if hit != self.sel && !(self.edit_points && node_under(s, self.sel, pointer.unwrap()).is_some()) {
+                        self.sel = hit;
+                        self.edit_points = false;
+                    }
+                }
+            }
+            if self.edit_points && response.secondary_clicked() {
+                if let (Some(i), Some((li, pi))) = (self.sel, pointer.and_then(|p| node_under(s, self.sel, p))) {
+                    let e = &mut s.shapes[i];
+                    e.bake(art);
+                    if let Some(own) = &mut e.own {
+                        let (c, closed) = &mut own.lines[li];
+                        if c.len() > if *closed { 3 } else { 2 } {
+                            c.remove(pi);
+                        }
+                    }
+                }
+            }
+            if self.edit_points && response.double_clicked() {
+                if let (Some(i), Some(u)) = (self.sel, user) {
+                    let e = &mut s.shapes[i];
+                    e.bake(art);
+                    if let Some(own) = &mut e.own {
+                        // Insert on the nearest segment, if the click was on the outline.
+                        let mut best = (slop / m.scale, None);
+                        for (li, (c, closed)) in own.lines.iter().enumerate() {
+                            let segs = if *closed { c.len() } else { c.len().saturating_sub(1) };
+                            for k in 0..segs {
+                                let d = artwork::near_line(&vec![c[k], c[(k + 1) % c.len()]], false, u);
+                                if d < best.0 {
+                                    best = (d, Some((li, k + 1)));
+                                }
+                            }
+                        }
+                        if let Some((li, at)) = best.1 {
+                            own.lines[li].0.insert(at, u);
+                            handled_double = true;
+                        }
+                    }
+                }
+            }
+            if response.drag_started() {
+                if let (Some(i), Some(p), Some(u)) = (self.sel, pointer, user) {
+                    if let Some((line, point)) = node_under(s, self.sel, p).filter(|_| self.edit_points) {
+                        s.shapes[i].bake(art);
+                        self.drag = Some(Drag::Node { line, point });
+                    } else if artwork::shape_at(art, s, m.to_stitch(u), slop) == Some(i) {
+                        self.drag = Some(Drag::Shape { start: u, from: (s.shapes[i].dx, s.shapes[i].dy) });
+                    }
+                }
+            }
+            if response.dragged() {
+                if let (Some(i), Some(u)) = (self.sel, user) {
+                    match self.drag {
+                        Some(Drag::Shape { start, from }) => {
+                            // Snap to 0.5 mm on the fabric.
+                            let snap = 5.0 / m.scale;
+                            let e = &mut s.shapes[i];
+                            e.dx = ((from.0 + u.0 - start.0) / snap).round() * snap;
+                            e.dy = ((from.1 + u.1 - start.1) / snap).round() * snap;
+                        }
+                        Some(Drag::Node { line, point }) => {
+                            if let Some(own) = &mut s.shapes[i].own {
+                                if let Some(q) = own.lines.get_mut(line).and_then(|l| l.0.get_mut(point)) {
+                                    *q = u;
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+
         // Interaction: drag the design to move it, drag elsewhere to pan, scroll to zoom.
-        if response.drag_started() {
+        if response.drag_started() && self.drag.is_none() {
             let over = response.interact_pointer_pos().map(|p| frame.to_world(p));
             self.drag = match (over, &self.design) {
                 (Some(w), Some(d)) => {
@@ -1013,13 +1202,13 @@ impl HoopApp {
                     self.view.pan += response.drag_delta();
                     self.user_view = true;
                 }
-                None => {}
+                _ => {}
             }
         }
         if response.drag_stopped() {
             self.drag = None;
         }
-        if response.double_clicked() {
+        if response.double_clicked() && !handled_double {
             self.fit_view(rect, false);
         }
         if response.hovered() {
@@ -1101,6 +1290,33 @@ impl HoopApp {
             }
         }
 
+        // The selected artwork shape and, while editing, its points.
+        if let (Some(m), Some(art), Some(s), Some(i)) = (shape_map, &self.artwork, &self.art, self.sel) {
+            if let Some(e) = s.shapes.get(i) {
+                let accent = self.accent();
+                let lines = e.lines(art);
+                let count: usize = lines.iter().map(|l| l.0.len()).sum();
+                for (c, closed) in &lines {
+                    let mut pts: Vec<egui::Pos2> = c.iter().map(|&q| frame.to_screen_pt(m.to_world(q))).collect();
+                    if *closed && !pts.is_empty() {
+                        pts.push(pts[0]);
+                    }
+                    painter.add(egui::Shape::line(pts.clone(), egui::Stroke::new(3.0, Color32::from_black_alpha(120))));
+                    painter.add(egui::Shape::line(pts, egui::Stroke::new(1.5, accent)));
+                }
+                if self.edit_points && count <= 800 {
+                    for q in lines.iter().flat_map(|l| l.0.iter()) {
+                        let p = frame.to_screen_pt(m.to_world(*q));
+                        let r = egui::Rect::from_center_size(p, vec2(7.0, 7.0));
+                        painter.rect_filled(r, 1, Color32::WHITE);
+                        painter.rect_stroke(r, 1, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
+                    }
+                } else if self.edit_points {
+                    painter.text(rect.center_top() + vec2(0.0, 56.0), egui::Align2::CENTER_CENTER, "Too many points to show. Press Simplify first.", egui::FontId::proportional(13.0), Color32::WHITE);
+                }
+            }
+        }
+
         // Overlay controls in the canvas corners.
         let chip = |t: &str| {
             egui::Button::new(RichText::new(t.to_string()).color(Color32::WHITE).size(12.5))
@@ -1123,6 +1339,16 @@ impl HoopApp {
             painter.rect_filled(bg, 7, Color32::from_black_alpha(140));
             painter.galley(at + vec2(10.0, 6.0), galley, Color32::WHITE);
         }
+    }
+
+    /// How artwork user units map onto the hoop, when an artwork design is shown.
+    fn shape_map(&self) -> Option<ShapeMap> {
+        if self.mode != Mode::Artwork || self.playing {
+            return None;
+        }
+        let (art, s, d) = (self.artwork.as_ref()?, self.art.as_ref()?, self.design.as_ref()?);
+        let (scale, mid) = artwork::frame(art, s);
+        Some(ShapeMap { scale, mid, t: Transform::new(d.bounds, &self.setup.at) })
     }
 
     fn toast(&mut self, text: String) {
@@ -1362,6 +1588,8 @@ impl HoopApp {
                 self.art = Some(ArtSettings::for_artwork(&art));
                 self.reset_history();
                 self.art_built = None;
+                self.sel = None;
+                self.edit_points = false;
                 self.artwork = Some(art);
                 self.design = None;
                 self.error = None;
@@ -1410,6 +1638,15 @@ impl HoopApp {
                 let blocks = pattern.blocks();
                 let bounds = pattern.bounds();
                 let first = self.design.is_none();
+                // Keep the drawing's frame still on the hoop when one shape
+                // moves or changes, instead of re-centering the whole design.
+                if let Some(old) = self.design.as_ref().filter(|_| !std::mem::take(&mut self.keep_anchor)) {
+                    let a = Transform::new(old.bounds, &self.setup.at).apply((0.0, 0.0));
+                    let b = Transform::new(bounds, &self.setup.at).apply((0.0, 0.0));
+                    self.setup.at.dx += a.0 - b.0;
+                    self.setup.at.dy += a.1 - b.1;
+                }
+                self.keep_anchor = false;
                 self.design = Some(Loaded { name: art.name.clone(), pattern, blocks, bounds });
                 if first && self.pinned.is_empty() {
                     self.setup.hoop = hoops::smallest_fitting(self.design.as_ref().unwrap().size());
@@ -1443,6 +1680,10 @@ impl HoopApp {
                 }
                 None => {
                     ui.label(RichText::new("Open an SVG or a picture (PNG, JPG), or drop one on the hoop. Logos and clip art with flat colors work best.").color(muted));
+                    if ui.button("Start from shapes").on_hover_text("An empty design to build from hearts, stars, circles and more").clicked() {
+                        self.picture = None;
+                        self.use_artwork(Ok(artwork::blank()));
+                    }
                 }
             }
             ui.add_space(4.0);
@@ -1533,8 +1774,13 @@ impl HoopApp {
             });
         });
 
+        card(ui, "Shapes", accent, |ui| shapes_card(ui, art, s, &mut self.sel, &mut self.edit_points, accent, muted));
+
         card(ui, "Threads", accent, |ui| {
-            let groups = artwork::thread_groups(art, s);
+            // Colors no shape uses any more are left out.
+            let used_layers: Vec<bool> = (0..art.layers.len()).map(|l| s.shapes.iter().any(|e| e.layer == l && !e.hidden)).collect();
+            let mut groups = artwork::thread_groups(art, s);
+            groups.retain(|g| g.1.iter().any(|&i| used_layers[i]));
             for (g, (thread, members)) in groups.iter().enumerate() {
                 let mut on = members.iter().all(|&i| s.layers[i].enabled);
                 let mut t = *thread;
@@ -1627,8 +1873,9 @@ impl HoopApp {
                 slider_row(ui, "Min", &mut s.stroke_min_mm, 0.5..=4.0, " mm", 1).on_hover_text("Thinnest satin line; thinner strokes are widened to this");
             }
         });
-        if ui.button("Reset settings").clicked() {
+        if ui.button("Reset settings").on_hover_text("Also puts every shape back as it was in the drawing").clicked() {
             self.art = Some(ArtSettings::for_artwork(art));
+            self.sel = None;
         }
         let _ = canvas_rect;
         ui.add_space(10.0);
@@ -2085,6 +2332,164 @@ impl eframe::App for HoopApp {
         self.help_overlay(ctx);
         self.usb_window(ctx);
     }
+}
+
+/// The Shapes card: every shape of the artwork, topmost first, with what can
+/// be done to the selected one.
+fn shapes_card(ui: &mut egui::Ui, art: &artwork::Artwork, s: &mut ArtSettings, sel: &mut Option<usize>, edit_points: &mut bool, accent: Color32, muted: Color32) {
+    let (scale, frame_mid) = artwork::frame(art, s);
+    ui.horizontal(|ui| {
+        ui.menu_button("Add shape", |ui| {
+            for name in artwork::BUILT_IN {
+                if ui.button(name).clicked() {
+                    let layer = sel.and_then(|i| s.shapes.get(i)).map_or(0, |e| e.layer);
+                    let size = (art.bounds.2 - art.bounds.0).min(art.bounds.3 - art.bounds.1) * 0.5;
+                    let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
+                    let own = artwork::built_in(name, frame_mid, size, layer);
+                    s.shapes.push(ShapeEdit {
+                        source: usize::MAX,
+                        own: Some(own),
+                        name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
+                        layer,
+                        hidden: false,
+                        dx: 0.0,
+                        dy: 0.0,
+                        scale: 1.0,
+                        rotate: 0.0,
+                    });
+                    if let Some(l) = s.layers.get_mut(layer) {
+                        l.enabled = true;
+                    }
+                    *sel = Some(s.shapes.len() - 1);
+                    ui.close();
+                }
+            }
+        });
+        ui.label(RichText::new(format!("{} shape{}", s.shapes.len(), if s.shapes.len() == 1 { "" } else { "s" })).size(12.0).color(muted));
+    });
+    if s.shapes.is_empty() {
+        return;
+    }
+    ui.label(RichText::new("Top of the list is sewn last and lies on top. Click a shape here or on the hoop to edit it.").size(12.0).color(muted));
+    egui::ScrollArea::vertical().id_salt("shape-list").max_height(200.0).show(ui, |ui| {
+        let width = ui.available_width();
+        for i in (0..s.shapes.len()).rev() {
+            let e = &mut s.shapes[i];
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 5.0;
+                let mut shown = !e.hidden;
+                if ui.checkbox(&mut shown, "").on_hover_text("Stitch this shape").changed() {
+                    e.hidden = !shown;
+                }
+                let (r, _) = ui.allocate_exact_size(vec2(12.0, 18.0), Sense::hover());
+                ui.painter().rect_filled(r.shrink2(vec2(0.0, 2.0)), 3, rgb(art.layers[e.layer].color));
+                let name = if e.hidden { RichText::new(&e.name).color(muted) } else { RichText::new(&e.name) };
+                let w = (width - 60.0).max(40.0);
+                let kind = if e.source >= art.shapes.len() { "added" } else if e.own.is_some() { "edited" } else if e.moved() { "moved" } else { "" };
+                let row = egui::Button::selectable(*sel == Some(i), (name, egui::Atom::grow(), RichText::new(kind).size(11.0).color(muted))).min_size(vec2(w, 20.0));
+                if ui.add(row).clicked() {
+                    *sel = if *sel == Some(i) { None } else { Some(i) };
+                    *edit_points = false;
+                }
+            });
+        }
+    });
+    let Some(i) = sel.filter(|&i| i < s.shapes.len()) else { return };
+    ui.add_space(6.0);
+    let w = (ui.available_width() - 18.0) / 4.0;
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 6.0;
+        if ui.add_enabled(i + 1 < s.shapes.len(), egui::Button::new("Up").min_size(vec2(w, 24.0))).on_hover_text("Sew later, on top · ]").clicked() {
+            s.shapes.swap(i, i + 1);
+            *sel = Some(i + 1);
+        }
+        if ui.add_enabled(i > 0, egui::Button::new("Down").min_size(vec2(w, 24.0))).on_hover_text("Sew earlier, underneath · [").clicked() {
+            s.shapes.swap(i, i - 1);
+            *sel = Some(i - 1);
+        }
+        if ui.add(egui::Button::new("Copy").min_size(vec2(w, 24.0))).on_hover_text("Duplicate, a little to the side · Ctrl+D").clicked() {
+            duplicate_shape(s, i, scale);
+            *sel = Some(i + 1);
+        }
+        if ui.add(egui::Button::new("Delete").min_size(vec2(w, 24.0))).on_hover_text("Del").clicked() {
+            s.shapes.remove(i);
+            *sel = None;
+            *edit_points = false;
+        }
+    });
+    let Some(i) = *sel else { return };
+    let e = &mut s.shapes[i];
+    ui.add_space(4.0);
+    // Offsets are user units; show them as mm on the fabric.
+    let mm = scale / 10.0;
+    let (mut x, mut y) = (e.dx * mm, e.dy * mm);
+    slider_row(ui, "Move X", &mut x, -150.0..=150.0, " mm", 1).on_hover_text("Or drag the selected shape on the hoop, or nudge with the arrow keys");
+    slider_row(ui, "Move Y", &mut y, -150.0..=150.0, " mm", 1);
+    if (x - e.dx * mm).abs() > 1e-4 || (y - e.dy * mm).abs() > 1e-4 {
+        (e.dx, e.dy) = (x / mm, y / mm);
+    }
+    let mut size = e.scale * 100.0;
+    if slider_row(ui, "Size", &mut size, 10.0..=400.0, " %", 0).changed() {
+        e.scale = (size / 100.0).max(0.05);
+    }
+    slider_row(ui, "Turn", &mut e.rotate, -180.0..=180.0, "°", 0);
+    ui.horizontal(|ui| {
+        ui.label(RichText::new("Color").color(muted));
+        ui.spacing_mut().item_spacing.x = 3.0;
+        for (l, layer) in art.layers.iter().enumerate() {
+            let (r, resp) = ui.allocate_exact_size(vec2(18.0, 18.0), Sense::click());
+            ui.painter().rect_filled(r.shrink(2.0), 4, rgb(layer.color));
+            if e.layer == l {
+                ui.painter().rect_stroke(r, 4, egui::Stroke::new(2.0, accent), egui::StrokeKind::Inside);
+            }
+            if resp.on_hover_text("Stitch with this color's thread").clicked() {
+                e.layer = l;
+                if let Some(c) = s.layers.get_mut(l) {
+                    c.enabled = true;
+                }
+            }
+        }
+    });
+    let e = &mut s.shapes[i];
+    ui.add_space(4.0);
+    let points: usize = e.base(art).lines.iter().map(|l| l.0.len()).sum();
+    ui.horizontal(|ui| {
+        if ui.add(egui::Button::new("Edit points").selected(*edit_points)).on_hover_text("Drag points on the hoop. Right-click a point to remove it, double-click a line to add one.").clicked() {
+            *edit_points = !*edit_points;
+            if *edit_points {
+                e.bake(art);
+            }
+        }
+        if ui.button("Simplify").on_hover_text("Fewer points, smoother to edit; keeps the shape within 0.3 mm").clicked() {
+            e.bake(art);
+            if let Some(own) = &mut e.own {
+                let eps = 3.0 / scale;
+                for (c, closed) in &mut own.lines {
+                    let fewer = if *closed { trace::simplify_closed(c, eps) } else { trace::simplify(c, eps) };
+                    if fewer.len() >= if *closed { 3 } else { 2 } {
+                        *c = fewer;
+                    }
+                }
+            }
+        }
+        let can_reset = e.moved() || (e.own.is_some() && e.source < art.shapes.len());
+        if ui.add_enabled(can_reset, egui::Button::new("Reset")).on_hover_text("Back to the shape as drawn").clicked() {
+            (e.dx, e.dy, e.scale, e.rotate) = (0.0, 0.0, 1.0, 0.0);
+            if e.source < art.shapes.len() {
+                e.own = None;
+            }
+        }
+    });
+    ui.label(RichText::new(format!("{points} points")).size(12.0).color(muted));
+}
+
+fn duplicate_shape(s: &mut ArtSettings, i: usize, scale: f32) {
+    let mut copy = s.shapes[i].clone();
+    // 5 mm to the right and down.
+    copy.dx += 50.0 / scale;
+    copy.dy += 50.0 / scale;
+    copy.name = format!("{} copy", copy.name);
+    s.shapes.insert(i + 1, copy);
 }
 
 fn rgb(c: [u8; 3]) -> Color32 {

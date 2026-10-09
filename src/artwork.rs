@@ -7,14 +7,14 @@ use std::path::Path;
 use crate::formats::{self, Cmd, Format, Pattern};
 use crate::lettering::{self, Contour, EdgeKind, FillKind, Pt, Settings, Stitcher};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Kind {
     Fill { even_odd: bool },
     Stroke { width: f32 },
 }
 
 /// One painted path. Coordinates are SVG user units, y down.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Shape {
     pub kind: Kind,
     /// Polylines with whether each one is closed.
@@ -75,6 +75,227 @@ pub struct ArtSettings {
     pub stroke_min_mm: f32,
     pub group_colors: bool,
     pub layers: Vec<LayerChoice>,
+    /// The shapes as the user arranged them, in stitch order (first is sewn
+    /// first and lies at the bottom).
+    pub shapes: Vec<ShapeEdit>,
+}
+
+/// One shape on the design: a shape of the drawing, or its own geometry once
+/// its points were edited or it was added from the built-in shapes, plus
+/// how it is moved, scaled and turned. Offsets are SVG user units.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ShapeEdit {
+    pub source: usize,
+    pub own: Option<Shape>,
+    pub name: String,
+    pub layer: usize,
+    pub hidden: bool,
+    pub dx: f32,
+    pub dy: f32,
+    pub scale: f32,
+    pub rotate: f32,
+}
+
+impl ShapeEdit {
+    pub fn of(art: &Artwork, i: usize) -> Self {
+        let sh = &art.shapes[i];
+        let kind = match sh.kind {
+            Kind::Fill { .. } => "Fill",
+            Kind::Stroke { .. } => "Line",
+        };
+        ShapeEdit { source: i, own: None, name: format!("{kind} {}", i + 1), layer: sh.layer, hidden: false, dx: 0.0, dy: 0.0, scale: 1.0, rotate: 0.0 }
+    }
+
+    pub fn base<'a>(&'a self, art: &'a Artwork) -> &'a Shape {
+        match &self.own {
+            Some(own) => own,
+            None => &art.shapes[self.source],
+        }
+    }
+
+    pub fn moved(&self) -> bool {
+        self.dx != 0.0 || self.dy != 0.0 || self.scale != 1.0 || self.rotate != 0.0
+    }
+
+    /// The outline with the move, scale and turn applied, in user units.
+    /// Scale and turn go around the middle of the shape.
+    pub fn lines(&self, art: &Artwork) -> Vec<(Contour, bool)> {
+        let sh = self.base(art);
+        if !self.moved() {
+            return sh.lines.clone();
+        }
+        let (cx, cy) = middle(&sh.lines);
+        let (sin, cos) = self.rotate.to_radians().sin_cos();
+        let k = self.scale;
+        let f = |p: Pt| {
+            let (x, y) = ((p.0 - cx) * k, (p.1 - cy) * k);
+            (x * cos - y * sin + cx + self.dx, x * sin + y * cos + cy + self.dy)
+        };
+        sh.lines.iter().map(|(c, closed)| (c.iter().map(|&p| f(p)).collect(), *closed)).collect()
+    }
+
+    /// Bakes the move into the points so they can be edited one by one.
+    pub fn bake(&mut self, art: &Artwork) {
+        if self.own.is_some() && !self.moved() {
+            return;
+        }
+        let mut sh = self.base(art).clone();
+        sh.lines = self.lines(art);
+        self.own = Some(sh);
+        (self.dx, self.dy, self.scale, self.rotate) = (0.0, 0.0, 1.0, 0.0);
+    }
+}
+
+/// Middle of the bounding box of some lines.
+pub fn middle(lines: &[(Contour, bool)]) -> Pt {
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for p in lines.iter().flat_map(|l| l.0.iter()) {
+        b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
+    }
+    if b.0 > b.2 { (0.0, 0.0) } else { ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0) }
+}
+
+/// How user units map to stitch units (0.1 mm): scale and the frame's middle.
+pub fn frame(art: &Artwork, s: &ArtSettings) -> (f32, Pt) {
+    let scale = s.width_mm * 10.0 / (art.bounds.2 - art.bounds.0).max(1e-3);
+    (scale, ((art.bounds.0 + art.bounds.2) / 2.0, (art.bounds.1 + art.bounds.3) / 2.0))
+}
+
+/// The topmost visible shape under a point in stitch units, within `slop`.
+pub fn shape_at(art: &Artwork, s: &ArtSettings, p: Pt, slop: f32) -> Option<usize> {
+    let (scale, c) = frame(art, s);
+    let q = (p.0 / scale + c.0, p.1 / scale + c.1);
+    let slop = slop / scale;
+    (0..s.shapes.len()).rev().find(|&i| {
+        let e = &s.shapes[i];
+        if e.hidden || !s.layers.get(e.layer).is_none_or(|l| l.enabled) {
+            return false;
+        }
+        let lines = e.lines(art);
+        let inside = matches!(e.base(art).kind, Kind::Fill { .. }) && {
+            let mut wind = false;
+            for (c, _) in &lines {
+                for k in 0..c.len() {
+                    let (a, b) = (c[k], c[(k + 1) % c.len()]);
+                    if (a.1 > q.1) != (b.1 > q.1) && q.0 < a.0 + (q.1 - a.1) / (b.1 - a.1) * (b.0 - a.0) {
+                        wind = !wind;
+                    }
+                }
+            }
+            wind
+        };
+        inside || lines.iter().any(|(c, closed)| near_line(c, *closed, q) <= slop.max(stroke_half(e.base(art))))
+    })
+}
+
+fn stroke_half(sh: &Shape) -> f32 {
+    match sh.kind {
+        Kind::Stroke { width } => width / 2.0,
+        Kind::Fill { .. } => 0.0,
+    }
+}
+
+/// Distance from a point to a polyline.
+pub fn near_line(c: &Contour, closed: bool, q: Pt) -> f32 {
+    let n = c.len();
+    let segs = if closed { n } else { n.saturating_sub(1) };
+    let mut best = c.first().map_or(f32::MAX, |&a| lettering::dist(a, q));
+    for k in 0..segs {
+        let (a, b) = (c[k], c[(k + 1) % n]);
+        let (vx, vy) = (b.0 - a.0, b.1 - a.1);
+        let t = (((q.0 - a.0) * vx + (q.1 - a.1) * vy) / (vx * vx + vy * vy).max(1e-9)).clamp(0.0, 1.0);
+        best = best.min(lettering::dist((a.0 + vx * t, a.1 + vy * t), q));
+    }
+    best
+}
+
+/// Built-in shapes that can be added to any artwork.
+pub const BUILT_IN: [&str; 7] = ["Circle", "Square", "Heart", "Star", "Shield", "Banner", "Line"];
+
+/// One built-in shape, `size` user units across, centered on `at`.
+pub fn built_in(name: &str, at: Pt, size: f32, layer: usize) -> Shape {
+    use std::f32::consts::{PI, TAU};
+    let r = size / 2.0;
+    let mut kind = Kind::Fill { even_odd: false };
+    let pts: Vec<Pt> = match name {
+        "Circle" => (0..72).map(|k| (k as f32 * TAU / 72.0).sin_cos()).map(|(s, c)| (c * r, s * r)).collect(),
+        "Square" => {
+            // Rounded corners stitch cleaner than sharp ones.
+            let (h, rc) = (r, r * 0.12);
+            let mut v = Vec::new();
+            for (cx, cy, a0) in [(h - rc, h - rc, 0.0), (-h + rc, h - rc, 0.5 * PI), (-h + rc, -h + rc, PI), (h - rc, -h + rc, 1.5 * PI)] {
+                for k in 0..=6 {
+                    let a = a0 + k as f32 * PI / 12.0;
+                    v.push((cx + rc * a.cos(), cy + rc * a.sin()));
+                }
+            }
+            v
+        }
+        "Heart" => (0..96)
+            .map(|k| {
+                let t = k as f32 * TAU / 96.0;
+                let x = 16.0 * t.sin().powi(3);
+                let y = 13.0 * t.cos() - 5.0 * (2.0 * t).cos() - 2.0 * (3.0 * t).cos() - (4.0 * t).cos();
+                (x * r / 17.0, -y * r / 17.0 - r * 0.1)
+            })
+            .collect(),
+        "Star" => (0..10)
+            .map(|k| {
+                let a = -PI / 2.0 + k as f32 * PI / 5.0;
+                let rr = if k % 2 == 0 { r } else { r * 0.42 };
+                (rr * a.cos(), rr * a.sin())
+            })
+            .collect(),
+        "Shield" => {
+            let mut v = vec![(-r * 0.85, -r), (r * 0.85, -r)];
+            for k in 0..=16 {
+                let t = k as f32 / 16.0;
+                // Straight sides that curve in to a point at the bottom.
+                let y = -r * 0.2 + t * r * 1.2;
+                let x = r * 0.85 * (1.0 - t.powf(1.8));
+                v.push((x, y));
+            }
+            for k in (0..16).rev() {
+                let t = k as f32 / 16.0;
+                v.push((-r * 0.85 * (1.0 - t.powf(1.8)), -r * 0.2 + t * r * 1.2));
+            }
+            v
+        }
+        "Banner" => {
+            let (h, notch) = (r * 0.3, r * 0.15);
+            let mut v = Vec::new();
+            for k in 0..=24 {
+                let x = -r + k as f32 * r / 12.0;
+                v.push((x, -h + (x / r * PI).cos() * -r * 0.08));
+            }
+            v.push((r - notch, 0.0));
+            for k in (0..=24).rev() {
+                let x = -r + k as f32 * r / 12.0;
+                v.push((x, h + (x / r * PI).cos() * -r * 0.08));
+            }
+            v.push((-r + notch, 0.0));
+            v
+        }
+        _ => {
+            kind = Kind::Stroke { width: size / 40.0 };
+            vec![(-r, 0.0), (r, 0.0)]
+        }
+    };
+    let closed = !matches!(kind, Kind::Stroke { .. });
+    Shape { kind, lines: vec![(pts.into_iter().map(|p| (p.0 + at.0, p.1 + at.1)).collect(), closed)], layer }
+}
+
+/// An empty artwork to build from the built-in shapes: a 100 mm frame and a
+/// few starting colors.
+pub fn blank() -> Artwork {
+    let colors = [[0xd0, 0x20, 0x30], [0x1d, 0x2a, 0x5c], [0xe8, 0xb0, 0x20], [0x20, 0x20, 0x20], [0xf4, 0xf4, 0xf0], [0x2a, 0x8a, 0x3e]];
+    Artwork {
+        name: "Shapes".into(),
+        shapes: Vec::new(),
+        layers: colors.iter().map(|&color| Layer { color, background: false, shapes: 0 }).collect(),
+        bounds: (0.0, 0.0, 377.95, 377.95),
+        skipped_images: 0,
+    }
 }
 
 /// SVG colors grouped by the thread they use, in order of first use.
@@ -152,6 +373,7 @@ impl ArtSettings {
                 .iter()
                 .map(|l| LayerChoice { thread: formats::nearest_jef(l.color), enabled: !l.background, look: Look::Default })
                 .collect(),
+            shapes: (0..art.shapes.len()).map(|i| ShapeEdit::of(art, i)).collect(),
         }
     }
 }
@@ -336,8 +558,7 @@ fn length(c: &Contour) -> f32 {
 }
 
 pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
-    let scale = s.width_mm * 10.0 / (art.bounds.2 - art.bounds.0).max(1e-3);
-    let (cx, cy) = ((art.bounds.0 + art.bounds.2) / 2.0, (art.bounds.1 + art.bounds.3) / 2.0);
+    let (scale, (cx, cy)) = frame(art, s);
     let to_mm = |p: Pt| ((p.0 - cx) * scale, (p.1 - cy) * scale);
     let enabled = |layer: usize| s.layers.get(layer).is_none_or(|l| l.enabled);
 
@@ -351,21 +572,26 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         lines: Vec<(Contour, bool)>,
     }
     let mut items: Vec<Item> = Vec::new();
-    for (doc, sh) in art.shapes.iter().enumerate() {
-        if !enabled(sh.layer) {
+    for (doc, e) in s.shapes.iter().enumerate() {
+        let sh = e.base(art);
+        if e.hidden || !enabled(e.layer) {
             continue;
         }
-        let lines: Vec<(Contour, bool)> = sh.lines.iter().map(|(c, closed)| (c.iter().map(|&p| to_mm(p)).collect(), *closed)).collect();
+        let lines: Vec<(Contour, bool)> = e.lines(art).iter().map(|(c, closed)| (c.iter().map(|&p| to_mm(p)).collect(), *closed)).collect();
         let keep = match sh.kind {
             Kind::Fill { .. } => lines.iter().map(|l| area(&l.0)).sum::<f32>() >= min_area,
             Kind::Stroke { .. } => lines.iter().map(|l| length(&l.0)).sum::<f32>() >= 10.0,
         };
         if keep {
-            items.push(Item { doc, layer: sh.layer, kind: sh.kind.clone(), lines });
+            items.push(Item { doc, layer: e.layer, kind: sh.kind.clone(), lines });
         }
     }
     if items.is_empty() {
-        return Err("Every color is turned off or too small to stitch.".into());
+        return Err(if s.shapes.iter().all(|e| e.hidden) {
+            "No shapes yet. Add one from Shapes, or open an SVG or a picture.".into()
+        } else {
+            "Every color is turned off or too small to stitch.".into()
+        });
     }
 
     // Stitch order: by color in order of first appearance, or the drawing's
@@ -591,6 +817,55 @@ mod tests {
         assert_eq!(p.threads[0].name, "Placement line");
         assert!(p.threads[1].name.starts_with("Tack-down"));
         assert_eq!(p.blocks().len(), 5);
+    }
+
+    #[test]
+    fn moving_hiding_and_reordering_shapes() {
+        let art = parse("logo", LOGO.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        let before = generate(&art, &s).unwrap().bounds();
+        // Move the red square 20 user units left: the design grows that way.
+        let red = s.shapes.iter().position(|e| art.layers[e.layer].color == [255, 0, 0]).unwrap();
+        s.shapes[red].dx = -20.0;
+        let moved = generate(&art, &s).unwrap().bounds();
+        assert!(moved.0 < before.0 - 50.0, "{moved:?} vs {before:?}");
+        // The point under the moved square now hits it; the old spot hits nothing red.
+        let (scale, mid) = frame(&art, &s);
+        let at = |u: Pt| ((u.0 - mid.0) * scale, (u.1 - mid.1) * scale);
+        assert_eq!(shape_at(&art, &s, at((5.0, 25.0)), 1.0), Some(red));
+        assert_ne!(shape_at(&art, &s, at((40.0, 15.0)), 1.0), Some(red));
+        // Hidden shapes are skipped, both for stitching and picking.
+        s.shapes[red].hidden = true;
+        assert_eq!(shape_at(&art, &s, at((5.0, 25.0)), 1.0), None);
+        let threads = generate(&art, &s).unwrap().threads.len();
+        assert_eq!(threads, 2);
+        // Baking keeps the outline and resets the move.
+        s.shapes[red].hidden = false;
+        s.shapes[red].rotate = 90.0;
+        let lines = s.shapes[red].lines(&art);
+        s.shapes[red].bake(&art);
+        assert!(!s.shapes[red].moved());
+        assert_eq!(s.shapes[red].lines(&art), lines);
+    }
+
+    #[test]
+    fn blank_artwork_takes_built_in_shapes() {
+        let art = blank();
+        let mut s = ArtSettings::for_artwork(&art);
+        assert_eq!(s.width_mm, 100.0);
+        assert!(generate(&art, &s).unwrap_err().starts_with("No shapes"));
+        for (k, name) in BUILT_IN.iter().enumerate() {
+            let sh = built_in(name, (189.0, 189.0), 150.0, k % art.layers.len());
+            let mut e = ShapeEdit::of(&Artwork { shapes: vec![sh.clone()], ..blank() }, 0);
+            e.own = Some(sh);
+            e.source = usize::MAX;
+            s.shapes.push(e);
+        }
+        let p = generate(&art, &s).unwrap();
+        let b = p.bounds();
+        // 150 user units of a 378-unit, 100 mm frame is about 40 mm.
+        assert!((b.2 - b.0) > 350.0 && (b.2 - b.0) < 450.0, "{b:?}");
+        assert!(p.threads.len() >= 6);
     }
 
     #[test]

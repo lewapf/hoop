@@ -38,6 +38,10 @@ impl Frame<'_> {
         self.center() + vec2(x, y) * self.view.scale
     }
 
+    pub fn to_screen_pt(&self, (x, y): (f32, f32)) -> Pos2 {
+        self.to_screen(x, y)
+    }
+
     pub fn to_world(&self, p: Pos2) -> (f32, f32) {
         let v = (p - self.center()) / self.view.scale;
         (v.x, v.y)
@@ -163,6 +167,7 @@ pub fn draw_hoop(f: &Frame, w: f32, h: f32, label: &str, fabric: [u8; 3], grid: 
 }
 
 /// Maps design coordinates to world coordinates for a placement.
+#[derive(Clone, Copy)]
 pub struct Transform {
     cx: f32,
     cy: f32,
@@ -190,6 +195,19 @@ impl Transform {
     pub fn apply(&self, (x, y): (f32, f32)) -> (f32, f32) {
         let (x, y) = ((x - self.cx) * self.flip, y - self.cy);
         (x * self.cos - y * self.sin + self.dx, x * self.sin + y * self.cos + self.dy)
+    }
+
+    /// Hoop coordinates back to design coordinates.
+    pub fn invert(&self, (x, y): (f32, f32)) -> (f32, f32) {
+        let (x, y) = (x - self.dx, y - self.dy);
+        let (x, y) = (x * self.cos + y * self.sin, -x * self.sin + y * self.cos);
+        (x * self.flip + self.cx, y + self.cy)
+    }
+
+    /// A move in hoop coordinates as a move in design coordinates.
+    pub fn invert_delta(&self, (x, y): (f32, f32)) -> (f32, f32) {
+        let (x, y) = (x * self.cos + y * self.sin, -x * self.sin + y * self.cos);
+        (x * self.flip, y)
     }
 }
 
@@ -304,5 +322,10 @@ mod tests {
         assert_eq!(turn.apply((100.0, 25.0)), (0.0, 50.0));
         let flip = Transform::new(bounds, &Placement { mirror: true, dx: 10.0, ..Default::default() });
         assert_eq!(flip.apply((100.0, 25.0)), (-40.0, 0.0));
+        for t in [&turn, &flip] {
+            let p = t.apply((37.0, -12.0));
+            let back = t.invert(p);
+            assert!((back.0 - 37.0).abs() < 1e-4 && (back.1 + 12.0).abs() < 1e-4);
+        }
     }
 }
