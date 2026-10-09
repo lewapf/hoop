@@ -103,10 +103,17 @@ wrong). Commits end with the Claude co-author line; nothing is pushed anywhere.
   and ties in there. (An earlier bug tied the new thread at the old thread's end,
   leaving visible stubs; there is a regression test.)
 - Row fills (`fill_shape`): rotate by the fill angle, scan rows with the
-  nonzero or even-odd rule (`row_spans`), subtract a knockout mask, add pull
+  nonzero or even-odd rule (`row_spans`), subtract a knockout mask (each
+  shape on top tested on its own, `mask_spans`, so opposite windings can't
+  cancel), add pull
   compensation, group overlapping row segments into columns, stitch boustrophedon.
   Wave/zigzag warp the outline, scan straight, unwarp. Gradient varies row
   spacing. Crosshatch is two passes. Satin = one stitch per row, split >7 mm.
+- Artwork stitch order (`layered_order` in artwork.rs): with "group colors",
+  shapes join their thread's run only past shapes they don't overlap (0.5 mm
+  grid, `Coverage`); anything below a shape that it overlaps sews first. At
+  each thread switch a two-level lookahead picks the next thread. Grouping
+  purely by color once sewed black outlines under the fills they sat on.
 - Contour fill: rasterize at ~spacing/3, exact Euclidean distance transform
   (Felzenszwalb, `edt_1d`), marching squares (`iso_lines`) at each ring level,
   stitches ≤ 2 mm.

@@ -630,7 +630,7 @@ pub fn satin_contour(st: &mut Stitcher, c: &Contour, width: f32) {
 /// Fill rows across a glyph at `angle`, using the nonzero winding rule so
 /// overlapping contours in script fonts fill correctly.
 /// Spans along the row at height `y` that lie inside the contours.
-fn row_spans(contours: &[Contour], y: f32, even_odd: bool) -> Vec<(f32, f32)> {
+pub fn row_spans(contours: &[Contour], y: f32, even_odd: bool) -> Vec<(f32, f32)> {
     let mut hits: Vec<(f32, i32)> = Vec::new();
     for c in contours {
         for i in 0..c.len() {
@@ -657,6 +657,25 @@ fn row_spans(contours: &[Contour], y: f32, even_odd: bool) -> Vec<(f32, f32)> {
         }
     }
     spans
+}
+
+/// A shape stacked on top of a fill, cut out of it: its contours and whether
+/// it uses the even-odd rule.
+pub type MaskShape = (Vec<Contour>, bool);
+
+/// Where a row crosses any of the mask shapes. Each shape is tested on its
+/// own, so shapes drawn in opposite directions don't cancel where they meet.
+fn mask_spans(mask: &[MaskShape], y: f32) -> Vec<(f32, f32)> {
+    let mut all: Vec<(f32, f32)> = mask.iter().flat_map(|(cs, eo)| row_spans(cs, y, *eo)).collect();
+    all.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut out: Vec<(f32, f32)> = Vec::with_capacity(all.len());
+    for (a, b) in all {
+        match out.last_mut() {
+            Some(last) if a <= last.1 => last.1 = last.1.max(b),
+            _ => out.push((a, b)),
+        }
+    }
+    out
 }
 
 /// Removes the parts of `spans` covered by `cut`. Both are sorted and disjoint.
@@ -706,7 +725,7 @@ pub fn thickness(glyph: &[Contour], even_odd: bool) -> f32 {
 /// What goes under a fill to hold the fabric: a running stitch around the
 /// shape and, for wide fills, a sparse fill across the top rows, inset
 /// 0.5 mm so it never shows at the edges.
-pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
     for c in glyph {
         run_contour(st, c, 25.0, false);
     }
@@ -723,7 +742,7 @@ pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f
 
 /// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
 /// left unstitched so layers don't pile up.
-pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
     if kind == FillKind::Contour {
         contour_fill(st, glyph, even_odd, mask, s);
         return;
@@ -749,7 +768,7 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
         let r: Contour = c.iter().map(|&p| rot(p)).collect();
         if warped { densify(&r, 5.0).into_iter().map(|(x, y)| (x, y - warp(x))).collect() } else { r }
     };
-    let rm: Vec<Contour> = mask.iter().map(to_row_space).collect();
+    let rm: Vec<MaskShape> = mask.iter().map(|(cs, eo)| (cs.iter().map(to_row_space).collect(), *eo)).collect();
     let rc: Vec<Contour> = glyph
         .iter()
         .map(|c| {
@@ -773,7 +792,7 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
     while y < y1 {
         let mut spans = row_spans(&rc, y, even_odd);
         if !rm.is_empty() {
-            spans = subtract(spans, &row_spans(&rm, y, false));
+            spans = subtract(spans, &mask_spans(&rm, y));
         }
         let pull = s.pull_mm * 10.0;
         // A negative pull insets rows (used by underlay); drop rows it empties.
@@ -947,7 +966,7 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             run_contour(&mut st, outline, 20.0, false);
         } else if s.patch_fill != FillKind::None {
             use_thread(&mut st, s.patch_thread, None);
-            let mask: Vec<Contour> = glyphs.iter().flatten().cloned().collect();
+            let mask: Vec<MaskShape> = glyphs.iter().map(|g| (g.clone(), false)).collect();
             run_contour(&mut st, outline, 25.0, false);
             let bg = Settings { density_mm: s.patch_fill.default_rows_mm(), underlay: false, ..s.clone() };
             fill_shape(&mut st, std::slice::from_ref(outline), false, &mask, s.patch_fill, s.fill_angle + 90.0, &bg);
@@ -1034,6 +1053,16 @@ fn patch_outline(glyphs: &[Vec<Contour>], s: &Settings) -> Option<Contour> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mask_shapes_drawn_opposite_ways_both_cut() {
+        // Two overlapping squares, one clockwise and one not: together their
+        // winding cancels where they overlap, but both must still be cut.
+        let a: Contour = vec![(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)];
+        let b: Contour = vec![(50.0, 0.0), (50.0, 100.0), (150.0, 100.0), (150.0, 0.0)];
+        assert_eq!(row_spans(&[a.clone(), b.clone()], 50.0, false), vec![(0.0, 50.0), (100.0, 150.0)]);
+        assert_eq!(mask_spans(&[(vec![a], false), (vec![b], false)], 50.0), vec![(0.0, 150.0)]);
+    }
 
     #[test]
     fn letters_come_out_at_the_requested_height() {
@@ -1197,7 +1226,7 @@ pub fn style(s: &mut Settings, fill: FillKind, angle: f32, edge: EdgeKind) {
 /// Rings that follow the outline inward, one row spacing apart. The shape is
 /// rasterized, every inside cell gets its distance to the edge, and the rings
 /// are the lines of equal distance, traced with marching squares.
-fn contour_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], s: &Settings) {
+fn contour_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], s: &Settings) {
     let spacing = (s.density_mm * 10.0).max(2.0);
     let cell = (spacing / 3.0).clamp(1.0, 3.0);
     let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
@@ -1216,7 +1245,7 @@ fn contour_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Co
         let y = y0 + (j as f32 + 0.5) * cell;
         let mut spans = row_spans(glyph, y, even_odd);
         if !mask.is_empty() {
-            spans = subtract(spans, &row_spans(mask, y, false));
+            spans = subtract(spans, &mask_spans(mask, y));
         }
         for (a, bb) in spans {
             let i0 = (((a - x0) / cell) - 0.5).ceil().max(0.0) as usize;

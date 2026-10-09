@@ -2,6 +2,7 @@
 //! with absolute transforms; filled paths become fill regions, stroked paths
 //! become running or satin lines, and every color becomes one thread.
 
+use std::collections::HashSet;
 use std::path::Path;
 
 use crate::formats::{self, Cmd, Format, Pattern};
@@ -566,6 +567,153 @@ fn length(c: &Contour) -> f32 {
     c.windows(2).map(|w| lettering::dist(w[0], w[1])).sum()
 }
 
+/// Stitch order that saves thread changes without breaking the drawing's
+/// layers. Shapes come in drawing order (bottom first). A shape may move
+/// ahead to join its thread only past shapes it doesn't touch: anything it
+/// overlaps that lies below it must be sewn first, or it would bury it.
+fn layered_order(threads: &[i32], touch: impl Fn(usize, usize) -> bool) -> Vec<usize> {
+    let n = threads.len();
+    // above[i]: shapes lying on i, which must wait for it.
+    let mut above: Vec<Vec<usize>> = vec![Vec::new(); n];
+    let mut below = vec![0usize; n];
+    for j in 0..n {
+        for i in 0..j {
+            if touch(i, j) {
+                below[j] += 1;
+                above[i].push(j);
+            }
+        }
+    }
+    let mut state = Sewing { below, ready: Vec::new(), current: None };
+    state.ready = (0..n).filter(|&j| state.below[j] == 0).collect();
+    // Two levels of lookahead find the fewest changes on every design tried;
+    // big traced pictures get one to stay quick.
+    let depth = if n <= 300 { 2 } else { 1 };
+    let mut order = Vec::with_capacity(n);
+    state.run(threads, &above, &mut order, depth);
+    order
+}
+
+/// Where `layered_order` is: shapes still waiting on others, shapes free to
+/// sew (sorted), and the thread on the machine.
+#[derive(Clone)]
+struct Sewing {
+    below: Vec<usize>,
+    ready: Vec<usize>,
+    current: Option<i32>,
+}
+
+impl Sewing {
+    /// Sews one shape: the lowest ready one in the current thread, else the
+    /// lowest ready one. Returns whether the thread changed.
+    fn step(&mut self, threads: &[i32], above: &[Vec<usize>], order: &mut Vec<usize>) -> bool {
+        let k = self.ready.iter().position(|&j| Some(threads[j]) == self.current).unwrap_or(0);
+        let i = self.ready.remove(k);
+        let changed = self.current != Some(threads[i]);
+        self.current = Some(threads[i]);
+        order.push(i);
+        for &j in &above[i] {
+            self.below[j] -= 1;
+            if self.below[j] == 0 {
+                let at = self.ready.partition_point(|&r| r < j);
+                self.ready.insert(at, j);
+            }
+        }
+        changed
+    }
+
+    /// Sews everything left; returns the thread changes. Whenever the
+    /// current thread runs out, it tries each thread that could come next,
+    /// sewing the rest with one level less of lookahead, and takes the one
+    /// with the fewest changes (ties go to the lowest shape's thread).
+    fn run(&mut self, threads: &[i32], above: &[Vec<usize>], order: &mut Vec<usize>, depth: usize) -> usize {
+        let mut changes = 0;
+        while !self.ready.is_empty() {
+            if depth > 0 && !self.ready.iter().any(|&j| Some(threads[j]) == self.current) {
+                let mut options: Vec<i32> = Vec::new();
+                for &j in &self.ready {
+                    if !options.contains(&threads[j]) {
+                        options.push(threads[j]);
+                    }
+                }
+                let mut best = (usize::MAX, options[0]);
+                for &t in &options {
+                    let mut trial = self.clone();
+                    trial.current = Some(t);
+                    let n = trial.run(threads, above, &mut Vec::new(), depth - 1);
+                    if n < best.0 {
+                        best = (n, t);
+                    }
+                }
+                changes += self.current.is_some() as usize;
+                self.current = Some(best.1);
+            }
+            changes += self.step(threads, above, order) as usize;
+        }
+        changes
+    }
+}
+
+/// Cells of a 0.5 mm grid a shape covers, for telling which shapes overlap.
+/// Fills cover their inside and outline, lines their stitched width.
+/// Units are 0.1 mm.
+struct Coverage {
+    bounds: (i32, i32, i32, i32),
+    cells: HashSet<(i32, i32)>,
+}
+
+impl Coverage {
+    const CELL: f32 = 5.0;
+
+    fn new(lines: &[(Contour, bool)], fill: Option<bool>, width: f32) -> Self {
+        let cell = |v: f32| (v / Self::CELL).floor() as i32;
+        let mut cells = HashSet::new();
+        let r = cell(width / 2.0 + Self::CELL / 2.0).max(0);
+        for (c, closed) in lines {
+            let n = if *closed || fill.is_some() { c.len() } else { c.len().saturating_sub(1) };
+            for i in 0..n {
+                let (p, q) = (c[i], c[(i + 1) % c.len()]);
+                let steps = (lettering::dist(p, q) / (Self::CELL / 2.0)).ceil().max(1.0) as usize;
+                for k in 0..=steps {
+                    let t = k as f32 / steps as f32;
+                    let (x, y) = (cell(p.0 + (q.0 - p.0) * t), cell(p.1 + (q.1 - p.1) * t));
+                    for dy in -r..=r {
+                        for dx in -r..=r {
+                            cells.insert((x + dx, y + dy));
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(even_odd) = fill {
+            let contours: Vec<Contour> = lines.iter().map(|l| l.0.clone()).collect();
+            let b = extent(lines);
+            for row in cell(b.1)..=cell(b.3) {
+                let y = (row as f32 + 0.5) * Self::CELL;
+                for (x0, x1) in lettering::row_spans(&contours, y, even_odd) {
+                    for col in cell(x0)..=cell(x1) {
+                        cells.insert((col, row));
+                    }
+                }
+            }
+        }
+        let mut bounds = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
+        for &(x, y) in &cells {
+            bounds = (bounds.0.min(x), bounds.1.min(y), bounds.2.max(x), bounds.3.max(y));
+        }
+        Coverage { bounds, cells }
+    }
+
+    fn overlaps(&self, o: &Coverage) -> bool {
+        let (p, q) = (self.bounds, o.bounds);
+        if p.0 > q.2 || q.0 > p.2 || p.1 > q.3 || q.1 > p.3 {
+            return false;
+        }
+        let (small, big) = if self.cells.len() < o.cells.len() { (self, o) } else { (o, self) };
+        small.cells.iter().any(|c| big.cells.contains(c))
+    }
+}
+
 pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     let (scale, (cx, cy)) = frame(art, s);
     let to_mm = |p: Pt| ((p.0 - cx) * scale, (p.1 - cy) * scale);
@@ -608,20 +756,6 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     // Stitch order: by color in order of first appearance, or the drawing's
     // own order, where each color change costs a thread change.
     let thread_of = |layer: usize| s.layers.get(layer).map_or_else(|| formats::nearest_jef(art.layers[layer].color), |l| l.thread);
-    let mut order: Vec<usize> = (0..items.len()).collect();
-    if s.group_colors {
-        // Several SVG colors can share a thread; they are stitched together.
-        let mut first: Vec<(i32, usize)> = Vec::new();
-        for it in &items {
-            let t = thread_of(it.layer);
-            if !first.iter().any(|f| f.0 == t) {
-                first.push((t, first.len()));
-            }
-        }
-        let rank = |t: i32| first.iter().find(|f| f.0 == t).map_or(usize::MAX, |f| f.1);
-        order.sort_by_key(|&i| (rank(thread_of(items[i].layer)), items[i].doc));
-    }
-
     // The fill and edge each shape gets after its thread's look is applied.
     let styled = |look: Look| -> Settings {
         let mut style = s.style.clone();
@@ -641,6 +775,24 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         }
         style
     };
+    // Shapes stacked on top of a fill, cut out of it when knockout is on.
+    let masks = |it: &Item| matches!(it.kind, Kind::Fill { .. }) && (styled(it.look).fill != FillKind::None || it.look == Look::Applique);
+    let order: Vec<usize> = if s.group_colors {
+        let threads: Vec<i32> = items.iter().map(|it| thread_of(it.layer)).collect();
+        let cover: Vec<Coverage> = items
+            .iter()
+            .map(|it| match it.kind {
+                Kind::Fill { even_odd } => Coverage::new(&it.lines, Some(even_odd), 0.0),
+                Kind::Stroke { width } => Coverage::new(&it.lines, None, (width * scale).max(s.stroke_min_mm * 10.0).min(70.0)),
+            })
+            .collect();
+        // Anything a shape overlaps that lies below it is sewn first, so
+        // the top shape's edges lie over it, as in the drawing.
+        layered_order(&threads, |a, b| cover[a].overlaps(&cover[b]))
+    } else {
+        (0..items.len()).collect()
+    };
+
     let mut st = Stitcher::new();
     let mut threads = Vec::new();
     let mut current: Option<i32> = None;
@@ -687,15 +839,11 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 let st_ref = &own;
                 let contours: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
                 // Everything drawn above this shape and overlapping it.
-                let mask: Vec<Contour> = if s.knockout {
+                let mask: Vec<lettering::MaskShape> = if s.knockout {
                     items
                         .iter()
-                        .filter(|o| {
-                            o.doc > it.doc
-                                && matches!(o.kind, Kind::Fill { .. })
-                                && (styled(o.look).fill != FillKind::None || o.look == Look::Applique)
-                        })
-                        .flat_map(|o| o.lines.iter().map(|l| l.0.clone()))
+                        .filter(|o| o.doc > it.doc && masks(o))
+                        .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
                         .collect()
                 } else {
                     Vec::new()
@@ -791,6 +939,24 @@ mod tests {
         s.knockout = false;
         let without = inside(&generate(&art, &s).unwrap());
         assert!(with * 10 < without, "{with} vs {without}");
+    }
+
+    #[test]
+    fn grouping_never_sews_a_shape_under_one_below_it() {
+        // Black silhouette, white key on it, black detail on the key, and a
+        // black mark far away. The detail must wait for the white; the far
+        // mark may join the first black run.
+        let sq = |x: f32, y: f32, w: f32| vec![(vec![(x, y), (x + w, y), (x + w, y + w), (x, y + w)], true)];
+        let cover: Vec<Coverage> = [sq(0.0, 0.0, 100.0), sq(10.0, 10.0, 80.0), sq(40.0, 40.0, 20.0), sq(500.0, 0.0, 20.0)]
+            .iter()
+            .map(|l| Coverage::new(l, Some(false), 0.0))
+            .collect();
+        let threads = [1, 2, 1, 1];
+        assert_eq!(layered_order(&threads, |a, b| cover[a].overlaps(&cover[b])), vec![0, 3, 1, 2]);
+        // A thin line inside a ring's hole doesn't touch the ring.
+        let ring = vec![(vec![(0.0, 0.0), (300.0, 0.0), (300.0, 300.0), (0.0, 300.0)], true), (vec![(50.0, 50.0), (50.0, 250.0), (250.0, 250.0), (250.0, 50.0)], true)];
+        let line = vec![(vec![(100.0, 150.0), (200.0, 150.0)], false)];
+        assert!(!Coverage::new(&ring, Some(false), 0.0).overlaps(&Coverage::new(&line, None, 5.0)));
     }
 
     #[test]
@@ -899,7 +1065,7 @@ mod samples {
             let s = ArtSettings::for_artwork(&art);
             let t = std::time::Instant::now();
             let p = generate(&art, &s).unwrap();
-            eprintln!("{path}: {} layers, {} stitches, {:?}", art.layers.len(), p.count(Cmd::Stitch), t.elapsed());
+            eprintln!("{path}: {} layers, {} threads, {} stitches, {:?}", art.layers.len(), p.threads.len(), p.count(Cmd::Stitch), t.elapsed());
             let threads: Vec<i32> = p.threads.iter().map(|t| formats::nearest_jef(t.color)).collect();
             let b = p.bounds();
             let pts: Vec<Pt> = p.points.iter().map(|&(x, y)| (x - (b.0 + b.2) / 2.0, y - (b.1 + b.3) / 2.0)).collect();
