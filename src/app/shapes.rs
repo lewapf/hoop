@@ -3,6 +3,7 @@
 
 use super::*;
 use crate::artwork::{Artwork, ShapeEdit};
+use crate::lettering::FillKind;
 
 /// Artwork user units to stitch units to hoop coordinates and back.
 #[derive(Clone, Copy)]
@@ -247,6 +248,7 @@ impl HoopApp {
             own: Some(artwork::built_in(name, mid, size, layer)),
             name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
             layer,
+            look: None,
             hidden: false,
             dx: 0.0,
             dy: 0.0,
@@ -804,6 +806,33 @@ impl HoopApp {
                     }
                 }
             });
+        });
+        card(ui, "Stitch as", accent, |ui| {
+            // One look for all picked shapes, or the thread's look (Auto).
+            let first = s.shapes[sel[0]].look;
+            let same = sel.iter().all(|&i| s.shapes[i].look == first);
+            let name = |l: Option<Look>| match l {
+                None => "Thread's look".to_string(),
+                Some(Look::Default) => "Fill style".to_string(),
+                Some(Look::Fill(k)) => format!("{k:?}"),
+                Some(Look::Outline) => "Outline".into(),
+                Some(Look::Applique) => "Appliqué".into(),
+            };
+            let mut look = first;
+            egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { "Mixed".into() }).width(ui.available_width()).show_ui(ui, |ui| {
+                ui.selectable_value(&mut look, None, "Thread's look").on_hover_text("Whatever the Threads tab sets for this color");
+                for k in [FillKind::Tatami, FillKind::Satin, FillKind::Contour, FillKind::Wave, FillKind::Open] {
+                    ui.selectable_value(&mut look, Some(Look::Fill(k)), format!("{k:?}"));
+                }
+                ui.selectable_value(&mut look, Some(Look::Outline), "Outline").on_hover_text("Only the outline: for thin shapes");
+                ui.selectable_value(&mut look, Some(Look::Applique), "Appliqué");
+            });
+            if look != first {
+                for &i in &sel {
+                    s.shapes[i].look = look;
+                }
+            }
+            ui.label(RichText::new("Satin suits parts under about 7 mm wide, tatami wider ones, outline anything under 1 mm.").size(11.5).color(muted));
         });
         let [i] = sel[..] else {
             ui.label(RichText::new(format!("{} shapes picked. Drag them on the hoop or nudge with the arrow keys.", sel.len())).size(12.0).color(muted));

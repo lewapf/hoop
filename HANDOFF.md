@@ -39,6 +39,9 @@ Output: **Save as JEF** (Ctrl+S), **Send to USB** (Ctrl+U, writes to
 src/main.rs       eframe setup: app id "hoop", MSAA 4, vsync OFF (see Gotchas)
 src/app.rs        app state, canvas, panels' contents (big; egui immediate mode)
 src/app/shell.rs  menu bar, tool bar, status bar, left/right docks and tabs
+src/app/checks.rs Check list, density overlay, fixes, save preflight
+src/check.rs      design check: density grid, needle hits, stitch lengths,
+                  artwork shape widths, lettering rules (thresholds on top)
 src/app/shapes.rs artwork shape editing: selection, drag/snap, handles,
                   points, Arrange actions, Objects list, Shape tab
 src/canvas.rs     fabric, hoop and stitch drawing; Transform (rotate/mirror/offset)
@@ -165,6 +168,11 @@ chromium --headless=new --allow-file-access-from-files --user-data-dir=/tmp/x/ch
   Node drag/right-click/double-click were not exercised with a real mouse by
   the agent (no pointer automation here); selection, outline and handles
   were checked by screenshot.
+- Check thresholds were calibrated on the owner's files: the machine-tested
+  heart peaks at 4.3 mm/mm² and the commercial GEARBRMN.jef at 6.4, both
+  clean; DENSE is 6.5, TOO_DENSE 9. Real stitch-outs should refine them.
+  `HOOP_FILES=a.jef:b.svg cargo test --release report_samples -- --ignored --nocapture`
+  prints reports for real files.
 - Fills go one direction per shape (no shape-following satin columns); contour
   fill is the alternative.
 - SVG dashes are stitched solid; embedded images in SVGs are skipped.

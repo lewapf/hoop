@@ -84,6 +84,7 @@ you pick that file in the save dialog yourself.
 | `1` – `4`               | Pick a hoop                                |
 | `F` / `D`               | Show the whole hoop / zoom to the design   |
 | `G` / `J` / `T`         | Grid / jump stitches / thread texture      |
+| `H`                     | Thread density view                        |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / redo any change                   |
 | `?`                     | Show the shortcuts                         |
 | `Q`                     | Quit                                       |
@@ -122,6 +123,36 @@ change by clicking a swatch.
 Bundled display fonts (Alfa Slab One, Anton, Bebas Neue, Bungee, Dancing
 Script, Lobster, Pacifico, Righteous) come from Google Fonts under the SIL Open
 Font License (`assets/fonts/OFL.txt`). Installed system fonts are listed too.
+
+## Checking a design before it sews
+
+The Check tab in the left dock looks at the stitches of whatever is on the
+hoop, opened files included, and lists what would sew badly:
+
+- **Density:** thread laid per mm², measured in 1 mm cells. One layer of
+  tatami or satin is about 2–2.5 mm of thread per mm²; around four layers or
+  more is a problem (needle breaks, puckering). Press `H` to color the dense
+  and overloaded spots on the hoop.
+- **Needle hits** piling up in one spot, which can cut the fabric.
+- **Stitch lengths:** stitches under 0.3 mm (thread breaks) and over 8 mm
+  (snags).
+- **Shape widths** in artwork: fills under about 1 mm can't be filled (fix:
+  stitch as outline), tatami under 2.5 mm looks better as satin, satin over
+  about 8 mm should be tatami.
+- **Lettering:** letters under 5 mm, small letters with a row fill, wide
+  satin edges, very close fill rows.
+
+Each issue has Show (zooms to it and selects the shape) and, where there is
+one, a fix button. Save and Send to USB ask before writing a design that
+still has problems.
+
+The stitch engine also avoids common digitizing faults on its own: it drops
+stitches under 0.3 mm, splits long steps between fill rows, caps satin lines
+at 7 mm, and lays a sparse cross-direction underlay, inset 0.5 mm, under
+fills wider than 3 mm. The Fabric box in Style sets row spacing, pull
+compensation and stitch length for woven, knit, denim or towel and says which
+stabilizer to use. Every artwork shape can have its own stitch type (Shape
+tab → Stitch as).
 
 ## Artwork tips
 

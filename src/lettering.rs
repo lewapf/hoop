@@ -389,6 +389,9 @@ pub struct Stitcher {
 
 /// Length of tie stitches in 0.1 mm.
 const TIE: f32 = 5.0;
+/// Stitches shorter than 0.3 mm are skipped: the needle lands in its own
+/// hole, which cuts the thread or the fabric (tie stitches are longer).
+pub const MIN_STITCH: f32 = 3.0;
 
 impl Stitcher {
     pub fn new() -> Self {
@@ -421,7 +424,7 @@ impl Stitcher {
             }
             return;
         }
-        if dist(l, p) < 0.5 {
+        if dist(l, p) < MIN_STITCH {
             return;
         }
         if self.tie_in {
@@ -676,6 +679,44 @@ fn subtract(spans: Vec<(f32, f32)>, cut: &[(f32, f32)]) -> Vec<(f32, f32)> {
     out
 }
 
+/// Area of a shape in square units, measured with the fill's own row scan
+/// so holes and the fill rule count the same way.
+pub fn shape_area(glyph: &[Contour], even_odd: bool) -> f32 {
+    let (mut y0, mut y1) = (f32::MAX, f32::MIN);
+    for p in glyph.iter().flatten() {
+        (y0, y1) = (y0.min(p.1), y1.max(p.1));
+    }
+    let step = ((y1 - y0) / 400.0).max(1.0);
+    let mut area = 0.0;
+    let mut y = y0 + step / 2.0;
+    while y < y1 {
+        area += row_spans(glyph, y, even_odd).iter().map(|(a, b)| b - a).sum::<f32>() * step;
+        y += step;
+    }
+    area
+}
+
+/// Typical width of a shape: twice its area over its outline length. A
+/// long strip w wide gives about w; a disc gives its radius.
+pub fn thickness(glyph: &[Contour], even_odd: bool) -> f32 {
+    let outline: f32 = glyph.iter().map(|c| (0..c.len()).map(|i| dist(c[i], c[(i + 1) % c.len()])).sum::<f32>()).sum();
+    2.0 * shape_area(glyph, even_odd) / outline.max(1e-3)
+}
+
+/// What goes under a fill to hold the fabric: a running stitch around the
+/// shape and, for wide fills, a sparse fill across the top rows, inset
+/// 0.5 mm so it never shows at the edges.
+pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
+    for c in glyph {
+        run_contour(st, c, 25.0, false);
+    }
+    let sparse = !matches!(kind, FillKind::Satin | FillKind::Open | FillKind::Crosshatch | FillKind::None);
+    if sparse && thickness(glyph, even_odd) > 30.0 {
+        let u = Settings { density_mm: 2.5, stitch_mm: 3.0, pull_mm: -0.5, ..s.clone() };
+        fill_shape(st, glyph, even_odd, mask, FillKind::Tatami, angle + 90.0, &u);
+    }
+}
+
 pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
     fill_shape(st, glyph, false, &[], kind, angle, s);
 }
@@ -735,8 +776,9 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
             spans = subtract(spans, &row_spans(&rm, y, false));
         }
         let pull = s.pull_mm * 10.0;
+        // A negative pull insets rows (used by underlay); drop rows it empties.
         let segs: Vec<(f32, f32, bool)> =
-            spans.into_iter().filter(|(a, b)| b - a > 2.0).map(|(a, b)| (a - pull, b + pull, false)).collect();
+            spans.into_iter().filter(|(a, b)| b - a > 2.0).map(|(a, b)| (a - pull, b + pull, false)).filter(|(a, b, _)| b - a > 2.0).collect();
         rows.push((y, segs));
         y += spacing_at(y);
     }
@@ -806,6 +848,16 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
                 st.travel(pts[0], pts[1]);
                 started = true;
             } else {
+                // The step to the next row runs along the edge; where the
+                // edge slants away it can get long, so split it.
+                if let Some(l) = st.last() {
+                    let step = stitch_len.max(25.0);
+                    let n = (dist(l, pts[0]) / step).ceil() as usize;
+                    for k in 1..n {
+                        let t = k as f32 / n as f32;
+                        st.stitch((l.0 + (pts[0].0 - l.0) * t, l.1 + (pts[0].1 - l.1) * t));
+                    }
+                }
                 st.stitch(pts[0]);
             }
             for p in &pts[1..] {
@@ -856,9 +908,7 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             return;
         }
         if s.underlay {
-            for c in g {
-                run_contour(st, c, 25.0, false);
-            }
+            underlay(st, g, false, &[], s.fill, s.fill_angle, s);
         }
         fill_glyph(st, g, s.fill, s.fill_angle, s);
         if s.fill == FillKind::Crosshatch {

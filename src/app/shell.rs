@@ -50,6 +50,7 @@ fn tabs(mode: Mode) -> &'static [Tab] {
 pub(super) enum Dock {
     Objects,
     Colors,
+    Check,
 }
 
 /// A row of tabs like a Qt tab widget: the picked one is raised and
@@ -126,7 +127,11 @@ impl HoopApp {
 
     fn left_dock(&mut self, ui: &mut egui::Ui) {
         let accent = self.accent();
-        let mut options = vec![(Dock::Colors, "Colors")];
+        let check = match &self.check {
+            Some(r) if r.count(crate::check::Level::Problem) > 0 => format!("Check ({})", r.count(crate::check::Level::Problem)),
+            _ => "Check".to_string(),
+        };
+        let mut options = vec![(Dock::Colors, "Colors"), (Dock::Check, check.as_str())];
         if self.mode == Mode::Artwork {
             options.insert(0, (Dock::Objects, "Objects"));
         } else if self.dock == Dock::Objects {
@@ -139,6 +144,7 @@ impl HoopApp {
             Dock::Colors => {
                 egui::ScrollArea::vertical().id_salt("colors").auto_shrink([false, false]).show(ui, |ui| self.colors_list(ui));
             }
+            Dock::Check => self.check_list(ui),
         }
     }
 
@@ -239,6 +245,7 @@ impl HoopApp {
                 check(ui, &mut self.jumps, "Jump stitches", "J");
                 check(ui, &mut self.textured, "Thread texture", "T");
                 check(ui, &mut self.sizes, "Size label", "");
+                check(ui, &mut self.density, "Thread density", "H");
                 ui.separator();
                 check(ui, &mut self.show_left, "Objects and colors panel", "");
                 check(ui, &mut self.show_right, "Properties panel", "");
@@ -449,6 +456,19 @@ impl HoopApp {
             }
             if !self.pinned.is_empty() {
                 ui.label(text(format!("{} pinned", self.pinned.len())));
+            }
+            if let Some(r) = &self.check {
+                use crate::check::Level;
+                let (p, w) = (r.count(Level::Problem), r.count(Level::Warning));
+                let (color, label) = match (p, w) {
+                    (0, 0) => (OK, "Check: ready to sew".to_string()),
+                    (0, w) => (WARN, format!("Check: {w} warning{}", if w == 1 { "" } else { "s" })),
+                    (p, _) => (BAD, format!("Check: {p} problem{}", if p == 1 { "" } else { "s" })),
+                };
+                if ui.add(egui::Label::new(RichText::new(label).size(12.0).color(color)).sense(Sense::click())).on_hover_text("Open the Check list").clicked() {
+                    self.dock = Dock::Check;
+                    self.show_left = true;
+                }
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(text(format!("{:.0}%", self.view.scale * 100.0 / self.hoop_scale.max(1e-6))));

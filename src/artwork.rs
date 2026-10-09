@@ -89,6 +89,8 @@ pub struct ShapeEdit {
     pub own: Option<Shape>,
     pub name: String,
     pub layer: usize,
+    /// How this shape is stitched, overriding its thread's look.
+    pub look: Option<Look>,
     pub hidden: bool,
     pub dx: f32,
     pub dy: f32,
@@ -103,7 +105,7 @@ impl ShapeEdit {
             Kind::Fill { .. } => "Fill",
             Kind::Stroke { .. } => "Line",
         };
-        ShapeEdit { source: i, own: None, name: format!("{kind} {}", i + 1), layer: sh.layer, hidden: false, dx: 0.0, dy: 0.0, scale: 1.0, rotate: 0.0 }
+        ShapeEdit { source: i, own: None, name: format!("{kind} {}", i + 1), layer: sh.layer, look: None, hidden: false, dx: 0.0, dy: 0.0, scale: 1.0, rotate: 0.0 }
     }
 
     pub fn base<'a>(&'a self, art: &'a Artwork) -> &'a Shape {
@@ -575,6 +577,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     struct Item {
         doc: usize,
         layer: usize,
+        look: Look,
         kind: Kind,
         lines: Vec<(Contour, bool)>,
     }
@@ -590,7 +593,8 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
             Kind::Stroke { .. } => lines.iter().map(|l| length(&l.0)).sum::<f32>() >= 10.0,
         };
         if keep {
-            items.push(Item { doc, layer: e.layer, kind: sh.kind.clone(), lines });
+            let look = e.look.unwrap_or_else(|| s.layers.get(e.layer).map_or(Look::Default, |l| l.look));
+            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines });
         }
     }
     if items.is_empty() {
@@ -619,10 +623,9 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     }
 
     // The fill and edge each shape gets after its thread's look is applied.
-    let look_of = |layer: usize| s.layers.get(layer).map_or(Look::Default, |l| l.look);
-    let styled = |layer: usize| -> Settings {
+    let styled = |look: Look| -> Settings {
         let mut style = s.style.clone();
-        match look_of(layer) {
+        match look {
             Look::Default => {}
             Look::Fill(k) => {
                 if k != style.fill {
@@ -644,7 +647,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     for &i in &order {
         let it = &items[i];
         let thread = thread_of(it.layer);
-        let applique = matches!(it.kind, Kind::Fill { .. }) && look_of(it.layer) == Look::Applique;
+        let applique = matches!(it.kind, Kind::Fill { .. }) && it.look == Look::Applique;
         if applique {
             // Two machine stops even within one thread: lay the fabric, then trim it.
             let outlines: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
@@ -680,7 +683,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         }
         match it.kind {
             Kind::Fill { even_odd } => {
-                let own = styled(it.layer);
+                let own = styled(it.look);
                 let st_ref = &own;
                 let contours: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
                 // Everything drawn above this shape and overlapping it.
@@ -690,7 +693,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                         .filter(|o| {
                             o.doc > it.doc
                                 && matches!(o.kind, Kind::Fill { .. })
-                                && (styled(o.layer).fill != FillKind::None || look_of(o.layer) == Look::Applique)
+                                && (styled(o.look).fill != FillKind::None || o.look == Look::Applique)
                         })
                         .flat_map(|o| o.lines.iter().map(|l| l.0.clone()))
                         .collect()
@@ -699,9 +702,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 };
                 if st_ref.fill != FillKind::None {
                     if st_ref.underlay {
-                        for c in &contours {
-                            lettering::run_contour(&mut st, c, 25.0, false);
-                        }
+                        lettering::underlay(&mut st, &contours, even_odd, &mask, st_ref.fill, st_ref.fill_angle, st_ref);
                     }
                     lettering::fill_shape(&mut st, &contours, even_odd, &mask, st_ref.fill, st_ref.fill_angle, st_ref);
                     if st_ref.fill == FillKind::Crosshatch {
@@ -718,7 +719,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 }
             }
             Kind::Stroke { width } => {
-                let w = (width * scale).max(s.stroke_min_mm * 10.0).min(80.0);
+                let w = (width * scale).max(s.stroke_min_mm * 10.0).min(70.0);
                 for (c, closed) in &it.lines {
                     let mut line = c.clone();
                     if *closed {

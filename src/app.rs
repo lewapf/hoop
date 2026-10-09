@@ -8,6 +8,7 @@ use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
 
+mod checks;
 mod shapes;
 mod shell;
 
@@ -45,6 +46,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("1 – 4", "Pick a hoop"),
     ("F / D", "Show the whole hoop / zoom to the design"),
     ("G / J / T", "Grid / jump stitches / thread texture"),
+    ("H", "Thread density view (from the Check list)"),
     ("Click shape", "Artwork: select a shape to move, resize or recolor it"),
     ("Arrows · [ / ]", "Selected shape: move it / send it down or up"),
     ("Ctrl+D · Del · Esc", "Selected shape: duplicate / delete / deselect"),
@@ -205,6 +207,15 @@ pub struct HoopApp {
     dock: Dock,
     show_left: bool,
     show_right: bool,
+    /// The design check and the stitches it was made for.
+    check: Option<crate::check::Report>,
+    check_key: u64,
+    density: bool,
+    /// A spot pointed out from the Check list, in design coordinates.
+    flash: Option<((f32, f32), std::time::Instant)>,
+    /// Saving or sending waits here while the user decides about problems.
+    preflight: Option<checks::Output>,
+    preflight_passed: bool,
     edit_points: bool,
     /// Set by undo and redo so the next stitch-out doesn't shift the design
     /// to keep shapes in place (the restored placement already does).
@@ -279,6 +290,12 @@ impl HoopApp {
             dock: Dock::Colors,
             show_left: true,
             show_right: true,
+            check: None,
+            check_key: 0,
+            density: false,
+            flash: None,
+            preflight: None,
+            preflight_passed: false,
             edit_points: false,
             keep_anchor: false,
             art_slow: false,
@@ -661,6 +678,9 @@ impl HoopApp {
         }
         if press(Modifiers::NONE, Key::G) {
             self.grid = !self.grid;
+        }
+        if press(Modifiers::NONE, Key::H) {
+            self.density = !self.density;
         }
         if press(Modifiers::NONE, Key::J) {
             self.jumps = !self.jumps;
@@ -1181,6 +1201,7 @@ impl HoopApp {
             }
         }
 
+        self.check_overlay(&painter, &frame);
         self.shape_overlay(&painter, &frame, hover_shape);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 
@@ -1316,6 +1337,7 @@ impl HoopApp {
     fn lettering_panel(&mut self, ui: &mut egui::Ui, tab: Tab) {
         let muted = self.muted();
         let accent = self.accent();
+        let mut tip_later = None;
         let s = &mut self.letter;
         if tab == Tab::Text {
         card(ui, "Text", accent, |ui| {
@@ -1358,6 +1380,9 @@ impl HoopApp {
                 segmented(ui, &mut s.align, &[(Align::Left, "Left"), (Align::Center, "Center"), (Align::Right, "Right")], accent);
             }
         });
+        if let Some(tip) = fabric_card(ui, s, muted) {
+            tip_later = Some(tip);
+        }
         fill_card(ui, s, muted, accent, true);
         edge_card(ui, s, accent, "Edge", true);
         }
@@ -1400,6 +1425,9 @@ impl HoopApp {
                 }
             }
         });
+        }
+        if let Some(tip) = tip_later {
+            self.toast(tip.to_string());
         }
         if tab == Tab::Text && ui.button("Reset lettering").on_hover_text("Back to the default style, keeping the font").clicked() {
             let font = self.letter.font;
@@ -1693,6 +1721,9 @@ impl HoopApp {
                 (artwork::PRESETS[i].2)(s);
             }
         });
+        if let Some(tip) = fabric_card(ui, &mut s.style, muted) {
+            self.status = Some((tip.to_string(), std::time::Instant::now()));
+        }
         fill_card(ui, &mut s.style, muted, accent, false);
         card(ui, "Clean-up", accent, |ui| {
             ui.checkbox(&mut s.knockout, "Cut hidden parts").on_hover_text("Leave areas covered by shapes on top unstitched, so layers don't pile up");
@@ -1753,6 +1784,9 @@ impl HoopApp {
     }
 
     fn save_jef(&mut self) {
+        if !self.checked(checks::Output::Jef) {
+            return;
+        }
         let Some(bytes) = self.jef_bytes() else { return };
         let name = if self.pinned.is_empty() { format!("{}.jef", self.design_stem()) } else { format!("{}-combined.jef", self.design_stem()) };
         self.ask_save("Save as JEF", name, "Janome JEF", "jef", bytes);
@@ -1826,6 +1860,9 @@ impl HoopApp {
 
     fn open_usb(&mut self) {
         if self.design.is_none() && self.pinned.is_empty() {
+            return;
+        }
+        if !self.checked(checks::Output::Usb) {
             return;
         }
         self.usb.open = true;
@@ -2153,7 +2190,9 @@ impl eframe::App for HoopApp {
         let canvas_rect = self.canvas_rect;
         self.keys(ctx, canvas_rect);
 
+        self.refresh_check();
         self.layout(ui, canvas_rect);
+        self.preflight_window(ctx);
         self.track_history(ctx, false);
         self.help_overlay(ctx);
         self.usb_window(ctx);
@@ -2473,6 +2512,38 @@ fn load_ui_font(ctx: &egui::Context) {
         fonts.families.entry(fam).or_default().insert(0, "omarchy".into());
     }
     ctx.set_fonts(fonts);
+}
+
+/// Fabrics and how they change the stitching: (name, extra row spacing in
+/// mm, pull compensation, stitch length, advice shown when picked).
+const FABRICS_SEW: [(&str, f32, f32, f32, &str); 4] = [
+    ("Woven", 0.0, 0.2, 3.5, "Woven cotton: tear-away stabilizer is enough."),
+    ("Knit", 0.05, 0.35, 3.0, "T-shirts and knits: use cut-away stabilizer and hoop without stretching."),
+    ("Denim", 0.0, 0.15, 4.0, "Denim and canvas: tear-away stabilizer, a size 90 needle."),
+    ("Towel", -0.05, 0.3, 3.0, "Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile."),
+];
+
+/// Quick fabric presets for the fill. Returns the advice for a picked one.
+fn fabric_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32) -> Option<&'static str> {
+    let mut tip = None;
+    let accent = ui.visuals().selection.bg_fill;
+    card(ui, "Fabric", accent, |ui| {
+        ui.label(RichText::new("Sets row spacing, pull and stitch length for the material.").size(12.0).color(muted));
+        let base = s.fill.default_rows_mm();
+        ui.horizontal(|ui| {
+            for (name, rows, pull, len, advice) in FABRICS_SEW {
+                let on = (s.density_mm - (base + rows)).abs() < 0.001 && (s.pull_mm - pull).abs() < 0.001 && (s.stitch_mm - len).abs() < 0.001;
+                if ui.selectable_label(on, name).on_hover_text(advice).clicked() {
+                    s.density_mm = base + rows;
+                    s.pull_mm = pull;
+                    s.stitch_mm = len;
+                    s.underlay = true;
+                    tip = Some(advice);
+                }
+            }
+        });
+    });
+    tip
 }
 
 /// Fill style tiles and the settings of the chosen style.
