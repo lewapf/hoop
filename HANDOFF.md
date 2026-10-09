@@ -180,6 +180,9 @@ Madeira/Isacord thread charts, editable pinned parts.
 
 ## Owner preferences
 
+- Wants the UI to feel like a Qt desktop program: menus, tool bar, tabbed
+  docks, status bar (asked 2026-10-09), and rich direct editing on the hoop.
+
 - Wants things done end to end: build, install into Omarchy, commit.
 - Likes the app to look polished and follow the Omarchy theme; screenshots are
   the check.
