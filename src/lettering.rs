@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use ttf_parser::OutlineBuilder;
 
 use crate::formats::{self, Cmd, Format, Pattern};
+use crate::route::Region;
 
 pub type Pt = (f32, f32);
 pub type Contour = Vec<Pt>;
@@ -34,6 +35,11 @@ impl FillKind {
             _ => 0.45,
         }
     }
+}
+
+/// Whether a fill sews closely enough to hide a travel run under it.
+pub fn covers(kind: FillKind, rows_mm: f32) -> bool {
+    matches!(kind, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Zigzag | FillKind::Contour) && rows_mm <= 0.8
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -385,6 +391,9 @@ pub struct Stitcher {
     fresh: bool,
     /// The needle just jumped; tie in toward the next stitch.
     tie_in: bool,
+    /// The shape being sewn, set by the caller around one shape's stitches:
+    /// moves within it run through the shape instead of jumping.
+    pub region: Option<Region>,
 }
 
 /// Length of tie stitches in 0.1 mm.
@@ -395,7 +404,7 @@ pub const MIN_STITCH: f32 = 3.0;
 
 impl Stitcher {
     pub fn new() -> Self {
-        Stitcher { points: Vec::new(), cmds: Vec::new(), fresh: true, tie_in: false }
+        Stitcher { points: Vec::new(), cmds: Vec::new(), fresh: true, tie_in: false, region: None }
     }
 
     pub fn last(&self) -> Option<Pt> {
@@ -431,6 +440,9 @@ impl Stitcher {
             self.tie_in = false;
             self.tie(l, p);
         }
+        if let Some(r) = &mut self.region {
+            r.mark(l, p);
+        }
         self.points.push(p);
         self.cmds.push(Cmd::Stitch);
     }
@@ -456,8 +468,9 @@ impl Stitcher {
         }
     }
 
-    /// Moves to `p` without sewing. Short hops are stitched instead, and real
-    /// jumps get tie stitches on both ends.
+    /// Moves to `p` without sewing. Short hops are stitched instead, moves
+    /// within the current shape run through it, and real jumps get tie
+    /// stitches on both ends.
     pub fn travel(&mut self, p: Pt, _next: Pt) {
         match self.last() {
             None => self.jump(p),
@@ -466,10 +479,17 @@ impl Stitcher {
                 self.jump(p);
             }
             Some(l) if dist(l, p) <= 25.0 => self.stitch(p),
-            Some(_) => {
-                self.tie_off();
-                self.jump(p);
-            }
+            Some(l) => match self.region.as_ref().and_then(|r| r.route(l, p)) {
+                Some(path) => {
+                    for q in path {
+                        self.stitch(q);
+                    }
+                }
+                None => {
+                    self.tie_off();
+                    self.jump(p);
+                }
+            },
         }
     }
 
@@ -665,7 +685,7 @@ pub type MaskShape = (Vec<Contour>, bool);
 
 /// Where a row crosses any of the mask shapes. Each shape is tested on its
 /// own, so shapes drawn in opposite directions don't cancel where they meet.
-fn mask_spans(mask: &[MaskShape], y: f32) -> Vec<(f32, f32)> {
+pub(crate) fn mask_spans(mask: &[MaskShape], y: f32) -> Vec<(f32, f32)> {
     let mut all: Vec<(f32, f32)> = mask.iter().flat_map(|(cs, eo)| row_spans(cs, y, *eo)).collect();
     all.sort_by(|a, b| a.0.total_cmp(&b.0));
     let mut out: Vec<(f32, f32)> = Vec::with_capacity(all.len());
@@ -679,7 +699,7 @@ fn mask_spans(mask: &[MaskShape], y: f32) -> Vec<(f32, f32)> {
 }
 
 /// Removes the parts of `spans` covered by `cut`. Both are sorted and disjoint.
-fn subtract(spans: Vec<(f32, f32)>, cut: &[(f32, f32)]) -> Vec<(f32, f32)> {
+pub(crate) fn subtract(spans: Vec<(f32, f32)>, cut: &[(f32, f32)]) -> Vec<(f32, f32)> {
     let mut out = Vec::new();
     for (mut a, b) in spans {
         for &(c0, c1) in cut {
@@ -726,6 +746,10 @@ pub fn thickness(glyph: &[Contour], even_odd: bool) -> f32 {
 /// shape and, for wide fills, a sparse fill across the top rows, inset
 /// 0.5 mm so it never shows at the edges.
 pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
+    // The fill covers underlay, so its travel may cross anything inside.
+    if let Some(r) = &mut st.region {
+        r.strict = false;
+    }
     for c in glyph {
         run_contour(st, c, 25.0, false);
     }
@@ -733,6 +757,9 @@ pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Ma
     if sparse && thickness(glyph, even_odd) > 30.0 {
         let u = Settings { density_mm: 2.5, stitch_mm: 3.0, pull_mm: -0.5, ..s.clone() };
         fill_shape(st, glyph, even_odd, mask, FillKind::Tatami, angle + 90.0, &u);
+    }
+    if let Some(r) = &mut st.region {
+        r.strict = true;
     }
 }
 
@@ -743,6 +770,9 @@ pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f
 /// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
 /// left unstitched so layers don't pile up.
 pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
+    if let Some(r) = &mut st.region {
+        r.clear_sewn();
+    }
     if kind == FillKind::Contour {
         contour_fill(st, glyph, even_odd, mask, s);
         return;
@@ -807,9 +837,25 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
     // Curved rows need shorter stitches to follow the curve.
     let stitch_len = if warped { (s.stitch_mm * 10.0).min(len / 8.0).max(12.0) } else { s.stitch_mm * 10.0 };
     loop {
-        let Some(first) = rows.iter().position(|r| r.1.iter().any(|s| !s.2)) else { break };
-        let mut ri = first;
-        let mut si = rows[ri].1.iter().position(|s| !s.2).unwrap();
+        // Start the next column at the head (no unsewn part above it) nearest
+        // the needle, so the move there is short and stays inside.
+        let here = st.last().map(rot);
+        let mut best: Option<(f32, usize, usize)> = None;
+        for (ri, row) in rows.iter().enumerate() {
+            for (si, seg) in row.1.iter().enumerate() {
+                if seg.2 || ri > 0 && rows[ri - 1].1.iter().any(|o| !o.2 && o.1 > seg.0 && o.0 < seg.1) {
+                    continue;
+                }
+                let d = here.map_or(0.0, |h| dist(h, (seg.0, row.0)).min(dist(h, (seg.1, row.0))));
+                if best.is_none_or(|b| d < b.0) {
+                    best = Some((d, ri, si));
+                }
+            }
+            if here.is_none() && best.is_some() {
+                break;
+            }
+        }
+        let Some((_, mut ri, mut si)) = best else { break };
         let mut forward = match st.last() {
             Some(l) => {
                 let (x0, x1, _) = rows[ri].1[si];
@@ -926,6 +972,7 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
         if s.fill == FillKind::None {
             return;
         }
+        st.region = Region::new(g, false, &[], &[]);
         if s.underlay {
             underlay(st, g, false, &[], s.fill, s.fill_angle, s);
         }
@@ -933,6 +980,7 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
         if s.fill == FillKind::Crosshatch {
             fill_glyph(st, g, s.fill, s.fill_angle + 90.0, s);
         }
+        st.region = None;
     };
     // Thread changes happen only when the thread really changes, except for
     // appliqué stops, where the machine must halt even in the same thread.
@@ -967,9 +1015,12 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
         } else if s.patch_fill != FillKind::None {
             use_thread(&mut st, s.patch_thread, None);
             let mask: Vec<MaskShape> = glyphs.iter().map(|g| (g.clone(), false)).collect();
+            let cover = if covers(s.fill, s.density_mm) { &mask[..] } else { &[] };
+            st.region = Region::new(std::slice::from_ref(outline), false, &mask, cover);
             run_contour(&mut st, outline, 25.0, false);
             let bg = Settings { density_mm: s.patch_fill.default_rows_mm(), underlay: false, ..s.clone() };
             fill_shape(&mut st, std::slice::from_ref(outline), false, &mask, s.patch_fill, s.fill_angle + 90.0, &bg);
+            st.region = None;
         }
     }
 

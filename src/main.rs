@@ -6,6 +6,7 @@ mod formats;
 mod hoops;
 mod lettering;
 mod prefs;
+mod route;
 mod theme;
 mod trace;
 mod testsew;

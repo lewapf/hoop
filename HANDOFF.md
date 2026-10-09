@@ -100,7 +100,18 @@ wrong). Commits end with the Claude co-author line; nothing is pushed anywhere.
 - `Stitcher` (lettering.rs) builds absolute points + `Cmd`s. `travel()` stitches
   hops ≤ 2.5 mm and jumps longer ones with 0.5 mm tie stitches at both ends.
   After `color_change()` the new thread is "fresh": it jumps to its first shape
-  and ties in there. (An earlier bug tied the new thread at the old thread's end,
+  and ties in there.
+- Travel inside a shape (`route.rs`): callers set `st.region` to a `Region`
+  (the shape on a ~0.5 mm grid) around one shape's underlay, fill and edge.
+  `travel()` then runs an A* path of 2.5 mm stitches through the shape
+  instead of jumping. Cells cut out for dense shapes on top count as inside
+  (those shapes sew later and hide the run); sewn rows are off limits on the
+  top pass (`strict`), allowed under underlay. Each fill pass clears the
+  sewn marks. The next fill column is the column head nearest the needle.
+  This halved jumps on the Bremen crest (296 → 165, 86 of those are
+  separate black outline strokes, which still jump). The JEF preview shows
+  under-runs faintly through the fill; a probe confirmed every routed point
+  has a later stitch within 0.3 mm. (An earlier bug tied the new thread at the old thread's end,
   leaving visible stubs; there is a regression test.)
 - Row fills (`fill_shape`): rotate by the fill angle, scan rows with the
   nonzero or even-odd rule (`row_spans`), subtract a knockout mask (each

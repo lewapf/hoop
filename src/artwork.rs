@@ -838,16 +838,21 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 let own = styled(it.look);
                 let st_ref = &own;
                 let contours: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
-                // Everything drawn above this shape and overlapping it.
-                let mask: Vec<lettering::MaskShape> = if s.knockout {
+                // Everything drawn above this shape and overlapping it, and of
+                // that, what sews densely enough to hide travel under it.
+                let above = |dense: bool| -> Vec<lettering::MaskShape> {
+                    if !s.knockout {
+                        return Vec::new();
+                    }
                     items
                         .iter()
                         .filter(|o| o.doc > it.doc && masks(o))
+                        .filter(|o| !dense || o.look == Look::Applique || lettering::covers(styled(o.look).fill, styled(o.look).density_mm))
                         .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
                         .collect()
-                } else {
-                    Vec::new()
                 };
+                let mask = above(false);
+                st.region = crate::route::Region::new(&contours, even_odd, &mask, &above(true));
                 if st_ref.fill != FillKind::None {
                     if st_ref.underlay {
                         lettering::underlay(&mut st, &contours, even_odd, &mask, st_ref.fill, st_ref.fill_angle, st_ref);
@@ -865,6 +870,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                         EdgeKind::Satin => lettering::satin_contour(&mut st, c, st_ref.edge_width_mm * 10.0),
                     }
                 }
+                st.region = None;
             }
             Kind::Stroke { width } => {
                 let w = (width * scale).max(s.stroke_min_mm * 10.0).min(70.0);
@@ -1097,3 +1103,4 @@ pub const PRESETS: [(&str, &str, fn(&mut ArtSettings)); 4] = [
         s.stroke = EdgeKind::Triple;
     }),
 ];
+
