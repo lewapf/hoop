@@ -235,6 +235,8 @@ pub struct HoopApp {
     pinned: Vec<Pinned>,
     usb: UsbState,
     test: testpiece::TestSew,
+    /// What the calibration sheet showed works; tunes defaults and the check.
+    tuning: crate::testsew::Tuning,
     /// The picture behind traced artwork, kept so it can be traced again.
     picture: Option<trace::Picture>,
     trace_set: TraceSettings,
@@ -314,6 +316,7 @@ impl HoopApp {
             pinned: Vec::new(),
             usb: UsbState::default(),
             test: testpiece::TestSew::default(),
+            tuning: Default::default(),
             picture: None,
             trace_set: TraceSettings::default(),
             pending_retrace: false,
@@ -1279,6 +1282,7 @@ impl HoopApp {
             self.play_rate = v;
         }
         self.letter = p.lettering();
+        self.tuning = p.tuning();
         self.want_font = p.get("letter.font").map(str::to_string);
         self.resolve_font();
     }
@@ -1456,7 +1460,9 @@ impl HoopApp {
         self.set_mode(Mode::Artwork);
         match result {
             Ok(art) => {
-                self.art = Some(ArtSettings::for_artwork(&art));
+                let mut s = ArtSettings::for_artwork(&art);
+                self.tuning.apply(&mut s.style);
+                self.art = Some(s);
                 self.reset_history();
                 self.art_built = None;
                 self.sel.clear();
@@ -2212,6 +2218,7 @@ impl eframe::App for HoopApp {
         self.keys(ctx, canvas_rect);
 
         self.refresh_check();
+        self.refresh_test_piece();
         self.layout(ui, canvas_rect);
         self.preflight_window(ctx);
         self.track_history(ctx, false);

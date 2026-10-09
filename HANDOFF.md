@@ -21,13 +21,15 @@ Output: **Save as JEF** (Ctrl+S), **Send to USB** (Ctrl+U, writes to
 `EMB/Embf`), **Save picture** (Ctrl+Shift+S, PNG of the preview). **Pin to hoop**
 (P) combines several designs into one JEF. **Test stitch-out** (Ctrl+T) cuts
 what's on the hoop to a dragged area and/or sews outlines only, and opens the
-calibration sheet (rows A–E, see `testsew::SHEET_ROWS`).
+calibration sheet (rows A–E, see `testsew::SHEET_ROWS`). Sheet results are a
+`testsew::Tuning` (prefs keys `tune.*`): `Tuning::apply` sets rows and pull
+in Settings, and `check::artwork`/`check::lettering` take it for their limits.
 
 ## Status
 
 - Installed as the Arch package `hoop` (`/usr/bin/hoop`, launcher entry, icon,
   MIME type `application/embroidery` for jef/dst/exp/pes/pec, set as default).
-- 50 unit tests pass (`bin/test`), 5 ignored sample exporters (see Testing;
+- 52 unit tests pass (`bin/test`), 5 ignored sample exporters (see Testing;
   `sheet_sample` writes the calibration sheet).
 - **Nothing made by Hoop has been stitched on the machine yet** except the
   JEF format itself: the writer reproduces the header of `heart_5x5_fill.jef`,

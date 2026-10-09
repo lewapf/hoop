@@ -55,7 +55,7 @@ pub(super) enum Dock {
 
 /// A row of tabs like a Qt tab widget: the picked one is raised and
 /// underlined. Tabs that don't fit wrap onto another row.
-fn tab_row<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], accent: Color32) {
+pub(super) fn tab_row<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], accent: Color32) {
     let raised = ui.visuals().panel_fill.lerp_to_gamma(ui.visuals().text_color(), 0.07);
     let line = ui.visuals().widgets.noninteractive.bg_stroke.color;
     ui.horizontal_wrapped(|ui| {

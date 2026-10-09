@@ -47,11 +47,17 @@ make or open the next part and move it into place. Save as JEF saves every
 pinned part and the current design as one file.
 
 To try a design before sewing all of it, open **Test stitch-out** (`Ctrl+T`):
-drag a rectangle on the hoop around the part to check, such as a tight corner
-or small letters, and optionally sew outlines only, without fills. Save the
-piece or send it to USB. The same window opens the calibration sheet: rows of
-satin widths, narrow fills, fill densities, pull compensation and small
-letters on one 123 × 111 mm sheet for the SQ14b hoop.
+drag a box on the hoop around the part to check, such as a tight corner or
+small letters (in Artwork, or box the picked shapes), and optionally sew
+outlines only, without fills. While the window is open the hoop shows only
+what the test will sew. Save the piece or send it to USB.
+
+The window's Calibration sheet page opens a sheet of satin widths, narrow
+fills, fill densities, pull compensation and small letters (123 × 111 mm, for
+the SQ14b hoop). After sewing it, pick what looked best on each row. Hoop
+remembers the answers, uses the row spacing and pull compensation for new
+designs, and the Check list judges designs by your limits instead of general
+rules.
 
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.

@@ -55,10 +55,10 @@ impl HoopApp {
         match self.mode {
             Mode::Artwork => {
                 if let (Some(art), Some(s)) = (&self.artwork, &self.art) {
-                    check::artwork(&mut report, art, s);
+                    check::artwork(&mut report, art, s, &self.tuning);
                 }
             }
-            Mode::Lettering => check::lettering(&mut report, &self.letter),
+            Mode::Lettering => check::lettering(&mut report, &self.letter, &self.tuning),
             Mode::Viewer => {}
         }
         self.check = Some(report);

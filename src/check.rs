@@ -6,6 +6,7 @@
 use crate::artwork::{self, ArtSettings, Artwork, Kind, Look};
 use crate::formats::{Cmd, Pattern};
 use crate::lettering::{self, EdgeKind, FillKind, Settings};
+use crate::testsew::Tuning;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Level {
@@ -260,7 +261,11 @@ pub fn stitches(p: &Pattern) -> Report {
 }
 
 /// Checks artwork shapes against how they are stitched.
-pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings) {
+pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tuning) {
+    // Limits from the test sheet when it was sewn, else general rules.
+    let fill_min = tune.fill_min.unwrap_or(0.9);
+    let satin_max = tune.satin_max.unwrap_or(7.0);
+    let sheet = |general: &str, mm: Option<f32>, what: &str| mm.map_or_else(|| general.to_string(), |v| format!(" Your test sheet: {what} {v} mm."));
     let (scale, mid) = artwork::frame(art, s);
     let to_mm = |p: (f32, f32)| ((p.0 - mid.0) * scale, (p.1 - mid.1) * scale);
     let mut thin = 0;
@@ -287,13 +292,16 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings) {
                     continue;
                 }
                 let t = lettering::thickness(&lines, even_odd) / 10.0;
-                if t < 0.9 {
+                if t < fill_min {
                     thin += 1;
                     if thin <= 5 {
                         report.issues.push(Issue {
                             level: Level::Problem,
                             title: format!("{} is too thin to fill", e.name),
-                            detail: format!("About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger."),
+                            detail: format!(
+                                "About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{}",
+                                sheet("", tune.fill_min, "narrowest clean fill")
+                            ),
                             at,
                             shape: Some(i),
                             fix: Some(Fix::ShapeLook(i, Look::Outline)),
@@ -308,11 +316,14 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings) {
                         shape: Some(i),
                         fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Satin))),
                     });
-                } else if fill == FillKind::Satin && t > 8.0 {
+                } else if fill == FillKind::Satin && t > satin_max + 1.0 {
                     report.issues.push(Issue {
                         level: Level::Warning,
                         title: format!("{} is wide for satin", e.name),
-                        detail: format!("About {t:.0} mm across. Satin over 7 mm is split into long, loose stitches; tatami holds better."),
+                        detail: format!(
+                            "About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{}",
+                            sheet(" Satin over 7 mm is split.", tune.satin_max, "widest tight satin")
+                        ),
                         at,
                         shape: Some(i),
                         fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Tatami))),
@@ -321,11 +332,14 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings) {
             }
             Kind::Stroke { width } => {
                 let w = width * scale / 10.0;
-                if s.stroke == EdgeKind::Satin && w > 6.0 {
+                if s.stroke == EdgeKind::Satin && w > tune.satin_max.unwrap_or(6.0) {
                     report.issues.push(Issue {
                         level: Level::Warning,
                         title: format!("{} is a wide satin line", e.name),
-                        detail: format!("{w:.1} mm wide; satin lines are capped at 7 mm, and wide satin snags."),
+                        detail: format!(
+                            "{w:.1} mm wide; wide satin snags.{}",
+                            sheet(" Satin lines are capped at 7 mm.", tune.satin_max, "widest tight satin")
+                        ),
                         at,
                         shape: Some(i),
                         fix: None,
@@ -357,15 +371,19 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings) {
 }
 
 /// Checks lettering settings.
-pub fn lettering(report: &mut Report, s: &Settings) {
-    if s.height_mm < 5.0 {
+pub fn lettering(report: &mut Report, s: &Settings, tune: &Tuning) {
+    let smallest = tune.letters_min.unwrap_or(5.0);
+    if s.height_mm < smallest {
         report.issues.push(Issue {
             level: Level::Problem,
-            title: "Letters under 5 mm".into(),
-            detail: "Small letters lose their shape in thread. 6 mm is about the smallest that reads well.".into(),
+            title: format!("Letters under {smallest} mm"),
+            detail: match tune.letters_min {
+                Some(mm) => format!("Your test sheet showed {mm} mm as the smallest letters that read well."),
+                None => "Small letters lose their shape in thread. 6 mm is about the smallest that reads well.".into(),
+            },
             at: None,
             shape: None,
-            fix: Some(Fix::Height(6.0)),
+            fix: Some(Fix::Height(tune.letters_min.unwrap_or(6.0))),
         });
     } else if s.height_mm < 10.0 && matches!(s.fill, FillKind::Tatami | FillKind::Wave | FillKind::Gradient | FillKind::Crosshatch | FillKind::Contour) {
         report.issues.push(Issue {
@@ -377,14 +395,18 @@ pub fn lettering(report: &mut Report, s: &Settings) {
             fix: Some(Fix::LetterFill(FillKind::Satin)),
         });
     }
-    if s.edge == EdgeKind::Satin && s.edge_width_mm > 5.0 {
+    let satin_max = tune.satin_max.unwrap_or(5.0);
+    if s.edge == EdgeKind::Satin && s.edge_width_mm > satin_max {
         report.issues.push(Issue {
             level: Level::Warning,
             title: "Wide satin edge".into(),
-            detail: "Satin edges over 5 mm get loose and snag.".into(),
+            detail: match tune.satin_max {
+                Some(mm) => format!("Your test sheet showed satin up to {mm} mm lying tight."),
+                None => "Satin edges over 5 mm get loose and snag.".into(),
+            },
             at: None,
             shape: None,
-            fix: Some(Fix::EdgeWidth(3.0)),
+            fix: Some(Fix::EdgeWidth(satin_max.min(3.0))),
         });
     }
     let fill_rows = matches!(s.fill, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Contour);
@@ -395,7 +417,7 @@ pub fn lettering(report: &mut Report, s: &Settings) {
             detail: "Rows under 0.3 mm pile thread on thread. 0.4–0.45 mm covers well.".into(),
             at: None,
             shape: None,
-            fix: Some(Fix::Rows(0.4)),
+            fix: Some(Fix::Rows(tune.rows.unwrap_or(0.4))),
         });
     }
     sort(report);
@@ -469,7 +491,7 @@ mod tests {
         s.min_detail_mm = 0.0;
         let p = artwork::generate(&art, &s).unwrap();
         let mut r = stitches(&p);
-        artwork(&mut r, &art, &s);
+        artwork(&mut r, &art, &s, &Tuning::default());
         let thin = r.issues.iter().find(|i| i.title.contains("too thin")).expect("thin sliver found");
         assert_eq!(thin.fix, Some(Fix::ShapeLook(1, Look::Outline)));
         let narrow = r.issues.iter().find(|i| i.title.contains("narrow")).expect("2 mm strip found");
@@ -479,7 +501,7 @@ mod tests {
         s.shapes[1].look = Some(Look::Outline);
         s.shapes[2].look = Some(Look::Fill(FillKind::Satin));
         let mut r = stitches(&artwork::generate(&art, &s).unwrap());
-        artwork(&mut r, &art, &s);
+        artwork(&mut r, &art, &s, &Tuning::default());
         assert!(!r.issues.iter().any(|i| i.shape.is_some()), "{:?}", r.issues);
     }
 
@@ -525,8 +547,23 @@ mod tests {
     #[test]
     fn small_tatami_letters_are_flagged() {
         let mut r = stitches(&rows(4.5, 1));
-        lettering(&mut r, &Settings { height_mm: 8.0, ..Default::default() });
+        lettering(&mut r, &Settings { height_mm: 8.0, ..Default::default() }, &Tuning::default());
         assert!(r.issues.iter().any(|i| i.fix == Some(Fix::LetterFill(FillKind::Satin))));
+    }
+
+    #[test]
+    fn test_sheet_results_move_the_limits() {
+        let s = Settings { height_mm: 6.0, fill: FillKind::Satin, ..Default::default() };
+        let mut r = stitches(&rows(4.5, 1));
+        lettering(&mut r, &s, &Tuning::default());
+        assert!(!r.issues.iter().any(|i| i.level == Level::Problem));
+        // The owner's sheet showed 7 mm letters as the smallest that read.
+        let tune = Tuning { letters_min: Some(7.0), ..Default::default() };
+        let mut r = stitches(&rows(4.5, 1));
+        lettering(&mut r, &s, &tune);
+        let issue = r.issues.iter().find(|i| i.level == Level::Problem).unwrap();
+        assert_eq!(issue.fix, Some(Fix::Height(7.0)));
+        assert!(issue.detail.contains("test sheet"));
     }
 }
 
@@ -545,7 +582,7 @@ mod samples {
                 let art = artwork::parse(f, &data).unwrap();
                 let s = ArtSettings::for_artwork(&art);
                 let mut r = stitches(&artwork::generate(&art, &s).unwrap());
-                artwork(&mut r, &art, &s);
+                artwork(&mut r, &art, &s, &Tuning::default());
                 r
             } else {
                 stitches(&crate::formats::read(f, &data).unwrap())

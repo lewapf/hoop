@@ -5,6 +5,10 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::lettering::{Align, EdgeKind, FillKind, PatchShape, Settings};
+use crate::testsew::Tuning;
+
+/// Prefs keys for the test sheet results, in the order of `Tuning::answers`.
+const TUNING_KEYS: [&str; 5] = ["tune.satin_max", "tune.fill_min", "tune.rows", "tune.pull", "tune.letters_min"];
 
 pub struct Prefs {
     file: PathBuf,
@@ -69,6 +73,28 @@ impl Prefs {
         list.truncate(8);
         let joined: Vec<String> = list.iter().map(|p| p.to_string_lossy().into_owned()).collect();
         self.set("recent", joined.join("\n"));
+    }
+
+    /// Results of the test sheet, one key per row; missing keys are rows
+    /// not sewn yet.
+    pub fn tuning(&self) -> Tuning {
+        let mut t = Tuning::default();
+        for (key, v) in TUNING_KEYS.iter().zip(t.answers()) {
+            *v = self.num::<f32>(key).filter(|v| v.is_finite() && *v >= 0.0);
+        }
+        t
+    }
+
+    pub fn store_tuning(&mut self, t: &Tuning) {
+        let mut t = *t;
+        for (key, v) in TUNING_KEYS.iter().zip(t.answers()) {
+            match v {
+                Some(v) => self.set(key, v),
+                None => {
+                    self.values.remove(*key);
+                }
+            }
+        }
     }
 
     pub fn store_lettering(&mut self, s: &Settings, font_name: &str) {
@@ -214,6 +240,21 @@ fn unescape(v: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_sheet_results_survive_a_round_trip() {
+        let file = std::env::temp_dir().join(format!("hoop-tune-{}", std::process::id()));
+        let mut p = Prefs::at(file.clone());
+        let t = Tuning { pull: Some(0.2), letters_min: Some(7.0), ..Default::default() };
+        p.store_tuning(&t);
+        p.save().unwrap();
+        assert_eq!(Prefs::at(file.clone()).tuning(), t);
+        // Clearing a row forgets it.
+        p.store_tuning(&Tuning { pull: Some(0.2), ..Default::default() });
+        p.save().unwrap();
+        assert_eq!(Prefs::at(file.clone()).tuning().letters_min, None);
+        let _ = std::fs::remove_file(file);
+    }
 
     #[test]
     fn lettering_and_recent_files_survive_a_round_trip() {

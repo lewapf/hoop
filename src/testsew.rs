@@ -102,14 +102,66 @@ pub fn crop(points: &[Pt], cmds: &[Cmd], threads: &[Thread], area: Area) -> Opti
     Some(Pattern { format: Format::Jef, points: out, cmds: out_cmds, threads: kept })
 }
 
-/// What each row of the test sheet holds, left to right, and what to look for.
-pub const SHEET_ROWS: [(&str, &str); 5] = [
-    ("A", "Satin columns 1.5 · 2.5 · 3.5 · 5 · 7 mm wide. Note where satin starts to look loose or snag."),
-    ("B", "Fill strips 1 · 2 · 3 · 4 · 6 mm wide. The narrowest one that fills cleanly is the smallest fill to use."),
-    ("C", "Fill rows 0.35 · 0.40 · 0.45 · 0.55 mm apart. Pick the lightest that still hides the fabric."),
-    ("D", "Satin edge over fill with pull compensation 0 · 0.2 · 0.4 mm. Pick the one with no gap between fill and edge."),
-    ("E", "Letters 5 · 7 · 10 mm tall. The smallest one that reads well is the smallest text to use."),
+/// The samples of each row of the test sheet, left to right, in mm.
+pub const SATIN_WIDTHS: [f32; 5] = [1.5, 2.5, 3.5, 5.0, 7.0];
+pub const FILL_WIDTHS: [f32; 5] = [1.0, 2.0, 3.0, 4.0, 6.0];
+pub const ROW_SPACINGS: [f32; 4] = [0.35, 0.40, 0.45, 0.55];
+pub const PULLS: [f32; 3] = [0.0, 0.2, 0.4];
+pub const LETTER_HEIGHTS: [f32; 3] = [5.0, 7.0, 10.0];
+
+/// One row of the sheet: its letter, what it holds, the question to answer
+/// after sewing it, and the samples to answer with.
+pub struct SheetRow {
+    pub letter: &'static str,
+    pub holds: &'static str,
+    pub question: &'static str,
+    pub samples: &'static [f32],
+}
+
+pub const SHEET_ROWS: [SheetRow; 5] = [
+    SheetRow { letter: "A", holds: "Satin columns", question: "Widest satin that still lies flat and tight", samples: &SATIN_WIDTHS },
+    SheetRow { letter: "B", holds: "Narrow fill strips", question: "Narrowest strip that filled cleanly", samples: &FILL_WIDTHS },
+    SheetRow { letter: "C", holds: "Fill row spacing", question: "Most open rows that still hide the fabric", samples: &ROW_SPACINGS },
+    SheetRow { letter: "D", holds: "Edge over fill, pull compensation", question: "Circle with no gap between fill and edge", samples: &PULLS },
+    SheetRow { letter: "E", holds: "Small letters", question: "Smallest letters that read well", samples: &LETTER_HEIGHTS },
 ];
+
+/// What the test sheet showed works with this machine, thread and fabric,
+/// one answer per row of `SHEET_ROWS`, in mm. `None` means not sewn yet;
+/// general rules apply instead.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Tuning {
+    pub satin_max: Option<f32>,
+    pub fill_min: Option<f32>,
+    pub rows: Option<f32>,
+    pub pull: Option<f32>,
+    pub letters_min: Option<f32>,
+}
+
+impl Tuning {
+    /// The answers in the order of `SHEET_ROWS`.
+    pub fn answers(&mut self) -> [&mut Option<f32>; 5] {
+        [&mut self.satin_max, &mut self.fill_min, &mut self.rows, &mut self.pull, &mut self.letters_min]
+    }
+
+    pub fn is_empty(&self) -> bool {
+        *self == Tuning::default()
+    }
+
+    /// Puts the row spacing and pull compensation the sheet chose into
+    /// stitch settings.
+    pub fn apply(&self, s: &mut Settings) {
+        // The sheet tests row fills; satin and open styles keep their own spacing.
+        if let Some(r) = self.rows {
+            if matches!(s.fill, FillKind::Tatami | FillKind::Wave | FillKind::Gradient | FillKind::Contour) {
+                s.density_mm = r;
+            }
+        }
+        if let Some(p) = self.pull {
+            s.pull_mm = p;
+        }
+    }
+}
 
 /// Thread numbers of the sheet: fills, then edges and lettering.
 const SHEET_FILL: i32 = 12;
@@ -151,20 +203,19 @@ pub fn sheet(font: &FontSource) -> Result<Pattern, String> {
     let mut st = Stitcher::new();
 
     // Thread 1: fills of rows B, C and D.
-    for (k, w) in [10.0, 20.0, 30.0, 40.0, 60.0].into_iter().enumerate() {
-        let shape = [rect(col(k), rows[1], w, 200.0)];
+    for (k, w) in FILL_WIDTHS.into_iter().enumerate() {
+        let shape = [rect(col(k), rows[1], w * 10.0, 200.0)];
         lettering::underlay(&mut st, &shape, false, &[], FillKind::Tatami, base.fill_angle, &base);
         lettering::fill_shape(&mut st, &shape, false, &[], FillKind::Tatami, base.fill_angle, &base);
     }
-    for (k, rows_mm) in [0.35, 0.40, 0.45, 0.55].into_iter().enumerate() {
+    for (k, rows_mm) in ROW_SPACINGS.into_iter().enumerate() {
         let s = Settings { density_mm: rows_mm, ..base.clone() };
         let shape = [rect(col(k), rows[2], 150.0, 150.0)];
         lettering::underlay(&mut st, &shape, false, &[], FillKind::Tatami, s.fill_angle, &s);
         lettering::fill_shape(&mut st, &shape, false, &[], FillKind::Tatami, s.fill_angle, &s);
     }
-    let pulls = [0.0, 0.2, 0.4];
-    let discs: Vec<Contour> = (0..pulls.len()).map(|k| circle(-350.0 + 300.0 * k as f32, rows[3], 100.0)).collect();
-    for (disc, pull) in discs.iter().zip(pulls) {
+    let discs: Vec<Contour> = (0..PULLS.len()).map(|k| circle(-350.0 + 300.0 * k as f32, rows[3], 100.0)).collect();
+    for (disc, pull) in discs.iter().zip(PULLS) {
         let s = Settings { pull_mm: pull, ..base.clone() };
         let shape = std::slice::from_ref(disc);
         lettering::underlay(&mut st, shape, false, &[], FillKind::Tatami, s.fill_angle, &s);
@@ -176,14 +227,14 @@ pub fn sheet(font: &FontSource) -> Result<Pattern, String> {
     for disc in &discs {
         lettering::satin_contour(&mut st, disc, base.edge_width_mm * 10.0);
     }
-    for (k, w) in [15.0, 25.0, 35.0, 50.0, 70.0].into_iter().enumerate() {
+    for (k, w) in SATIN_WIDTHS.into_iter().enumerate() {
         let x = col(k);
-        lettering::satin_path(&mut st, &[(x, rows[0] - 100.0), (x, rows[0] + 100.0)], w);
+        lettering::satin_path(&mut st, &[(x, rows[0] - 100.0), (x, rows[0] + 100.0)], w * 10.0);
     }
-    for ((label, _), y) in SHEET_ROWS.iter().zip(rows) {
-        text(&mut st, font, label, 6.0, (-580.0, y))?;
+    for (row, y) in SHEET_ROWS.iter().zip(rows) {
+        text(&mut st, font, row.letter, 6.0, (-580.0, y))?;
     }
-    for (k, h) in [5.0, 7.0, 10.0].into_iter().enumerate() {
+    for (k, h) in LETTER_HEIGHTS.into_iter().enumerate() {
         text(&mut st, font, "Abg", h, (-350.0 + 320.0 * k as f32, rows[4]))?;
     }
     st.finish();
