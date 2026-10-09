@@ -125,6 +125,13 @@ wrong). Commits end with the Claude co-author line; nothing is pushed anywhere.
   grid, `Coverage`); anything below a shape that it overlaps sews first. At
   each thread switch a two-level lookahead picks the next thread. Grouping
   purely by color once sewed black outlines under the fills they sat on.
+- Artwork lines (strokes) with knockout on are cut where a fill drawn
+  above covers them, stopping half their width plus 0.75 mm short of its
+  edge (`clip_line`). Hidden outline parts then aren't sewn, and the line
+  no longer overlaps that fill on the ordering grid, so black can sew in
+  one run. Bremen_Wappen(Mittel).svg (fill and stroke on the same element)
+  went from 9 thread blocks to 6. Lines thinner than `HAIRLINE` (0.8 mm in
+  the design) sew as a triple run when the line style is satin.
 - Contour fill: rasterize at ~spacing/3, exact Euclidean distance transform
   (Felzenszwalb, `edt_1d`), marching squares (`iso_lines`) at each ring level,
   stitches ≤ 2 mm.

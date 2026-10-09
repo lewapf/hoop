@@ -567,6 +567,87 @@ fn length(c: &Contour) -> f32 {
     c.windows(2).map(|w| lettering::dist(w[0], w[1])).sum()
 }
 
+fn segment_dist(p: Pt, a: Pt, b: Pt) -> f32 {
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let l2 = dx * dx + dy * dy;
+    let t = if l2 > 0.0 { (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0) } else { 0.0 };
+    lettering::dist(p, (a.0 + dx * t, a.1 + dy * t))
+}
+
+/// Whether `p` lies inside a filled shape or within `margin` of its edge.
+fn covered(p: Pt, shape: &[Contour], even_odd: bool, margin: f32) -> bool {
+    let mut winding = 0;
+    for c in shape {
+        for k in 0..c.len() {
+            let (a, b) = (c[k], c[(k + 1) % c.len()]);
+            if segment_dist(p, a, b) < margin {
+                return true;
+            }
+            if (a.1 <= p.1) != (b.1 <= p.1) && p.0 < a.0 + (p.1 - a.1) / (b.1 - a.1) * (b.0 - a.0) {
+                winding += if b.1 > a.1 { 1 } else { -1 };
+            }
+        }
+    }
+    if even_odd { winding % 2 != 0 } else { winding != 0 }
+}
+
+/// The parts of a line not covered by any of `shapes`, as open lines.
+/// Pieces shorter than 1 mm are dropped.
+fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f32) -> Vec<(Contour, bool)> {
+    let (c, closed) = line;
+    let b = extent(std::slice::from_ref(line));
+    let near: Vec<&(Vec<Contour>, bool)> = shapes
+        .iter()
+        .filter(|(cs, _)| {
+            let e = extent(&cs.iter().map(|c| (c.clone(), true)).collect::<Vec<_>>());
+            e.0 - margin <= b.2 && b.0 <= e.2 + margin && e.1 - margin <= b.3 && b.1 <= e.3 + margin
+        })
+        .collect();
+    if near.is_empty() {
+        return vec![line.clone()];
+    }
+    let mut path = c.clone();
+    if *closed {
+        path.push(c[0]);
+    }
+    // Test points every 0.2 mm.
+    let mut pts: Vec<(Pt, bool)> = Vec::new();
+    for w in path.windows(2) {
+        let n = (lettering::dist(w[0], w[1]) / 2.0).ceil().max(1.0) as usize;
+        for k in 0..n {
+            let t = k as f32 / n as f32;
+            let p = (w[0].0 + (w[1].0 - w[0].0) * t, w[0].1 + (w[1].1 - w[0].1) * t);
+            pts.push((p, near.iter().any(|(cs, eo)| covered(p, cs, *eo, margin))));
+        }
+    }
+    if let Some(&l) = path.last() {
+        pts.push((l, near.iter().any(|(cs, eo)| covered(l, cs, *eo, margin))));
+    }
+    if pts.iter().all(|p| !p.1) {
+        return vec![line.clone()];
+    }
+    // A closed line that is cut starts at a cut, so its pieces don't break
+    // where the loop happened to begin.
+    if *closed {
+        let first = pts.iter().position(|p| p.1).unwrap();
+        pts.pop();
+        pts.rotate_left(first);
+    }
+    let mut out = Vec::new();
+    let mut piece: Contour = Vec::new();
+    for (p, hidden) in pts.into_iter().chain(std::iter::once(((0.0, 0.0), true))) {
+        if hidden {
+            if length(&piece) >= 10.0 {
+                out.push((crate::trace::simplify(&piece, 0.5), false));
+            }
+            piece.clear();
+        } else {
+            piece.push(p);
+        }
+    }
+    out
+}
+
 /// Stitch order that saves thread changes without breaking the drawing's
 /// layers. Shapes come in drawing order (bottom first). A shape may move
 /// ahead to join its thread only past shapes it doesn't touch: anything it
@@ -714,6 +795,9 @@ impl Coverage {
     }
 }
 
+/// Lines drawn thinner than this (0.8 mm) sew as a triple run, not satin.
+pub const HAIRLINE: f32 = 8.0;
+
 pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     let (scale, (cx, cy)) = frame(art, s);
     let to_mm = |p: Pt| ((p.0 - cx) * scale, (p.1 - cy) * scale);
@@ -777,6 +861,27 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     };
     // Shapes stacked on top of a fill, cut out of it when knockout is on.
     let masks = |it: &Item| matches!(it.kind, Kind::Fill { .. }) && (styled(it.look).fill != FillKind::None || it.look == Look::Applique);
+    // Lines hidden under fills drawn above them are cut away, a little past
+    // the fill's edge, so they neither show through nor have to be sewn
+    // before that fill (which would cost extra thread changes).
+    if s.knockout {
+        let stroke_w = |width: f32| (width * scale).max(s.stroke_min_mm * 10.0).min(70.0);
+        for i in 0..items.len() {
+            let Kind::Stroke { width } = items[i].kind else { continue };
+            let above: Vec<(Vec<Contour>, bool)> = items
+                .iter()
+                .filter(|o| o.doc > items[i].doc && masks(o))
+                .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
+                .collect();
+            if !above.is_empty() {
+                // Past the half width, a gap of a cell and a half keeps the line
+                // clear of the fill on the overlap grid used for ordering.
+                let margin = stroke_w(width) / 2.0 + 1.5 * Coverage::CELL;
+                items[i].lines = items[i].lines.iter().flat_map(|l| clip_line(l, &above, margin)).collect();
+            }
+        }
+        items.retain(|it| !it.lines.is_empty());
+    }
     let order: Vec<usize> = if s.group_colors {
         let threads: Vec<i32> = items.iter().map(|it| thread_of(it.layer)).collect();
         let cover: Vec<Coverage> = items
@@ -879,7 +984,10 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     if *closed {
                         line.push(c[0]);
                     }
-                    match s.stroke {
+                    // Hairlines drawn thinner than a satin can sew become a
+                    // triple run, which sews about that thin.
+                    let kind = if s.stroke == EdgeKind::Satin && width * scale < HAIRLINE { EdgeKind::Triple } else { s.stroke };
+                    match kind {
                         EdgeKind::None => {}
                         EdgeKind::Running => lettering::run_path(&mut st, &line, 25.0, false),
                         EdgeKind::Triple => lettering::run_path(&mut st, &line, 25.0, true),
@@ -945,6 +1053,60 @@ mod tests {
         s.knockout = false;
         let without = inside(&generate(&art, &s).unwrap());
         assert!(with * 10 < without, "{with} vs {without}");
+    }
+
+    #[test]
+    fn lines_under_later_fills_are_cut_away() {
+        // A line across a square drawn on top of it: only the parts outside
+        // the square, short of its edge by the margin, are left.
+        let square = vec![(vec![vec![(100.0, -50.0), (200.0, -50.0), (200.0, 50.0), (100.0, 50.0)]], false)];
+        let pieces = clip_line(&(vec![(0.0, 0.0), (300.0, 0.0)], false), &square, 10.0);
+        assert_eq!(pieces.len(), 2);
+        let ends: Vec<f32> = pieces.iter().flat_map(|(c, _)| [c[0].0, c[c.len() - 1].0]).collect();
+        assert!((ends[0] - 0.0).abs() < 1.0 && (ends[1] - 90.0).abs() < 3.0, "{ends:?}");
+        assert!((ends[2] - 210.0).abs() < 3.0 && (ends[3] - 300.0).abs() < 1.0, "{ends:?}");
+        // A loop around the square is left whole; a loop inside it is gone.
+        let around = (vec![(50.0, -100.0), (250.0, -100.0), (250.0, 100.0), (50.0, 100.0)], true);
+        assert_eq!(clip_line(&around, &square, 10.0), vec![around.clone()]);
+        assert!(clip_line(&(vec![(130.0, -20.0), (170.0, -20.0), (170.0, 20.0), (130.0, 20.0)], true), &square, 10.0).is_empty());
+    }
+
+    #[test]
+    fn outlines_hidden_in_the_drawing_are_not_sewn() {
+        // A black-outlined red square under a blue circle: no black stitch
+        // may land well inside the circle, and black still sews in one run.
+        let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60">
+            <rect x="10" y="10" width="40" height="40" fill="#ff0000" stroke="#000000" stroke-width="1"/>
+            <circle cx="50" cy="30" r="12" fill="#0000ff" stroke="#000000" stroke-width="1"/>
+        </svg>"##;
+        let art = parse("hidden.svg", svg.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        s.width_mm = 100.0;
+        let p = generate(&art, &s).unwrap();
+        // The circle's middle in stitch space: design x 50 of 10..62 wide art.
+        let (scale, (cx, cy)) = frame(&art, &s);
+        let mid = ((50.0 - cx) * scale, (30.0 - cy) * scale);
+        let r = 12.0 * scale;
+        let black: Vec<_> = p.blocks().into_iter().filter(|b| b.thread.color == [0, 0, 0]).collect();
+        assert_eq!(black.len(), 1, "black should sew once");
+        let b = &black[0];
+        let hidden = (b.start..b.end).filter(|&i| p.cmds[i] == Cmd::Stitch && lettering::dist(p.points[i], mid) < r - 15.0).count();
+        assert_eq!(hidden, 0);
+    }
+
+    #[test]
+    fn hairlines_sew_as_a_triple_run() {
+        let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+            <path d="M10 50 H90" stroke="#000000" stroke-width="0.4" fill="none"/>
+        </svg>"##;
+        let art = parse("hair.svg", svg.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        s.width_mm = 100.0;
+        s.stroke = EdgeKind::Satin;
+        let p = generate(&art, &s).unwrap();
+        // A triple run stays on the line; a satin would swing 0.5 mm off it.
+        let y = p.points[p.points.len() / 2].1;
+        assert!(p.points.iter().zip(&p.cmds).filter(|(_, c)| **c == Cmd::Stitch).all(|(q, _)| (q.1 - y).abs() < 1.0));
     }
 
     #[test]
@@ -1103,4 +1265,5 @@ pub const PRESETS: [(&str, &str, fn(&mut ArtSettings)); 4] = [
         s.stroke = EdgeKind::Triple;
     }),
 ];
+
 
