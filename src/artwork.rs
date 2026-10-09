@@ -795,9 +795,6 @@ impl Coverage {
     }
 }
 
-/// Lines drawn thinner than this (0.8 mm) sew as a triple run, not satin.
-pub const HAIRLINE: f32 = 8.0;
-
 pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     let (scale, (cx, cy)) = frame(art, s);
     let to_mm = |p: Pt| ((p.0 - cx) * scale, (p.1 - cy) * scale);
@@ -984,10 +981,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     if *closed {
                         line.push(c[0]);
                     }
-                    // Hairlines drawn thinner than a satin can sew become a
-                    // triple run, which sews about that thin.
-                    let kind = if s.stroke == EdgeKind::Satin && width * scale < HAIRLINE { EdgeKind::Triple } else { s.stroke };
-                    match kind {
+                    match s.stroke {
                         EdgeKind::None => {}
                         EdgeKind::Running => lettering::run_path(&mut st, &line, 25.0, false),
                         EdgeKind::Triple => lettering::run_path(&mut st, &line, 25.0, true),
@@ -1092,21 +1086,6 @@ mod tests {
         let b = &black[0];
         let hidden = (b.start..b.end).filter(|&i| p.cmds[i] == Cmd::Stitch && lettering::dist(p.points[i], mid) < r - 15.0).count();
         assert_eq!(hidden, 0);
-    }
-
-    #[test]
-    fn hairlines_sew_as_a_triple_run() {
-        let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-            <path d="M10 50 H90" stroke="#000000" stroke-width="0.4" fill="none"/>
-        </svg>"##;
-        let art = parse("hair.svg", svg.as_bytes()).unwrap();
-        let mut s = ArtSettings::for_artwork(&art);
-        s.width_mm = 100.0;
-        s.stroke = EdgeKind::Satin;
-        let p = generate(&art, &s).unwrap();
-        // A triple run stays on the line; a satin would swing 0.5 mm off it.
-        let y = p.points[p.points.len() / 2].1;
-        assert!(p.points.iter().zip(&p.cmds).filter(|(_, c)| **c == Cmd::Stitch).all(|(q, _)| (q.1 - y).abs() < 1.0));
     }
 
     #[test]

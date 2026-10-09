@@ -130,8 +130,10 @@ wrong). Commits end with the Claude co-author line; nothing is pushed anywhere.
   edge (`clip_line`). Hidden outline parts then aren't sewn, and the line
   no longer overlaps that fill on the ordering grid, so black can sew in
   one run. Bremen_Wappen(Mittel).svg (fill and stroke on the same element)
-  went from 9 thread blocks to 6. Lines thinner than `HAIRLINE` (0.8 mm in
-  the design) sew as a triple run when the line style is satin.
+  went from 9 thread blocks to 6.
+  (Tried: lines under 0.8 mm as triple run. It looked bad: 2.5 mm run
+  steps turn small curves into polygons, and short stitched hops between
+  nearby lines show as black links. Reverted.)
 - Contour fill: rasterize at ~spacing/3, exact Euclidean distance transform
   (Felzenszwalb, `edt_1d`), marching squares (`iso_lines`) at each ring level,
   stitches ≤ 2 mm.
