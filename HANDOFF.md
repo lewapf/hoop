@@ -19,17 +19,21 @@ digitizing software for the owner's needs. Three tabs:
 
 Output: **Save as JEF** (Ctrl+S), **Send to USB** (Ctrl+U, writes to
 `EMB/Embf`), **Save picture** (Ctrl+Shift+S, PNG of the preview). **Pin to hoop**
-(P) combines several designs into one JEF.
+(P) combines several designs into one JEF. **Test stitch-out** (Ctrl+T) cuts
+what's on the hoop to a dragged area and/or sews outlines only, and opens the
+calibration sheet (rows A–E, see `testsew::SHEET_ROWS`).
 
 ## Status
 
 - Installed as the Arch package `hoop` (`/usr/bin/hoop`, launcher entry, icon,
   MIME type `application/embroidery` for jef/dst/exp/pes/pec, set as default).
-- 36 unit tests pass (`bin/test`), 3 ignored sample exporters (see Testing).
+- 50 unit tests pass (`bin/test`), 5 ignored sample exporters (see Testing;
+  `sheet_sample` writes the calibration sheet).
 - **Nothing made by Hoop has been stitched on the machine yet** except the
   JEF format itself: the writer reproduces the header of `heart_5x5_fill.jef`,
   which was stitched successfully before Hoop existed. The owner was asked
-  to sew a sample sheet; their feedback should drive default tuning.
+  to sew the calibration sheet (Test stitch-out → Open test sheet); its
+  results (rows A–E) should drive default tuning and the check thresholds.
 - **Send to USB has not met a real stick.** Detection is tested against sample
   `lsblk` output, writing against a temp folder.
 
@@ -54,6 +58,9 @@ src/artwork.rs    SVG → shapes (usvg), artwork stitching, thread grouping,
                   per-thread looks, presets
 src/trace.rs      picture → artwork (k-means, despeckle, marching squares,
                   Chaikin, RDP, hole matching)
+src/testsew.rs    test pieces: crop stitches to an area (ties only where it
+                  cuts a run), the calibration sheet
+src/app/testpiece.rs  Test stitch-out window, area drag on the hoop, overlay
 src/usb.rs        lsblk parsing, udisksctl mount/eject, EMB/Embf writing
 src/prefs.rs      ~/.local/state/hoop/prefs (key = value lines)
 src/theme.rs      Omarchy theme colors, watched from a background thread

@@ -8,6 +8,7 @@ mod lettering;
 mod prefs;
 mod theme;
 mod trace;
+mod testsew;
 mod usb;
 
 fn main() -> eframe::Result {

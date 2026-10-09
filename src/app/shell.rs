@@ -204,6 +204,9 @@ impl HoopApp {
                 if item(ui, out, "Send to USB…", "Ctrl+U") {
                     self.open_usb();
                 }
+                if item(ui, true, "Test stitch-out…", "Ctrl+T") {
+                    self.test.open = true;
+                }
                 if item(ui, has, "Save picture…", "Ctrl+Shift+S") {
                     self.save_picture();
                 }
@@ -370,6 +373,9 @@ impl HoopApp {
             }
             if tool(ui, has || !self.pinned.is_empty(), "To USB", "Write the JEF straight to the machine's USB stick · Ctrl+U") {
                 self.open_usb();
+            }
+            if tool(ui, true, "Test", "Sew a small part first, or the calibration sheet · Ctrl+T") {
+                self.test.open = !self.test.open;
             }
             ui.separator();
             if tool(ui, !self.undo.is_empty() || self.pending_since.is_some(), "Undo", "Ctrl+Z") {

@@ -46,6 +46,13 @@ To combine designs, say a name under a logo, press Pin to hoop (`P`), then
 make or open the next part and move it into place. Save as JEF saves every
 pinned part and the current design as one file.
 
+To try a design before sewing all of it, open **Test stitch-out** (`Ctrl+T`):
+drag a rectangle on the hoop around the part to check, such as a tight corner
+or small letters, and optionally sew outlines only, without fills. Save the
+piece or send it to USB. The same window opens the calibration sheet: rows of
+satin widths, narrow fills, fill densities, pull compensation and small
+letters on one 123 × 111 mm sheet for the SQ14b hoop.
+
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.
 
@@ -66,6 +73,7 @@ you pick that file in the save dialog yourself.
 | `V` / `L` / `A`         | Viewer / lettering / artwork               |
 | `Ctrl+S`                | Save as JEF                                |
 | `Ctrl+U`                | Send to the machine's USB stick            |
+| `Ctrl+T`                | Test stitch-out: an area, outlines, or the calibration sheet |
 | `Ctrl+V`                | Paste SVG code as artwork                  |
 | `Ctrl+A`                | Pick every artwork shape                   |
 | `Arrows` · `[` / `]`    | Picked shapes: move / one step up or down  |

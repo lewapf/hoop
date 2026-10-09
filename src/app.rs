@@ -11,6 +11,7 @@ use crate::artwork::{self, ArtSettings, Look};
 mod checks;
 mod shapes;
 mod shell;
+mod testpiece;
 
 use shell::{Dock, Tab};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
@@ -32,6 +33,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("V / L / A", "Viewer / lettering / artwork"),
     ("Ctrl+S", "Save as JEF"),
     ("Ctrl+U", "Send to the USB stick for the machine"),
+    ("Ctrl+T", "Test stitch-out: sew a small part, or the calibration sheet"),
     ("Ctrl+Shift+S", "Save a picture of the preview"),
     ("Ctrl+V", "Paste SVG code as artwork"),
     ("Space", "Play or pause the stitch-out"),
@@ -66,6 +68,8 @@ struct UsbState {
     /// The drive last written to, offered for ejecting.
     sent_to: Option<usb::Drive>,
     message: Option<Result<String, String>>,
+    /// What to send instead of the design, such as a test piece.
+    bytes: Option<Vec<u8>>,
 }
 
 /// A finished part fixed on the hoop, in hoop coordinates (0.1 mm, hoop
@@ -230,6 +234,7 @@ pub struct HoopApp {
     capture: Capture,
     pinned: Vec<Pinned>,
     usb: UsbState,
+    test: testpiece::TestSew,
     /// The picture behind traced artwork, kept so it can be traced again.
     picture: Option<trace::Picture>,
     trace_set: TraceSettings,
@@ -308,6 +313,7 @@ impl HoopApp {
             capture: Capture::Idle,
             pinned: Vec::new(),
             usb: UsbState::default(),
+            test: testpiece::TestSew::default(),
             picture: None,
             trace_set: TraceSettings::default(),
             pending_retrace: false,
@@ -575,6 +581,9 @@ impl HoopApp {
         if typed_question {
             self.help = !self.help;
         }
+        if self.test.picking && press(Modifiers::NONE, Key::Escape) {
+            self.test.picking = false;
+        }
         if !self.help {
             self.shape_keys(ctx);
         }
@@ -592,6 +601,9 @@ impl HoopApp {
         }
         if press(Modifiers::COMMAND, Key::U) {
             self.open_usb();
+        }
+        if press(Modifiers::COMMAND, Key::T) {
+            self.test.open = !self.test.open;
         }
         if press(Modifiers::COMMAND, Key::S) {
             self.save_jef();
@@ -1077,12 +1089,14 @@ impl HoopApp {
         let painter = ui.painter_at(rect);
         let frame = Frame { painter: &painter, rect, view: self.view };
 
+        // Drawing the test area takes over the pointer until it is done.
+        let picking = self.test_area_input(ui, &response, &frame);
         // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
-        let handled_double = self.shape_input(ui, &response, &frame);
-        let hover_shape = self.shape_hover(ui, &response, &frame);
+        let handled_double = !picking && self.shape_input(ui, &response, &frame);
+        let hover_shape = if picking { None } else { self.shape_hover(ui, &response, &frame) };
 
         // Interaction: drag the design to move it, drag elsewhere to pan, scroll to zoom.
-        if response.drag_started() && self.drag.is_none() {
+        if response.drag_started() && self.drag.is_none() && !picking {
             let over = response.interact_pointer_pos().map(|p| frame.to_world(p));
             let middle = ui.input(|i| i.pointer.button_down(egui::PointerButton::Middle));
             self.drag = match (over, &self.design) {
@@ -1203,6 +1217,7 @@ impl HoopApp {
 
         self.check_overlay(&painter, &frame);
         self.shape_overlay(&painter, &frame, hover_shape);
+        self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 
     }
@@ -1865,11 +1880,17 @@ impl HoopApp {
         if !self.checked(checks::Output::Usb) {
             return;
         }
+        self.show_usb(&self.design_stem(), None);
+    }
+
+    /// Opens the Send to USB window for the design, or for `bytes` instead.
+    fn show_usb(&mut self, name: &str, bytes: Option<Vec<u8>>) {
         self.usb.open = true;
         self.usb.drives = usb::drives();
         self.usb.chosen = 0;
         self.usb.message = None;
-        self.usb.name = usb::short_name(&self.design_stem());
+        self.usb.name = usb::short_name(name);
+        self.usb.bytes = bytes;
     }
 
     fn usb_window(&mut self, ctx: &egui::Context) {
@@ -1939,7 +1960,7 @@ impl HoopApp {
             self.usb.open = false;
         }
         if send {
-            if let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.jef_bytes()) {
+            if let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.usb.bytes.clone().or_else(|| self.jef_bytes())) {
                 let file = format!("{}.jef", usb::short_name(&self.usb.name));
                 let (tx, rx) = channel();
                 let ctx = ctx.clone();
@@ -2195,6 +2216,7 @@ impl eframe::App for HoopApp {
         self.preflight_window(ctx);
         self.track_history(ctx, false);
         self.help_overlay(ctx);
+        self.test_window(ctx);
         self.usb_window(ctx);
     }
 }
