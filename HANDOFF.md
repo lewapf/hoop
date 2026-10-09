@@ -131,6 +131,10 @@ wrong). Commits end with the Claude co-author line; nothing is pushed anywhere.
   no longer overlaps that fill on the ordering grid, so black can sew in
   one run. Bremen_Wappen(Mittel).svg (fill and stroke on the same element)
   went from 9 thread blocks to 6.
+  A line that runs alongside a later line closely enough that the satins
+  touch (more than 3 mm of it) gives way there (`split_line`); in the
+  drawing the two read as one line. Files that move all outlines above all
+  fills (Bremen_Wappen(Stick).svg) defeat both rules; use the original.
   (Tried: lines under 0.8 mm as triple run. It looked bad: 2.5 mm run
   steps turn small curves into polygons, and short stitched hops between
   nearby lines show as black links. Reverted.)

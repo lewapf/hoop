@@ -606,32 +606,60 @@ fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f3
     if near.is_empty() {
         return vec![line.clone()];
     }
+    split_line(line, |p| near.iter().any(|(cs, eo)| covered(p, cs, *eo, margin)), 0.0)
+}
+
+/// Cuts the stretches of a line where `hidden` holds, keeping hidden
+/// stretches shorter than `min_run` (so a crossing doesn't break a line).
+/// Returns open lines; pieces shorter than 1 mm are dropped.
+fn split_line(line: &(Contour, bool), hidden: impl Fn(Pt) -> bool, min_run: f32) -> Vec<(Contour, bool)> {
+    let (c, closed) = line;
     let mut path = c.clone();
     if *closed {
         path.push(c[0]);
     }
     // Test points every 0.2 mm.
+    const STEP: f32 = 2.0;
     let mut pts: Vec<(Pt, bool)> = Vec::new();
     for w in path.windows(2) {
-        let n = (lettering::dist(w[0], w[1]) / 2.0).ceil().max(1.0) as usize;
+        let n = (lettering::dist(w[0], w[1]) / STEP).ceil().max(1.0) as usize;
         for k in 0..n {
             let t = k as f32 / n as f32;
             let p = (w[0].0 + (w[1].0 - w[0].0) * t, w[0].1 + (w[1].1 - w[0].1) * t);
-            pts.push((p, near.iter().any(|(cs, eo)| covered(p, cs, *eo, margin))));
+            pts.push((p, hidden(p)));
         }
     }
     if let Some(&l) = path.last() {
-        pts.push((l, near.iter().any(|(cs, eo)| covered(l, cs, *eo, margin))));
+        pts.push((l, hidden(l)));
     }
-    if pts.iter().all(|p| !p.1) {
-        return vec![line.clone()];
+    if *closed && !pts.is_empty() {
+        pts.pop();
     }
     // A closed line that is cut starts at a cut, so its pieces don't break
     // where the loop happened to begin.
     if *closed {
-        let first = pts.iter().position(|p| p.1).unwrap();
-        pts.pop();
-        pts.rotate_left(first);
+        if let Some(first) = pts.iter().position(|p| p.1) {
+            let start = (0..pts.len()).map(|k| (first + pts.len() - k) % pts.len()).find(|&k| !pts[k].1).map_or(0, |k| (k + 1) % pts.len());
+            pts.rotate_left(start);
+        }
+    }
+    // Short hidden stretches stay.
+    let mut k = 0;
+    while k < pts.len() {
+        if !pts[k].1 {
+            k += 1;
+            continue;
+        }
+        let end = (k..pts.len()).find(|&e| !pts[e].1).unwrap_or(pts.len());
+        if ((end - k) as f32) * STEP < min_run {
+            for q in &mut pts[k..end] {
+                q.1 = false;
+            }
+        }
+        k = end;
+    }
+    if pts.iter().all(|p| !p.1) {
+        return vec![line.clone()];
     }
     let mut out = Vec::new();
     let mut piece: Contour = Vec::new();
@@ -877,6 +905,40 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 items[i].lines = items[i].lines.iter().flat_map(|l| clip_line(l, &above, margin)).collect();
             }
         }
+        // Where a line runs alongside a line drawn later, so close that the
+        // two satins would touch, the drawing shows one line; the lower one
+        // gives way for that stretch. Crossings are too short to count.
+        for i in 0..items.len() {
+            let Kind::Stroke { width } = items[i].kind else { continue };
+            let wi = stroke_w(width);
+            let b = extent(&items[i].lines);
+            let later: Vec<(Vec<(Pt, Pt)>, f32)> = items
+                .iter()
+                .filter(|o| o.doc > items[i].doc)
+                .filter_map(|o| match o.kind {
+                    Kind::Stroke { width } => Some((o, stroke_w(width))),
+                    Kind::Fill { .. } => None,
+                })
+                .map(|(o, w)| {
+                    let reach = (wi + w) / 2.0 + 3.0;
+                    let segs = o
+                        .lines
+                        .iter()
+                        .flat_map(|(c, closed)| {
+                            let n = c.len();
+                            (0..if *closed { n } else { n.saturating_sub(1) }).map(move |k| (c[k], c[(k + 1) % n]))
+                        })
+                        .filter(|(p, q)| p.0.max(q.0) >= b.0 - reach && p.0.min(q.0) <= b.2 + reach && p.1.max(q.1) >= b.1 - reach && p.1.min(q.1) <= b.3 + reach)
+                        .collect();
+                    (segs, reach)
+                })
+                .filter(|(segs, _): &(Vec<(Pt, Pt)>, f32)| !segs.is_empty())
+                .collect();
+            if !later.is_empty() {
+                let hidden = |p: Pt| later.iter().any(|(segs, reach)| segs.iter().any(|&(a, b)| segment_dist(p, a, b) < *reach));
+                items[i].lines = items[i].lines.iter().flat_map(|l| split_line(l, hidden, 30.0)).collect();
+            }
+        }
         items.retain(|it| !it.lines.is_empty());
     }
     let order: Vec<usize> = if s.group_colors {
@@ -1063,6 +1125,18 @@ mod tests {
         let around = (vec![(50.0, -100.0), (250.0, -100.0), (250.0, 100.0), (50.0, 100.0)], true);
         assert_eq!(clip_line(&around, &square, 10.0), vec![around.clone()]);
         assert!(clip_line(&(vec![(130.0, -20.0), (170.0, -20.0), (170.0, 20.0), (130.0, 20.0)], true), &square, 10.0).is_empty());
+    }
+
+    #[test]
+    fn a_line_along_a_later_line_gives_way_but_crossings_stay() {
+        let line = (vec![(0.0, 0.0), (300.0, 0.0)], false);
+        // Alongside for 10 mm, 0.8 mm away: that stretch goes.
+        let along = |p: Pt| p.0 > 100.0 && p.0 < 200.0;
+        let pieces = split_line(&line, along, 30.0);
+        assert_eq!(pieces.len(), 2);
+        // A crossing hides 2 mm: too short, the line stays whole.
+        let cross = |p: Pt| p.0 > 140.0 && p.0 < 160.0;
+        assert_eq!(split_line(&line, cross, 30.0), vec![line.clone()]);
     }
 
     #[test]
