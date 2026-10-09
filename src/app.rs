@@ -84,6 +84,42 @@ impl ShapeMap {
     }
 }
 
+#[derive(Clone, Copy)]
+enum Handle {
+    Corner,
+    Turn,
+}
+
+/// The selected shape's box on screen and the knob above it for turning.
+struct Handles {
+    rect: egui::Rect,
+    turn: egui::Pos2,
+}
+
+impl Handles {
+    fn corners(&self) -> [egui::Pos2; 4] {
+        [self.rect.left_top(), self.rect.right_top(), self.rect.right_bottom(), self.rect.left_bottom()]
+    }
+
+    fn hit(&self, p: egui::Pos2) -> Option<Handle> {
+        if (self.turn - p).length() <= 9.0 {
+            return Some(Handle::Turn);
+        }
+        self.corners().iter().any(|c| (*c - p).length() <= 9.0).then_some(Handle::Corner)
+    }
+}
+
+fn shape_handles(frame: &Frame, m: ShapeMap, art: &artwork::Artwork, e: &ShapeEdit) -> Option<Handles> {
+    let pts: Vec<egui::Pos2> = e.lines(art).iter().flat_map(|l| l.0.iter()).map(|&q| frame.to_screen_pt(m.to_world(q))).collect();
+    if pts.is_empty() {
+        return None;
+    }
+    // Keep tiny shapes grabbable: the box is at least 24 px across.
+    let rect = egui::Rect::from_points(&pts).expand(4.0);
+    let rect = egui::Rect::from_center_size(rect.center(), rect.size().max(vec2(24.0, 24.0)));
+    Some(Handles { rect, turn: rect.center_top() - vec2(0.0, 24.0) })
+}
+
 /// A finished part fixed on the hoop, in hoop coordinates (0.1 mm, hoop
 /// center at the origin), with rotation and position already applied.
 struct Pinned {
@@ -152,6 +188,11 @@ enum Drag {
     Shape { start: (f32, f32), from: (f32, f32) },
     /// Moving one point of the selected shape: line and point index.
     Node { line: usize, point: usize },
+    /// Resizing the selected shape by a corner: size and pointer distance
+    /// from the shape's middle when the drag started.
+    Scale { from: f32, start: f32 },
+    /// Turning the selected shape: its turn and the pointer's angle at the start.
+    Turn { from: f32, start: f32 },
 }
 
 pub struct HoopApp {
@@ -1139,19 +1180,59 @@ impl HoopApp {
                     }
                 }
             }
-            if response.drag_started() {
-                if let (Some(i), Some(p), Some(u)) = (self.sel, pointer, user) {
-                    if let Some((line, point)) = node_under(s, self.sel, p).filter(|_| self.edit_points) {
-                        s.shapes[i].bake(art);
-                        self.drag = Some(Drag::Node { line, point });
-                    } else if artwork::shape_at(art, s, m.to_stitch(u), slop) == Some(i) {
+            // Drags start where the button went down, not where the pointer
+            // is once it has moved far enough to count as a drag.
+            let (origin, shift) = ui.input(|i| (i.pointer.press_origin(), i.modifiers.shift));
+            if response.drag_started() && !shift {
+                if let Some(p) = origin {
+                    let u = m.to_user(frame.to_world(p));
+                    let handle = self.sel.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(&frame, m, art, e)).and_then(|h| h.hit(p));
+                    let center = |e: &ShapeEdit| {
+                        let c = artwork::middle(&e.base(art).lines);
+                        (c.0 + e.dx, c.1 + e.dy)
+                    };
+                    if let (Some(i), Some(h)) = (self.sel, handle) {
+                        let e = &s.shapes[i];
+                        let c = center(e);
+                        self.drag = Some(match h {
+                            Handle::Corner => Drag::Scale { from: e.scale, start: lettering::dist(c, u).max(1e-3) },
+                            Handle::Turn => Drag::Turn { from: e.rotate, start: (u.1 - c.1).atan2(u.0 - c.0).to_degrees() },
+                        });
+                    } else if let Some((line, point)) = node_under(s, self.sel, p).filter(|_| self.edit_points) {
+                        if let Some(i) = self.sel {
+                            s.shapes[i].bake(art);
+                            self.drag = Some(Drag::Node { line, point });
+                        }
+                    } else if let Some(i) = artwork::shape_at(art, s, m.to_stitch(u), slop) {
+                        // Press on any shape and drag: it is picked and moved in one go.
+                        if self.sel != Some(i) {
+                            self.sel = Some(i);
+                            self.edit_points = false;
+                        }
                         self.drag = Some(Drag::Shape { start: u, from: (s.shapes[i].dx, s.shapes[i].dy) });
                     }
                 }
             }
             if response.dragged() {
                 if let (Some(i), Some(u)) = (self.sel, user) {
+                    let c = {
+                        let e = &s.shapes[i];
+                        let c = artwork::middle(&e.base(art).lines);
+                        (c.0 + e.dx, c.1 + e.dy)
+                    };
                     match self.drag {
+                        Some(Drag::Scale { from, start }) => {
+                            let k = from * lettering::dist(c, u) / start;
+                            // Whole percents read better in the panel.
+                            s.shapes[i].scale = (k * 100.0).round().clamp(10.0, 400.0) / 100.0;
+                        }
+                        Some(Drag::Turn { from, start }) => {
+                            let a = (u.1 - c.1).atan2(u.0 - c.0).to_degrees();
+                            let mut r = from + a - start;
+                            r = (r + 180.0).rem_euclid(360.0) - 180.0;
+                            // Shift snaps to 15°.
+                            s.shapes[i].rotate = if shift { (r / 15.0).round() * 15.0 } else { r.round() };
+                        }
                         Some(Drag::Shape { start, from }) => {
                             // Snap to 0.5 mm on the fabric.
                             let snap = 5.0 / m.scale;
@@ -1169,6 +1250,34 @@ impl HoopApp {
                         _ => {}
                     }
                 }
+            }
+        }
+
+        // Show what a press would grab.
+        let mut hover_shape = None;
+        if let (Some(m), Some(art), Some(s)) = (shape_map, &self.artwork, &self.art) {
+            match self.drag {
+                Some(Drag::Shape { .. } | Drag::Node { .. }) => ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing),
+                Some(Drag::Scale { .. }) => ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeNwSe),
+                Some(Drag::Turn { .. }) => ui.ctx().set_cursor_icon(egui::CursorIcon::Alias),
+                _ if response.hovered() => {
+                    if let Some(p) = response.hover_pos() {
+                        let handle = self.sel.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(&frame, m, art, e)).and_then(|h| h.hit(p));
+                        let shift = ui.input(|i| i.modifiers.shift);
+                        match handle {
+                            Some(Handle::Corner) => ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeNwSe),
+                            Some(Handle::Turn) => ui.ctx().set_cursor_icon(egui::CursorIcon::Alias),
+                            None if !shift => {
+                                hover_shape = artwork::shape_at(art, s, m.to_stitch(m.to_user(frame.to_world(p))), 6.0 / self.view.scale);
+                                if hover_shape.is_some() {
+                                    ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+                                }
+                            }
+                            None => {}
+                        }
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -1290,7 +1399,18 @@ impl HoopApp {
             }
         }
 
-        // The selected artwork shape and, while editing, its points.
+        // A faint outline on the shape under the pointer.
+        if let (Some(m), Some(art), Some(s), Some(h)) = (shape_map, &self.artwork, &self.art, hover_shape.filter(|&h| Some(h) != self.sel)) {
+            for (c, closed) in &s.shapes[h].lines(art) {
+                let mut pts: Vec<egui::Pos2> = c.iter().map(|&q| frame.to_screen_pt(m.to_world(q))).collect();
+                if *closed && !pts.is_empty() {
+                    pts.push(pts[0]);
+                }
+                painter.add(egui::Shape::line(pts, egui::Stroke::new(1.0, Color32::from_white_alpha(170))));
+            }
+        }
+        // The selected artwork shape with its resize and turn handles, or
+        // its points while editing them.
         if let (Some(m), Some(art), Some(s), Some(i)) = (shape_map, &self.artwork, &self.art, self.sel) {
             if let Some(e) = s.shapes.get(i) {
                 let accent = self.accent();
@@ -1311,7 +1431,19 @@ impl HoopApp {
                         painter.rect_filled(r, 1, Color32::WHITE);
                         painter.rect_stroke(r, 1, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
                     }
-                } else if self.edit_points {
+                } else if !self.edit_points {
+                    if let Some(h) = shape_handles(&frame, m, art, e) {
+                        let dash = egui::Stroke::new(1.0, accent.gamma_multiply(0.8));
+                        painter.add(egui::Shape::dashed_line(&[h.rect.left_top(), h.rect.right_top(), h.rect.right_bottom(), h.rect.left_bottom(), h.rect.left_top()], dash, 4.0, 3.0));
+                        painter.line_segment([h.rect.center_top(), h.turn], dash);
+                        for c in h.corners() {
+                            let r = egui::Rect::from_center_size(c, vec2(9.0, 9.0));
+                            painter.rect_filled(r, 2, Color32::WHITE);
+                            painter.rect_stroke(r, 2, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
+                        }
+                        painter.circle(h.turn, 5.5, Color32::WHITE, egui::Stroke::new(1.5, accent));
+                    }
+                } else {
                     painter.text(rect.center_top() + vec2(0.0, 56.0), egui::Align2::CENTER_CENTER, "Too many points to show. Press Simplify first.", egui::FontId::proportional(13.0), Color32::WHITE);
                 }
             }
@@ -1331,7 +1463,11 @@ impl HoopApp {
         if self.design.is_some() && ui.put(egui::Rect::from_min_max(br - vec2(240.0, 30.0), br - vec2(140.0, 0.0)), chip("Design  D")).clicked() {
             self.fit_view(rect, true);
         }
-        let hint = "Drag design to move · scroll to zoom · ? for keys";
+        let hint = if shape_map.is_some() {
+            "Drag a shape to move it · Shift+drag moves the design · scroll to zoom"
+        } else {
+            "Drag design to move · scroll to zoom · ? for keys"
+        };
         let galley = painter.layout_no_wrap(hint.into(), egui::FontId::proportional(12.0), Color32::WHITE);
         let at = rect.left_bottom() + vec2(12.0, -12.0 - galley.size().y - 12.0);
         let bg = egui::Rect::from_min_size(at, galley.size() + vec2(20.0, 12.0));

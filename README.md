@@ -18,8 +18,9 @@ up, and the colors can be merged down to a few threads.
 
 The Shapes card lists every shape of the artwork. Pick one there or click it
 on the hoop to move, resize, turn, recolor, duplicate, hide, delete or
-restack it (the top of the list is sewn last). Drag the selected shape on the
-hoop to move it. Edit points shows its outline points: drag them, right-click
+restack it (the top of the list is sewn last). Press on any shape and drag to
+move it; drag a corner of the selected shape to resize it and the round knob
+above it to turn it (Shift snaps to 15°). Shift+drag moves the whole design. Edit points shows its outline points: drag them, right-click
 one to remove it, double-click the outline to add one; Simplify thins out
 traced outlines first. Add shape puts in a circle, rounded square, heart,
 star, shield, banner or line, and Start from shapes begins an empty design
