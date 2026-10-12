@@ -16,6 +16,7 @@ mod shell;
 mod team;
 mod testpiece;
 mod threadwin;
+mod tools;
 
 use shell::{Dock, Tab};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
@@ -255,6 +256,7 @@ pub struct HoopApp {
     library: library::Library,
     threads: threadwin::ThreadCharts,
     team: team::Team,
+    tools: tools::Tools,
 }
 
 impl HoopApp {
@@ -335,6 +337,7 @@ impl HoopApp {
             library: Default::default(),
             threads: Default::default(),
             team: Default::default(),
+            tools: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -372,6 +375,9 @@ impl HoopApp {
             Ok("colors") => self.dock = Dock::Colors,
             Ok("check") => self.dock = Dock::Check,
             _ => {}
+        }
+        if let Some(i) = std::env::var("HOOP_SELECT").ok().and_then(|v| v.parse::<usize>().ok()) {
+            self.sel = vec![i];
         }
         match std::env::var("HOOP_WINDOW").as_deref() {
             Ok("threads") => self.threads.open = true,
@@ -1152,7 +1158,7 @@ impl HoopApp {
         let frame = Frame { painter: &painter, rect, view: self.view };
 
         // Drawing the test area takes over the pointer until it is done.
-        let picking = self.test_area_input(ui, &response, &frame);
+        let picking = self.test_area_input(ui, &response, &frame) || self.tool_input(ui, &response, &frame);
         // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
         let handled_double = !picking && self.shape_input(ui, &response, &frame);
         let hover_shape = if picking { None } else { self.shape_hover(ui, &response, &frame) };
@@ -1279,6 +1285,7 @@ impl HoopApp {
 
         self.check_overlay(&painter, &frame);
         self.shape_overlay(&painter, &frame, hover_shape);
+        self.tool_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 

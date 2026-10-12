@@ -255,6 +255,8 @@ impl HoopApp {
             dy: 0.0,
             scale: 1.0,
             rotate: 0.0,
+            angles: Vec::new(),
+            entry: None,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
@@ -760,13 +762,14 @@ impl HoopApp {
             ui.label(RichText::new(t!("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one.")).size(12.0).color(muted));
             return;
         }
+        self.tool_card(ui);
         let mut op = None;
         card(ui, t!("Arrange"), accent, |ui| {
             let w = (ui.available_width() - 12.0) / 4.0;
             let rows: [[(&str, &str, Arrange); 4]; 3] = [
-                [("Front", t!("Sew last, on top · Shift+]"), Arrange::Front), ("Forward", t!("One step up · ]"), Arrange::Forward), ("Backward", t!("One step down · ["), Arrange::Backward), ("Back", t!("Sew first, underneath · Shift+["), Arrange::Back)],
-                [("Left", t!("Align left edges"), Arrange::Left), ("Center", t!("Align middles across"), Arrange::CenterX), ("Right", t!("Align right edges"), Arrange::Right), ("Top", t!("Align top edges"), Arrange::Top)],
-                [("Middle", t!("Align middles up and down"), Arrange::Middle), ("Bottom", t!("Align bottom edges"), Arrange::Bottom), ("Copy", t!("Duplicate · Ctrl+D"), Arrange::Duplicate), ("Delete", "Del", Arrange::Delete)],
+                [(t!("Front"), t!("Sew last, on top · Shift+]"), Arrange::Front), (t!("Forward"), t!("One step up · ]"), Arrange::Forward), (t!("Backward"), t!("One step down · ["), Arrange::Backward), (t!("Back"), t!("Sew first, underneath · Shift+["), Arrange::Back)],
+                [(t!("Left"), t!("Align left edges"), Arrange::Left), (t!("Center"), t!("Align middles across"), Arrange::CenterX), (t!("Right"), t!("Align right edges"), Arrange::Right), (t!("Top"), t!("Align top edges"), Arrange::Top)],
+                [(t!("Middle"), t!("Align middles up and down"), Arrange::Middle), (t!("Bottom"), t!("Align bottom edges"), Arrange::Bottom), (t!("Copy"), t!("Duplicate · Ctrl+D"), Arrange::Duplicate), (t!("Delete"), "Del", Arrange::Delete)],
             ];
             for row in rows {
                 ui.horizontal(|ui| {

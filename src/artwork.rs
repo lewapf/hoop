@@ -97,6 +97,12 @@ pub struct ShapeEdit {
     pub dy: f32,
     pub scale: f32,
     pub rotate: f32,
+    /// Stitch angle lines for the fill, in the shape's own coordinates
+    /// (before the move). One line sets the angle; several split the shape
+    /// into parts, each nearest one line and sewn at its angle.
+    pub angles: Vec<(Pt, Pt)>,
+    /// Where the needle enters the shape, in the shape's own coordinates.
+    pub entry: Option<Pt>,
 }
 
 impl ShapeEdit {
@@ -106,7 +112,43 @@ impl ShapeEdit {
             Kind::Fill { .. } => t!("Fill"),
             Kind::Stroke { .. } => t!("Line"),
         };
-        ShapeEdit { source: i, own: None, name: format!("{kind} {}", i + 1), layer: sh.layer, look: None, hidden: false, dx: 0.0, dy: 0.0, scale: 1.0, rotate: 0.0 }
+        ShapeEdit {
+            source: i,
+            own: None,
+            name: format!("{kind} {}", i + 1),
+            layer: sh.layer,
+            look: None,
+            hidden: false,
+            dx: 0.0,
+            dy: 0.0,
+            scale: 1.0,
+            rotate: 0.0,
+            angles: Vec::new(),
+            entry: None,
+        }
+    }
+
+    /// A point in the shape's own coordinates, moved like the shape.
+    pub fn place(&self, art: &Artwork, p: Pt) -> Pt {
+        if !self.moved() {
+            return p;
+        }
+        let (cx, cy) = middle(&self.base(art).lines);
+        let (sin, cos) = self.rotate.to_radians().sin_cos();
+        let (x, y) = ((p.0 - cx) * self.scale, (p.1 - cy) * self.scale);
+        (x * cos - y * sin + cx + self.dx, x * sin + y * cos + cy + self.dy)
+    }
+
+    /// The inverse of `place`: a point in user units to the shape's own.
+    pub fn unplace(&self, art: &Artwork, p: Pt) -> Pt {
+        if !self.moved() {
+            return p;
+        }
+        let (cx, cy) = middle(&self.base(art).lines);
+        let (sin, cos) = self.rotate.to_radians().sin_cos();
+        let (x, y) = (p.0 - cx - self.dx, p.1 - cy - self.dy);
+        let k = self.scale.max(1e-6);
+        ((x * cos + y * sin) / k + cx, (-x * sin + y * cos) / k + cy)
     }
 
     pub fn base<'a>(&'a self, art: &'a Artwork) -> &'a Shape {
@@ -144,9 +186,66 @@ impl ShapeEdit {
         }
         let mut sh = self.base(art).clone();
         sh.lines = self.lines(art);
+        self.angles = self.angles.iter().map(|&(a, b)| (self.place(art, a), self.place(art, b))).collect();
+        self.entry = self.entry.map(|p| self.place(art, p));
         self.own = Some(sh);
         (self.dx, self.dy, self.scale, self.rotate) = (0.0, 0.0, 1.0, 0.0);
     }
+}
+
+/// Splits a fill by its stitch angle lines. Each part is what lies nearer
+/// one line's middle than any other's; it is returned as the other parts
+/// (to mask out) and the line's angle. No lines give one part at `default`.
+fn angle_parts(lines: &[(Pt, Pt)], contours: &[Contour], default: f32) -> Vec<(Vec<lettering::MaskShape>, f32)> {
+    let angle = |&(a, b): &(Pt, Pt)| (b.1 - a.1).atan2(b.0 - a.0).to_degrees();
+    if lines.len() <= 1 {
+        return vec![(Vec::new(), lines.first().map_or(default, angle))];
+    }
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for p in contours.iter().flatten() {
+        b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
+    }
+    let pad = 100.0;
+    let bx: Contour = vec![(b.0 - pad, b.1 - pad), (b.2 + pad, b.1 - pad), (b.2 + pad, b.3 + pad), (b.0 - pad, b.3 + pad)];
+    let mids: Vec<Pt> = lines.iter().map(|(a, b)| ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)).collect();
+    // Voronoi cell of each middle: the box cut by the half planes nearer it.
+    let cells: Vec<Contour> = (0..mids.len())
+        .map(|i| {
+            let mut cell = bx.clone();
+            for j in 0..mids.len() {
+                if i != j {
+                    cell = clip_half(&cell, mids[i], mids[j]);
+                }
+            }
+            cell
+        })
+        .collect();
+    (0..lines.len())
+        .map(|i| {
+            let others = (0..cells.len()).filter(|&j| j != i && cells[j].len() >= 3).map(|j| (vec![cells[j].clone()], false)).collect();
+            (others, angle(&lines[i]))
+        })
+        .collect()
+}
+
+/// The part of a convex polygon nearer `a` than `b` (Sutherland–Hodgman).
+fn clip_half(poly: &Contour, a: Pt, b: Pt) -> Contour {
+    let m = ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
+    let n = (b.0 - a.0, b.1 - a.1);
+    let side = |p: Pt| (p.0 - m.0) * n.0 + (p.1 - m.1) * n.1; // < 0 is a's side
+    let mut out = Vec::new();
+    for k in 0..poly.len() {
+        let (p, q) = (poly[k], poly[(k + 1) % poly.len()]);
+        let (sp, sq) = (side(p), side(q));
+        if sp <= 0.0 {
+            out.push(p);
+        }
+        if (sp < 0.0) != (sq < 0.0) && (sp - sq).abs() > 1e-9 {
+            let t = sp / (sp - sq);
+            out.push((p.0 + (q.0 - p.0) * t, p.1 + (q.1 - p.1) * t));
+        }
+    }
+    out
 }
 
 /// Bounding box of some lines: min x, min y, max x, max y. Empty lines give
@@ -849,6 +948,9 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         lines: Vec<(Contour, bool)>,
         /// Lines as sewn, when cutting made them differ from `lines`.
         sew: Option<Vec<(Contour, bool)>>,
+        /// Stitch angle lines and entry point, in stitch units.
+        angles: Vec<(Pt, Pt)>,
+        entry: Option<Pt>,
     }
     let mut items: Vec<Item> = Vec::new();
     for (doc, e) in s.shapes.iter().enumerate() {
@@ -863,7 +965,9 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         };
         if keep {
             let look = e.look.unwrap_or_else(|| s.layers.get(e.layer).map_or(Look::Default, |l| l.look));
-            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None });
+            let angles = e.angles.iter().map(|&(a, b)| (to_mm(e.place(art, a)), to_mm(e.place(art, b)))).collect();
+            let entry = e.entry.map(|p| to_mm(e.place(art, p)));
+            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None, angles, entry });
         }
     }
     if items.is_empty() {
@@ -1003,12 +1107,23 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 let mask = above(false);
                 st.region = crate::route::Region::new(&contours, even_odd, &mask, &above(true));
                 if st_ref.fill != FillKind::None {
-                    if st_ref.underlay {
-                        lettering::underlay(&mut st, &contours, even_odd, &mask, st_ref.fill, st_ref.fill_angle, st_ref);
+                    if let Some(p) = it.entry {
+                        st.travel(p, p);
                     }
-                    lettering::fill_shape(&mut st, &contours, even_odd, &mask, st_ref.fill, st_ref.fill_angle, st_ref);
-                    if st_ref.fill == FillKind::Crosshatch {
-                        lettering::fill_shape(&mut st, &contours, even_odd, &mask, st_ref.fill, st_ref.fill_angle + 90.0, st_ref);
+                    // The parts the angle lines split the shape into, each
+                    // with its mask and angle; one part when there are none.
+                    let parts = angle_parts(&it.angles, &contours, st_ref.fill_angle);
+                    let first = parts[0].1;
+                    if st_ref.underlay {
+                        lettering::underlay(&mut st, &contours, even_odd, &mask, st_ref.fill, first, st_ref);
+                    }
+                    for (cut, angle) in &parts {
+                        let mut m = mask.clone();
+                        m.extend(cut.iter().cloned());
+                        lettering::fill_shape(&mut st, &contours, even_odd, &m, st_ref.fill, *angle, st_ref);
+                        if st_ref.fill == FillKind::Crosshatch {
+                            lettering::fill_shape(&mut st, &contours, even_odd, &m, st_ref.fill, *angle + 90.0, st_ref);
+                        }
                     }
                 }
                 for c in &contours {
@@ -1043,6 +1158,39 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn angle_lines_split_a_fill_into_parts_with_their_own_direction() {
+        let sq = vec![vec![(0.0, 0.0), (400.0, 0.0), (400.0, 200.0), (0.0, 200.0)]];
+        // Left: rows across (0°); right: rows up and down (90°).
+        let lines = [((50.0, 100.0), (150.0, 100.0)), ((300.0, 50.0), (300.0, 150.0))];
+        let parts = angle_parts(&lines, &sq, 45.0);
+        assert_eq!(parts.len(), 2);
+        assert!((parts[0].1 - 0.0).abs() < 0.1 && (parts[1].1 - 90.0).abs() < 0.1);
+        let s = Settings { density_mm: 0.5, pull_mm: 0.0, ..Settings::default() };
+        let mut left_h = 0;
+        let mut right_v = 0;
+        let mut wrong = 0;
+        for (cut, angle) in &parts {
+            let mut st = Stitcher::new();
+            lettering::fill_shape(&mut st, &sq, false, cut, FillKind::Tatami, *angle, &s);
+            for w in st.points.windows(2) {
+                let (a, b) = (w[0], w[1]);
+                let (dx, dy) = ((b.0 - a.0).abs(), (b.1 - a.1).abs());
+                if dx.max(dy) < 15.0 {
+                    continue;
+                }
+                let mid = (a.0 + b.0) / 2.0;
+                match (mid < 200.0, dx > dy) {
+                    (true, true) => left_h += 1,
+                    (false, false) => right_v += 1,
+                    _ => wrong += 1,
+                }
+            }
+        }
+        assert!(left_h > 50 && right_v > 50, "{left_h} {right_v}");
+        assert!(wrong * 10 < left_h + right_v, "{wrong}");
+    }
 
     const LOGO: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50">
         <rect width="100" height="50" fill="#ffffff"/>

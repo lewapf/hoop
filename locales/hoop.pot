@@ -113,37 +113,73 @@ msgstr ""
 msgid "Arrange"
 msgstr ""
 
+msgid "Front"
+msgstr ""
+
 msgid "Sew last, on top · Shift+]"
+msgstr ""
+
+msgid "Forward"
 msgstr ""
 
 msgid "One step up · ]"
 msgstr ""
 
+msgid "Backward"
+msgstr ""
+
 msgid "One step down · ["
+msgstr ""
+
+msgid "Back"
 msgstr ""
 
 msgid "Sew first, underneath · Shift+["
 msgstr ""
 
+msgid "Left"
+msgstr ""
+
 msgid "Align left edges"
+msgstr ""
+
+msgid "Center"
 msgstr ""
 
 msgid "Align middles across"
 msgstr ""
 
+msgid "Right"
+msgstr ""
+
 msgid "Align right edges"
+msgstr ""
+
+msgid "Top"
 msgstr ""
 
 msgid "Align top edges"
 msgstr ""
 
+msgid "Middle"
+msgstr ""
+
 msgid "Align middles up and down"
+msgstr ""
+
+msgid "Bottom"
 msgstr ""
 
 msgid "Align bottom edges"
 msgstr ""
 
+msgid "Copy"
+msgstr ""
+
 msgid "Duplicate · Ctrl+D"
+msgstr ""
+
+msgid "Delete"
 msgstr ""
 
 msgid "One shape aligns to the drawing's frame; several align to each other."
@@ -337,9 +373,6 @@ msgstr ""
 msgid "Duplicate"
 msgstr ""
 
-msgid "Delete"
-msgstr ""
-
 msgid "Hide"
 msgstr ""
 
@@ -497,9 +530,6 @@ msgid "Turn right"
 msgstr ""
 
 msgid "Rotate 90° right · R"
-msgstr ""
-
-msgid "Center"
 msgstr ""
 
 msgid "Pin"
@@ -796,6 +826,38 @@ msgid "{code} {name} · click to mark as mine"
 msgstr ""
 
 msgid "Done"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "Drag across the shape in the direction the stitches should run · Esc to stop"
+msgstr ""
+
+msgid "Click where the needle should start this shape · Esc to stop"
+msgstr ""
+
+msgid "Stitching"
+msgstr ""
+
+msgid "Add stitch angle"
+msgstr ""
+
+msgid "Drag a line across the shape; its fill rows follow it. Several lines split the fill into parts."
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "{n} angle line"
+msgid_plural "{n} angle lines"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Set start point"
+msgstr ""
+
+msgid "Where the needle comes in, to save a jump or hide the tie-in"
 msgstr ""
 
 msgid "Natural linen"
@@ -1253,12 +1315,6 @@ msgstr ""
 msgid "Distance between lines, in letter heights"
 msgstr ""
 
-msgid "Left"
-msgstr ""
-
-msgid "Right"
-msgstr ""
-
 msgid "Edge"
 msgstr ""
 
@@ -1351,9 +1407,6 @@ msgid "Save JEF…"
 msgstr ""
 
 msgid "Use this SVG"
-msgstr ""
-
-msgid "Clear"
 msgstr ""
 
 msgid "Trace"
