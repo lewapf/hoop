@@ -397,6 +397,10 @@ impl HoopApp {
                 });
             }
             ui.menu_button(t!("Help"), |ui| {
+                if item(ui, true, t!("User manual"), "F1") {
+                    self.manual.open = true;
+                    ui.close();
+                }
                 if item(ui, true, t!("Keyboard shortcuts"), "?") {
                     self.help = true;
                 }

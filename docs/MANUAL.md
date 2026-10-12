@@ -1,0 +1,305 @@
+# Hoop user manual
+
+Hoop prepares machine embroidery for the Janome MC9900. It opens embroidery
+files, turns text, SVG drawings and pictures into stitches, checks how a
+design will sew, and writes the file the machine reads. Nothing here needs
+the internet except downloading extra thread charts.
+
+## Getting started
+
+The quickest way in is the **new project wizard**: press `N` or pick
+**File → New project…**. It asks, one step at a time:
+
+1. **What to make:** a name, a monogram, a round badge, a key fob, a
+   coaster, a lace ornament, a logo or picture, or a shape from the
+   library.
+2. **What fabric:** this sets row spacing, pull compensation, stitch
+   length and underlay, and tells you which stabilizer to use.
+3. **The content:** your text, initials, a file, or a library shape.
+4. **The size and the hoop.**
+5. **Thread colors.**
+6. **Create:** the design appears on the hoop. The last page offers
+   **Save as JEF**, **Send to USB** and **Save worksheet**, with
+   step-by-step sewing advice.
+
+You can change everything afterwards in the panels on the right.
+
+## The window
+
+- **Menu bar and tool bar** at the top.
+- **Left dock:**
+  - **Library:** your designs folder, with thumbnails.
+  - **Objects:** artwork shapes; this page shows only in the Artwork tab.
+  - **Colors:** the threads in sewing order.
+  - **Check:** problems found in the design.
+- **Canvas:** the fabric in the hoop. Drag the design to move it, drag
+  the fabric to pan, scroll to zoom, double-click to see the whole hoop.
+- **Right dock:** the settings of the current tab, in pages (Text, Style,
+  Hoop, Stitch, View…).
+- **Status bar:** pointer position, size, stitch count, whether it fits,
+  and the result of the design check.
+
+Hoop has three tabs, switched with `V`, `L` and `A`:
+
+- **Viewer:** opens finished embroidery files.
+- **Lettering:** turns text into stitches.
+- **Artwork:** turns SVG drawings and pictures into stitches.
+
+## Opening and viewing designs
+
+Open JEF, DST, EXP, PES or PEC files with `O`, by dropping them on the
+window, or by clicking a thumbnail in the **Library**.
+
+- **Library:**
+  - **Up** goes to the folder above, **Folder…** picks another folder,
+    and **Find by name** filters the list.
+  - **Shapes** switches to 109 ready-made silhouettes you can stitch or
+    build on.
+- **Playback:**
+  - `Space` plays the stitch-out; the **Stitch** page sets the speed.
+  - `,` and `.` step one stitch back or forward.
+  - `[` and `]` jump to the previous or next thread.
+- **Hoops:** `1`–`4` pick the SQ14b, RE20b, SQ20b or FA10a hoop. The
+  **Hoop** page says whether the design fits and offers fixes: rotate it,
+  use a bigger hoop, shrink it, or split it into several hoopings.
+- **Rotating and mirroring:** `R` and `Shift+R` rotate by 90°, `M`
+  mirrors, `C` centers. Saving bakes these in.
+
+## Lettering
+
+Type in the **Text** page and pick a font. Bundled fonts come first;
+installed system fonts follow.
+
+- **Quick styles** set a whole look in one click:
+  - Classic, Satin, Outline, Bold, Vintage, Wavy, Shaded.
+  - Key fob, Coaster and Lace, the templates described below.
+- **Style page:**
+  - Height, letter spacing and slant.
+  - **Layout:**
+    - Straight or Arc.
+    - Circle badge: line 1 round the top, line 2 round the bottom.
+    - Arch, Valley, Bulge, Pinch, Bridge, Wave or Grow envelopes.
+    - Monogram: three initials, the middle one larger.
+  - **Fabric** presets, the **Fill** style and the **Edge** style.
+- **Patch page:** a background shape behind the text.
+  - Shapes: box, rounded, oval, circle, or fob.
+  - Background: filled, light, lace, plain fabric, or appliqué.
+  - A satin border.
+  - **In the hoop: finish the back** adds a stop for backing fabric
+    before the border.
+- **Team names** (Text page): one name per line. **Save designs…**
+  writes one JEF per name with the current settings.
+
+Letters smaller than about 10 mm sew best as **Column** (satin) fill; the
+Check list suggests it.
+
+## Artwork
+
+Open an SVG file or a picture (PNG, JPG, WebP), or start from shapes.
+Pictures are reduced to a few flat colors and traced first. Logos and
+clip art work best; photos do not.
+
+- **Source page:** the size of the design.
+  - **Draw:** put a **backdrop picture** behind the hoop and trace it by
+    hand with the **Pen**:
+    - Click to place a corner.
+    - Drag to pull out a curve.
+    - Click the first point to close a filled shape.
+    - Press `Enter` or double-click to end an open line.
+    - Press `Esc` to stop.
+- **Objects:** every shape, topmost first.
+  - Click a shape to pick it, `Ctrl+click` to add another, or drag over
+    empty fabric to pick several.
+  - Drag shapes on the hoop to move them, use the corner handle to
+    resize, and the round knob to turn.
+- **Shape page:**
+  - Add built-in shapes.
+  - **Stitching:**
+    - **Add stitch angle:** drag a line across the shape to set the
+      direction of its fill rows. Several lines split the fill into
+      parts with their own angles.
+    - **Set start point:** click where the needle should enter.
+  - Arrange, align, recolor, choose a look per shape, transform, and
+    edit points.
+- **Style page:** fill and edge styles for the whole artwork, plus
+  clean-up (cut hidden parts, drop tiny details).
+- **Threads page:** one Janome thread per drawing color. Turn colors off,
+  give a color a different look (outline, appliqué, a fill style), merge
+  colors down to fewer threads.
+
+The default fill, **Auto**, sews narrow parts as satin columns that turn
+with the shape and wide parts as tatami.
+
+## Stitch types
+
+- **Fills:**
+  - **Auto:** columns where narrow, tatami where wide.
+  - **Column:** satin that follows the shape's center lines.
+  - **Tatami:** rows of short stitches with staggered needle points.
+  - **Satin:** one stitch across per row.
+  - **Contour:** rings that follow the outline inward.
+  - **Wave** and **Zigzag:** rows that swing.
+  - **Hatch:** an open crosshatch.
+  - **Gradient:** rows that thin out across the shape.
+  - **Open:** sparse rows.
+  - **Stipple:** a meandering line that never crosses itself.
+  - **Cross-stitch:** an X in every cell.
+- **Edges:**
+  - **Run** and **Triple** (bean stitch).
+  - **Satin.**
+  - **Blanket:** an E-stitch, for appliqué.
+  - **Scallop.**
+- **Underlay** (Style → Fill → More settings): stitches sewn first to
+  hold the fabric. Choose auto, edge run, tatami, zigzag, or double
+  zigzag for towels and fleece.
+- **Fabric presets** set spacing, pull compensation, stitch length and
+  underlay together for woven, knit, denim, towel, fleece, felt,
+  leather, silk and caps. Hover over one for stabilizer advice.
+
+## Appliqué and in-the-hoop projects
+
+**Appliqué** is set in Lettering → Patch → Appliqué, or in Artwork
+through a color's or a shape's look. The machine sews:
+
+1. A **placement line**, then stops. Lay the fabric over the line.
+2. A **tack-down**, then stops again. Trim the fabric close to the
+   stitching.
+3. A **satin cover** that hides the cut edge.
+
+**In-the-hoop** pieces (the Key fob and Coaster quick styles, or the
+option on the Patch page) add a stop before the border. Tape backing
+fabric under the hoop; a tack-down holds it and the border covers both
+edges. Then cut round the border. For a key fob, punch the eyelet open.
+
+**Lace** sews a double lattice that holds together on its own. Hoop two
+layers of water-soluble stabilizer and rinse it away afterwards.
+
+## Checking before you sew
+
+The **Check** list (left dock) looks for:
+
+- Thread piling up.
+- Needle holes too close together.
+- Very short or very long stitches.
+- Too many jumps.
+- Shapes too thin to fill, or too wide for satin.
+- Letters too small.
+
+Click a problem to see where it is. **Fix it this way** applies the
+suggested change. `H` shows the thread density on the hoop. Hoop asks
+before saving a design that still has problems.
+
+**Test stitch-out** (`Ctrl+T`) has two pages:
+
+- **Test a part:** sew only part of a design first, such as a tight
+  corner or the smallest letters, or sew outlines only.
+- **Calibration sheet:** samples of satin widths, narrow fills, row
+  spacing, pull compensation and small letters. After sewing it, pick
+  what looked best. Hoop then uses your results for new designs and
+  for the Check list.
+
+## Saving and sending
+
+- **Save as JEF** (`Ctrl+S`): the file for the MC9900.
+- **Send to USB** (`Ctrl+U`): writes the JEF straight into `EMB/Embf` on
+  the machine's USB stick. Names of up to 8 letters show best. **Eject**
+  closes the stick safely.
+- **File → Export as:** DST, EXP, PES, PEC or VP3 for other machines.
+- **Save worksheet** (`Ctrl+P`): a PDF with the facts, the thread
+  sequence, the sewing time, and an actual-size template for placing
+  the design on fabric. Print it at 100 %.
+- **Save picture** (`Ctrl+Shift+S`): a PNG of the preview.
+
+## Bigger designs and combining
+
+- **Pin to hoop** (`P`): keeps the current design on the hoop so you can
+  add the next part, such as a name under a logo. Saving writes all of
+  them as one file.
+- **File → Split into hoopings:** cuts a design that is too big for the
+  hoop into numbered parts.
+  - Objects stay whole where they fit.
+  - Each part starts with gray registration crosses. After re-hooping,
+    line the needle up with them.
+  - Pick the crosses out at the end.
+
+## Editing stitch files
+
+For an opened JEF, DST, EXP, PES or PEC file:
+
+- **Colors list:** click a swatch to set the real thread color.
+  Right-click a thread to sew it earlier or later, or to delete its
+  stitches.
+- **Design page → Edit stitches:**
+  - **Merge repeated threads:** saves thread changes.
+  - **Remove tiny stitches:** drops stitches under 0.3 mm.
+  - **Pick stitches on the hoop:** click a needle point to pick it.
+    Drag it, nudge it with the arrow keys, or press `Del` to remove it.
+
+Every edit can be undone with `Ctrl+Z`.
+
+## Threads
+
+Hoop works in Janome threads; the JEF file stores their numbers.
+**View → Thread charts** (or Settings) shows another brand's names next
+to them: Madeira, Isacord, Robison-Anton, Sulky, Brother and more.
+
+- **Get** downloads a chart from the Ink/Stitch project.
+- **My threads:** tick the spools you own. Hoop then suggests those
+  first when a color is close enough.
+
+**Copy thread list** in the Colors dock gives a shopping list.
+
+## Settings
+
+**Edit → Settings** (`Ctrl+,`) holds:
+
+- The language: System, English, Polski or Deutsch.
+- The designs folder.
+- Machine speed, used for sewing times.
+- The thread chart.
+- The widest satin that Auto sews as columns.
+- Display options.
+- Your test sheet results.
+- The translations folder.
+- **Reset all settings**.
+
+Hoop remembers settings in `~/.local/state/hoop/prefs`.
+
+## Translating Hoop
+
+Every line Hoop shows can be translated with gettext `.po` files:
+
+1. Copy `locales/hoop.pot` to `<language>.po`.
+2. Fill it in with a PO editor such as Poedit.
+3. Put it in `~/.local/share/hoop/locale/`.
+4. Pick the language in Settings.
+
+Lines left empty stay in English.
+
+## Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `N` | New project wizard |
+| `O` | Open a file |
+| `V` / `L` / `A` | Viewer / Lettering / Artwork |
+| `Ctrl+S` | Save as JEF |
+| `Ctrl+U` | Send to USB |
+| `Ctrl+P` | Save worksheet |
+| `Ctrl+T` | Test stitch-out |
+| `Ctrl+,` | Settings |
+| `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / redo |
+| `Space` | Play or pause the stitch-out |
+| `,` / `.` | One stitch back / forward |
+| `[` / `]` | Previous / next thread, or move picked shapes down / up |
+| Arrows | Move the design 1 mm (`Shift`: 10 mm) |
+| `R` / `Shift+R` | Rotate right / left |
+| `M` | Mirror |
+| `C` | Center in the hoop |
+| `P` | Pin to the hoop |
+| `1`–`4` | Pick a hoop |
+| `F` / `D` | Whole hoop / zoom to the design |
+| `G` / `J` / `T` / `H` | Grid / jumps / thread texture / density |
+| `F1` | This manual (Help → User manual) |
+| `?` | Shortcut list |
+| `Q` | Quit |

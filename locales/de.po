@@ -1,0 +1,2542 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: de\n"
+"Language-Name: Deutsch\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Open or make a design to check how it will sew."
+msgstr "Öffne oder erstelle ein Motiv, um zu prüfen, wie es gestickt wird."
+
+msgid "Ready to sew"
+msgstr "Bereit zum Sticken"
+
+msgid "{n} thing to look at"
+msgid_plural "{n} things to look at"
+msgstr[0] "{n} Punkt zum Ansehen"
+msgstr[1] "{n} Punkte zum Ansehen"
+
+msgid "{n} problem to fix"
+msgid_plural "{n} problems to fix"
+msgstr[0] "{n} Problem zu beheben"
+msgstr[1] "{n} Probleme zu beheben"
+
+msgid "Show thread density on the hoop  H"
+msgstr "Garndichte im Rahmen zeigen  H"
+
+msgid "Amber where thread is dense, red where it piles up"
+msgstr "Gelb, wo das Garn dicht liegt, rot, wo es sich türmt"
+
+msgid "Density, stitch lengths and shape widths all look right for this design."
+msgstr "Dichte, Stichlängen und Formbreiten sehen für dieses Motiv gut aus."
+
+msgid "Show"
+msgstr "Zeigen"
+
+msgid "Zoom to it on the hoop"
+msgstr "Im Rahmen hinzoomen"
+
+msgid "Fix it this way"
+msgstr "So beheben"
+
+msgid "{stitches} stitches checked. In the density view, uncolored parts carry about one layer of thread, the way machine embroidery is meant to be."
+msgstr "{stitches} Stiche geprüft. In der Dichteansicht tragen ungefärbte Stellen etwa eine Lage Garn – so, wie Maschinenstickerei sein soll."
+
+msgid "Changed: {fix}"
+msgstr "Geändert: {fix}"
+
+msgid "This design has problems"
+msgstr "Dieses Motiv hat Probleme"
+
+msgid "The check found things that will likely sew badly:"
+msgstr "Die Prüfung hat Stellen gefunden, die vermutlich schlecht gestickt werden:"
+
+msgid "Review"
+msgstr "Ansehen"
+
+msgid "Save anyway"
+msgstr "Trotzdem speichern"
+
+msgid "Send anyway"
+msgstr "Trotzdem senden"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "too much"
+msgstr "zu viel"
+
+msgid "Couldn't open the picture: {e}."
+msgstr "Das Bild ließ sich nicht öffnen: {e}."
+
+msgid "Drawn shape {n}"
+msgstr "Gezeichnete Form {n}"
+
+msgid "Drawn line {n}"
+msgstr "Gezeichnete Linie {n}"
+
+msgid "Click for a corner, drag for a curve · click the first point to close · Enter ends a line · Esc stops"
+msgstr "Klicken für eine Ecke, ziehen für eine Kurve · ersten Punkt anklicken zum Schließen · Enter beendet eine Linie · Esc hört auf"
+
+msgid "Draw"
+msgstr "Zeichnen"
+
+msgid "Trace a picture by hand: put it behind the hoop, then draw shapes over it with the pen."
+msgstr "Ein Bild von Hand nachzeichnen: hinter den Rahmen legen und mit dem Stift Formen darüber zeichnen."
+
+msgid "Backdrop picture…"
+msgstr "Hintergrundbild…"
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "How strongly the picture shows"
+msgstr "Wie stark das Bild zu sehen ist"
+
+msgid "Pen"
+msgstr "Stift"
+
+msgid "Draw a shape or line point by point"
+msgstr "Eine Form oder Linie Punkt für Punkt zeichnen"
+
+msgid "Pictures"
+msgstr "Bilder"
+
+msgid "Split into hoopings"
+msgstr "Auf mehrere Rahmungen aufteilen"
+
+msgid "For designs bigger than the hoop: each part is sewn in its own hooping. Objects stay whole where they fit; the rest is cut at the part edges."
+msgstr "Für Motive, die größer als der Rahmen sind: Jeder Teil wird in einer eigenen Rahmung gestickt. Objekte bleiben ganz, wo sie passen; der Rest wird an den Teilgrenzen geschnitten."
+
+msgid "Hoop"
+msgstr "Rahmen"
+
+msgid "Part {k}: {stitches} stitches, {threads} threads"
+msgstr "Teil {k}: {stitches} Stiche, {threads} Garne"
+
+msgid "Sew the parts in order. Each starts with gray registration crosses on its shared edges: after re-hooping, line the needle up with the crosses of the part before. Pick the crosses out at the end."
+msgstr "Sticke die Teile der Reihe nach. Jeder beginnt mit grauen Passkreuzen an den gemeinsamen Kanten: Nach dem Neurahmen die Nadel auf die Kreuze des vorigen Teils ausrichten. Die Kreuze am Ende heraustrennen."
+
+msgid "Save {n} part…"
+msgid_plural "Save {n} parts…"
+msgstr[0] "{n} Teil speichern…"
+msgstr[1] "{n} Teile speichern…"
+
+msgid "Folder for the hoopings"
+msgstr "Ordner für die Rahmungen"
+
+msgid "Couldn't save {file}: {e}."
+msgstr "{file} ließ sich nicht speichern: {e}."
+
+msgid "Saved {n} hooping to {folder}"
+msgid_plural "Saved {n} hoopings to {folder}"
+msgstr[0] "{n} Rahmung in {folder} gespeichert"
+msgstr[1] "{n} Rahmungen in {folder} gespeichert"
+
+msgid "The folder above"
+msgstr "Übergeordneter Ordner"
+
+msgid "Folder…"
+msgstr "Ordner…"
+
+msgid "Pick the folder to browse"
+msgstr "Ordner zum Durchsuchen wählen"
+
+msgid "Reload"
+msgstr "Neu laden"
+
+msgid "Shapes"
+msgstr "Formen"
+
+msgid "109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)"
+msgstr "109 fertige Formen zum Sticken oder Weiterbauen (Phosphor Icons, MIT-Lizenz)"
+
+msgid "Find by name"
+msgstr "Nach Namen suchen"
+
+msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures."
+msgstr "Hier sind keine Motive. Hoop zeigt JEF, DST, EXP, PES, PEC, SVG und Bilder."
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "System ({lang})"
+msgstr "System ({lang})"
+
+msgid "Designs folder"
+msgstr "Motivordner"
+
+msgid "Change…"
+msgstr "Ändern…"
+
+msgid "Machine speed"
+msgstr "Tempo"
+
+msgid "{spm} spm"
+msgstr "{spm} Stiche/min"
+
+msgid "Thread chart"
+msgstr "Garnkarte"
+
+msgid "My threads…"
+msgstr "Meine Garne…"
+
+msgid "Satin columns up to"
+msgstr "Satinsäulen bis"
+
+msgid "Auto sews parts this wide or narrower as satin columns, wider ones as tatami"
+msgstr "Auto stickt Teile dieser Breite oder schmaler als Satinsäulen, breitere als Tatami"
+
+msgid "Display"
+msgstr "Anzeige"
+
+msgid "Fabric"
+msgstr "Stoff"
+
+msgid "Thread texture"
+msgstr "Garnstruktur"
+
+msgid "Template grid, 10 mm"
+msgstr "Vorlagenraster, 10 mm"
+
+msgid "Jump stitches"
+msgstr "Sprungstiche"
+
+msgid "Size label under the design"
+msgstr "Maße unter dem Motiv"
+
+msgid "Test sheet"
+msgstr "Testbogen"
+
+msgid "Not sewn yet, so Hoop uses general rules."
+msgstr "Noch nicht gestickt, daher nutzt Hoop allgemeine Regeln."
+
+msgid "Using your test sheet results."
+msgstr "Die Ergebnisse deines Testbogens werden genutzt."
+
+msgid "Open…"
+msgstr "Öffnen…"
+
+msgid "Folders"
+msgstr "Ordner"
+
+msgid "Translations folder"
+msgstr "Übersetzungsordner"
+
+msgid "Put <language>.po files here to add or fix a translation"
+msgstr "Lege hier <Sprache>.po-Dateien ab, um eine Übersetzung hinzuzufügen oder zu verbessern"
+
+msgid "Clear picture cache"
+msgstr "Vorschau-Cache leeren"
+
+msgid "Library thumbnails are drawn again"
+msgstr "Die Vorschaubilder der Bibliothek werden neu gezeichnet"
+
+msgid "Done"
+msgstr "Fertig"
+
+msgid "Reset all settings"
+msgstr "Alle Einstellungen zurücksetzen"
+
+msgid "Back to how Hoop started; recent files are kept"
+msgstr "Zurück zum Anfangszustand; die zuletzt geöffneten Dateien bleiben"
+
+msgid "Settings are back to the start."
+msgstr "Die Einstellungen sind zurückgesetzt."
+
+msgid "{name} copy"
+msgstr "{name} Kopie"
+
+msgid "Too many points to show. Press Simplify first."
+msgstr "Zu viele Punkte zum Anzeigen. Zuerst Vereinfachen drücken."
+
+msgid "Open an SVG or a picture, or start from shapes, to see its parts here."
+msgstr "Öffne eine SVG-Datei oder ein Bild oder beginne mit Formen, um hier die Teile zu sehen."
+
+msgid "Add shape"
+msgstr "Form hinzufügen"
+
+msgid "{v0} shapes · {v1} picked"
+msgstr "{v0} Formen · {v1} ausgewählt"
+
+msgid "Show or hide this shape"
+msgstr "Diese Form zeigen oder verbergen"
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid "Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."
+msgstr "Klicke eine Form im Rahmen oder unter Objekte an. Ziehe über leeren Stoff, um mehrere zu wählen; Strg+Klick fügt eine hinzu."
+
+msgid "Arrange"
+msgstr "Anordnen"
+
+msgid "Front"
+msgstr "Ganz nach vorn"
+
+msgid "Sew last, on top · Shift+]"
+msgstr "Zuletzt sticken, obenauf · Shift+]"
+
+msgid "Forward"
+msgstr "Nach vorn"
+
+msgid "One step up · ]"
+msgstr "Eine Ebene höher · ]"
+
+msgid "Backward"
+msgstr "Nach hinten"
+
+msgid "One step down · ["
+msgstr "Eine Ebene tiefer · ["
+
+msgid "Back"
+msgstr "Ganz nach hinten"
+
+msgid "Sew first, underneath · Shift+["
+msgstr "Zuerst sticken, darunter · Shift+["
+
+msgid "Left"
+msgstr "Links"
+
+msgid "Align left edges"
+msgstr "Linke Kanten ausrichten"
+
+msgid "Center"
+msgstr "Mitte"
+
+msgid "Align middles across"
+msgstr "Waagerecht mittig ausrichten"
+
+msgid "Right"
+msgstr "Rechts"
+
+msgid "Align right edges"
+msgstr "Rechte Kanten ausrichten"
+
+msgid "Top"
+msgstr "Oben"
+
+msgid "Align top edges"
+msgstr "Obere Kanten ausrichten"
+
+msgid "Middle"
+msgstr "Mitte senkrecht"
+
+msgid "Align middles up and down"
+msgstr "Senkrecht mittig ausrichten"
+
+msgid "Bottom"
+msgstr "Unten"
+
+msgid "Align bottom edges"
+msgstr "Untere Kanten ausrichten"
+
+msgid "Copy"
+msgstr "Kopieren"
+
+msgid "Duplicate · Ctrl+D"
+msgstr "Duplizieren · Strg+D"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "One shape aligns to the drawing's frame; several align to each other."
+msgstr "Eine Form richtet sich am Rahmen der Zeichnung aus, mehrere aneinander."
+
+msgid "Thread color"
+msgstr "Garnfarbe"
+
+msgid "Stitch with this color's thread (set in Threads)"
+msgstr "Mit dem Garn dieser Farbe sticken (unter Garne festgelegt)"
+
+msgid "Stitch as"
+msgstr "Sticken als"
+
+msgid "Thread's look"
+msgstr "Wie das Garn"
+
+msgid "Fill style"
+msgstr "Füllstil"
+
+msgid "Outline"
+msgstr "Kontur"
+
+msgid "Appliqué"
+msgstr "Applikation"
+
+msgid "Mixed"
+msgstr "Gemischt"
+
+msgid "Whatever the Threads tab sets for this color"
+msgstr "Was der Reiter Garne für diese Farbe festlegt"
+
+msgid "Only the outline: for thin shapes"
+msgstr "Nur die Kontur: für dünne Formen"
+
+msgid "Satin suits parts under about 7 mm wide, tatami wider ones, outline anything under 1 mm."
+msgstr "Satin passt zu Teilen unter etwa 7 mm Breite, Tatami zu breiteren, Kontur zu allem unter 1 mm."
+
+msgid "{v0} shapes picked. Drag them on the hoop or nudge with the arrow keys."
+msgstr "{v0} Formen ausgewählt. Im Rahmen ziehen oder mit den Pfeiltasten verschieben."
+
+msgid "Transform"
+msgstr "Transformieren"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Move X"
+msgstr "X verschieben"
+
+msgid "Or drag the shape on the hoop, or nudge with the arrow keys"
+msgstr "Oder die Form im Rahmen ziehen oder mit den Pfeiltasten verschieben"
+
+msgid "Move Y"
+msgstr "Y verschieben"
+
+msgid "Size"
+msgstr "Größe"
+
+msgid "Or drag a corner handle"
+msgstr "Oder an einem Eckgriff ziehen"
+
+msgid "Turn"
+msgstr "Drehen"
+
+msgid "Or drag the round knob; Shift snaps to 15°"
+msgstr "Oder am runden Knopf ziehen; Shift rastet in 15°-Schritten ein"
+
+msgid "{v0:.1} × {v1:.1} mm on the fabric"
+msgstr "{v0:.1} × {v1:.1} mm auf dem Stoff"
+
+msgid "Points"
+msgstr "Punkte"
+
+msgid "Edit points"
+msgstr "Punkte bearbeiten"
+
+msgid "Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one."
+msgstr "Punkte im Rahmen ziehen. Rechtsklick auf einen Punkt entfernt ihn, Doppelklick auf die Kontur fügt einen hinzu."
+
+msgid "Simplify"
+msgstr "Vereinfachen"
+
+msgid "Fewer points, smoother to edit; keeps the shape within 0.3 mm"
+msgstr "Weniger Punkte, leichter zu bearbeiten; die Form bleibt auf 0,3 mm genau"
+
+msgid "Back to the shape as drawn"
+msgstr "Zurück zur gezeichneten Form"
+
+msgid "{n} point"
+msgid_plural "{n} points"
+msgstr[0] "{n} Punkt"
+msgstr[1] "{n} Punkte"
+
+msgid "Design"
+msgstr "Motiv"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Style"
+msgstr "Stil"
+
+msgid "Patch"
+msgstr "Aufnäher"
+
+msgid "Source"
+msgstr "Quelle"
+
+msgid "Shape"
+msgstr "Form"
+
+msgid "Threads"
+msgstr "Garne"
+
+msgid "Stitch"
+msgstr "Stiche"
+
+msgid "View"
+msgstr "Ansicht"
+
+msgid "Check ({v0})"
+msgstr "Prüfung ({v0})"
+
+msgid "Check"
+msgstr "Prüfung"
+
+msgid "Library"
+msgstr "Bibliothek"
+
+msgid "Colors"
+msgstr "Farben"
+
+msgid "Objects"
+msgstr "Objekte"
+
+msgid "File"
+msgstr "Datei"
+
+msgid "New project…"
+msgstr "Neues Projekt…"
+
+msgid "Open recent"
+msgstr "Zuletzt geöffnet"
+
+msgid "New from shapes"
+msgstr "Neu aus Formen"
+
+msgid "Paste SVG code…"
+msgstr "SVG-Code einfügen…"
+
+msgid "Save as JEF…"
+msgstr "Als JEF speichern…"
+
+msgid "Export as"
+msgstr "Exportieren als"
+
+msgid "Send to USB…"
+msgstr "Auf USB senden…"
+
+msgid "Split into hoopings…"
+msgstr "Auf mehrere Rahmungen aufteilen…"
+
+msgid "Test stitch-out…"
+msgstr "Probestickerei…"
+
+msgid "Save picture…"
+msgstr "Bild speichern…"
+
+msgid "Save worksheet (PDF)…"
+msgstr "Arbeitsblatt speichern (PDF)…"
+
+msgid "Quit"
+msgstr "Beenden"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Undo"
+msgstr "Rückgängig"
+
+msgid "Redo"
+msgstr "Wiederholen"
+
+msgid "Settings…"
+msgstr "Einstellungen…"
+
+msgid "Select all shapes"
+msgstr "Alle Formen auswählen"
+
+msgid "Deselect"
+msgstr "Auswahl aufheben"
+
+msgid "Duplicate"
+msgstr "Duplizieren"
+
+msgid "Hide"
+msgstr "Verbergen"
+
+msgid "Show all shapes"
+msgstr "Alle Formen zeigen"
+
+msgid "Whole hoop"
+msgstr "Ganzer Rahmen"
+
+msgid "Zoom to design"
+msgstr "Auf Motiv zoomen"
+
+msgid "Template grid"
+msgstr "Vorlagenraster"
+
+msgid "Size label"
+msgstr "Maßangabe"
+
+msgid "Thread density"
+msgstr "Garndichte"
+
+msgid "Translations are .po files in ~/.local/share/hoop/locale"
+msgstr "Übersetzungen sind .po-Dateien in ~/.local/share/hoop/locale"
+
+msgid "Thread charts and my threads…"
+msgstr "Garnkarten und meine Garne…"
+
+msgid "Objects and colors panel"
+msgstr "Objekt- und Farbleiste"
+
+msgid "Properties panel"
+msgstr "Eigenschaftenleiste"
+
+msgid "Viewer"
+msgstr "Betrachter"
+
+msgid "Lettering"
+msgstr "Schrift"
+
+msgid "Artwork"
+msgstr "Grafik"
+
+msgid "Rotate right"
+msgstr "Nach rechts drehen"
+
+msgid "Rotate left"
+msgstr "Nach links drehen"
+
+msgid "Mirror"
+msgstr "Spiegeln"
+
+msgid "Center in hoop"
+msgstr "Im Rahmen zentrieren"
+
+msgid "{name}  {w} × {h} mm"
+msgstr "{name}  {w} × {h} mm"
+
+msgid "Pin to hoop"
+msgstr "An den Rahmen heften"
+
+msgid "Clear pinned parts"
+msgstr "Angeheftete Teile entfernen"
+
+msgid "Insert"
+msgstr "Einfügen"
+
+msgid "Bring to front"
+msgstr "Ganz nach vorn"
+
+msgid "Bring forward"
+msgstr "Eine Ebene nach vorn"
+
+msgid "Send backward"
+msgstr "Eine Ebene nach hinten"
+
+msgid "Send to back"
+msgstr "Ganz nach hinten"
+
+msgid "Align"
+msgstr "Ausrichten"
+
+msgid "Left edges"
+msgstr "Linke Kanten"
+
+msgid "Centers across"
+msgstr "Waagerechte Mitten"
+
+msgid "Right edges"
+msgstr "Rechte Kanten"
+
+msgid "Top edges"
+msgstr "Obere Kanten"
+
+msgid "Middles up and down"
+msgstr "Senkrechte Mitten"
+
+msgid "Bottom edges"
+msgstr "Untere Kanten"
+
+msgid "Help"
+msgstr "Hilfe"
+
+msgid "Keyboard shortcuts"
+msgstr "Tastenkürzel"
+
+msgid "About Hoop"
+msgstr "Über Hoop"
+
+msgid "Hoop {v0} · embroidery for the Janome MC9900"
+msgstr "Hoop {v0} · Stickerei für die Janome MC9900"
+
+msgid "Open"
+msgstr "Öffnen"
+
+msgid "Open a design, SVG or picture · O"
+msgstr "Ein Motiv, eine SVG-Datei oder ein Bild öffnen · O"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Save as JEF · Ctrl+S"
+msgstr "Als JEF speichern · Strg+S"
+
+msgid "To USB"
+msgstr "Auf USB"
+
+msgid "Write the JEF straight to the machine's USB stick · Ctrl+U"
+msgstr "Die JEF direkt auf den USB-Stick der Maschine schreiben · Strg+U"
+
+msgid "Test"
+msgstr "Probe"
+
+msgid "Sew a small part first, or the calibration sheet · Ctrl+T"
+msgstr "Erst einen kleinen Teil oder den Kalibrierbogen sticken · Strg+T"
+
+msgid "Turn left"
+msgstr "Links drehen"
+
+msgid "Rotate 90° left · Shift+R"
+msgstr "Um 90° nach links drehen · Shift+R"
+
+msgid "Turn right"
+msgstr "Rechts drehen"
+
+msgid "Rotate 90° right · R"
+msgstr "Um 90° nach rechts drehen · R"
+
+msgid "Pin"
+msgstr "Anheften"
+
+msgid "Keep this design on the hoop and start the next part · P"
+msgstr "Dieses Motiv im Rahmen behalten und den nächsten Teil beginnen · P"
+
+msgid "Show the whole hoop · F"
+msgstr "Ganzen Rahmen zeigen · F"
+
+msgid "Zoom to the design · D"
+msgstr "Auf das Motiv zoomen · D"
+
+msgid "Pause"
+msgstr "Pause"
+
+msgid "Play"
+msgstr "Abspielen"
+
+msgid "Play the stitch-out · Space"
+msgstr "Das Sticken abspielen · Leertaste"
+
+msgid "X {v0:>6.1}  Y {v1:>6.1} mm"
+msgstr "X {v0:>6.1}  Y {v1:>6.1} mm"
+
+msgid "{v0:.1} × {v1:.1} mm"
+msgstr "{v0:.1} × {v1:.1} mm"
+
+msgid "{n} stitch"
+msgid_plural "{n} stitches"
+msgstr[0] "{n} Stich"
+msgstr[1] "{n} Stiche"
+
+msgid "{n} color"
+msgid_plural "{n} colors"
+msgstr[0] "{n} Farbe"
+msgstr[1] "{n} Farben"
+
+msgid "fits"
+msgstr "passt"
+
+msgid "doesn't fit"
+msgstr "passt nicht"
+
+msgid "{count} pinned"
+msgstr "{count} angeheftet"
+
+msgid "Check: ready to sew"
+msgstr "Prüfung: bereit zum Sticken"
+
+msgid "Check: {n} warning"
+msgid_plural "Check: {n} warnings"
+msgstr[0] "Prüfung: {n} Warnung"
+msgstr[1] "Prüfung: {n} Warnungen"
+
+msgid "Check: {n} problem"
+msgid_plural "Check: {n} problems"
+msgstr[0] "Prüfung: {n} Problem"
+msgstr[1] "Prüfung: {n} Probleme"
+
+msgid "Open the Check list"
+msgstr "Prüfliste öffnen"
+
+msgid "Drag a shape to move it · drag empty fabric to pick several · Shift+drag moves the design · middle-drag pans"
+msgstr "Eine Form ziehen, um sie zu bewegen · über leeren Stoff ziehen, um mehrere zu wählen · Shift+Ziehen bewegt das Motiv · mittlere Taste verschiebt die Ansicht"
+
+msgid "Drag the design to move it · scroll to zoom · ? for keys"
+msgstr "Das Motiv ziehen, um es zu bewegen · scrollen zum Zoomen · ? für Tasten"
+
+msgid "Edit stitches"
+msgstr "Stiche bearbeiten"
+
+msgid "Right-click a thread in Colors to move or delete it."
+msgstr "Rechtsklick auf ein Garn unter Farben, um es zu verschieben oder zu löschen."
+
+msgid "Merge repeated threads"
+msgstr "Wiederholte Garne zusammenfassen"
+
+msgid "Join neighbouring threads of the same color, saving thread changes"
+msgstr "Benachbarte Garne derselben Farbe verbinden und Garnwechsel sparen"
+
+msgid "Remove tiny stitches"
+msgstr "Winzige Stiche entfernen"
+
+msgid "Drop stitches under 0.3 mm, which can break the thread"
+msgstr "Stiche unter 0,3 mm entfernen, die das Garn reißen lassen können"
+
+msgid "Pick stitches on the hoop"
+msgstr "Stiche im Rahmen auswählen"
+
+msgid "Click a needle point to pick it, drag to move it, Del to delete it, arrows to nudge; Esc to stop"
+msgstr "Einen Einstichpunkt anklicken, um ihn zu wählen, ziehen zum Verschieben, Entf zum Löschen, Pfeiltasten zum Rücken; Esc beendet"
+
+msgid "Pick the stitch at the playback position"
+msgstr "Den Stich an der Abspielposition wählen"
+
+msgid "Stitch {n} picked"
+msgstr "Stich {n} ausgewählt"
+
+msgid "Saved {n} thread change"
+msgid_plural "Saved {n} thread changes"
+msgstr[0] "{n} Garnwechsel gespart"
+msgstr[1] "{n} Garnwechsel gespart"
+
+msgid "Removed {n} tiny stitch"
+msgid_plural "Removed {n} tiny stitches"
+msgstr[0] "{n} winziger Stich entfernt"
+msgstr[1] "{n} winzige Stiche entfernt"
+
+msgid "Sew earlier"
+msgstr "Früher sticken"
+
+msgid "Sew later"
+msgstr "Später sticken"
+
+msgid "Delete this thread's stitches"
+msgstr "Die Stiche dieses Garns löschen"
+
+msgid "Click a needle point to pick it · drag to move · Del deletes · Esc stops"
+msgstr "Einstichpunkt anklicken zum Wählen · ziehen zum Verschieben · Entf löscht · Esc beendet"
+
+msgid "Team names"
+msgstr "Teamnamen"
+
+msgid "One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts."
+msgstr "Ein Name pro Zeile. Jeder wird mit den Schrifteinstellungen oben gestickt und als eigene JEF gespeichert – bereit für einen Stapel Shirts."
+
+msgid "ANNA\nBEN\nCHARLOTTE"
+msgstr "ANNA\nBEN\nCHARLOTTE"
+
+msgid "Save {n} design…"
+msgid_plural "Save {n} designs…"
+msgstr[0] "{n} Motiv speichern…"
+msgstr[1] "{n} Motive speichern…"
+
+msgid "Pick a folder; each name becomes NAME.jef"
+msgstr "Einen Ordner wählen; jeder Name wird zu NAME.jef"
+
+msgid "Folder for the team names"
+msgstr "Ordner für die Teamnamen"
+
+msgid "Saved {n} design to {folder}"
+msgid_plural "Saved {n} designs to {folder}"
+msgstr[0] "{n} Motiv in {folder} gespeichert"
+msgstr[1] "{n} Motive in {folder} gespeichert"
+
+msgid "Couldn't save: {list}"
+msgstr "Konnte nicht speichern: {list}"
+
+msgid "No artwork open."
+msgstr "Keine Grafik geöffnet."
+
+msgid "Saved designs don't record which stitches are edges."
+msgstr "Gespeicherte Motive merken sich nicht, welche Stiche Kanten sind."
+
+msgid "Open or make a design first, or sew the calibration sheet below."
+msgstr "Erst ein Motiv öffnen oder erstellen oder den Kalibrierbogen unten sticken."
+
+msgid "Draw a box on the hoop around the part to test."
+msgstr "Ein Rechteck im Rahmen um den zu prüfenden Teil ziehen."
+
+msgid "No stitches lie fully inside the box. Draw it over the part to test."
+msgstr "Kein Stich liegt ganz im Rechteck. Zieh es über den zu prüfenden Teil."
+
+msgid "Test sheet loaded. Save or send it, sew it, then enter what looked best."
+msgstr "Testbogen geladen. Speichern oder senden, sticken und dann eintragen, was am besten aussah."
+
+msgid "Test sheet results cleared. General rules apply again."
+msgstr "Testbogen-Ergebnisse gelöscht. Es gelten wieder allgemeine Regeln."
+
+msgid "Drag a box around the part to test · Esc to stop"
+msgstr "Ein Rechteck um den zu prüfenden Teil ziehen · Esc beendet"
+
+msgid "Test area  {v0:.0} × {v1:.0} mm"
+msgstr "Probebereich  {v0:.0} × {v1:.0} mm"
+
+msgid "Small samples of each stitch type on one 123 × 111 mm sheet for the SQ14b hoop: about 10 minutes in 2 threads. Sew it once for each kind of fabric."
+msgstr "Kleine Proben jeder Stichart auf einem 123 × 111 mm großen Bogen für den Rahmen SQ14b: etwa 10 Minuten mit 2 Garnen. Einmal für jede Stoffart sticken."
+
+msgid "Open test sheet"
+msgstr "Testbogen öffnen"
+
+msgid "After sewing it: what looked best?"
+msgstr "Nach dem Sticken: Was sah am besten aus?"
+
+msgid "Samples run left to right on each row. Hoop uses your answers for new designs and in the Check list."
+msgstr "Die Proben laufen in jeder Reihe von links nach rechts. Hoop nutzt deine Antworten für neue Motive und in der Prüfliste."
+
+msgid "Not sewn"
+msgstr "Nicht gestickt"
+
+msgid "Use these results"
+msgstr "Diese Ergebnisse nutzen"
+
+msgid "Forget results"
+msgstr "Ergebnisse vergessen"
+
+msgid "satin up to {v0}"
+msgstr "Satin bis {v0}"
+
+msgid "fills from {v0}"
+msgstr "Füllungen ab {v0}"
+
+msgid "rows {mm}"
+msgstr "Reihen {mm}"
+
+msgid "pull {mm}"
+msgstr "Zugausgleich {mm}"
+
+msgid "letters from {v0}"
+msgstr "Buchstaben ab {v0}"
+
+msgid "In use: {v0}."
+msgstr "Verwendet: {v0}."
+
+msgid "{stitches} stitches · {n} thread · about {minutes:.0} min"
+msgid_plural "{stitches} stitches · {n} threads · about {minutes:.0} min"
+msgstr[0] "{stitches} Stiche · {n} Garn · etwa {minutes:.0} min"
+msgstr[1] "{stitches} Stiche · {n} Garne · etwa {minutes:.0} min"
+
+msgid "{v0:.1} × {v1:.1} mm, centered on the hoop when sent"
+msgstr "{v0:.1} × {v1:.1} mm, beim Senden im Rahmen zentriert"
+
+msgid "Test stitch-out"
+msgstr "Probestickerei"
+
+msgid "Test a part"
+msgstr "Einen Teil testen"
+
+msgid "Calibration sheet"
+msgstr "Kalibrierbogen"
+
+msgid "Sew a small part on scrap before the whole design, with the same fabric, stabilizer and thread."
+msgstr "Erst einen kleinen Teil auf einem Rest sticken, mit demselben Stoff, Vlies und Garn."
+
+msgid "1  What to sew"
+msgstr "1  Was gestickt wird"
+
+msgid "Whole design"
+msgstr "Ganzes Motiv"
+
+msgid "Part of it"
+msgstr "Ein Teil davon"
+
+msgid "Drag on the hoop…"
+msgstr "Im Rahmen ziehen…"
+
+msgid "Draw again"
+msgstr "Neu zeichnen"
+
+msgid "Draw on hoop"
+msgstr "Im Rahmen zeichnen"
+
+msgid "Drag a box on the hoop"
+msgstr "Ein Rechteck im Rahmen ziehen"
+
+msgid "Around picked shapes"
+msgstr "Um die gewählten Formen"
+
+msgid "Pick shapes on the hoop or in Objects first"
+msgstr "Erst Formen im Rahmen oder unter Objekte wählen"
+
+msgid "Box {v0:.0} × {v1:.0} mm. "
+msgstr "Rechteck {v0:.0} × {v1:.0} mm. "
+
+msgid "{what}Box a tight corner, the smallest letters or any detail you're unsure of. Only stitches fully inside are sewn; cut runs get tie stitches."
+msgstr "{what}Umrahme eine enge Ecke, die kleinsten Buchstaben oder jedes Detail, bei dem du unsicher bist. Nur Stiche, die ganz innen liegen, werden gestickt; geschnittene Läufe bekommen Vernähstiche."
+
+msgid "Outlines only, no fills"
+msgstr "Nur Konturen, keine Füllungen"
+
+msgid "Saved files don't record which stitches are edges. Make the design in Lettering or Artwork to test outlines."
+msgstr "Gespeicherte Dateien merken sich nicht, welche Stiche Kanten sind. Erstelle das Motiv unter Schrift oder Grafik, um Konturen zu testen."
+
+msgid "Edges where the fills go: checks shape, size and placement in a fraction of the time."
+msgstr "Kanten dort, wo die Füllungen hinkommen: prüft Form, Größe und Lage in einem Bruchteil der Zeit."
+
+msgid "Outlines need a design made in Lettering or Artwork."
+msgstr "Konturen brauchen ein Motiv aus Schrift oder Grafik."
+
+msgid "2  Sew it"
+msgstr "2  Sticken"
+
+msgid "Show the full design"
+msgstr "Ganzes Motiv zeigen"
+
+msgid "That's the whole design. Pick a part or outlines above for a shorter test."
+msgstr "Das ist das ganze Motiv. Wähle oben einen Teil oder Konturen für eine kürzere Probe."
+
+msgid "Save test…"
+msgstr "Probe speichern…"
+
+msgid "Save test as JEF"
+msgstr "Probe als JEF speichern"
+
+msgid "Janome JEF"
+msgstr "Janome JEF"
+
+msgid "{n} is ready."
+msgstr "{n} ist bereit."
+
+msgid "Thread charts"
+msgstr "Garnkarten"
+
+msgid "Thread lists use"
+msgstr "Garnlisten verwenden"
+
+msgid "The machine file keeps Janome thread numbers. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."
+msgstr "Die Maschinendatei behält die Janome-Garnnummern. Farbenliste, kopierte Listen und Arbeitsblätter nennen das nächste Garn dieser Karte und bevorzugen Garne aus Meine Garne."
+
+msgid "Get more charts"
+msgstr "Weitere Karten holen"
+
+msgid "Downloaded from the Ink/Stitch project (GPL) into ~/.local/share/hoop/threads. Charts in Inkscape's palettes folder show up too."
+msgstr "Aus dem Ink/Stitch-Projekt (GPL) nach ~/.local/share/hoop/threads geladen. Karten aus dem Paletten-Ordner von Inkscape erscheinen ebenfalls."
+
+msgid "Update"
+msgstr "Aktualisieren"
+
+msgid "Get"
+msgstr "Holen"
+
+msgid "Downloading…"
+msgstr "Wird geladen…"
+
+msgid "My threads · {v0} ticked"
+msgstr "Meine Garne · {v0} angehakt"
+
+msgid "Only mine"
+msgstr "Nur meine"
+
+msgid "None"
+msgstr "Keine"
+
+msgid "Find by name or number"
+msgstr "Nach Name oder Nummer suchen"
+
+msgid "{code} {name} · click to mark as mine"
+msgstr "{code} {name} · anklicken, um es als meins zu markieren"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Drag across the shape in the direction the stitches should run · Esc to stop"
+msgstr "Quer über die Form in die Richtung ziehen, in die die Stiche laufen sollen · Esc beendet"
+
+msgid "Click where the needle should start this shape · Esc to stop"
+msgstr "Klicke dorthin, wo die Nadel diese Form beginnen soll · Esc beendet"
+
+msgid "Stitching"
+msgstr "Sticken"
+
+msgid "Add stitch angle"
+msgstr "Stichwinkel hinzufügen"
+
+msgid "Drag a line across the shape; its fill rows follow it. Several lines split the fill into parts."
+msgstr "Eine Linie über die Form ziehen; die Füllreihen folgen ihr. Mehrere Linien teilen die Füllung in Teile."
+
+msgid "Clear"
+msgstr "Leeren"
+
+msgid "{n} angle line"
+msgid_plural "{n} angle lines"
+msgstr[0] "{n} Winkellinie"
+msgstr[1] "{n} Winkellinien"
+
+msgid "Set start point"
+msgstr "Startpunkt setzen"
+
+msgid "Where the needle comes in, to save a jump or hide the tie-in"
+msgstr "Wo die Nadel einsticht – um einen Sprung zu sparen oder das Vernähen zu verstecken"
+
+msgid "Name or text"
+msgstr "Name oder Text"
+
+msgid "Monogram"
+msgstr "Monogramm"
+
+msgid "Round badge"
+msgstr "Rundes Abzeichen"
+
+msgid "Key fob (in the hoop)"
+msgstr "Schlüsselanhänger (im Rahmen)"
+
+msgid "Coaster (in the hoop)"
+msgstr "Untersetzer (im Rahmen)"
+
+msgid "Lace ornament"
+msgstr "Spitzen-Ornament"
+
+msgid "Logo or picture"
+msgstr "Logo oder Bild"
+
+msgid "Shape from the library"
+msgstr "Form aus der Bibliothek"
+
+msgid "Lettering in satin columns, for towels, bags and shirts"
+msgstr "Schrift in Satinsäulen, für Handtücher, Taschen und Shirts"
+
+msgid "Three initials, the middle one larger"
+msgstr "Drei Initialen, die mittlere größer"
+
+msgid "Text round a circle with a stitched background and border"
+msgstr "Text um einen Kreis mit gesticktem Hintergrund und Rand"
+
+msgid "An appliqué tag with a key-ring eyelet, finished on both sides"
+msgstr "Ein Applikationsanhänger mit Öse für den Schlüsselring, beidseitig fertig"
+
+msgid "A round appliqué coaster backed with fabric"
+msgstr "Ein runder Applikationsuntersetzer mit Stoffrückseite"
+
+msgid "Free-standing lace on water-soluble stabilizer"
+msgstr "Freistehende Spitze auf wasserlöslichem Vlies"
+
+msgid "An SVG or a picture turned into stitches"
+msgstr "Eine SVG-Datei oder ein Bild, in Stiche verwandelt"
+
+msgid "A ready-made shape: heart, star, animal, sport…"
+msgstr "Eine fertige Form: Herz, Stern, Tier, Sport…"
+
+msgid "Anna"
+msgstr "Anna"
+
+msgid "AMB"
+msgstr "AMB"
+
+msgid "BREMEN\nGERMANY"
+msgstr "BREMEN\nDEUTSCHLAND"
+
+msgid "MILA"
+msgstr "MILA"
+
+msgid "Home"
+msgstr "Zuhause"
+
+msgid "Noel"
+msgstr "Noel"
+
+msgid "New project"
+msgstr "Neues Projekt"
+
+msgid "Step {k} of {n}"
+msgstr "Schritt {k} von {n}"
+
+msgid "What would you like to make?"
+msgstr "Was möchtest du machen?"
+
+msgid "What will you sew on?"
+msgstr "Worauf stickst du?"
+
+msgid "Lace is sewn on two layers of water-soluble stabilizer, whatever the fabric choice."
+msgstr "Spitze wird auf zwei Lagen wasserlöslichem Vlies gestickt, egal welcher Stoff gewählt ist."
+
+msgid "Pick the logo or picture"
+msgstr "Logo oder Bild wählen"
+
+msgid "Pick a shape"
+msgstr "Eine Form wählen"
+
+msgid "Choose a file…"
+msgstr "Datei wählen…"
+
+msgid "Your initials"
+msgstr "Deine Initialen"
+
+msgid "Your text"
+msgstr "Dein Text"
+
+msgid "Line 1 goes round the top, line 2 round the bottom."
+msgstr "Zeile 1 läuft oben um den Kreis, Zeile 2 unten."
+
+msgid "One or more lines."
+msgstr "Eine oder mehrere Zeilen."
+
+msgid "How big?"
+msgstr "Wie groß?"
+
+msgid "Letter height"
+msgstr "Buchstabenhöhe"
+
+msgid "Width"
+msgstr "Breite"
+
+msgid "Letters under 8 mm are sewn as narrow satin; use a thin (60 wt) thread if you have one."
+msgstr "Buchstaben unter 8 mm werden als schmaler Satin gestickt; nimm dünnes Garn (60er), wenn du hast."
+
+msgid "Thread colors"
+msgstr "Garnfarben"
+
+msgid "Border"
+msgstr "Rand"
+
+msgid "Artwork keeps its own colors; change them later in the Threads tab."
+msgstr "Grafiken behalten ihre eigenen Farben; ändere sie später im Reiter Garne."
+
+msgid "Ready"
+msgstr "Fertig"
+
+msgid "Your design is on the hoop. Check it, then:"
+msgstr "Dein Motiv ist im Rahmen. Prüfe es, dann:"
+
+msgid "Hoop tear-away or no-show mesh stabilizer."
+msgstr "Reißvlies oder No-Show-Mesh einspannen."
+
+msgid "At each stop, do what the thread name says: lay the front fabric, trim, tape backing under the hoop."
+msgstr "Bei jedem Halt tun, was der Garnname sagt: Oberstoff auflegen, zurückschneiden, Rückseitenstoff unter den Rahmen kleben."
+
+msgid "Cut round the border, close to the satin; for a fob, punch the eyelet."
+msgstr "Am Rand entlang ausschneiden, dicht am Satin; beim Anhänger die Öse ausstanzen."
+
+msgid "Hoop two layers of water-soluble stabilizer."
+msgstr "Zwei Lagen wasserlösliches Vlies einspannen."
+
+msgid "Sew, cut away the extra stabilizer and rinse the rest out."
+msgstr "Sticken, überschüssiges Vlies abschneiden und den Rest auswaschen."
+
+msgid "Save worksheet…"
+msgstr "Arbeitsblatt speichern…"
+
+msgid "Create"
+msgstr "Erstellen"
+
+msgid "Next"
+msgstr "Weiter"
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "Natural linen"
+msgstr "Naturleinen"
+
+msgid "White cotton"
+msgstr "Weiße Baumwolle"
+
+msgid "Heather gray"
+msgstr "Grau meliert"
+
+msgid "Denim"
+msgstr "Denim"
+
+msgid "Navy"
+msgstr "Marine"
+
+msgid "Black"
+msgstr "Schwarz"
+
+msgid "Brick red"
+msgstr "Ziegelrot"
+
+msgid "Sage"
+msgstr "Salbei"
+
+msgid "Real time"
+msgstr "Echtzeit"
+
+msgid "O"
+msgstr ""
+
+msgid "Open a file"
+msgstr "Eine Datei öffnen"
+
+msgid "Viewer / lettering / artwork"
+msgstr "Betrachter / Schrift / Grafik"
+
+msgid "Ctrl+S"
+msgstr "Strg+S"
+
+msgid "Save as JEF"
+msgstr "Als JEF speichern"
+
+msgid "Ctrl+U"
+msgstr "Strg+U"
+
+msgid "Send to the USB stick for the machine"
+msgstr "An den USB-Stick der Maschine senden"
+
+msgid "Ctrl+T"
+msgstr "Strg+T"
+
+msgid "Test stitch-out: sew a small part, or the calibration sheet"
+msgstr "Probestickerei: einen kleinen Teil oder den Kalibrierbogen sticken"
+
+msgid "Ctrl+Shift+S"
+msgstr "Strg+Shift+S"
+
+msgid "Save a picture of the preview"
+msgstr "Ein Bild der Vorschau speichern"
+
+msgid "Ctrl+P"
+msgstr "Strg+P"
+
+msgid "Save a worksheet PDF with an actual-size template"
+msgstr "Ein Arbeitsblatt-PDF mit Vorlage in Originalgröße speichern"
+
+msgid "Ctrl+,"
+msgstr "Strg+,"
+
+msgid "Settings: language, folders, machine, threads"
+msgstr "Einstellungen: Sprache, Ordner, Maschine, Garne"
+
+msgid "N"
+msgstr ""
+
+msgid "New project wizard"
+msgstr "Assistent für ein neues Projekt"
+
+msgid "Ctrl+V"
+msgstr "Strg+V"
+
+msgid "Paste SVG code as artwork"
+msgstr "SVG-Code als Grafik einfügen"
+
+msgid "Space"
+msgstr "Leertaste"
+
+msgid "Play or pause the stitch-out"
+msgstr "Sticken abspielen oder anhalten"
+
+msgid "Home / End"
+msgstr "Pos1 / Ende"
+
+msgid "Back to the first stitch / show everything"
+msgstr "Zurück zum ersten Stich / alles zeigen"
+
+msgid "Previous / next thread"
+msgstr "Vorheriges / nächstes Garn"
+
+msgid "Step one stitch back / forward"
+msgstr "Einen Stich zurück / vor"
+
+msgid "Arrows"
+msgstr "Pfeiltasten"
+
+msgid "Move the design 1 mm (Shift: 10 mm)"
+msgstr "Das Motiv 1 mm verschieben (Shift: 10 mm)"
+
+msgid "R / Shift+R"
+msgstr ""
+
+msgid "Rotate 90° right / left"
+msgstr "Um 90° nach rechts / links drehen"
+
+msgid "M"
+msgstr ""
+
+msgid "P"
+msgstr ""
+
+msgid "Pin the design to the hoop to combine it with the next"
+msgstr "Das Motiv an den Rahmen heften, um es mit dem nächsten zu kombinieren"
+
+msgid "C"
+msgstr ""
+
+msgid "Center in the hoop"
+msgstr "Im Rahmen zentrieren"
+
+msgid "Pick a hoop"
+msgstr "Einen Rahmen wählen"
+
+msgid "Show the whole hoop / zoom to the design"
+msgstr "Ganzen Rahmen zeigen / auf das Motiv zoomen"
+
+msgid "Grid / jump stitches / thread texture"
+msgstr "Raster / Sprungstiche / Garnstruktur"
+
+msgid "H"
+msgstr ""
+
+msgid "Thread density view (from the Check list)"
+msgstr "Garndichte-Ansicht (aus der Prüfliste)"
+
+msgid "Click shape"
+msgstr "Form anklicken"
+
+msgid "Artwork: select a shape to move, resize or recolor it"
+msgstr "Grafik: eine Form wählen, um sie zu verschieben, zu skalieren oder umzufärben"
+
+msgid "Arrows · [ / ]"
+msgstr "Pfeiltasten · [ / ]"
+
+msgid "Selected shape: move it / send it down or up"
+msgstr "Gewählte Form: verschieben / eine Ebene tiefer oder höher"
+
+msgid "Ctrl+D · Del · Esc"
+msgstr "Strg+D · Entf · Esc"
+
+msgid "Selected shape: duplicate / delete / deselect"
+msgstr "Gewählte Form: duplizieren / löschen / abwählen"
+
+msgid "Ctrl+Z / Ctrl+Shift+Z"
+msgstr "Strg+Z / Strg+Shift+Z"
+
+msgid "Undo / redo any change"
+msgstr "Jede Änderung rückgängig machen / wiederholen"
+
+msgid "Show these shortcuts"
+msgstr "Diese Tastenkürzel zeigen"
+
+msgid "Q"
+msgstr ""
+
+msgid "Couldn't open {name}: {e}."
+msgstr "{name} ließ sich nicht öffnen: {e}."
+
+msgid "{name} — Hoop"
+msgstr "{name} — Hoop"
+
+msgid "Open an embroidery design"
+msgstr "Ein Stickmotiv öffnen"
+
+msgid "JEF"
+msgstr ""
+
+msgid "DST"
+msgstr ""
+
+msgid "EXP"
+msgstr ""
+
+msgid "PES"
+msgstr ""
+
+msgid "PEC"
+msgstr ""
+
+msgid "SVG"
+msgstr ""
+
+msgid "PNG"
+msgstr ""
+
+msgid "JPG"
+msgstr ""
+
+msgid "JPEG"
+msgstr ""
+
+msgid "Undone"
+msgstr "Rückgängig gemacht"
+
+msgid "Redone"
+msgstr "Wiederholt"
+
+msgid "{format} · {v1:.1} × {v2:.1} mm"
+msgstr "{format} · {v1:.1} × {v2:.1} mm"
+
+msgid "Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop."
+msgstr "Öffne eine JEF-, DST-, EXP-, PES- oder PEC-Datei oder zieh sie auf den Rahmen."
+
+msgid "Recent"
+msgstr "Zuletzt"
+
+msgid "Fits the {v0}"
+msgstr "Passt in den {v0}"
+
+msgid "Closest edge is {m:.1} mm away."
+msgstr "Die nächste Kante ist {m:.1} mm entfernt."
+
+msgid "{over_w:.1} mm too wide"
+msgstr "{over_w:.1} mm zu breit"
+
+msgid "{over_h:.1} mm too tall"
+msgstr "{over_h:.1} mm zu hoch"
+
+msgid " Rotate it 90° (R) and it fits."
+msgstr " Um 90° drehen (R), dann passt es."
+
+msgid " Pick a bigger hoop."
+msgstr " Einen größeren Rahmen wählen."
+
+msgid "Doesn't fit this hoop"
+msgstr "Passt nicht in diesen Rahmen"
+
+msgid "Off the sewing area"
+msgstr "Außerhalb des Stickfelds"
+
+msgid "Sticks out {by:.1} mm on the {side}. Press C to center."
+msgstr "Ragt {by:.1} mm heraus ({side}). C drücken zum Zentrieren."
+
+msgid "Rotate 90°"
+msgstr "Um 90° drehen"
+
+msgid "Use {hoop}"
+msgstr "{hoop} verwenden"
+
+msgid "Shrink to fit"
+msgstr "Passend verkleinern"
+
+msgid "Grow to fill hoop"
+msgstr "Auf den Rahmen vergrößern"
+
+msgid "Combine"
+msgstr "Kombinieren"
+
+msgid "Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file."
+msgstr "Dieses Motiv an den Rahmen heften, dann den nächsten Teil erstellen oder öffnen, etwa einen Namen unter einem Logo. Als JEF speichern speichert alles als eine Datei."
+
+msgid "{v0:.0} × {v1:.0} mm"
+msgstr "{v0:.0} × {v1:.0} mm"
+
+msgid "P · keep this design where it is and start the next part"
+msgstr "P · dieses Motiv an seinem Platz lassen und den nächsten Teil beginnen"
+
+msgid "Clear pinned"
+msgstr "Angeheftete entfernen"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Left 90°"
+msgstr "Links 90°"
+
+msgid "Rotate left · Shift+R"
+msgstr "Nach links drehen · Shift+R"
+
+msgid "Right 90°"
+msgstr "Rechts 90°"
+
+msgid "Rotate right · R"
+msgstr "Nach rechts drehen · R"
+
+msgid "{v0}°{v1}  ·  X {v2}  Y {v3} mm"
+msgstr "{v0}°{v1}  ·  X {v2}  Y {v3} mm"
+
+msgid "Stitch-out"
+msgstr "Sticken"
+
+msgid "Replay"
+msgstr "Neu abspielen"
+
+msgid "All {total} stitches"
+msgstr "Alle {total} Stiche"
+
+msgid "{shown} / {total} · thread {thread}"
+msgstr "{shown} / {total} · Garn {thread}"
+
+msgid "≈ {mins} min + {n} change"
+msgid_plural "≈ {mins} min + {n} changes"
+msgstr[0] "≈ {mins} min + {n} Wechsel"
+msgstr[1] "≈ {mins} min + {n} Wechsel"
+
+msgid "≈ {mins} min"
+msgstr "≈ {mins} min"
+
+msgid "Stitches"
+msgstr "Stiche"
+
+msgid "{v0} · {trims} trims"
+msgstr "{v0} · {trims} Schnitte"
+
+msgid "Sewing time"
+msgstr "Stickzeit"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "A PDF with the thread sequence and an actual-size template · Ctrl+P"
+msgstr "Ein PDF mit Garnreihenfolge und Vorlage in Originalgröße · Strg+P"
+
+msgid "Other fabric color"
+msgstr "Andere Stofffarbe"
+
+msgid "Thread texture  T"
+msgstr "Garnstruktur  T"
+
+msgid "Template grid, 10 mm  G"
+msgstr "Vorlagenraster, 10 mm  G"
+
+msgid "Jump stitches  J"
+msgstr "Sprungstiche  J"
+
+msgid "A PNG of the hoop preview, to share · Ctrl+Shift+S"
+msgstr "Ein PNG der Rahmenvorschau zum Teilen · Strg+Shift+S"
+
+msgid "Press ? for every shortcut."
+msgstr "Drücke ? für alle Tastenkürzel."
+
+msgid "Thread colors of the design show here, in sewing order."
+msgstr "Hier erscheinen die Garnfarben des Motivs in Stickreihenfolge."
+
+msgid "{code}{v0:.1} m · {stitches} st"
+msgstr "{code}{v0:.1} m · {stitches} St."
+
+msgid "{stitches} stitches, about {v1:.1} m of thread"
+msgstr "{stitches} Stiche, etwa {v1:.1} m Garn"
+
+msgid "Click to show this thread on its own"
+msgstr "Anklicken, um nur dieses Garn zu zeigen"
+
+msgid "{format} files don't store thread colors. Click a swatch to set the real ones."
+msgstr "{format}-Dateien speichern keine Garnfarben. Klicke auf ein Farbfeld, um die echten einzustellen."
+
+msgid "Copy thread list"
+msgstr "Garnliste kopieren"
+
+msgid "For shopping or notes"
+msgstr "Zum Einkaufen oder für Notizen"
+
+msgid "{v0}. {name} {code}{alt} — {stitches} stitches, about {v4:.1} m"
+msgstr "{v0}. {name} {code}{alt} — {stitches} Stiche, etwa {v4:.1} m"
+
+msgid "Thread list copied"
+msgstr "Garnliste kopiert"
+
+msgid "Thread chart: {chart_name}…"
+msgstr "Garnkarte: {chart_name}…"
+
+msgid "Pick a brand and mark the threads you have"
+msgstr "Eine Marke wählen und die vorhandenen Garne markieren"
+
+msgid "Press O to open a design, N for the new project wizard, or drop a file here"
+msgstr "O öffnet ein Motiv, N den Assistenten für ein neues Projekt – oder eine Datei hierher ziehen"
+
+msgid "Lettering — Hoop"
+msgstr "Schrift — Hoop"
+
+msgid "Search fonts"
+msgstr "Schriften suchen"
+
+msgid "Looking for installed fonts…"
+msgstr "Installierte Schriften werden gesucht…"
+
+msgid "Quick styles"
+msgstr "Schnellstile"
+
+msgid "Height"
+msgstr "Höhe"
+
+msgid "Height of capital letters"
+msgstr "Höhe der Großbuchstaben"
+
+msgid "Spacing"
+msgstr "Abstand"
+
+msgid "Extra space between letters"
+msgstr "Zusätzlicher Abstand zwischen Buchstaben"
+
+msgid "Layout"
+msgstr "Anordnung"
+
+msgid "Arc"
+msgstr "Bogen"
+
+msgid "Bend the text into an arch (positive) or a smile (negative). 360° closes the circle."
+msgstr "Den Text zu einem Bogen (positiv) oder Lächeln (negativ) biegen. 360° schließt den Kreis."
+
+msgid "Circle"
+msgstr "Kreis"
+
+msgid "Inside diameter of the ring of text"
+msgstr "Innendurchmesser des Textrings"
+
+msgid "Line 1 runs round the top, line 2 round the bottom, more lines sit in the middle."
+msgstr "Zeile 1 läuft oben, Zeile 2 unten herum, weitere Zeilen stehen in der Mitte."
+
+msgid "Type three initials; the middle one is sewn larger."
+msgstr "Drei Initialen eingeben; die mittlere wird größer gestickt."
+
+msgid "Amount"
+msgstr "Stärke"
+
+msgid "How far the envelope bends the text"
+msgstr "Wie stark die Hülle den Text biegt"
+
+msgid "Slant"
+msgstr "Neigung"
+
+msgid "Lean the letters like italics"
+msgstr "Die Buchstaben kursiv neigen"
+
+msgid "Lines"
+msgstr "Zeilen"
+
+msgid "Distance between lines, in letter heights"
+msgstr "Zeilenabstand in Buchstabenhöhen"
+
+msgid "Edge"
+msgstr "Rand"
+
+msgid "A background shape for badges and name patches"
+msgstr "Eine Hintergrundform für Abzeichen und Namensschilder"
+
+msgid "Off"
+msgstr "Aus"
+
+msgid "Box"
+msgstr "Rechteck"
+
+msgid "Round"
+msgstr "Abgerundet"
+
+msgid "Oval"
+msgstr "Oval"
+
+msgid "Fob"
+msgstr "Anhänger"
+
+msgid "Padding"
+msgstr "Innenabstand"
+
+msgid "Space between the text and the patch edge"
+msgstr "Abstand zwischen Text und Rand des Aufnähers"
+
+msgid "Satin border width; 0 for none"
+msgstr "Breite des Satinrands; 0 für keinen"
+
+msgid "Background"
+msgstr "Hintergrund"
+
+msgid "Filled"
+msgstr "Gefüllt"
+
+msgid "Stitched solid"
+msgstr "Voll gestickt"
+
+msgid "Light"
+msgstr "Leicht"
+
+msgid "An open fill, the fabric shows through"
+msgstr "Eine offene Füllung, der Stoff scheint durch"
+
+msgid "Lace"
+msgstr "Spitze"
+
+msgid "A double lattice for free-standing lace on water-soluble stabilizer"
+msgstr "Ein doppeltes Gitter für freistehende Spitze auf wasserlöslichem Vlies"
+
+msgid "No background stitching"
+msgstr "Kein gestickter Hintergrund"
+
+msgid "A piece of fabric sewn on: placement line, stop, tack-down, stop, then the cover stitch"
+msgstr "Ein aufgenähtes Stoffstück: Platzierungslinie, Halt, Heftstich, Halt, dann der Deckstich"
+
+msgid "The machine stops twice: lay the fabric over the placement line, then trim it close to the tack-down."
+msgstr "Die Maschine hält zweimal: Stoff über die Platzierungslinie legen, dann dicht am Heftstich zurückschneiden."
+
+msgid "Guide"
+msgstr "Führung"
+
+msgid "Fill"
+msgstr "Füllung"
+
+msgid "In the hoop: finish the back"
+msgstr "Im Rahmen: Rückseite fertigstellen"
+
+msgid "Before the border the machine stops: tape backing fabric under the hoop; a tack-down holds it and the border covers both edges. Cut out round the border."
+msgstr "Vor dem Rand hält die Maschine: Rückseitenstoff unter den Rahmen kleben; ein Heftstich hält ihn und der Rand deckt beide Kanten. Am Rand entlang ausschneiden."
+
+msgid "Lace: hoop two layers of water-soluble stabilizer, sew, then rinse the stabilizer away."
+msgstr "Spitze: zwei Lagen wasserlösliches Vlies einspannen, sticken, dann das Vlies auswaschen."
+
+msgid "Reset lettering"
+msgstr "Schrift zurücksetzen"
+
+msgid "Back to the default style, keeping the font"
+msgstr "Zurück zum Standardstil, die Schriftart bleibt"
+
+msgid "Pasted SVG"
+msgstr "Eingefügtes SVG"
+
+msgid "{n} shape"
+msgid_plural "{n} shapes"
+msgstr[0] "{n} Form"
+msgstr[1] "{n} Formen"
+
+msgid "Skipped {n} embedded picture. Only vector shapes can be stitched."
+msgid_plural "Skipped {n} embedded pictures. Only vector shapes can be stitched."
+msgstr[0] "{n} eingebettetes Bild übersprungen. Nur Vektorformen lassen sich sticken."
+msgstr[1] "{n} eingebettete Bilder übersprungen. Nur Vektorformen lassen sich sticken."
+
+msgid "Open an SVG or a picture (PNG, JPG), or drop one on the hoop. Logos and clip art with flat colors work best."
+msgstr "Öffne eine SVG-Datei oder ein Bild (PNG, JPG) oder zieh es auf den Rahmen. Logos und Cliparts mit flachen Farben eignen sich am besten."
+
+msgid "Start from shapes"
+msgstr "Mit Formen beginnen"
+
+msgid "An empty design to build from hearts, stars, circles and more"
+msgstr "Ein leeres Motiv zum Bauen aus Herzen, Sternen, Kreisen und mehr"
+
+msgid "Paste SVG"
+msgstr "SVG einfügen"
+
+msgid "Paste SVG code, or press Ctrl+V anywhere with SVG code copied"
+msgstr "SVG-Code einfügen oder irgendwo Strg+V drücken, wenn SVG-Code kopiert ist"
+
+msgid "Save JEF…"
+msgstr "JEF speichern…"
+
+msgid "Use this SVG"
+msgstr "Dieses SVG verwenden"
+
+msgid "Trace"
+msgstr "Nachzeichnen"
+
+msgid "Pictures are reduced to a few flat colors and outlined. Logos and clip art work best; photos don't stitch well."
+msgstr "Bilder werden auf wenige flache Farben reduziert und umrissen. Logos und Cliparts eignen sich am besten; Fotos lassen sich schlecht sticken."
+
+msgid "How many colors the picture is reduced to, background included"
+msgstr "Auf wie viele Farben das Bild reduziert wird, Hintergrund inklusive"
+
+msgid "Smooth"
+msgstr "Glätten"
+
+msgid "Rounds off pixel corners in the outlines"
+msgstr "Rundet Pixelecken in den Umrissen ab"
+
+msgid "Clean"
+msgstr "Säubern"
+
+msgid "Removes specks and noise before tracing. Raise it for scanned or blurry pictures."
+msgstr "Entfernt Flecken und Rauschen vor dem Nachzeichnen. Für gescannte oder unscharfe Bilder erhöhen."
+
+msgid "Leave out the background color"
+msgstr "Hintergrundfarbe weglassen"
+
+msgid "Height {v0:.1} mm"
+msgstr "Höhe {v0:.1} mm"
+
+msgid "Fit hoop"
+msgstr "In Rahmen einpassen"
+
+msgid "Largest size that fits the hoop with 5 mm to spare"
+msgstr "Größte Größe, die mit 5 mm Luft in den Rahmen passt"
+
+msgid "Stitch these colors"
+msgstr "Diese Farben sticken"
+
+msgid "Auto"
+msgstr "Auto"
+
+msgid "Use the Fill card below"
+msgstr "Die Karte Füllung unten verwenden"
+
+msgid "Only the shape's outline"
+msgstr "Nur die Kontur der Form"
+
+msgid "Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover"
+msgstr "Ein Stoffstück aufnähen: Platzierungslinie, Halt, Heftstich, Halt, Satin-Deckstich"
+
+msgid "{n} thread in use"
+msgid_plural "{n} threads in use"
+msgstr[0] "{n} Garn in Gebrauch"
+msgstr[1] "{n} Garne in Gebrauch"
+
+msgid "Merge the closest threads until {n} are left"
+msgstr "Die ähnlichsten Garne zusammenfassen, bis {n} übrig sind"
+
+msgid "Reduce to"
+msgstr "Reduzieren auf"
+
+msgid "Group by thread (fewer thread changes)"
+msgstr "Nach Garn gruppieren (weniger Garnwechsel)"
+
+msgid "Off: stitch in the drawing's own order, changing thread whenever it changes"
+msgstr "Aus: in der Reihenfolge der Zeichnung sticken und das Garn wechseln, wann immer es sich ändert"
+
+msgid "Clean-up"
+msgstr "Aufräumen"
+
+msgid "Cut hidden parts"
+msgstr "Verdeckte Teile ausschneiden"
+
+msgid "Leave areas covered by shapes on top unstitched, so layers don't pile up"
+msgstr "Bereiche unter darüberliegenden Formen nicht sticken, damit sich keine Lagen türmen"
+
+msgid "Detail"
+msgstr "Detail"
+
+msgid "Shapes smaller than this many mm across are left out"
+msgstr "Formen kleiner als so viele mm werden weggelassen"
+
+msgid "Outline on fills"
+msgstr "Kontur auf Füllungen"
+
+msgid "How strokes in the SVG are stitched"
+msgstr "Wie Linien aus der SVG-Datei gestickt werden"
+
+msgid "Satin"
+msgstr "Satin"
+
+msgid "Run"
+msgstr "Geradstich"
+
+msgid "Triple"
+msgstr "Dreifach"
+
+msgid "Min"
+msgstr "Min"
+
+msgid "Thinnest satin line; thinner strokes are widened to this"
+msgstr "Dünnste Satinlinie; dünnere Linien werden darauf verbreitert"
+
+msgid "Reset settings"
+msgstr "Einstellungen zurücksetzen"
+
+msgid "Also puts every shape back as it was in the drawing"
+msgstr "Setzt außerdem jede Form auf den Stand der Zeichnung zurück"
+
+msgid "Pinned to the hoop. Make or open the next part."
+msgstr "An den Rahmen geheftet. Den nächsten Teil erstellen oder öffnen."
+
+msgid "Export"
+msgstr "Exportieren"
+
+msgid "{name} {w} × {h} mm"
+msgstr "{name} {w} × {h} mm"
+
+msgid "Save worksheet"
+msgstr "Arbeitsblatt speichern"
+
+msgid "Send to USB"
+msgstr "Auf USB senden"
+
+msgid "Plug in the USB stick for the machine."
+msgstr "Den USB-Stick der Maschine einstecken."
+
+msgid "Hoop looks for removable FAT, exFAT and NTFS drives."
+msgstr "Hoop sucht nach Wechseldatenträgern mit FAT, exFAT und NTFS."
+
+msgid "will be opened"
+msgstr "wird geöffnet"
+
+msgid "Saved into EMB/Embf, where the MC9900 looks for designs. Up to 8 letters shows best on the machine."
+msgstr "Wird in EMB/Embf gespeichert, wo die MC9900 nach Motiven sucht. Bis zu 8 Buchstaben werden an der Maschine am besten angezeigt."
+
+msgid "Working…"
+msgstr "Arbeite…"
+
+msgid "Send"
+msgstr "Senden"
+
+msgid "Look again"
+msgstr "Erneut suchen"
+
+msgid "Close the drive so it can be pulled out safely"
+msgstr "Das Laufwerk schließen, damit es sicher abgezogen werden kann"
+
+msgid "Sent {file} to {v1}"
+msgstr "{file} an {v1} gesendet"
+
+msgid "{v0} is ejected. You can pull it out."
+msgstr "{v0} ist ausgeworfen. Du kannst ihn abziehen."
+
+msgid "Save picture"
+msgstr "Bild speichern"
+
+msgid "PNG picture"
+msgstr "PNG-Bild"
+
+msgid "Couldn't make the picture: {e}."
+msgstr "Das Bild ließ sich nicht erstellen: {e}."
+
+msgid "Saved {path}"
+msgstr "{path} gespeichert"
+
+msgid "Couldn't save {v0}: {e}."
+msgstr "{v0} ließ sich nicht speichern: {e}."
+
+msgid "Shortcuts"
+msgstr "Tastenkürzel"
+
+msgid "Drag the design to move it, drag the fabric to pan, scroll to zoom, double-click to show the whole hoop."
+msgstr "Das Motiv ziehen, um es zu bewegen, den Stoff ziehen, um die Ansicht zu verschieben, scrollen zum Zoomen, Doppelklick zeigt den ganzen Rahmen."
+
+msgid "Press ? or Esc to close."
+msgstr "? oder Esc zum Schließen."
+
+msgid "The picture couldn't be taken. Try again."
+msgstr "Das Bild konnte nicht aufgenommen werden. Bitte erneut versuchen."
+
+msgid "{w} × {h} mm"
+msgstr "{w} × {h} mm"
+
+msgid "Too small"
+msgstr "Zu klein"
+
+msgid "Hoop {name} · key {v1}"
+msgstr "Rahmen {name} · Taste {v1}"
+
+msgid "Column"
+msgstr "Säule"
+
+msgid "Tatami"
+msgstr "Tatami"
+
+msgid "Contour"
+msgstr "Kontur"
+
+msgid "Wave"
+msgstr "Welle"
+
+msgid "Zigzag"
+msgstr "Zickzack"
+
+msgid "Hatch"
+msgstr "Gitter"
+
+msgid "Gradient"
+msgstr "Verlauf"
+
+msgid "Stipple"
+msgstr "Mäander"
+
+msgid "Cross-stitch"
+msgstr "Kreuzstich"
+
+msgid "Thread"
+msgstr "Garn"
+
+msgid "Woven"
+msgstr "Gewebe"
+
+msgid "Woven cotton: tear-away stabilizer is enough."
+msgstr "Baumwollgewebe: Reißvlies genügt."
+
+msgid "Knit"
+msgstr "Strick"
+
+msgid "T-shirts and knits: use cut-away stabilizer and hoop without stretching."
+msgstr "T-Shirts und Strickware: Schneidevlies nehmen und ohne Dehnen einspannen."
+
+msgid "Denim and canvas: tear-away stabilizer, a size 90 needle."
+msgstr "Denim und Canvas: Reißvlies, Nadelstärke 90."
+
+msgid "Towel"
+msgstr "Frottee"
+
+msgid "Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile."
+msgstr "Frottee und Fleece: wasserlösliche Folie obenauf legen, damit die Stiche nicht im Flor versinken."
+
+msgid "Fleece"
+msgstr "Fleece"
+
+msgid "Fleece: cut-away stabilizer below, water-soluble topping on top."
+msgstr "Fleece: Schneidevlies darunter, wasserlösliche Folie obenauf."
+
+msgid "Felt"
+msgstr "Filz"
+
+msgid "Felt barely moves; light underlay keeps it flat. No stabilizer needed for patches."
+msgstr "Filz bewegt sich kaum; leichte Unterlage hält ihn flach. Für Aufnäher braucht es kein Vlies."
+
+msgid "Leather"
+msgstr "Leder"
+
+msgid "Leather and vinyl: every hole stays, so fewer, longer stitches and a leather needle."
+msgstr "Leder und Vinyl: Jedes Loch bleibt, also weniger, längere Stiche und eine Ledernadel."
+
+msgid "Silk"
+msgstr "Seide"
+
+msgid "Silk and thin fabric: a fine needle, light fills and a soft tear-away or wash-away."
+msgstr "Seide und dünne Stoffe: eine feine Nadel, leichte Füllungen und ein weiches Reiß- oder Auswaschvlies."
+
+msgid "Cap"
+msgstr "Kappe"
+
+msgid "Caps and stiff canvas: sew from the center out; zigzag underlay helps on the curve."
+msgstr "Kappen und steifer Canvas: von der Mitte nach außen sticken; Zickzack-Unterlage hilft auf der Wölbung."
+
+msgid "Sets row spacing, pull, stitch length and underlay for the material."
+msgstr "Stellt Reihenabstand, Zugausgleich, Stichlänge und Unterlage für das Material ein."
+
+msgid "Angle"
+msgstr "Winkel"
+
+msgid "Direction of the stitch rows"
+msgstr "Richtung der Stichreihen"
+
+msgid "Rows"
+msgstr "Reihen"
+
+msgid "Distance between fill rows"
+msgstr "Abstand zwischen den Füllreihen"
+
+msgid "Distance between the meandering lines"
+msgstr "Abstand zwischen den Mäanderlinien"
+
+msgid "Cell"
+msgstr "Zelle"
+
+msgid "Size of each cross"
+msgstr "Größe jedes Kreuzes"
+
+msgid "Fade"
+msgstr "Auslauf"
+
+msgid "Row spacing at the light end"
+msgstr "Reihenabstand am hellen Ende"
+
+msgid "Swing"
+msgstr "Ausschlag"
+
+msgid "How far the rows swing up and down"
+msgstr "Wie weit die Reihen auf und ab schwingen"
+
+msgid "Length"
+msgstr "Länge"
+
+msgid "Distance from one wave to the next"
+msgstr "Abstand von einer Welle zur nächsten"
+
+msgid "Satin looks best on strokes under 8 mm wide."
+msgstr "Satin sieht auf Linien unter 8 mm Breite am besten aus."
+
+msgid "The pattern shows in how the thread catches the light."
+msgstr "Das Muster zeigt sich darin, wie das Garn das Licht fängt."
+
+msgid "Open fills let the fabric show through. Nice on felt and canvas."
+msgstr "Offene Füllungen lassen den Stoff durchscheinen. Schön auf Filz und Canvas."
+
+msgid "Rows thin out across each shape. Turn the angle to set the direction."
+msgstr "Die Reihen werden über die Form hinweg lichter. Den Winkel drehen, um die Richtung festzulegen."
+
+msgid "Rings follow the outline inward. Lovely on round shapes and bold letters."
+msgstr "Ringe folgen der Kontur nach innen. Schön auf runden Formen und fetten Buchstaben."
+
+msgid "Satin that turns with the shape, like hand-digitized lettering and borders. For parts up to about 7 mm wide."
+msgstr "Satin, der sich mit der Form dreht, wie von Hand digitalisierte Schrift und Ränder. Für Teile bis etwa 7 mm Breite."
+
+msgid "A meandering line that never crosses itself. Quilting look; pair it with a triple outline."
+msgstr "Eine mäandernde Linie, die sich nie kreuzt. Quilt-Optik; mit einer Dreifachkontur kombinieren."
+
+msgid "Hand-stitched look: an X in every cell. Use bigger cells on thick fabric."
+msgstr "Handstick-Optik: ein X in jeder Zelle. Auf dickem Stoff größere Zellen nehmen."
+
+msgid "Narrow parts become turning satin columns, wide parts tatami at this angle."
+msgstr "Schmale Teile werden zu sich drehenden Satinsäulen, breite zu Tatami in diesem Winkel."
+
+msgid "More settings"
+msgstr "Weitere Einstellungen"
+
+msgid "Distance between fill rows. Smaller is denser."
+msgstr "Abstand zwischen den Füllreihen. Kleiner ist dichter."
+
+msgid "Stitch length along each row"
+msgstr "Stichlänge entlang jeder Reihe"
+
+msgid "Pull"
+msgstr "Zugausgleich"
+
+msgid "Stitches pull the fabric in, so rows are made this much longer at each end"
+msgstr "Stiche ziehen den Stoff zusammen, daher werden die Reihen an jedem Ende um so viel länger"
+
+msgid "Underlay"
+msgstr "Unterlage"
+
+msgid "Stitches under the fill that hold the fabric and lift the top stitches"
+msgstr "Stiche unter der Füllung, die den Stoff halten und die Oberstiche anheben"
+
+msgid "Blanket"
+msgstr "Langettenstich"
+
+msgid "Scallop"
+msgstr "Bogenkante"
+
+msgid "The classic appliqué edge: prongs reach into the shape."
+msgstr "Die klassische Applikationskante: Zacken reichen in die Form hinein."
+
+msgid "Line"
+msgstr "Linie"
+
+msgid "Square"
+msgstr "Quadrat"
+
+msgid "Heart"
+msgstr "Herz"
+
+msgid "Star"
+msgstr "Stern"
+
+msgid "Shield"
+msgstr "Schild"
+
+msgid "Banner"
+msgstr "Banner"
+
+msgid "{name} isn't an SVG Hoop can read: {e}."
+msgstr "{name} ist kein SVG, das Hoop lesen kann: {e}."
+
+msgid "{name} has no shapes to stitch.{v0}"
+msgstr "{name} hat keine Formen zum Sticken.{v0}"
+
+msgid "No shapes yet. Add one from Shapes, or open an SVG or a picture."
+msgstr "Noch keine Formen. Füge eine aus Formen hinzu oder öffne eine SVG-Datei oder ein Bild."
+
+msgid "Every color is turned off or too small to stitch."
+msgstr "Jede Farbe ist ausgeschaltet oder zu klein zum Sticken."
+
+msgid "Placement line"
+msgstr "Platzierungslinie"
+
+msgid "Tack-down (lay the fabric first)"
+msgstr "Heftstich (erst den Stoff auflegen)"
+
+msgid "Nothing to stitch with these settings. Turn on a fill or a line style."
+msgstr "Mit diesen Einstellungen gibt es nichts zu sticken. Eine Füllung oder einen Linienstil einschalten."
+
+msgid "Rows {mm:.2} mm"
+msgstr "Reihen {mm:.2} mm"
+
+msgid "Stitch as outline"
+msgstr "Als Kontur sticken"
+
+msgid "Use {style}"
+msgstr "{style} verwenden"
+
+msgid "Change"
+msgstr "Ändern"
+
+msgid "Make {mm:.0} mm tall"
+msgstr "{mm:.0} mm hoch machen"
+
+msgid "Edge {mm:.1} mm"
+msgstr "Rand {mm:.1} mm"
+
+msgid "Far too much thread in one place"
+msgstr "Viel zu viel Garn an einer Stelle"
+
+msgid "{n} spot ({area} mm² in all) carries about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see it."
+msgid_plural "{n} spots ({area} mm² in all) carry about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see them."
+msgstr[0] "{n} Stelle ({area} mm² insgesamt) trägt etwa vier Lagen Stiche oder mehr. Die Nadel kann brechen und der Stoff sich kräuseln. Die Dichteansicht (H) einschalten, um sie zu sehen."
+msgstr[1] "{n} Stellen ({area} mm² insgesamt) tragen etwa vier Lagen Stiche oder mehr. Die Nadel kann brechen und der Stoff sich kräuseln. Die Dichteansicht (H) einschalten, um sie zu sehen."
+
+msgid "Dense areas"
+msgstr "Dichte Bereiche"
+
+msgid "About {area} mm² carry two layers of stitching or more, often fills under fills. It sews, but stiffly."
+msgstr "Etwa {area} mm² tragen zwei Lagen Stiche oder mehr, oft Füllungen unter Füllungen. Es näht sich, aber steif."
+
+msgid "Needle hits pile up"
+msgstr "Einstiche häufen sich"
+
+msgid "In {n} spot the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric."
+msgid_plural "In {n} spots the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric."
+msgstr[0] "An {n} Stelle sticht die Nadel über {hits:.0}-mal pro mm² ein, meist in engen Kurven oder Satinspitzen. Das kann den Stoff zerschneiden."
+msgstr[1] "An {n} Stellen sticht die Nadel über {hits:.0}-mal pro mm² ein, meist in engen Kurven oder Satinspitzen. Das kann den Stoff zerschneiden."
+
+msgid "{v0} very short stitches"
+msgstr "{v0} sehr kurze Stiche"
+
+msgid "Stitches under 0.3 mm land in their own holes and can break the thread."
+msgstr "Stiche unter 0,3 mm treffen ihr eigenes Loch und können das Garn reißen lassen."
+
+msgid "{v0} stitches longer than 8 mm"
+msgstr "{v0} Stiche länger als 8 mm"
+
+msgid "Long loose stitches snag on wear and washing. Use tatami there or a narrower satin."
+msgstr "Lange lose Stiche bleiben beim Tragen und Waschen hängen. Dort Tatami oder einen schmaleren Satin nehmen."
+
+msgid "{n} jump"
+msgid_plural "{n} jumps"
+msgstr[0] "{n} Sprung"
+msgstr[1] "{n} Sprünge"
+
+msgid "Every jump is a thread to trim. Fewer, larger shapes sew faster."
+msgstr "Jeder Sprung ist ein Faden zum Abschneiden. Weniger, größere Formen sticken schneller."
+
+msgid " Your test sheet: {what} {v} mm."
+msgstr " Dein Testbogen: {what} {v} mm."
+
+msgid "{name} is too thin to fill"
+msgstr "{name} ist zu dünn zum Füllen"
+
+msgid "About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{v0}"
+msgstr "Etwa {t:.1} mm breit. So kurze Füllreihen sind nicht zu sehen; als Kontur sticken oder größer machen.{v0}"
+
+msgid "{name} is narrow for {fill}"
+msgstr "{name} ist schmal für {fill}"
+
+msgid "About {t:.1} mm wide. A satin column gives narrow parts a clean, shiny finish that turns with the shape."
+msgstr "Etwa {t:.1} mm breit. Eine Satinsäule gibt schmalen Teilen ein sauberes, glänzendes Finish, das sich mit der Form dreht."
+
+msgid "{name} is wide for satin"
+msgstr "{name} ist breit für Satin"
+
+msgid "About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{v0}"
+msgstr "Etwa {t:.0} mm breit. Breiter Satin wird in lange, lose Stiche geteilt; Tatami hält besser.{v0}"
+
+msgid "{name} is a wide satin line"
+msgstr "{name} ist eine breite Satinlinie"
+
+msgid "{w:.1} mm wide; wide satin snags.{v0}"
+msgstr "{w:.1} mm breit; breiter Satin bleibt hängen.{v0}"
+
+msgid "{v0} more shapes too thin to fill"
+msgstr "{v0} weitere Formen zu dünn zum Füllen"
+
+msgid "Raise Detail in Style → Clean-up to leave out slivers, or stitch them as outlines."
+msgstr "Detail unter Stil → Aufräumen erhöhen, um Splitter wegzulassen, oder sie als Konturen sticken."
+
+msgid "Letters under {smallest} mm"
+msgstr "Buchstaben unter {smallest} mm"
+
+msgid "Your test sheet showed {mm} mm as the smallest letters that read well."
+msgstr "Dein Testbogen hat {mm} mm als kleinste gut lesbare Buchstaben gezeigt."
+
+msgid "Small letters lose their shape in thread. 6 mm is about the smallest that reads well."
+msgstr "Kleine Buchstaben verlieren im Garn ihre Form. Etwa 6 mm ist die kleinste gut lesbare Größe."
+
+msgid "Small letters with a row fill"
+msgstr "Kleine Buchstaben mit Reihenfüllung"
+
+msgid "Below 10 mm the letter strokes are narrow; satin columns keep them crisp."
+msgstr "Unter 10 mm sind die Buchstabenstriche schmal; Satinsäulen halten sie scharf."
+
+msgid "Wide satin edge"
+msgstr "Breiter Satinrand"
+
+msgid "Your test sheet showed satin up to {mm} mm lying tight."
+msgstr "Dein Testbogen hat Satin bis {mm} mm straff liegend gezeigt."
+
+msgid "Satin edges over 5 mm get loose and snag."
+msgstr "Satinränder über 5 mm werden locker und bleiben hängen."
+
+msgid "Fill rows very close"
+msgstr "Füllreihen sehr eng"
+
+msgid "Rows under 0.3 mm pile thread on thread. 0.4–0.45 mm covers well."
+msgstr "Reihen unter 0,3 mm legen Garn auf Garn. 0,4–0,45 mm deckt gut."
+
+msgid "JEF · Janome"
+msgstr "JEF · Janome"
+
+msgid "DST · Tajima, most machines"
+msgstr "DST · Tajima, die meisten Maschinen"
+
+msgid "EXP · Melco, Bernina"
+msgstr "EXP · Melco, Bernina"
+
+msgid "PES · Brother, Baby Lock"
+msgstr "PES · Brother, Baby Lock"
+
+msgid "PEC · Brother"
+msgstr "PEC · Brother"
+
+msgid "VP3 · Pfaff, Husqvarna Viking"
+msgstr "VP3 · Pfaff, Husqvarna Viking"
+
+msgid "Tajima DST"
+msgstr ""
+
+msgid "Melco EXP"
+msgstr ""
+
+msgid "Brother PES"
+msgstr ""
+
+msgid "Brother PEC"
+msgstr ""
+
+msgid "Pfaff VP3"
+msgstr ""
+
+msgid "This isn't a file Hoop can read. It opens JEF, DST, EXP, PES and PEC."
+msgstr "Diese Datei kann Hoop nicht lesen. Es öffnet JEF, DST, EXP, PES und PEC."
+
+msgid "The file ends early, so it may be damaged."
+msgstr "Die Datei endet zu früh und ist vielleicht beschädigt."
+
+msgid "The file has no stitches in it."
+msgstr "Die Datei enthält keine Stiche."
+
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Optional"
+msgstr "Optional"
+
+msgid "Free arm"
+msgstr "Freiarm"
+
+msgid "Edge run"
+msgstr "Kantenlauf"
+
+msgid "Double zigzag"
+msgstr "Doppelter Zickzack"
+
+msgid "Straight"
+msgstr "Gerade"
+
+msgid "Circle badge"
+msgstr "Rundes Abzeichen"
+
+msgid "Arch"
+msgstr "Bogen oben"
+
+msgid "Valley"
+msgstr "Tal"
+
+msgid "Bulge"
+msgstr "Wölbung"
+
+msgid "Pinch"
+msgstr "Einschnürung"
+
+msgid "Bridge"
+msgstr "Brücke"
+
+msgid "Grow"
+msgstr "Wachsen"
+
+msgid "Hello"
+msgstr "Hallo"
+
+msgid "Couldn't read {v0}: {e}."
+msgstr "{v0} ließ sich nicht lesen: {e}."
+
+msgid "Registration marks (remove after)"
+msgstr "Passkreuze (danach entfernen)"
+
+msgid "Satin columns"
+msgstr "Satinsäulen"
+
+msgid "Widest satin that still lies flat and tight"
+msgstr "Breitester Satin, der noch flach und straff liegt"
+
+msgid "Narrow fill strips"
+msgstr "Schmale Füllstreifen"
+
+msgid "Narrowest strip that filled cleanly"
+msgstr "Schmalster Streifen, der sauber gefüllt wurde"
+
+msgid "Fill row spacing"
+msgstr "Füllreihenabstand"
+
+msgid "Most open rows that still hide the fabric"
+msgstr "Lichteste Reihen, die den Stoff noch verdecken"
+
+msgid "Edge over fill, pull compensation"
+msgstr "Rand über Füllung, Zugausgleich"
+
+msgid "Circle with no gap between fill and edge"
+msgstr "Kreis ohne Lücke zwischen Füllung und Rand"
+
+msgid "Small letters"
+msgstr "Kleine Buchstaben"
+
+msgid "Smallest letters that read well"
+msgstr "Kleinste gut lesbare Buchstaben"
+
+msgid "Abg"
+msgstr "Äbg"
+
+msgid "Janome"
+msgstr ""
+
+msgid "No home folder."
+msgstr "Kein Home-Ordner."
+
+msgid "Couldn't run curl: {e}"
+msgstr "curl ließ sich nicht starten: {e}"
+
+msgid "Download failed: {v0}"
+msgstr "Herunterladen fehlgeschlagen: {v0}"
+
+msgid "The download wasn't a thread chart."
+msgstr "Die heruntergeladene Datei war keine Garnkarte."
+
+msgid "{name} is fully transparent, so there's nothing to trace."
+msgstr "{name} ist völlig transparent, es gibt nichts nachzuzeichnen."
+
+msgid "Couldn't find any shapes in {name}."
+msgstr "In {name} wurden keine Formen gefunden."
+
+msgid "USB drive"
+msgstr "USB-Laufwerk"
+
+msgid "Couldn't run udisksctl: {e}."
+msgstr "udisksctl ließ sich nicht starten: {e}."
+
+msgid "DESIGN"
+msgstr "MOTIV"
+
+msgid "Couldn't open the USB drive: {e}"
+msgstr "Das USB-Laufwerk ließ sich nicht öffnen: {e}"
+
+msgid "The USB drive didn't say where it was opened."
+msgstr "Das USB-Laufwerk hat nicht mitgeteilt, wo es geöffnet wurde."
+
+msgid "Couldn't make the EMB/Embf folder: {e}."
+msgstr "Der Ordner EMB/Embf ließ sich nicht anlegen: {e}."
+
+msgid "Couldn't write to the USB drive: {e}."
+msgstr "Auf das USB-Laufwerk ließ sich nicht schreiben: {e}."
+
+msgid "Couldn't close the USB drive: {e}"
+msgstr "Das USB-Laufwerk ließ sich nicht schließen: {e}"
+
+msgid "Embroidery worksheet · {date} · made with Hoop"
+msgstr "Stick-Arbeitsblatt · {date} · erstellt mit Hoop"
+
+msgid "{w:.1} × {h:.1} mm"
+msgstr "{w:.1} × {h:.1} mm"
+
+msgid "{colors} ({n} thread change)"
+msgid_plural "{colors} ({n} thread changes)"
+msgstr[0] "{colors} ({n} Garnwechsel)"
+msgstr[1] "{colors} ({n} Garnwechsel)"
+
+msgid "≈ {v0:.0} min at {spm} spm"
+msgstr "≈ {v0:.0} min bei {spm} Stichen/min"
+
+msgid "Top thread"
+msgstr "Oberfaden"
+
+msgid "≈ {m:.1} m"
+msgstr "≈ {m:.1} m"
+
+msgid "Center offset"
+msgstr "Versatz der Mitte"
+
+msgid "{v0:+.1}, {v1:+.1} mm"
+msgstr "{v0:+.1}, {v1:+.1} mm"
+
+msgid "Thread sequence"
+msgstr "Garnreihenfolge"
+
+msgid "Thread ({chart})"
+msgstr "Garn ({chart})"
+
+msgid "Code"
+msgstr "Nummer"
+
+msgid "… and {v0} more"
+msgstr "… und {v0} weitere"
+
+msgid "{name} · actual size"
+msgstr "{name} · Originalgröße"
+
+msgid "Print at 100 % (no fit to page). The bar below must measure 50 mm. Lay the sheet on the fabric and mark the center cross."
+msgstr "Mit 100 % drucken (nicht an Seite anpassen). Der Balken unten muss 50 mm messen. Das Blatt auf den Stoff legen und das Mittelkreuz markieren."
+
+msgid "50 mm"
+msgstr "50 mm"
+
+msgid "The design is larger than the page, so its edges are cut off here."
+msgstr "Das Motiv ist größer als die Seite, daher sind seine Ränder hier abgeschnitten."
+
+msgid "hoop center"
+msgstr "Rahmenmitte"
+
+msgid "Jumps"
+msgstr "Sprungstiche"
+
+msgid "User manual"
+msgstr "Benutzerhandbuch"
+
+msgid "Interface font"
+msgstr "Oberflächenschrift"
+
+msgid "Theme font"
+msgstr "Schrift des Themas"
+
+msgid "The font of the Omarchy theme, usually monospace"
+msgstr "Die Schrift des Omarchy-Themas, meist dicktengleich"

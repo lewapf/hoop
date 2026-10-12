@@ -147,10 +147,118 @@ msgstr ""
 msgid "Reload"
 msgstr ""
 
+msgid "Shapes"
+msgstr ""
+
+msgid "109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)"
+msgstr ""
+
 msgid "Find by name"
 msgstr ""
 
 msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures."
+msgstr ""
+
+msgid "User manual"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "System ({lang})"
+msgstr ""
+
+msgid "Designs folder"
+msgstr ""
+
+msgid "Change…"
+msgstr ""
+
+msgid "Machine speed"
+msgstr ""
+
+msgid "{spm} spm"
+msgstr ""
+
+msgid "Thread chart"
+msgstr ""
+
+msgid "My threads…"
+msgstr ""
+
+msgid "Satin columns up to"
+msgstr ""
+
+msgid "Auto sews parts this wide or narrower as satin columns, wider ones as tatami"
+msgstr ""
+
+msgid "Interface font"
+msgstr ""
+
+msgid "Theme font"
+msgstr ""
+
+msgid "The font of the Omarchy theme, usually monospace"
+msgstr ""
+
+msgid "Display"
+msgstr ""
+
+msgid "Fabric"
+msgstr ""
+
+msgid "Thread texture"
+msgstr ""
+
+msgid "Template grid, 10 mm"
+msgstr ""
+
+msgid "Jump stitches"
+msgstr ""
+
+msgid "Size label under the design"
+msgstr ""
+
+msgid "Test sheet"
+msgstr ""
+
+msgid "Not sewn yet, so Hoop uses general rules."
+msgstr ""
+
+msgid "Using your test sheet results."
+msgstr ""
+
+msgid "Open…"
+msgstr ""
+
+msgid "Folders"
+msgstr ""
+
+msgid "Translations folder"
+msgstr ""
+
+msgid "Put <language>.po files here to add or fix a translation"
+msgstr ""
+
+msgid "Clear picture cache"
+msgstr ""
+
+msgid "Library thumbnails are drawn again"
+msgstr ""
+
+msgid "Done"
+msgstr ""
+
+msgid "Reset all settings"
+msgstr ""
+
+msgid "Back to how Hoop started; recent files are kept"
+msgstr ""
+
+msgid "Settings are back to the start."
 msgstr ""
 
 msgid "{name} copy"
@@ -386,7 +494,7 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-msgid "Open…"
+msgid "New project…"
 msgstr ""
 
 msgid "Open recent"
@@ -431,6 +539,9 @@ msgstr ""
 msgid "Redo"
 msgstr ""
 
+msgid "Settings…"
+msgstr ""
+
 msgid "Select all shapes"
 msgstr ""
 
@@ -455,22 +566,10 @@ msgstr ""
 msgid "Template grid"
 msgstr ""
 
-msgid "Jump stitches"
-msgstr ""
-
-msgid "Thread texture"
-msgstr ""
-
 msgid "Size label"
 msgstr ""
 
 msgid "Thread density"
-msgstr ""
-
-msgid "Language"
-msgstr ""
-
-msgid "System ({lang})"
 msgstr ""
 
 msgid "Translations are .po files in ~/.local/share/hoop/locale"
@@ -768,9 +867,6 @@ msgstr ""
 msgid "Test sheet results cleared. General rules apply again."
 msgstr ""
 
-msgid "Using your test sheet results."
-msgstr ""
-
 msgid "Drag a box around the part to test · Esc to stop"
 msgstr ""
 
@@ -796,9 +892,6 @@ msgid "Use these results"
 msgstr ""
 
 msgid "Forget results"
-msgstr ""
-
-msgid "Not sewn yet, so Hoop uses general rules."
 msgstr ""
 
 msgid "satin up to {v0}"
@@ -944,9 +1037,6 @@ msgstr ""
 msgid "{code} {name} · click to mark as mine"
 msgstr ""
 
-msgid "Done"
-msgstr ""
-
 msgid "Start"
 msgstr ""
 
@@ -977,6 +1067,162 @@ msgid "Set start point"
 msgstr ""
 
 msgid "Where the needle comes in, to save a jump or hide the tie-in"
+msgstr ""
+
+msgid "Name or text"
+msgstr ""
+
+msgid "Monogram"
+msgstr ""
+
+msgid "Round badge"
+msgstr ""
+
+msgid "Key fob (in the hoop)"
+msgstr ""
+
+msgid "Coaster (in the hoop)"
+msgstr ""
+
+msgid "Lace ornament"
+msgstr ""
+
+msgid "Logo or picture"
+msgstr ""
+
+msgid "Shape from the library"
+msgstr ""
+
+msgid "Lettering in satin columns, for towels, bags and shirts"
+msgstr ""
+
+msgid "Three initials, the middle one larger"
+msgstr ""
+
+msgid "Text round a circle with a stitched background and border"
+msgstr ""
+
+msgid "An appliqué tag with a key-ring eyelet, finished on both sides"
+msgstr ""
+
+msgid "A round appliqué coaster backed with fabric"
+msgstr ""
+
+msgid "Free-standing lace on water-soluble stabilizer"
+msgstr ""
+
+msgid "An SVG or a picture turned into stitches"
+msgstr ""
+
+msgid "A ready-made shape: heart, star, animal, sport…"
+msgstr ""
+
+msgid "Anna"
+msgstr ""
+
+msgid "AMB"
+msgstr ""
+
+msgid "BREMEN\nGERMANY"
+msgstr ""
+
+msgid "MILA"
+msgstr ""
+
+msgid "Home"
+msgstr ""
+
+msgid "Noel"
+msgstr ""
+
+msgid "New project"
+msgstr ""
+
+msgid "Step {k} of {n}"
+msgstr ""
+
+msgid "What would you like to make?"
+msgstr ""
+
+msgid "What will you sew on?"
+msgstr ""
+
+msgid "Lace is sewn on two layers of water-soluble stabilizer, whatever the fabric choice."
+msgstr ""
+
+msgid "Pick the logo or picture"
+msgstr ""
+
+msgid "Pick a shape"
+msgstr ""
+
+msgid "Choose a file…"
+msgstr ""
+
+msgid "Your initials"
+msgstr ""
+
+msgid "Your text"
+msgstr ""
+
+msgid "Line 1 goes round the top, line 2 round the bottom."
+msgstr ""
+
+msgid "One or more lines."
+msgstr ""
+
+msgid "How big?"
+msgstr ""
+
+msgid "Letter height"
+msgstr ""
+
+msgid "Width"
+msgstr ""
+
+msgid "Letters under 8 mm are sewn as narrow satin; use a thin (60 wt) thread if you have one."
+msgstr ""
+
+msgid "Thread colors"
+msgstr ""
+
+msgid "Border"
+msgstr ""
+
+msgid "Artwork keeps its own colors; change them later in the Threads tab."
+msgstr ""
+
+msgid "Ready"
+msgstr ""
+
+msgid "Your design is on the hoop. Check it, then:"
+msgstr ""
+
+msgid "Hoop tear-away or no-show mesh stabilizer."
+msgstr ""
+
+msgid "At each stop, do what the thread name says: lay the front fabric, trim, tape backing under the hoop."
+msgstr ""
+
+msgid "Cut round the border, close to the satin; for a fob, punch the eyelet."
+msgstr ""
+
+msgid "Hoop two layers of water-soluble stabilizer."
+msgstr ""
+
+msgid "Sew, cut away the extra stabilizer and rinse the rest out."
+msgstr ""
+
+msgid "Save worksheet…"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Close"
 msgstr ""
 
 msgid "Natural linen"
@@ -1043,6 +1289,21 @@ msgid "Ctrl+P"
 msgstr ""
 
 msgid "Save a worksheet PDF with an actual-size template"
+msgstr ""
+
+msgid "Ctrl+,"
+msgstr ""
+
+msgid "Settings: language, folders, machine, threads"
+msgstr ""
+
+msgid "N"
+msgstr ""
+
+msgid "New project wizard"
+msgstr ""
+
+msgid "F1"
 msgstr ""
 
 msgid "Ctrl+V"
@@ -1287,6 +1548,9 @@ msgstr ""
 msgid "Stitches"
 msgstr ""
 
+msgid "Jumps"
+msgstr ""
+
 msgid "{v0} · {trims} trims"
 msgstr ""
 
@@ -1296,19 +1560,7 @@ msgstr ""
 msgid "Details"
 msgstr ""
 
-msgid "Machine speed"
-msgstr ""
-
-msgid "{spm} spm"
-msgstr ""
-
-msgid "Save worksheet…"
-msgstr ""
-
 msgid "A PDF with the thread sequence and an actual-size template · Ctrl+P"
-msgstr ""
-
-msgid "Display"
 msgstr ""
 
 msgid "Other fabric color"
@@ -1321,9 +1573,6 @@ msgid "Template grid, 10 mm  G"
 msgstr ""
 
 msgid "Jump stitches  J"
-msgstr ""
-
-msgid "Size label under the design"
 msgstr ""
 
 msgid "A PNG of the hoop preview, to share · Ctrl+Shift+S"
@@ -1365,7 +1614,7 @@ msgstr ""
 msgid "Pick a brand and mark the threads you have"
 msgstr ""
 
-msgid "Press O to open a design, or drop a file here"
+msgid "Press O to open a design, N for the new project wizard, or drop a file here"
 msgstr ""
 
 msgid "Lettering — Hoop"
@@ -1458,9 +1707,6 @@ msgstr ""
 msgid "Space between the text and the patch edge"
 msgstr ""
 
-msgid "Border"
-msgstr ""
-
 msgid "Satin border width; 0 for none"
 msgstr ""
 
@@ -1483,9 +1729,6 @@ msgid "Lace"
 msgstr ""
 
 msgid "A double lattice for free-standing lace on water-soluble stabilizer"
-msgstr ""
-
-msgid "Fabric"
 msgstr ""
 
 msgid "No background stitching"
@@ -1574,9 +1817,6 @@ msgid "Removes specks and noise before tracing. Raise it for scanned or blurry p
 msgstr ""
 
 msgid "Leave out the background color"
-msgstr ""
-
-msgid "Width"
 msgstr ""
 
 msgid "Height {v0:.1} mm"
@@ -1941,9 +2181,6 @@ msgstr ""
 msgid "Banner"
 msgstr ""
 
-msgid "Shapes"
-msgstr ""
-
 msgid "{name} isn't an SVG Hoop can read: {e}."
 msgstr ""
 
@@ -2167,9 +2404,6 @@ msgid "Bridge"
 msgstr ""
 
 msgid "Grow"
-msgstr ""
-
-msgid "Monogram"
 msgstr ""
 
 msgid "Hello"

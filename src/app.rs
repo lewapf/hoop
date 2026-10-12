@@ -13,6 +13,7 @@ mod checks;
 mod draw;
 mod hoopings;
 mod library;
+mod manual;
 mod shapes;
 mod settings;
 mod shell;
@@ -48,6 +49,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("Ctrl+P"), n!("Save a worksheet PDF with an actual-size template")),
     (n!("Ctrl+,"), n!("Settings: language, folders, machine, threads")),
     (n!("N"), n!("New project wizard")),
+    (n!("F1"), n!("User manual")),
     (n!("Ctrl+V"), n!("Paste SVG code as artwork")),
     (n!("Space"), n!("Play or pause the stitch-out")),
     (n!("Home / End"), n!("Back to the first stitch / show everything")),
@@ -273,6 +275,7 @@ pub struct HoopApp {
     pen: draw::Pen,
     settings: settings::SettingsWindow,
     wizard: wizard::Wizard,
+    manual: manual::Manual,
 }
 
 impl HoopApp {
@@ -360,6 +363,7 @@ impl HoopApp {
             pen: Default::default(),
             settings: Default::default(),
             wizard: Default::default(),
+            manual: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -373,7 +377,7 @@ impl HoopApp {
         app.restore();
         app.restore_chart();
         app.reset_history();
-        load_ui_font(&cc.egui_ctx);
+        load_ui_font(&cc.egui_ctx, app.prefs.get("ui_font") == Some("theme"));
         app.apply_theme(&cc.egui_ctx);
         if let Some(path) = file {
             app.open(&cc.egui_ctx, &path);
@@ -410,6 +414,7 @@ impl HoopApp {
             Ok("test") => self.test.open = true,
             Ok("help") => self.help = true,
             Ok("settings") => self.settings.open = true,
+            Ok("manual") => self.manual.open = true,
             Ok("wizard") => {
                 self.open_wizard();
                 if let Ok(m) = std::env::var("HOOP_WIZARD_MAKE") {
@@ -696,6 +701,9 @@ impl HoopApp {
         }
         if press(Modifiers::NONE, Key::N) || press(Modifiers::COMMAND, Key::N) {
             self.open_wizard();
+        }
+        if press(Modifiers::NONE, Key::F1) {
+            self.manual.open = !self.manual.open;
         }
         if press(Modifiers::COMMAND, Key::Comma) {
             self.settings.open = !self.settings.open;
@@ -1045,10 +1053,10 @@ impl HoopApp {
             };
             let trims = p.count(Cmd::Trim);
             let rows = [
-                ("Size", t!("{v0:.1} × {v1:.1} mm", v0 = w / 10.0, v1 = h / 10.0)),
+                (t!("Size"), t!("{v0:.1} × {v1:.1} mm", v0 = w / 10.0, v1 = h / 10.0)),
                 (t!("Stitches"), stitches.to_string()),
                 (t!("Colors"), d.blocks.len().to_string()),
-                ("Jumps", if trims > 0 { t!("{v0} · {trims} trims", v0 = p.count(Cmd::Jump), trims = trims) } else { p.count(Cmd::Jump).to_string() }),
+                (t!("Jumps"), if trims > 0 { t!("{v0} · {trims} trims", v0 = p.count(Cmd::Jump), trims = trims) } else { p.count(Cmd::Jump).to_string() }),
                 (t!("Sewing time"), time),
             ];
             let warnings = p.warnings();
@@ -2425,6 +2433,7 @@ impl eframe::App for HoopApp {
         self.hoopings_window(ctx);
         self.settings_window(ctx);
         self.wizard_window(ctx);
+        self.manual_window(ctx);
     }
 }
 
@@ -2768,7 +2777,7 @@ fn jef_picker_labeled(ui: &mut egui::Ui, id: &str, label: &str, value: &mut i32)
 }
 
 /// Uses the Omarchy monospace font for the interface, like Omarchy's own apps.
-fn load_ui_font(ctx: &egui::Context) {
+fn load_ui_font(ctx: &egui::Context, theme_font_everywhere: bool) {
     for theme in [egui::Theme::Dark, egui::Theme::Light] {
         ctx.style_mut_of(theme, |s| {
             use egui::{FontId, TextStyle};
@@ -2789,14 +2798,21 @@ fn load_ui_font(ctx: &egui::Context) {
             .filter(|o| o.status.success())
             .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
     };
-    let Some(family) = run("omarchy", &["font", "current"]) else { return };
-    let Some(file) = run("fc-match", &["-f", "%{file}", &family]) else { return };
-    let Ok(bytes) = std::fs::read(&file) else { return };
+    // IBM Plex Sans (OFL, built in) for the interface; the theme's font,
+    // usually monospace, for numbers. "ui_font = theme" uses the theme's
+    // font everywhere.
     let mut fonts = egui::FontDefinitions::default();
-    fonts.font_data.insert("omarchy".into(), std::sync::Arc::new(egui::FontData::from_owned(bytes)));
-    for fam in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
-        fonts.families.entry(fam).or_default().insert(0, "omarchy".into());
+    fonts.font_data.insert("plex".into(), std::sync::Arc::new(egui::FontData::from_static(include_bytes!("../assets/ui/IBMPlexSans-Regular.ttf"))));
+    let theme_font = run("omarchy", &["font", "current"])
+        .and_then(|family| run("fc-match", &["-f", "%{file}", &family]))
+        .and_then(|file| std::fs::read(file).ok());
+    if let Some(bytes) = theme_font {
+        fonts.font_data.insert("omarchy".into(), std::sync::Arc::new(egui::FontData::from_owned(bytes)));
+        fonts.families.entry(egui::FontFamily::Monospace).or_default().insert(0, "omarchy".into());
     }
+    let sans = !(theme_font_everywhere && fonts.font_data.contains_key("omarchy"));
+    let first = if sans { "plex" } else { "omarchy" };
+    fonts.families.entry(egui::FontFamily::Proportional).or_default().insert(0, first.into());
     ctx.set_fonts(fonts);
 }
 

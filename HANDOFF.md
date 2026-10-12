@@ -281,6 +281,22 @@ on). Run test windows with XDG_STATE_HOME pointing at a scratch folder so
 the owner's prefs aren't touched (the shell's XDG_STATE_HOME is set, so
 override it explicitly).
 
+## Later the same day
+
+- Settings window (Edit → Settings, Ctrl+,), new project wizard (N),
+  User manual (F1, `docs/MANUAL.md` built in and rendered by
+  `app/manual.rs`; keep it in step with features), 109 Phosphor shapes
+  (MIT) in `assets/shapes`, installed to /usr/share/hoop/shapes.
+- Polish and German catalogs in `locales/` (bundled in `i18n::BUNDLED`).
+  Built from the .pot with translations kept in a scratch script; when
+  adding UI text, add the PL/DE lines to the .po files too.
+- UI font is IBM Plex Sans, built in (`assets/ui`); the Omarchy font stays
+  for monospace. Settings → Interface font switches back.
+- The owner asked about Windows/macOS. Portable already: UI, formats,
+  stitching, PDF, i18n. Linux-only: usb.rs (lsblk/udisksctl), XDG/HOME
+  paths, system font scan, Omarchy theme and font, curl, xdg-open,
+  /usr/share paths. Plan agreed in principle, not started.
+
 ## Ideas queued with the owner
 
 Drag to reorder in the Shapes list, Bezier handles in point editing,

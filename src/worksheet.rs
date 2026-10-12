@@ -213,11 +213,11 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     let fx = bx.0 + bx.2 + 10.0 * MM;
     let changes = bl.len().saturating_sub(1);
     let facts = [
-        ("Size", t!("{w:.1} × {h:.1} mm", w = w, h = h)),
-        ("Hoop", sheet.hoop.to_string()),
-        ("Stitches", stitch_count.to_string()),
-        ("Colors", if changes == 0 { "1".into() } else { tn!(changes, "{colors} ({n} thread change)", "{colors} ({n} thread changes)", colors = bl.len()) }),
-        ("Jumps", jumps.to_string()),
+        (t!("Size"), t!("{w:.1} × {h:.1} mm", w = w, h = h)),
+        (t!("Hoop"), sheet.hoop.to_string()),
+        (t!("Stitches"), stitch_count.to_string()),
+        (t!("Colors"), if changes == 0 { "1".into() } else { tn!(changes, "{colors} ({n} thread change)", "{colors} ({n} thread changes)", colors = bl.len()) }),
+        (t!("Jumps"), jumps.to_string()),
         (t!("Sewing time"), t!("≈ {v0:.0} min at {spm} spm", v0 = minutes.max(1.0), spm = sheet.spm)),
         (t!("Top thread"), t!("≈ {m:.1} m", m = total_m)),
         (t!("Center offset"), t!("{v0:+.1}, {v1:+.1} mm", v0 = cx / 10.0, v1 = cy / 10.0)),

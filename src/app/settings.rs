@@ -115,6 +115,23 @@ impl HoopApp {
                 }
                 ui.end_row();
 
+                ui.label(t!("Interface font"));
+                ui.horizontal(|ui| {
+                    let theme = self.prefs.get("ui_font") == Some("theme");
+                    let mut pick = None;
+                    if ui.selectable_label(!theme, "IBM Plex Sans").clicked() {
+                        pick = Some("sans");
+                    }
+                    if ui.selectable_label(theme, t!("Theme font")).on_hover_text(t!("The font of the Omarchy theme, usually monospace")).clicked() {
+                        pick = Some("theme");
+                    }
+                    if let Some(p) = pick {
+                        self.prefs.set("ui_font", p);
+                        load_ui_font(ui.ctx(), p == "theme");
+                    }
+                });
+                ui.end_row();
+
                 // Display
                 ui.label(t!("Display"));
                 ui.vertical(|ui| {

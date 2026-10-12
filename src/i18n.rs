@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::sync::{LazyLock, RwLock};
 
 /// Catalogs built into the program: (language code, PO text).
-const BUNDLED: &[(&str, &str)] = &[];
+const BUNDLED: &[(&str, &str)] = &[("de", include_str!("../locales/de.po")), ("pl", include_str!("../locales/pl.po"))];
 
 static CATALOG: LazyLock<RwLock<HashMap<&'static str, &'static str>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 /// Plural lines: the English singular → each plural form of the language.
@@ -551,6 +551,29 @@ mod tests {
         let p = parse_po(po);
         assert_eq!(p, vec![("Open".into(), "Otwórz".into()), ("Two lines".into(), "Dwie linie".into()), ("Quote \"x\"".into(), String::new())]);
         assert_eq!(language_name("pl", po), "Polski");
+    }
+
+    #[test]
+    fn bundled_catalogs_load_and_keep_placeholders() {
+        for (code, po) in BUNDLED {
+            let entries = parse_po_entries(po);
+            assert!(entries.len() > 700, "{code}: {}", entries.len());
+            let ph = |s: &str| {
+                let mut v: Vec<String> = s.split('{').skip(1).filter_map(|p| p.split_once('}').map(|x| x.0.to_string())).collect();
+                v.sort();
+                v
+            };
+            for e in entries.iter().filter(|e| !e.plural && !e.forms[0].is_empty()) {
+                assert_eq!(ph(&e.id), ph(&e.forms[0]), "{code}: {}", e.id);
+            }
+        }
+        let pl = parse_po_entries(BUNDLED.iter().find(|b| b.0 == "pl").unwrap().1);
+        assert!(pl.iter().any(|e| e.id == "Open…" && e.forms[0] == "Otwórz…"));
+        let st = pl.iter().find(|e| e.id == "{n} stitch").unwrap();
+        assert_eq!(st.forms[plural_index("pl", 5)], "{n} ściegów");
+        let de = parse_po_entries(BUNDLED.iter().find(|b| b.0 == "de").unwrap().1);
+        let st = de.iter().find(|e| e.id == "{n} stitch").unwrap();
+        assert_eq!(st.forms[plural_index("de", 1)], "{n} Stich");
     }
 
     #[test]
