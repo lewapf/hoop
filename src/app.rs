@@ -10,6 +10,7 @@ use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
 
 mod checks;
+mod library;
 mod shapes;
 mod shell;
 mod testpiece;
@@ -249,6 +250,7 @@ pub struct HoopApp {
     want_font: Option<String>,
     /// A recent file picked in the panel, opened once the panel is drawn.
     open_later: Option<PathBuf>,
+    library: library::Library,
 }
 
 impl HoopApp {
@@ -326,6 +328,7 @@ impl HoopApp {
             prefs: Prefs::load(),
             want_font: None,
             open_later: None,
+            library: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -356,6 +359,9 @@ impl HoopApp {
                 "artwork" => self.set_mode(Mode::Artwork),
                 _ => self.set_mode(Mode::Viewer),
             }
+        }
+        if std::env::var("HOOP_DOCK").is_ok_and(|d| d == "library") {
+            self.dock = Dock::Library;
         }
         if let Ok(t) = std::env::var("HOOP_TAB") {
             if let Some(tab) = shell::tab_named(self.mode, &t) {

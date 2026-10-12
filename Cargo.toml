@@ -10,6 +10,7 @@ eframe = { version = "0.36", default-features = false, features = ["default_font
 egui = "0.36"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "bmp", "gif"] }
 png = "0.17"
+resvg = { version = "0.48", default-features = false }
 rfd = "0.17"
 ttf-parser = "0.25"
 usvg = "0.48.1"

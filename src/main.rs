@@ -6,6 +6,7 @@ mod export;
 mod formats;
 mod hoops;
 mod lettering;
+mod library;
 mod prefs;
 mod route;
 mod theme;
