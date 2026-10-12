@@ -99,7 +99,7 @@ Agents can't type the sudo password. What worked:
 
 ```sh
 cd pkgbuild && makepkg -f --noconfirm && \
-  pkexec pacman -U --noconfirm "$PWD/hoop-0.1.0-1-x86_64.pkg.tar.zst"; \
+  pkexec pacman -U --noconfirm "$PWD/hoop-0.2.0-1-x86_64.pkg.tar.zst"; \
   rm -rf src pkg *.pkg.tar.zst
 ```
 

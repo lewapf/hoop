@@ -1,10 +1,11 @@
 pkgname=hoop
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc='Preview embroidery files on Janome hoops'
 arch=('x86_64' 'aarch64')
 license=('MIT')
 depends=('gcc-libs' 'glibc' 'libglvnd' 'libxkbcommon' 'wayland' 'xdg-desktop-portal')
+optdepends=('curl: download thread charts of other brands')
 makedepends=('cargo')
 options=('!lto' '!debug')
 source=()
