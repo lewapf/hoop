@@ -59,6 +59,63 @@ remembers the answers, uses the row spacing and pull compensation for new
 designs, and the Check list judges designs by your limits instead of general
 rules.
 
+## Digitizing features
+
+These work much like the tools in digitizing programs such as Wilcom or
+Janome Artistic Digitizer.
+
+- **Satin columns that turn with the shape.** The Column fill sews a
+  shape as satin along its center lines. It splits the column at sharp
+  corners, shortens crowded stitches on the inside of curves and fills
+  any leftovers with tatami. Auto, the default for artwork, uses columns
+  for parts up to 7 mm wide and tatami for wider ones. Satin edges and
+  lines also turn smoothly round corners.
+- **Stitch types:**
+  - Fills: tatami, satin, contour, wave, zigzag, crosshatch, gradient,
+    open, stipple (a meander that never crosses itself) and cross-stitch.
+  - Edges: run, triple (bean stitch), satin, blanket (an E-stitch for
+    appliqué) and scallop.
+- **Underlay and fabrics.** The underlay can be auto, edge run, tatami,
+  zigzag or double zigzag. Fabric presets (woven, knit, denim, towel,
+  fleece, felt, leather, silk, cap) set the row spacing, pull compensation,
+  stitch length and underlay together.
+- **Stitch angles and start points.** In the Shape tab, under Stitching,
+  drag a line across a shape to set its fill direction. Several lines
+  split the fill into parts, each sewn at its own angle. A start point
+  sets where the needle enters the shape.
+- **Drawing.** In the Source tab, under Draw, put a picture faintly behind
+  the hoop and trace it with the pen:
+  - Click to place a corner.
+  - Drag to pull out a curve.
+  - Click the first point to close a filled shape.
+  - Press Enter to end a line.
+- **Lettering layouts:** straight, arc, circle badge (line 1 round the
+  top, line 2 round the bottom), arch, valley, bulge, pinch, bridge,
+  wave, grow and monogram.
+- **Team names.** Type one name per line and Hoop saves each one as its
+  own JEF.
+- **Templates.** The Key fob and Coaster quick styles make in-the-hoop
+  pieces with a stop for the backing fabric. Lace makes free-standing
+  lace on water-soluble stabilizer.
+- **Editing stitch files.** For an opened JEF, DST, EXP, PES or PEC file:
+  - Right-click a thread in Colors to sew it earlier or later, or to
+    delete it.
+  - Merge neighbouring threads of the same color, or remove stitches
+    under 0.3 mm.
+  - Pick single stitches on the hoop to move or delete them.
+- **Several hoopings.** File → Split into hoopings cuts a design that is
+  too big for the hoop into numbered parts. Each part starts with
+  registration crosses for lining up the fabric.
+- **Other machines.** File → Export as writes DST, EXP, PES, PEC and VP3.
+- **Worksheet.** Ctrl+P saves a PDF with the thread sequence, the sewing
+  time and an actual-size template for placing the design.
+- **Library.** The Library dock shows a thumbnail of every design in a
+  folder.
+- **Thread charts.** View → Thread charts names the closest thread from
+  Madeira, Isacord, Robison-Anton, Sulky and other brands. The charts are
+  downloaded from the Ink/Stitch project. Tick the spools you own under
+  My threads, and Hoop prefers those.
+
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.
 
@@ -86,6 +143,7 @@ you pick that file in the save dialog yourself.
 | `Shift+[` / `Shift+]`   | Picked shapes: to the back / front         |
 | `Ctrl+D` · `Del` · `Ctrl+H` · `Esc` | Picked shapes: duplicate / delete / hide / deselect |
 | `Ctrl+Shift+S`          | Save a picture of the preview              |
+| `Ctrl+P`                | Save a worksheet PDF with an actual-size template |
 | `Space`                 | Play or pause the stitch-out               |
 | `Home` / `End`          | Back to the first stitch / show everything |
 | `[` / `]`               | Previous / next thread                     |

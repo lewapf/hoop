@@ -1,7 +1,8 @@
 # Hoop handoff
 
 Notes for whoever picks this project up next, human or agent. Updated
-2026-10-07, at commit `26ec189` plus this file.
+2026-10-12 after the "digitizer features" session (see the section of that
+name below).
 
 ## What it is
 
@@ -29,8 +30,8 @@ in Settings, and `check::artwork`/`check::lettering` take it for their limits.
 
 - Installed as the Arch package `hoop` (`/usr/bin/hoop`, launcher entry, icon,
   MIME type `application/embroidery` for jef/dst/exp/pes/pec, set as default).
-- 52 unit tests pass (`bin/test`), 5 ignored sample exporters (see Testing;
-  `sheet_sample` writes the calibration sheet).
+- 91 unit tests pass (`bin/test`), 9 ignored sample/tool tests (see
+  Testing and the digitizer section).
 - **Nothing made by Hoop has been stitched on the machine yet** except the
   JEF format itself: the writer reproduces the header of `heart_5x5_fill.jef`,
   which was stitched successfully before Hoop existed. The owner was asked
@@ -64,6 +65,17 @@ src/testsew.rs    test pieces: crop stitches to an area (ties only where it
                   cuts a run), the calibration sheet
 src/app/testpiece.rs  Test stitch-out window, area drag on the hoop, overlay
 src/usb.rs        lsblk parsing, udisksctl mount/eject, EMB/Embf writing
+src/i18n.rs       translations: t!/tn!/n! macros, .po parsing, plural rules
+src/column.rs     turning satin columns (distance field, thinning, rays)
+src/special.rs    stipple and cross-stitch fills, blanket and scallop edges
+src/export.rs     DST, EXP, PES, PEC, VP3 writers (+ JEF via formats.rs)
+src/worksheet.rs  hand-written PDF: worksheet and actual-size template
+src/library.rs    design folder scan and thumbnails (cached, resvg)
+src/threads.rs    thread charts from .gpl files, Lab matching, My threads
+src/split.rs      multi-hooping: parts, registration crosses
+src/app/library.rs, threadwin.rs, team.rs, tools.rs, hoopings.rs,
+src/app/stitchedit.rs, draw.rs   the UI for the above
+locales/hoop.pot  every translatable line
 src/prefs.rs      ~/.local/state/hoop/prefs (key = value lines)
 src/theme.rs      Omarchy theme colors, watched from a background thread
 assets/fonts/     8 bundled OFL display fonts (Google Fonts)
@@ -216,11 +228,65 @@ chromium --headless=new --allow-file-access-from-files --user-data-dir=/tmp/x/ch
 - Thread chart (JEF/PEC colors) was written from memory; a few shades may be off.
 - Optional MC9900 hoops (SQ20b, FA10a) should be double-checked against the manual.
 
+## Digitizer features session (2026-10-12)
+
+The owner asked for Hoop to work more like Wilcom or Janome Artistic
+Digitizer, then for "all" 16 items of the plan, plus localization. All are
+in, each in its own commit:
+
+- Export DST/EXP/PES/PEC/VP3 (cross-checked by reading back with
+  pyembroidery 1.5.1 in a scratch venv; PEC writes the 4-byte start jump
+  PE-Design uses, so readers at offset 528 and 532 both work).
+- Worksheet PDF (Ctrl+P). Base fonts only: letters outside WinAnsi lose
+  their accents (`worksheet::plain`).
+- Library dock with thumbnails cached in ~/.cache/hoop/thumbs.
+- Thread charts: Janome built in; others are Ink/Stitch GPL palettes that
+  are *downloaded* with curl into ~/.local/share/hoop/threads, never
+  bundled (Hoop is MIT). JEF still stores Janome numbers.
+- Turning satin (`column.rs`, FillKind::Column; FillKind::Auto picks column
+  up to `column_max_mm`, default for artwork). Debug renders:
+  `T=text H=mm F=font FILL=column|auto|stipple|cross EDGE=satin|blanket|...
+  SHAPE=Circle|Arch|... PX=px/mm HOOP_OUT=dir cargo test --release
+  column_letters -- --ignored` writes letters.png with the outline in gray.
+  Known weak spots: diagonal junctions (M, N, W) get some tatami patches;
+  super-bold strokes fan.
+- Satin edges/lines turn round corners (`satin_rows`).
+- Lettering layouts (TextShape), team names, monogram; small letters
+  suggest Column.
+- Stipple, cross-stitch, blanket, scallop.
+- Underlay kinds and nine fabric presets.
+- Angle lines and start point per artwork shape (Shape tab → Stitching).
+- Multi-hooping (File → Split into hoopings).
+- Stitch editing for opened files (Colors right-click, Design tab card,
+  pick stitches on the hoop). Pattern edits ride in undo snapshots via an
+  Rc pointer compared by address (`stitchedit::Shared`).
+- Pen drawing over a backdrop picture (Source tab → Draw).
+- Key fob / coaster in-the-hoop patches and free-standing lace.
+- Localization: every visible line goes through `t!("English")`,
+  `tn!(n, "one", "other")` for counts, `n!()` marks const tables that are
+  translated where shown with `i18n::tr`. **New UI text must use these.**
+  Refresh the template with `cargo test --release update_pot -- --ignored`.
+  A pseudo-translation (every line in [brackets]) was used to find missed
+  lines; regenerate one from hoop.pot the same way if needed.
+
+Not exercised with a real mouse (no pointer automation here): angle-line
+drag, start-point click, pen drawing, stitch picking/dragging, Colors
+right-click menu. Engine parts behind them have unit tests.
+
+Debug environment variables for screenshots (read in `debug_start`):
+HOOP_MODE, HOOP_TAB (tab enum name), HOOP_DOCK=library|colors|check,
+HOOP_WINDOW=threads|test|help|split, HOOP_SPLIT_HOOP=index,
+HOOP_SELECT=shape index, HOOP_BACKDROP=picture path (also turns the pen
+on). Run test windows with XDG_STATE_HOME pointing at a scratch folder so
+the owner's prefs aren't touched (the shell's XDG_STATE_HOME is set, so
+override it explicitly).
+
 ## Ideas queued with the owner
 
-Monogram templates, text on both halves of a circle (badge style), drag to
-reorder in the Shapes list, per-shape fill style, Bezier handles in point editing,
-Madeira/Isacord thread charts, editable pinned parts.
+Drag to reorder in the Shapes list, Bezier handles in point editing,
+editable pinned parts, motif fills, photo stitch, a real exit point (fill
+order that ends where asked), turning fills that follow angle lines
+smoothly instead of splitting into parts.
 
 ## Owner preferences
 
