@@ -14,6 +14,7 @@ mod draw;
 mod hoopings;
 mod library;
 mod shapes;
+mod settings;
 mod shell;
 mod stitchedit;
 mod team;
@@ -44,6 +45,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("Ctrl+T"), n!("Test stitch-out: sew a small part, or the calibration sheet")),
     (n!("Ctrl+Shift+S"), n!("Save a picture of the preview")),
     (n!("Ctrl+P"), n!("Save a worksheet PDF with an actual-size template")),
+    (n!("Ctrl+,"), n!("Settings: language, folders, machine, threads")),
     (n!("Ctrl+V"), n!("Paste SVG code as artwork")),
     (n!("Space"), n!("Play or pause the stitch-out")),
     (n!("Home / End"), n!("Back to the first stitch / show everything")),
@@ -267,6 +269,7 @@ pub struct HoopApp {
     stitch_edit: stitchedit::StitchEdit,
     backdrop: Option<draw::Backdrop>,
     pen: draw::Pen,
+    settings: settings::SettingsWindow,
 }
 
 impl HoopApp {
@@ -352,6 +355,7 @@ impl HoopApp {
             stitch_edit: Default::default(),
             backdrop: None,
             pen: Default::default(),
+            settings: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -401,6 +405,7 @@ impl HoopApp {
             Ok("threads") => self.threads.open = true,
             Ok("test") => self.test.open = true,
             Ok("help") => self.help = true,
+            Ok("settings") => self.settings.open = true,
             Ok("split") => {
                 self.open_hoopings();
                 if let Some(h) = std::env::var("HOOP_SPLIT_HOOP").ok().and_then(|v| v.parse().ok()) {
@@ -678,6 +683,9 @@ impl HoopApp {
         }
         if press(Modifiers::COMMAND, Key::P) && self.design.is_some() {
             self.save_worksheet();
+        }
+        if press(Modifiers::COMMAND, Key::Comma) {
+            self.settings.open = !self.settings.open;
         }
         if press(Modifiers::COMMAND, Key::U) {
             self.open_usb();
@@ -1396,6 +1404,7 @@ impl HoopApp {
             self.play_rate = v;
         }
         self.letter = p.lettering();
+        self.letter.column_max_mm = self.column_max();
         self.tuning = p.tuning();
         self.want_font = p.get("letter.font").map(str::to_string);
         self.resolve_font();
@@ -1607,6 +1616,7 @@ impl HoopApp {
             Ok(art) => {
                 let mut s = ArtSettings::for_artwork(&art);
                 self.tuning.apply(&mut s.style);
+                s.style.column_max_mm = self.column_max();
                 self.art = Some(s);
                 self.reset_history();
                 self.art_built = None;
@@ -2400,6 +2410,7 @@ impl eframe::App for HoopApp {
         self.usb_window(ctx);
         self.threads_window(ctx);
         self.hoopings_window(ctx);
+        self.settings_window(ctx);
     }
 }
 

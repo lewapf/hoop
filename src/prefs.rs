@@ -61,6 +61,11 @@ impl Prefs {
         std::fs::rename(&tmp, &self.file)
     }
 
+    /// Forgets everything but the recent files.
+    pub fn reset_keep_recent(&mut self) {
+        self.values.retain(|k, _| k == "recent");
+    }
+
     pub fn recent(&self) -> Vec<PathBuf> {
         self.get("recent").map(|r| r.split('\n').filter(|s| !s.is_empty()).map(PathBuf::from).collect()).unwrap_or_default()
     }

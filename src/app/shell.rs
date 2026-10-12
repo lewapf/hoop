@@ -245,6 +245,10 @@ impl HoopApp {
                     self.redo_step();
                 }
                 ui.separator();
+                if item(ui, true, t!("Settings…"), "Ctrl+,") {
+                    self.settings.open = true;
+                }
+                ui.separator();
                 for (text, keys, op, on) in [
                     (t!("Select all shapes"), "Ctrl+A", Arrange::SelectAll, art),
                     (t!("Deselect"), "Esc", Arrange::Deselect, picked),
