@@ -622,13 +622,19 @@ msgstr ""
 msgid "\"Black line 3\", \"Green fill 2\" instead of \"Line 31\""
 msgstr ""
 
-msgid "Break apart fills"
+msgid "Merge same-thread shapes"
+msgstr ""
+
+msgid "Shapes of one thread and look become one object, unless a shape between them overlaps (the stacking stays as drawn)"
+msgstr ""
+
+msgid "Break apart fills (adds objects)"
 msgstr ""
 
 msgid "A fill made of separate pieces (five diamonds in one shape) becomes one shape per piece, each with its holes"
 msgstr ""
 
-msgid "Break apart lines"
+msgid "Break apart lines (adds objects)"
 msgstr ""
 
 msgid "Every loop or stroke of a line becomes its own shape. Makes long lists; useful to style one outline"
@@ -648,6 +654,11 @@ msgstr ""
 
 msgid "{n} piece split off"
 msgid_plural "{n} pieces split off"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} shape merged"
+msgid_plural "{n} shapes merged"
 msgstr[0] ""
 msgstr[1] ""
 

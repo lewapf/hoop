@@ -12,12 +12,15 @@ pub struct Optimize {
     /// Lines made of several loops or strokes become one shape each.
     pub split_lines: bool,
     pub join: bool,
+    /// Shapes of one thread, kind and look that follow each other in the
+    /// stack (or only have non-touching shapes between them) become one.
+    pub merge: bool,
     pub drop_small: bool,
 }
 
 impl Default for Optimize {
     fn default() -> Self {
-        Optimize { rename: true, split: true, split_lines: false, join: true, drop_small: true }
+        Optimize { rename: true, split: false, split_lines: false, join: true, merge: true, drop_small: true }
     }
 }
 
@@ -28,6 +31,7 @@ pub struct Optimized {
     pub after: usize,
     pub split: usize,
     pub joined: usize,
+    pub merged: usize,
     pub dropped: usize,
 }
 
@@ -152,6 +156,81 @@ fn join_lines(mut lines: Vec<Contour>, tol: f32) -> (Vec<Contour>, usize) {
     }
 }
 
+/// Bounding box of a shape as placed, in user units.
+fn bbox(art: &Artwork, e: &ShapeEdit) -> (f32, f32, f32, f32) {
+    extent(&e.lines(art))
+}
+
+fn touch(a: (f32, f32, f32, f32), b: (f32, f32, f32, f32)) -> bool {
+    a.0 <= b.2 && b.0 <= a.2 && a.1 <= b.3 && b.1 <= a.3
+}
+
+/// Whether two shapes can become one without changing how they sew.
+fn mergeable(art: &Artwork, a: &ShapeEdit, b: &ShapeEdit) -> bool {
+    let same_kind = match (&a.base(art).kind, &b.base(art).kind) {
+        (Kind::Fill { even_odd: x }, Kind::Fill { even_odd: y }) => x == y,
+        (Kind::Stroke { width: x }, Kind::Stroke { width: y }) => (x - y).abs() <= x.max(*y) * 0.05,
+        _ => false,
+    };
+    same_kind
+        && a.layer == b.layer
+        && a.look == b.look
+        && a.style == b.style
+        && !a.hidden
+        && !b.hidden
+        && a.angles.is_empty()
+        && b.angles.is_empty()
+        && a.entry.is_none()
+        && b.entry.is_none()
+}
+
+/// Where a shape really lies, on the 0.5 mm grid stitch ordering uses.
+fn coverage(art: &Artwork, s: &ArtSettings, e: &ShapeEdit) -> Coverage {
+    let (scale, (cx, cy)) = frame(art, s);
+    let lines: Vec<Line> = e.lines(art).into_iter().map(|(c, k)| (c.into_iter().map(|p| ((p.0 - cx) * scale, (p.1 - cy) * scale)).collect(), k)).collect();
+    match e.base(art).kind {
+        Kind::Fill { even_odd } => Coverage::new(&lines, Some(even_odd), 0.0),
+        Kind::Stroke { width } => Coverage::new(&lines, None, (width * scale).max(s.stroke_min_mm * 10.0).min(70.0)),
+    }
+}
+
+/// Merges each shape into an earlier one it can join, as long as nothing
+/// it really overlaps lies between them in the stack, so layering stays
+/// as drawn.
+fn merge_shapes(art: &Artwork, s: &ArtSettings, shapes: Vec<ShapeEdit>, merged: &mut usize) -> Vec<ShapeEdit> {
+    let mut out: Vec<ShapeEdit> = Vec::new();
+    let mut covers: Vec<Coverage> = Vec::new();
+    for e in shapes {
+        let eb = bbox(art, &e);
+        let ec = coverage(art, s, &e);
+        let mut target = None;
+        for k in (0..out.len()).rev() {
+            if mergeable(art, &out[k], &e) {
+                target = Some(k);
+                break;
+            }
+            if touch(bbox(art, &out[k]), eb) && covers[k].overlaps(&ec) {
+                break;
+            }
+        }
+        match target {
+            Some(k) => {
+                let mut lines = out[k].lines(art);
+                lines.extend(e.lines(art));
+                let kind = out[k].base(art).kind.clone();
+                out[k] = with_lines(&out[k], kind, lines);
+                covers[k] = coverage(art, s, &out[k]);
+                *merged += 1;
+            }
+            None => {
+                out.push(e);
+                covers.push(ec);
+            }
+        }
+    }
+    out
+}
+
 /// Tidies the shapes of `s` as `opts` asks.
 pub fn optimize(art: &Artwork, s: &mut ArtSettings, opts: Optimize) -> Optimized {
     let before = s.shapes.len();
@@ -209,6 +288,9 @@ pub fn optimize(art: &Artwork, s: &mut ArtSettings, opts: Optimize) -> Optimized
             !dup
         });
         report.dropped = n - shapes.len();
+    }
+    if opts.merge {
+        shapes = merge_shapes(art, s, shapes, &mut report.merged);
     }
     if opts.join {
         // Lines of one color and width that follow each other in the
@@ -283,13 +365,25 @@ mod tests {
     </svg>"##;
 
     #[test]
+    fn merging_never_adds_objects_and_keeps_the_stitches() {
+        let art = parse("t", SVG.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        s.min_detail_mm = 1.0;
+        let before = generate(&art, &s).unwrap().count(Cmd::Stitch);
+        let r = optimize(&art, &mut s, Optimize::default());
+        assert!(r.after < r.before, "{r:?}");
+        let after = generate(&art, &s).unwrap().count(Cmd::Stitch);
+        assert!((after as f32 - before as f32).abs() < before as f32 * 0.1, "{before} → {after}");
+    }
+
+    #[test]
     fn breaks_apart_joins_lines_and_drops_specks() {
         let art = parse("t", SVG.as_bytes()).unwrap();
         let mut s = ArtSettings::for_artwork(&art);
         s.min_detail_mm = 1.0;
         assert_eq!(s.shapes.len(), 4);
         let before = generate(&art, &s).unwrap().count(Cmd::Stitch);
-        let r = optimize(&art, &mut s, Optimize::default());
+        let r = optimize(&art, &mut s, Optimize { split: true, merge: false, ..Optimize::default() });
         // Green: two squares and a ring (square with its hole) = 3 pieces;
         // the two black lines join into one; the red speck goes.
         assert_eq!(r.split, 2, "{r:?}");

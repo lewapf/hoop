@@ -116,10 +116,12 @@ clip art work best; photos do not.
   - Drag shapes on the hoop to move them, use the corner handle to
     resize, and the round knob to turn.
 - **Optimize…** (top of Objects) tidies the list, with a preview of the
-  result before you apply it: name shapes by thread ("Black line 3"),
-  break fills made of separate pieces into one shape per piece, join
-  lines that touch end to end, and remove specks and exact copies.
-  Breaking lines into single loops is there too, off by default.
+  result before you apply it. By default it names shapes by thread
+  ("Black line 3"), merges shapes of one thread and look into one object
+  (never across a shape that overlaps them, so the stacking stays as
+  drawn), joins lines that touch end to end, and removes specks and
+  exact copies. Breaking fills or lines apart (to style one piece on its
+  own) is there too, off by default, since it adds objects.
 - **Shape page:**
   - Add built-in shapes.
   - **Stitching:**

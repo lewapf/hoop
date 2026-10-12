@@ -54,14 +54,20 @@ impl HoopApp {
                 row(ui, &mut opts.rename, t!("Name by thread"), t!("\"Black line 3\", \"Green fill 2\" instead of \"Line 31\""));
                 row(
                     ui,
+                    &mut opts.merge,
+                    t!("Merge same-thread shapes"),
+                    t!("Shapes of one thread and look become one object, unless a shape between them overlaps (the stacking stays as drawn)"),
+                );
+                row(
+                    ui,
                     &mut opts.split,
-                    t!("Break apart fills"),
+                    t!("Break apart fills (adds objects)"),
                     t!("A fill made of separate pieces (five diamonds in one shape) becomes one shape per piece, each with its holes"),
                 );
                 row(
                     ui,
                     &mut opts.split_lines,
-                    t!("Break apart lines"),
+                    t!("Break apart lines (adds objects)"),
                     t!("Every loop or stroke of a line becomes its own shape. Makes long lists; useful to style one outline"),
                 );
                 row(
@@ -75,6 +81,9 @@ impl HoopApp {
                 let mut parts = Vec::new();
                 if r.split > 0 {
                     parts.push(tn!(r.split, "{n} piece split off", "{n} pieces split off"));
+                }
+                if r.merged > 0 {
+                    parts.push(tn!(r.merged, "{n} shape merged", "{n} shapes merged"));
                 }
                 if r.joined > 0 {
                     parts.push(tn!(r.joined, "{n} line joined", "{n} lines joined"));

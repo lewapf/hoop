@@ -2758,3 +2758,21 @@ msgid_plural "{n} shapes removed"
 msgstr[0] "{n} kształt usunięty"
 msgstr[1] "{n} kształty usunięte"
 msgstr[2] "{n} kształtów usuniętych"
+
+msgid "Merge same-thread shapes"
+msgstr "Scal kształty tej samej nici"
+
+msgid "Shapes of one thread and look become one object, unless a shape between them overlaps (the stacking stays as drawn)"
+msgstr "Kształty jednej nici i wyglądu stają się jednym obiektem, chyba że nachodzi na nie kształt pomiędzy (kolejność warstw zostaje jak w rysunku)"
+
+msgid "Break apart fills (adds objects)"
+msgstr "Rozdziel wypełnienia (dodaje obiekty)"
+
+msgid "Break apart lines (adds objects)"
+msgstr "Rozdziel linie (dodaje obiekty)"
+
+msgid "{n} shape merged"
+msgid_plural "{n} shapes merged"
+msgstr[0] "{n} kształt scalony"
+msgstr[1] "{n} kształty scalone"
+msgstr[2] "{n} kształtów scalonych"

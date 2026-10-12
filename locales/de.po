@@ -2731,3 +2731,20 @@ msgid "{n} shape removed"
 msgid_plural "{n} shapes removed"
 msgstr[0] "{n} Form entfernt"
 msgstr[1] "{n} Formen entfernt"
+
+msgid "Merge same-thread shapes"
+msgstr "Formen gleichen Garns zusammenfassen"
+
+msgid "Shapes of one thread and look become one object, unless a shape between them overlaps (the stacking stays as drawn)"
+msgstr "Formen eines Garns und Aussehens werden ein Objekt, außer eine Form dazwischen überlappt (die Stapelung bleibt wie gezeichnet)"
+
+msgid "Break apart fills (adds objects)"
+msgstr "Füllungen trennen (mehr Objekte)"
+
+msgid "Break apart lines (adds objects)"
+msgstr "Linien trennen (mehr Objekte)"
+
+msgid "{n} shape merged"
+msgid_plural "{n} shapes merged"
+msgstr[0] "{n} Form zusammengefasst"
+msgstr[1] "{n} Formen zusammengefasst"
