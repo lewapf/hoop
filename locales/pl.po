@@ -2578,3 +2578,45 @@ msgstr "Ukryj ten panel · F10"
 
 msgid "Hide or show the left / right panel"
 msgstr "Ukryj lub pokaż lewy / prawy panel"
+
+msgid "Play demo"
+msgstr "Odtwórz demo"
+
+msgid "Embroidery designs for the Janome MC9900"
+msgstr "Wzory haftu dla Janome MC9900"
+
+msgid "Type it, and it's stitched"
+msgstr "Wpisz – i już jest haft"
+
+msgid "Arcs, circles and envelopes"
+msgstr "Łuki, okręgi i obwiednie"
+
+msgid "Badges in one click"
+msgstr "Odznaki jednym kliknięciem"
+
+msgid "A wizard from idea to file"
+msgstr "Kreator od pomysłu do pliku"
+
+msgid "109 shapes, satin that turns with them"
+msgstr "109 kształtów, satyna, która za nimi skręca"
+
+msgid "Checked before you sew"
+msgstr "Sprawdzone przed haftem"
+
+msgid "Madeira, Isacord, Sulky… and the spools you own"
+msgstr "Madeira, Isacord, Sulky… i nici, które masz"
+
+msgid "Too big for the hoop? Split it"
+msgstr "Za duży na tamborek? Podziel go"
+
+msgid "English · Polski · Deutsch"
+msgstr "English · Polski · Deutsch"
+
+msgid "A manual built in"
+msgstr "Wbudowana instrukcja"
+
+msgid "Save · USB · PDF"
+msgstr "Zapis · USB · PDF"
+
+msgid "Hoop — free, for your Janome"
+msgstr "Hoop – za darmo, dla twojej Janome"

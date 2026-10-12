@@ -265,6 +265,48 @@ msgstr ""
 msgid "too much"
 msgstr ""
 
+msgid "Hoop"
+msgstr ""
+
+msgid "Embroidery designs for the Janome MC9900"
+msgstr ""
+
+msgid "Type it, and it's stitched"
+msgstr ""
+
+msgid "Arcs, circles and envelopes"
+msgstr ""
+
+msgid "Badges in one click"
+msgstr ""
+
+msgid "A wizard from idea to file"
+msgstr ""
+
+msgid "109 shapes, satin that turns with them"
+msgstr ""
+
+msgid "Checked before you sew"
+msgstr ""
+
+msgid "Madeira, Isacord, Sulky… and the spools you own"
+msgstr ""
+
+msgid "Too big for the hoop? Split it"
+msgstr ""
+
+msgid "English · Polski · Deutsch"
+msgstr ""
+
+msgid "A manual built in"
+msgstr ""
+
+msgid "Save · USB · PDF"
+msgstr ""
+
+msgid "Hoop — free, for your Janome"
+msgstr ""
+
 msgid "Couldn't open the picture: {e}."
 msgstr ""
 
@@ -311,9 +353,6 @@ msgid "Split into hoopings"
 msgstr ""
 
 msgid "For designs bigger than the hoop: each part is sewn in its own hooping. Objects stay whole where they fit; the rest is cut at the part edges."
-msgstr ""
-
-msgid "Hoop"
 msgstr ""
 
 msgid "Part {k}: {stitches} stitches, {threads} threads"
@@ -1078,6 +1117,9 @@ msgid "Test stitch-out…"
 msgstr ""
 
 msgid "Save worksheet (PDF)…"
+msgstr ""
+
+msgid "Play demo"
 msgstr ""
 
 msgid "Quit"

@@ -84,6 +84,9 @@ impl HoopApp {
         if press(Modifiers::NONE, Key::N) || press(Modifiers::COMMAND, Key::N) {
             self.open_wizard();
         }
+        if self.demo_running() && press(Modifiers::NONE, Key::Escape) {
+            self.stop_demo();
+        }
         if press(Modifiers::NONE, Key::F9) {
             self.show_left = !self.show_left;
         }
@@ -350,6 +353,7 @@ impl HoopApp {
         self.hoopings_overlay(&painter, &frame);
         self.stitch_edit_overlay(&painter, &frame);
         self.pen_overlay(&painter, &frame);
+        self.demo_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
     }

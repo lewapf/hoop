@@ -282,6 +282,10 @@ impl HoopApp {
                     self.save_worksheet();
                 }
                 ui.separator();
+                if item(ui, true, t!("Play demo"), "") {
+                    self.start_demo();
+                }
+                ui.separator();
                 if item(ui, true, t!("Quit"), "Q") {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }

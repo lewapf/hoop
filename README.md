@@ -116,6 +116,9 @@ Janome Artistic Digitizer.
   downloaded from the Ink/Stitch project. Tick the spools you own under
   My threads, and Hoop prefers those.
 
+For a screen recording, `hoop --demo` (or File → Play demo) plays a
+30-second tour with captions.
+
 Hoop follows the Omarchy theme. It never overwrites the file you opened unless
 you pick that file in the save dialog yourself.
 

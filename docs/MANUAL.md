@@ -268,6 +268,14 @@ to them: Madeira, Isacord, Robison-Anton, Sulky, Brother and more.
 
 Hoop remembers settings in `~/.local/state/hoop/prefs`.
 
+## Demo
+
+**File → Play demo** (or `hoop --demo` from a terminal) plays a 30-second
+tour for screen recordings. It types lettering, bends it, makes a badge,
+stitches out a library shape, shows the check, opens the wizard, thread
+charts, hoopings, settings and manual windows, and flips the languages.
+`Esc` stops it. Your own settings come back when it ends.
+
 ## Translating Hoop
 
 Every line Hoop shows can be translated with gettext `.po` files:

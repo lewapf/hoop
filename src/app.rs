@@ -12,6 +12,7 @@ use crate::hoops::{self, Fit, HOOPS, Placement};
 mod artwork_panel;
 mod canvas_view;
 mod checks;
+mod demo;
 mod draw;
 mod history;
 mod hoopings;
@@ -316,6 +317,7 @@ pub struct HoopApp {
     settings: settings::SettingsWindow,
     wizard: wizard::Wizard,
     manual: manual::Manual,
+    demo: Option<demo::Demo>,
 }
 
 impl HoopApp {
@@ -404,6 +406,7 @@ impl HoopApp {
             settings: Default::default(),
             wizard: Default::default(),
             manual: Default::default(),
+            demo: None,
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -419,8 +422,12 @@ impl HoopApp {
         app.reset_history();
         load_ui_font(&cc.egui_ctx, app.prefs.get("ui_font") == Some("theme"));
         app.apply_theme(&cc.egui_ctx);
-        if let Some(path) = file {
+        let demo = file.as_deref() == Some(std::path::Path::new("--demo"));
+        if let Some(path) = file.filter(|_| !demo) {
             app.open(&cc.egui_ctx, &path);
+        }
+        if demo {
+            app.start_demo();
         }
         app.debug_start(&cc.egui_ctx);
         app
@@ -722,6 +729,7 @@ impl HoopApp {
 
 impl eframe::App for HoopApp {
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.stop_demo();
         self.store();
     }
 
@@ -730,6 +738,7 @@ impl eframe::App for HoopApp {
         if self.theme.refresh() {
             self.apply_theme(ctx);
         }
+        self.demo_tick(ctx);
 
         if let Some(rx) = &self.picker {
             match rx.try_recv() {
