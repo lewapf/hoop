@@ -2635,3 +2635,30 @@ msgid "{n} picked shape"
 msgid_plural "{n} picked shapes"
 msgstr[0] "{n} gewählte Form"
 msgstr[1] "{n} gewählte Formen"
+
+msgid "Leave fabric"
+msgstr "Stoff freilassen"
+
+msgid "Not sewn; the fabric shows here, and nothing below is sewn through it"
+msgstr "Nicht gestickt; hier zeigt sich der Stoff, und nichts darunter wird hindurchgestickt"
+
+msgid "Stitch these colors. Off: not sewn, and the fabric shows where they are"
+msgstr "Diese Farben sticken. Aus: nicht gestickt, an ihrer Stelle zeigt sich der Stoff"
+
+msgid "Stitch these colors. Off: not sewn, as if they weren't in the drawing"
+msgstr "Diese Farben sticken. Aus: nicht gestickt, als wären sie nicht in der Zeichnung"
+
+msgid "Colors switched off leave fabric"
+msgstr "Ausgeschaltete Farben lassen Stoff frei"
+
+msgid "A color unticked in Threads isn't sewn and leaves the fabric showing, so shapes below aren't sewn through it. Off: it is as if the color weren't there."
+msgstr "Eine unter Garne abgewählte Farbe wird nicht gestickt und lässt den Stoff frei, darunterliegende Formen werden nicht hindurchgestickt. Aus: als wäre die Farbe nicht da."
+
+msgid "Leave fabric?"
+msgstr "Stoff freilassen?"
+
+msgid "This color matches the fabric. Leave the fabric showing here instead of sewing it, and don't sew shapes below through it."
+msgstr "Diese Farbe entspricht dem Stoff. Hier den Stoff zeigen statt zu sticken, und darunterliegende Formen nicht hindurchsticken."
+
+msgid "background"
+msgstr "Hintergrund"

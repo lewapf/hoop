@@ -72,6 +72,9 @@ pub enum Look {
     Outline,
     /// Sewn on as a piece of fabric: placement line, stop, tack-down, stop, satin cover.
     Applique,
+    /// Not sewn: the fabric shows here. Cuts its area out of every shape
+    /// below it, so nothing is sewn "through" it.
+    Hole,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -81,6 +84,9 @@ pub struct ArtSettings {
     /// font and thread fields are unused here.
     pub style: Settings,
     pub knockout: bool,
+    /// Colors switched off in Threads leave the fabric showing, like
+    /// holes, instead of letting shapes below be sewn through them.
+    pub off_leaves_fabric: bool,
     pub min_detail_mm: f32,
     pub stroke: EdgeKind,
     pub stroke_min_mm: f32,
@@ -285,6 +291,7 @@ impl ArtSettings {
             width_mm,
             style: Settings { fill: FillKind::Auto, edge: EdgeKind::None, underlay: true, fill_angle: 45.0, ..Default::default() },
             knockout: true,
+            off_leaves_fabric: true,
             min_detail_mm: 1.0,
             stroke: EdgeKind::Satin,
             stroke_min_mm: 1.0,
@@ -495,6 +502,43 @@ mod tests {
         assert_eq!(p.threads[0].name, "Placement line");
         assert!(p.threads[1].name.starts_with("Tack-down"));
         assert_eq!(p.blocks().len(), 5);
+    }
+
+    #[test]
+    fn holes_leave_fabric_under_them() {
+        let art = parse("logo", LOGO.as_bytes()).unwrap();
+        let red = |s: &ArtSettings| -> Vec<Pt> {
+            let p = generate(&art, s).unwrap();
+            let name = formats::jef_thread(formats::nearest_jef([255, 0, 0]), 0).name;
+            let b = p.blocks().into_iter().find(|b| b.thread.name == name).unwrap();
+            (b.start..b.end).filter(|&i| p.cmds[i] == Cmd::Stitch).map(|i| p.points[i]).collect()
+        };
+        let mut s = ArtSettings::for_artwork(&art);
+        let (scale, mid) = frame(&art, &s);
+        // The blue circle (center 45,25, r 10) lies on the red square's right edge.
+        let c = ((45.0 - mid.0) * scale, (25.0 - mid.1) * scale);
+        let r = 8.0 * scale;
+        let inside = |pts: &[Pt]| pts.iter().filter(|p| lettering::dist(**p, c) < r).count();
+        let blue_shape = s.shapes.iter().position(|e| art.layers[e.layer].color == [0, 0, 255]).unwrap();
+        let blue_layer = art.shapes[blue_shape].layer;
+        // Knockout on: red stops under the blue circle (a travel run may
+        // still pass under it, hidden by the circle).
+        assert!(inside(&red(&s)) <= 3);
+        // The circle as a hole: not sewn, red still stops there.
+        s.shapes[blue_shape].look = Some(Look::Hole);
+        let p = generate(&art, &s).unwrap();
+        assert!(p.blocks().len() < generate(&art, &ArtSettings::for_artwork(&art)).unwrap().blocks().len());
+        assert_eq!(inside(&red(&s)), 0);
+        // Even with knockout off, a hole cuts.
+        s.knockout = false;
+        assert_eq!(inside(&red(&s)), 0);
+        // A switched-off color leaves fabric too, unless that is turned off.
+        s.shapes[blue_shape].look = None;
+        s.layers[blue_layer].enabled = false;
+        assert_eq!(inside(&red(&s)), 0);
+        s.off_leaves_fabric = false;
+        let through = inside(&red(&s));
+        assert!(through > 8, "sewn through: {through}");
     }
 
     #[test]

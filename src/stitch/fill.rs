@@ -109,7 +109,7 @@ pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Ma
         r.strict = false;
     }
     for c in glyph {
-        run_contour(st, c, 25.0, false);
+        run_contour_outside(st, c, 25.0, mask);
     }
     let thick = thickness(glyph, even_odd) > 30.0;
     let open = matches!(kind, FillKind::Open | FillKind::Crosshatch | FillKind::None);

@@ -853,6 +853,7 @@ impl HoopApp {
                 Some(Look::Fill(k)) => crate::i18n::tr(crate::lettering::fill_name(k)).to_string(),
                 Some(Look::Outline) => t!("Outline").into(),
                 Some(Look::Applique) => t!("Appliqué").into(),
+                Some(Look::Hole) => t!("Leave fabric").into(),
             };
             let mut look = first;
             egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { t!("Mixed").into() }).width(ui.available_width()).show_ui(
@@ -864,6 +865,8 @@ impl HoopApp {
                     }
                     ui.selectable_value(&mut look, Some(Look::Outline), t!("Outline")).on_hover_text(t!("Only the outline: for thin shapes"));
                     ui.selectable_value(&mut look, Some(Look::Applique), t!("Appliqué"));
+                    ui.selectable_value(&mut look, Some(Look::Hole), t!("Leave fabric"))
+                        .on_hover_text(t!("Not sewn; the fabric shows here, and nothing below is sewn through it"));
                 },
             );
             if look != first {

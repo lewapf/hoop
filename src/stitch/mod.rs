@@ -475,6 +475,50 @@ pub fn shape_area(glyph: &[Contour], even_odd: bool) -> f32 {
     area
 }
 
+/// Whether a point lies inside a shape, by its fill rule.
+pub fn inside(p: Pt, contours: &[Contour], even_odd: bool) -> bool {
+    let mut winding = 0;
+    for c in contours {
+        for i in 0..c.len() {
+            let (a, b) = (c[i], c[(i + 1) % c.len()]);
+            if (a.1 <= p.1) != (b.1 <= p.1) {
+                let x = a.0 + (p.1 - a.1) / (b.1 - a.1) * (b.0 - a.0);
+                if x > p.0 {
+                    winding += if b.1 > a.1 { 1 } else { -1 };
+                }
+            }
+        }
+    }
+    if even_odd { winding % 2 != 0 } else { winding != 0 }
+}
+
+/// Runs round an outline, leaving out the parts under the mask shapes
+/// (holes or shapes on top), so an underlay never shows through a hole.
+pub fn run_contour_outside(st: &mut Stitcher, c: &Contour, step: f32, mask: &[MaskShape]) {
+    if mask.is_empty() {
+        return run_contour(st, c, step, false);
+    }
+    let pts = densify(c, 2.0);
+    let masked: Vec<bool> = pts.iter().map(|&p| mask.iter().any(|(cs, eo)| inside(p, cs, *eo))).collect();
+    let Some(start) = masked.iter().position(|&m| m) else {
+        return run_contour(st, c, step, false);
+    };
+    // Walk once round from a masked point, sewing each stretch in the open.
+    let n = pts.len();
+    let mut piece: Vec<Pt> = Vec::new();
+    for k in 1..=n {
+        let i = (start + k) % n;
+        if masked[i] {
+            if piece.len() > 1 && piece.windows(2).map(|w| dist(w[0], w[1])).sum::<f32>() > 20.0 {
+                run_path(st, &piece, step, false);
+            }
+            piece.clear();
+        } else {
+            piece.push(pts[i]);
+        }
+    }
+}
+
 /// Area of a shape left after cutting out the mask shapes on top of it.
 pub fn masked_area(glyph: &[Contour], even_odd: bool, mask: &[MaskShape]) -> f32 {
     let (mut y0, mut y1) = (f32::MAX, f32::MIN);

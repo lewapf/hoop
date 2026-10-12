@@ -133,6 +133,15 @@ clip art work best; photos do not.
   give a color a different look (outline, appliqué, a fill style), merge
   colors down to fewer threads.
 
+**Holes and leaving the fabric showing.** A shape on top cuts its area
+out of the shapes below it, so nothing is sewn twice. To leave the fabric
+itself showing (a white detail on white cloth, a cut-out), give the color
+or the shape the look **Leave fabric**: it isn't sewn, and nothing below
+is sewn through it. A color you untick in Threads works the same way
+(Style → Clean-up → *Colors switched off leave fabric* turns that off).
+When a color matches the fabric, Threads offers **Leave fabric?** next
+to it.
+
 The default fill, **Auto**, sews narrow parts as satin columns that turn
 with the shape and wide parts as tatami.
 

@@ -226,6 +226,7 @@ impl HoopApp {
             });
         }
         if tab == Tab::Threads {
+            let fabric = self.fabric;
             card(ui, t!("Threads"), accent, |ui| {
                 // Colors no shape uses any more are left out.
                 let used_layers: Vec<bool> = (0..art.layers.len()).map(|l| s.shapes.iter().any(|e| e.layer == l && !e.hidden)).collect();
@@ -235,7 +236,12 @@ impl HoopApp {
                     let mut on = members.iter().all(|&i| s.layers[i].enabled);
                     let mut t = *thread;
                     ui.horizontal(|ui| {
-                        if ui.checkbox(&mut on, "").on_hover_text(t!("Stitch these colors")).changed() {
+                        let tip = if s.off_leaves_fabric {
+                            t!("Stitch these colors. Off: not sewn, and the fabric shows where they are")
+                        } else {
+                            t!("Stitch these colors. Off: not sewn, as if they weren't in the drawing")
+                        };
+                        if ui.checkbox(&mut on, "").on_hover_text(tip).changed() {
                             for &i in members {
                                 s.layers[i].enabled = on;
                             }
@@ -253,8 +259,26 @@ impl HoopApp {
                         ui.label(RichText::new("→").color(muted));
                         thread_menu(ui, ("group", g), &mut t);
 
+                        // A color the same as the fabric is usually a hole in
+                        // the drawing (white details on white cloth): offer to
+                        // leave the fabric showing instead of sewing it.
+                        let fabric_like = members.iter().all(|&i| crate::threads::distance(art.layers[i].color, fabric) < 8.0);
+                        let is_hole = members.iter().all(|&i| s.layers[i].look == Look::Hole);
+                        if fabric_like && on && !is_hole && !members.iter().any(|&i| art.layers[i].background) {
+                            if ui
+                                .small_button(t!("Leave fabric?"))
+                                .on_hover_text(t!(
+                                    "This color matches the fabric. Leave the fabric showing here instead of sewing it, and don't sew shapes below through it."
+                                ))
+                                .clicked()
+                            {
+                                for &i in members {
+                                    s.layers[i].look = Look::Hole;
+                                }
+                            }
+                        }
                         if members.iter().any(|&i| art.layers[i].background) {
-                            ui.label(RichText::new("background").size(11.0).color(muted));
+                            ui.label(RichText::new(t!("background")).size(11.0).color(muted));
                         }
                     });
                     ui.horizontal(|ui| {
@@ -266,6 +290,7 @@ impl HoopApp {
                             Look::Fill(k) => crate::i18n::tr(crate::lettering::fill_name(k)).to_string(),
                             Look::Outline => t!("Outline").into(),
                             Look::Applique => t!("Appliqué").into(),
+                            Look::Hole => t!("Leave fabric").into(),
                         };
                         egui::ComboBox::from_id_salt(("look", g)).selected_text(name).width(78.0).show_ui(ui, |ui| {
                             ui.selectable_value(&mut look, Look::Default, t!("Auto")).on_hover_text(t!("Use the Fill card below"));
@@ -275,6 +300,8 @@ impl HoopApp {
                             ui.selectable_value(&mut look, Look::Outline, t!("Outline")).on_hover_text(t!("Only the shape's outline"));
                             ui.selectable_value(&mut look, Look::Applique, t!("Appliqué"))
                                 .on_hover_text(t!("Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover"));
+                            ui.selectable_value(&mut look, Look::Hole, t!("Leave fabric"))
+                                .on_hover_text(t!("Not sewn; the fabric shows here, and nothing below is sewn through it"));
                         });
                         for &i in members {
                             s.layers[i].look = look;
@@ -356,6 +383,8 @@ impl HoopApp {
         }
         card_folded(ui, t!("Clean-up"), accent, |ui| {
             ui.checkbox(&mut s.knockout, t!("Cut hidden parts")).on_hover_text(t!("Leave areas covered by shapes on top unstitched, so layers don't pile up"));
+            ui.checkbox(&mut s.off_leaves_fabric, t!("Colors switched off leave fabric"))
+                .on_hover_text(t!("A color unticked in Threads isn't sewn and leaves the fabric showing, so shapes below aren't sewn through it. Off: it is as if the color weren't there."));
             slider_row(ui, t!("Detail"), &mut s.min_detail_mm, 0.0..=5.0, " mm", 1).on_hover_text(t!("Shapes smaller than this many mm across are left out"));
         });
         if picked.is_empty() {

@@ -365,9 +365,22 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         own: Option<Settings>,
     }
     let mut items: Vec<Item> = Vec::new();
+    // Shapes that leave the fabric showing: (drawing order, outline).
+    let mut holes: Vec<(usize, lettering::MaskShape)> = Vec::new();
     for (doc, e) in s.shapes.iter().enumerate() {
         let sh = e.base(art);
-        if e.hidden || !enabled(e.layer) {
+        if e.hidden {
+            continue;
+        }
+        let look = e.look.unwrap_or_else(|| s.layers.get(e.layer).map_or(Look::Default, |l| l.look));
+        let hole = look == Look::Hole || (!enabled(e.layer) && s.off_leaves_fabric);
+        if hole || !enabled(e.layer) {
+            if let (true, Kind::Fill { even_odd }) = (hole, &sh.kind) {
+                let lines: Vec<Contour> = e.lines(art).iter().map(|(c, _)| c.iter().map(|&p| to_mm(p)).collect()).collect();
+                if lines.iter().map(area).sum::<f32>() >= min_area {
+                    holes.push((doc, (lines, *even_odd)));
+                }
+            }
             continue;
         }
         let lines: Vec<(Contour, bool)> = e.lines(art).iter().map(|(c, closed)| (c.iter().map(|&p| to_mm(p)).collect(), *closed)).collect();
@@ -376,7 +389,6 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
             Kind::Stroke { .. } => lines.iter().map(|l| length(&l.0)).sum::<f32>() >= 10.0,
         };
         if keep {
-            let look = e.look.unwrap_or_else(|| s.layers.get(e.layer).map_or(Look::Default, |l| l.look));
             let angles = e.angles.iter().map(|&(a, b)| (to_mm(e.place(art, a)), to_mm(e.place(art, b)))).collect();
             let entry = e.entry.map(|p| to_mm(e.place(art, p)));
             items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None, angles, entry, own: e.style.clone() });
@@ -406,7 +418,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     lettering::style(&mut style, k, base.fill_angle, base.edge);
                 }
             }
-            Look::Outline | Look::Applique => {
+            Look::Outline | Look::Applique | Look::Hole => {
                 style.fill = FillKind::None;
                 if style.edge == EdgeKind::None {
                     style.edge = EdgeKind::Triple;
@@ -420,15 +432,17 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     // Lines hidden under fills drawn above them are cut away, a little past
     // the fill's edge, so they neither show through nor have to be sewn
     // before that fill (which would cost extra thread changes).
-    if s.knockout {
+    // Holes always cut, whatever the knockout setting: that is what they are for.
+    if s.knockout || !holes.is_empty() {
         let stroke_w = |width: f32| (width * scale).max(s.stroke_min_mm * 10.0).min(70.0);
         for i in 0..items.len() {
             let Kind::Stroke { width } = items[i].kind else { continue };
-            let above: Vec<(Vec<Contour>, bool)> = items
+            let mut above: Vec<(Vec<Contour>, bool)> = items
                 .iter()
-                .filter(|o| o.doc > items[i].doc && masks(o))
+                .filter(|o| s.knockout && o.doc > items[i].doc && masks(o))
                 .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
                 .collect();
+            above.extend(holes.iter().filter(|h| h.0 > items[i].doc).map(|h| h.1.clone()));
             if !above.is_empty() {
                 // Past the half width, a gap of a cell and a half keeps the line
                 // clear of the fill on the overlap grid used for ordering.
@@ -509,15 +523,20 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 // Everything drawn above this shape and overlapping it, and of
                 // that, what sews densely enough to hide travel under it.
                 let above = |dense: bool| -> Vec<lettering::MaskShape> {
+                    // Holes on top leave fabric; they always cut, but travel
+                    // can't hide under them (nothing is sewn there).
+                    let mut out: Vec<lettering::MaskShape> =
+                        if dense { Vec::new() } else { holes.iter().filter(|h| h.0 > it.doc).map(|h| h.1.clone()).collect() };
                     if !s.knockout {
-                        return Vec::new();
+                        return out;
                     }
-                    let mut out: Vec<lettering::MaskShape> = items
-                        .iter()
-                        .filter(|o| o.doc > it.doc && masks(o))
-                        .filter(|o| !dense || o.look == Look::Applique || lettering::covers(styled(o).fill, styled(o).density_mm))
-                        .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
-                        .collect();
+                    out.extend(
+                        items
+                            .iter()
+                            .filter(|o| o.doc > it.doc && masks(o))
+                            .filter(|o| !dense || o.look == Look::Applique || lettering::covers(styled(o).fill, styled(o).density_mm))
+                            .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true }))),
+                    );
                     // Satin lines drawn on top cover what's under them, so the
                     // fill stops 0.25 mm inside each side of the line.
                     if s.stroke == EdgeKind::Satin {

@@ -103,7 +103,19 @@ msgstr ""
 msgid "Threads"
 msgstr ""
 
-msgid "Stitch these colors"
+msgid "Stitch these colors. Off: not sewn, and the fabric shows where they are"
+msgstr ""
+
+msgid "Stitch these colors. Off: not sewn, as if they weren't in the drawing"
+msgstr ""
+
+msgid "Leave fabric?"
+msgstr ""
+
+msgid "This color matches the fabric. Leave the fabric showing here instead of sewing it, and don't sew shapes below through it."
+msgstr ""
+
+msgid "background"
 msgstr ""
 
 msgid "Stitch as"
@@ -118,6 +130,9 @@ msgstr ""
 msgid "Appliqué"
 msgstr ""
 
+msgid "Leave fabric"
+msgstr ""
+
 msgid "Use the Fill card below"
 msgstr ""
 
@@ -125,6 +140,9 @@ msgid "Only the shape's outline"
 msgstr ""
 
 msgid "Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover"
+msgstr ""
+
+msgid "Not sewn; the fabric shows here, and nothing below is sewn through it"
 msgstr ""
 
 msgid "{n} thread in use"
@@ -177,6 +195,12 @@ msgid "Cut hidden parts"
 msgstr ""
 
 msgid "Leave areas covered by shapes on top unstitched, so layers don't pile up"
+msgstr ""
+
+msgid "Colors switched off leave fabric"
+msgstr ""
+
+msgid "A color unticked in Threads isn't sewn and leaves the fabric showing, so shapes below aren't sewn through it. Off: it is as if the color weren't there."
 msgstr ""
 
 msgid "Detail"

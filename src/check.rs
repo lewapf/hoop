@@ -290,7 +290,7 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                 let fill = match look {
                     Look::Default => s.style.fill,
                     Look::Fill(k) => k,
-                    Look::Outline | Look::Applique => FillKind::None,
+                    Look::Outline | Look::Applique | Look::Hole => FillKind::None,
                 };
                 if fill == FillKind::None {
                     continue;

@@ -2659,3 +2659,30 @@ msgid_plural "{n} picked shapes"
 msgstr[0] "{n} zaznaczony kształt"
 msgstr[1] "{n} zaznaczone kształty"
 msgstr[2] "{n} zaznaczonych kształtów"
+
+msgid "Leave fabric"
+msgstr "Zostaw tkaninę"
+
+msgid "Not sewn; the fabric shows here, and nothing below is sewn through it"
+msgstr "Nie haftowane; widać tu tkaninę, a nic pod spodem nie jest przez to haftowane"
+
+msgid "Stitch these colors. Off: not sewn, and the fabric shows where they are"
+msgstr "Haftuj te kolory. Wyłączone: nie są haftowane, a w ich miejscu widać tkaninę"
+
+msgid "Stitch these colors. Off: not sewn, as if they weren't in the drawing"
+msgstr "Haftuj te kolory. Wyłączone: nie są haftowane, jakby ich nie było w rysunku"
+
+msgid "Colors switched off leave fabric"
+msgstr "Wyłączone kolory zostawiają tkaninę"
+
+msgid "A color unticked in Threads isn't sewn and leaves the fabric showing, so shapes below aren't sewn through it. Off: it is as if the color weren't there."
+msgstr "Kolor odznaczony w Niciach nie jest haftowany i zostawia widoczną tkaninę, więc kształty pod nim nie są przez niego haftowane. Wyłączone: jakby tego koloru nie było."
+
+msgid "Leave fabric?"
+msgstr "Zostawić tkaninę?"
+
+msgid "This color matches the fabric. Leave the fabric showing here instead of sewing it, and don't sew shapes below through it."
+msgstr "Ten kolor pasuje do tkaniny. Zostaw tu widoczną tkaninę zamiast haftu i nie haftuj przez nią kształtów pod spodem."
+
+msgid "background"
+msgstr "tło"
