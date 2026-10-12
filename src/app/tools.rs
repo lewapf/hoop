@@ -44,33 +44,33 @@ impl HoopApp {
         let at = response.interact_pointer_pos().map(|p| frame.to_world(p));
         match tool {
             ShapeTool::Entry => {
-                if response.clicked() {
-                    if let (Some(w), Some(art)) = (at, &self.artwork) {
-                        let s = self.art.as_mut().unwrap();
-                        let e = &mut s.shapes[i];
-                        e.entry = Some(e.unplace(art, m.to_user(w)));
-                        self.tools.tool = None;
-                    }
+                if response.clicked()
+                    && let (Some(w), Some(art)) = (at, &self.artwork)
+                {
+                    let s = self.art.as_mut().unwrap();
+                    let e = &mut s.shapes[i];
+                    e.entry = Some(e.unplace(art, m.to_user(w)));
+                    self.tools.tool = None;
                 }
             }
             ShapeTool::Angle => {
-                if response.drag_started() {
-                    if let Some(w) = at {
-                        self.tools.drag = Some((w, w));
-                    }
+                if response.drag_started()
+                    && let Some(w) = at
+                {
+                    self.tools.drag = Some((w, w));
                 }
                 if let (Some(d), Some(w)) = (&mut self.tools.drag, at) {
                     d.1 = w;
                 }
-                if response.drag_stopped() {
-                    if let (Some((a, b)), Some(art)) = (self.tools.drag.take(), &self.artwork) {
-                        // A click or a tiny drag isn't a direction.
-                        if (a.0 - b.0).hypot(a.1 - b.1) > 20.0 {
-                            let s = self.art.as_mut().unwrap();
-                            let e = &mut s.shapes[i];
-                            let (ua, ub) = (e.unplace(art, m.to_user(a)), e.unplace(art, m.to_user(b)));
-                            e.angles.push((ua, ub));
-                        }
+                if response.drag_stopped()
+                    && let (Some((a, b)), Some(art)) = (self.tools.drag.take(), &self.artwork)
+                {
+                    // A click or a tiny drag isn't a direction.
+                    if (a.0 - b.0).hypot(a.1 - b.1) > 20.0 {
+                        let s = self.art.as_mut().unwrap();
+                        let e = &mut s.shapes[i];
+                        let (ua, ub) = (e.unplace(art, m.to_user(a)), e.unplace(art, m.to_user(b)));
+                        e.angles.push((ua, ub));
                     }
                 }
             }

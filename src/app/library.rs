@@ -66,22 +66,21 @@ impl HoopApp {
             if ui.add_enabled(dir.parent().is_some(), egui::Button::new("Up")).on_hover_text(t!("The folder above")).clicked() {
                 go = dir.parent().map(|p| p.to_path_buf());
             }
-            if ui.button(t!("Folder…")).on_hover_text(t!("Pick the folder to browse")).clicked() {
-                if let Some(d) = rfd::FileDialog::new().set_directory(&dir).pick_folder() {
-                    go = Some(d);
-                }
+            if ui.button(t!("Folder…")).on_hover_text(t!("Pick the folder to browse")).clicked()
+                && let Some(d) = rfd::FileDialog::new().set_directory(&dir).pick_folder()
+            {
+                go = Some(d);
             }
             if ui.button(t!("Reload")).clicked() {
                 go = Some(dir.clone());
             }
-            if let Some(shapes) = shapes_dir() {
-                if ui
+            if let Some(shapes) = shapes_dir()
+                && ui
                     .add(egui::Button::selectable(dir == shapes, t!("Shapes")))
                     .on_hover_text(t!("109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)"))
                     .clicked()
-                {
-                    go = Some(if dir == shapes { designs_dir() } else { shapes });
-                }
+            {
+                go = Some(if dir == shapes { designs_dir() } else { shapes });
             }
         });
         let name = dir.file_name().map_or_else(|| dir.display().to_string(), |n| n.to_string_lossy().into_owned());

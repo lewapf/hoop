@@ -27,13 +27,13 @@ impl HoopApp {
         if !self.settings.open {
             return;
         }
-        if let Some(rx) = &self.settings.folder_pick {
-            if let Ok(answer) = rx.try_recv() {
-                self.settings.folder_pick = None;
-                if let Some(dir) = answer {
-                    self.prefs.set("library.dir", dir.display());
-                    self.library.dir = None;
-                }
+        if let Some(rx) = &self.settings.folder_pick
+            && let Ok(answer) = rx.try_recv()
+        {
+            self.settings.folder_pick = None;
+            if let Some(dir) = answer {
+                self.prefs.set("library.dir", dir.display());
+                self.library.dir = None;
             }
         }
         let muted = self.muted();
@@ -174,10 +174,10 @@ impl HoopApp {
                     // Files
                     ui.label(t!("Folders"));
                     ui.vertical(|ui| {
-                        if ui.button(t!("Translations folder")).on_hover_text(t!("Put <language>.po files here to add or fix a translation")).clicked() {
-                            if let Some(d) = std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/share/hoop/locale")) {
-                                open_in_files(&d);
-                            }
+                        if ui.button(t!("Translations folder")).on_hover_text(t!("Put <language>.po files here to add or fix a translation")).clicked()
+                            && let Some(d) = std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/share/hoop/locale"))
+                        {
+                            open_in_files(&d);
                         }
                         if ui.button(t!("Clear picture cache")).on_hover_text(t!("Library thumbnails are drawn again")).clicked() {
                             if let Some(d) = std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache/hoop/thumbs")) {

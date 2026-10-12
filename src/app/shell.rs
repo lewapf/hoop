@@ -137,7 +137,7 @@ impl HoopApp {
             egui::Panel::left("dock").resizable(true).default_size(250.0).size_range(210.0..=420.0).frame(dock).show(ui, |ui| self.left_dock(ui));
         } else {
             egui::Panel::left("dock-strip").resizable(false).exact_size(26.0).frame(strip).show(ui, |ui| {
-                if chevron(ui, false, &t!("Show the left panel · F9")) {
+                if chevron(ui, false, t!("Show the left panel · F9")) {
                     self.show_left = true;
                 }
             });
@@ -151,7 +151,7 @@ impl HoopApp {
                 .show(ui, |ui| self.right_dock(ui, canvas_rect));
         } else {
             egui::Panel::right("controls-strip").resizable(false).exact_size(26.0).frame(strip).show(ui, |ui| {
-                if chevron(ui, true, &t!("Show the right panel · F10")) {
+                if chevron(ui, true, t!("Show the right panel · F10")) {
                     self.show_right = true;
                 }
             });
@@ -176,7 +176,7 @@ impl HoopApp {
             let w = ui.available_width() - 26.0;
             ui.allocate_ui(vec2(w, 0.0), |ui| tab_row(ui, &mut self.dock, &options, accent));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                hide = chevron(ui, true, &t!("Hide this panel · F9"));
+                hide = chevron(ui, true, t!("Hide this panel · F9"));
             });
         });
         if hide {
@@ -202,7 +202,7 @@ impl HoopApp {
         }
         let mut hide = false;
         ui.horizontal_top(|ui| {
-            hide = chevron(ui, false, &t!("Hide this panel · F10"));
+            hide = chevron(ui, false, t!("Hide this panel · F10"));
             ui.vertical(|ui| tab_row(ui, &mut self.tab[m], &options, accent));
         });
         if hide {

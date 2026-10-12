@@ -8,6 +8,9 @@ use std::hash::{Hash, Hasher};
 use super::*;
 use crate::testsew::{self, Area, Tuning};
 
+/// A test piece and its color blocks.
+type Piece = (Pattern, Vec<Block>);
+
 #[derive(Default)]
 pub(super) struct TestSew {
     pub open: bool,
@@ -28,7 +31,7 @@ pub(super) struct TestSew {
     sheet_page: bool,
     /// The last test piece in hoop coordinates with its threads, and a
     /// fingerprint of what it was made from.
-    cache: Option<(u64, Result<(Pattern, Vec<Block>), String>)>,
+    cache: Option<(u64, Result<Piece, String>)>,
 }
 
 impl TestSew {
@@ -116,7 +119,7 @@ impl HoopApp {
     }
 
     /// The design's stitches in hoop coordinates, one thread per segment.
-    fn design_on_hoop(&self, d: &Loaded) -> Result<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>), String> {
+    fn design_on_hoop(&self, d: &Loaded) -> Result<formats::Stitches, String> {
         let (pattern, threads) = if self.test.outlines && self.mode != Mode::Viewer {
             let p = self.outline_pattern()?;
             let threads = segment_threads(&p, &[]);
@@ -267,10 +270,10 @@ impl HoopApp {
         if response.drag_started() {
             self.test.drag_from = at;
         }
-        if let (Some(a), Some(b)) = (self.test.drag_from, at) {
-            if response.dragged() || response.drag_stopped() {
-                self.test.area = Some((a.0.min(b.0), a.1.min(b.1), a.0.max(b.0), a.1.max(b.1)));
-            }
+        if let (Some(a), Some(b)) = (self.test.drag_from, at)
+            && (response.dragged() || response.drag_stopped())
+        {
+            self.test.area = Some((a.0.min(b.0), a.1.min(b.1), a.0.max(b.0), a.1.max(b.1)));
         }
         if response.drag_stopped() {
             self.test.drag_from = None;
@@ -291,14 +294,16 @@ impl HoopApp {
             return;
         }
         let accent = self.accent();
-        if self.test.partial() && !self.test.hide_preview && !self.test.picking {
-            if let Some((_, Ok((piece, blocks)))) = &self.test.cache {
-                let [r, g, b] = self.fabric;
-                painter.rect_filled(frame.rect, 0, Color32::from_rgba_unmultiplied(r, g, b, 200));
-                let identity = Transform::new((0.0, 0.0, 0.0, 0.0), &Placement::default());
-                let style = DesignStyle { textured: self.textured, show_jumps: false, focus: None, fabric: self.fabric };
-                canvas::draw_design(frame, piece, blocks, &identity, piece.points.len(), &style);
-            }
+        if self.test.partial()
+            && !self.test.hide_preview
+            && !self.test.picking
+            && let Some((_, Ok((piece, blocks)))) = &self.test.cache
+        {
+            let [r, g, b] = self.fabric;
+            painter.rect_filled(frame.rect, 0, Color32::from_rgba_unmultiplied(r, g, b, 200));
+            let identity = Transform::new((0.0, 0.0, 0.0, 0.0), &Placement::default());
+            let style = DesignStyle { textured: self.textured, show_jumps: false, focus: None, fabric: self.fabric };
+            canvas::draw_design(frame, piece, blocks, &identity, piece.points.len(), &style);
         }
         if self.test.picking {
             let tip = t!("Drag a box around the part to test · Esc to stop");

@@ -7,6 +7,9 @@
 use super::*;
 use crate::artwork::{Kind, Shape, ShapeEdit};
 
+/// A placed pen point and the handle pulling a curve out of it.
+type PenPoint = ((f32, f32), Option<(f32, f32)>);
+
 pub(super) struct Backdrop {
     tex: egui::TextureHandle,
     /// Width over height.
@@ -20,7 +23,7 @@ pub(super) struct Pen {
     pub on: bool,
     /// Placed points in artwork user units, each with the handle that
     /// pulls the curve out of it (an offset; none for a corner).
-    points: Vec<((f32, f32), Option<(f32, f32)>)>,
+    points: Vec<PenPoint>,
     dragging: bool,
     /// Where the pointer is, for the line to the next point.
     hover: Option<(f32, f32)>,
@@ -135,17 +138,17 @@ impl HoopApp {
             self.finish_pen(false);
             return true;
         }
-        if response.drag_started() || response.clicked() {
-            if let (Some(u), Some(p)) = (user, pos) {
-                // A click on the first point closes the shape.
-                let first = self.pen.points.first().map(|f| frame.to_screen_pt(m.to_world(f.0)));
-                if self.pen.points.len() >= 3 && first.is_some_and(|f| (f - p).length() <= 9.0) {
-                    self.finish_pen(true);
-                    return true;
-                }
-                self.pen.points.push((u, None));
-                self.pen.dragging = response.drag_started();
+        if (response.drag_started() || response.clicked())
+            && let (Some(u), Some(p)) = (user, pos)
+        {
+            // A click on the first point closes the shape.
+            let first = self.pen.points.first().map(|f| frame.to_screen_pt(m.to_world(f.0)));
+            if self.pen.points.len() >= 3 && first.is_some_and(|f| (f - p).length() <= 9.0) {
+                self.finish_pen(true);
+                return true;
             }
+            self.pen.points.push((u, None));
+            self.pen.dragging = response.drag_started();
         }
         if self.pen.dragging {
             if let (Some(u), Some(last)) = (user, self.pen.points.last_mut()) {
@@ -200,10 +203,10 @@ impl HoopApp {
         let accent = self.accent();
         let screen = |u: Pt| frame.to_screen_pt(m.to_world(u));
         let mut line: Vec<egui::Pos2> = flatten(&self.pen.points, false).into_iter().map(screen).collect();
-        if let (Some(h), false) = (self.pen.hover, self.pen.dragging) {
-            if !self.pen.points.is_empty() {
-                line.push(screen(h));
-            }
+        if let (Some(h), false) = (self.pen.hover, self.pen.dragging)
+            && !self.pen.points.is_empty()
+        {
+            line.push(screen(h));
         }
         painter.add(egui::Shape::line(line, egui::Stroke::new(2.0, accent)));
         for (k, (p, h)) in self.pen.points.iter().enumerate() {
@@ -271,13 +274,13 @@ impl HoopApp {
             });
             self.pen.pick = Some(rx);
         }
-        if let Some(rx) = &self.pen.pick {
-            if let Ok(answer) = rx.try_recv() {
-                self.pen.pick = None;
-                if let Some(path) = answer {
-                    let ctx = ui.ctx().clone();
-                    self.load_backdrop(&ctx, &path);
-                }
+        if let Some(rx) = &self.pen.pick
+            && let Ok(answer) = rx.try_recv()
+        {
+            self.pen.pick = None;
+            if let Some(path) = answer {
+                let ctx = ui.ctx().clone();
+                self.load_backdrop(&ctx, &path);
             }
         }
     }

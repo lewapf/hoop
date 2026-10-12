@@ -153,6 +153,9 @@ enum FitFix {
 
 /// Everything undo covers: hoop and placement plus the lettering and
 /// artwork settings.
+/// A save dialog in progress: its answer, the bytes, and the extension.
+type SaveJob = (Receiver<Option<PathBuf>>, Vec<u8>, &'static str);
+
 #[derive(Clone, PartialEq)]
 struct Snapshot {
     setup: Setup,
@@ -285,7 +288,7 @@ pub struct HoopApp {
     font_scan: Option<Receiver<Vec<FontSource>>>,
     font_filter: String,
     /// A save dialog in progress: its answer, the bytes, and the extension.
-    saver: Option<(Receiver<Option<PathBuf>>, Vec<u8>, &'static str)>,
+    saver: Option<SaveJob>,
     capture: Capture,
     pinned: Vec<Pinned>,
     usb: UsbState,
@@ -466,10 +469,10 @@ impl HoopApp {
             }
             _ => {}
         }
-        if let Ok(t) = std::env::var("HOOP_TAB") {
-            if let Some(tab) = shell::tab_named(self.mode, &t) {
-                self.tab[self.mode as usize] = tab;
-            }
+        if let Ok(t) = std::env::var("HOOP_TAB")
+            && let Some(tab) = shell::tab_named(self.mode, &t)
+        {
+            self.tab[self.mode as usize] = tab;
         }
     }
 
@@ -653,11 +656,11 @@ impl HoopApp {
 
     /// Picks the remembered font once it shows up in the font list.
     fn resolve_font(&mut self) {
-        if let Some(name) = &self.want_font {
-            if let Some(i) = self.fonts.iter().position(|f| &f.name == name) {
-                self.letter.font = i;
-                self.want_font = None;
-            }
+        if let Some(name) = &self.want_font
+            && let Some(i) = self.fonts.iter().position(|f| &f.name == name)
+        {
+            self.letter.font = i;
+            self.want_font = None;
         }
     }
 
@@ -754,7 +757,7 @@ impl eframe::App for HoopApp {
                 self.paste_svg(&text);
             }
         }
-        let dropped = ctx.input(|i| i.raw.dropped_files.iter().next().map(|f| f.path().to_path_buf()));
+        let dropped = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf()));
         if let Some(path) = dropped {
             self.open(ctx, &path);
         }
@@ -772,12 +775,12 @@ impl eframe::App for HoopApp {
             ctx.request_repaint_after(std::time::Duration::from_millis(16));
         }
 
-        if let Some(rx) = &self.font_scan {
-            if let Ok(found) = rx.try_recv() {
-                self.fonts.extend(found);
-                self.font_scan = None;
-                self.resolve_font();
-            }
+        if let Some(rx) = &self.font_scan
+            && let Ok(found) = rx.try_recv()
+        {
+            self.fonts.extend(found);
+            self.font_scan = None;
+            self.resolve_font();
         }
         if let Capture::Waiting(_, since) = self.capture {
             if since.elapsed().as_secs() >= 3 {

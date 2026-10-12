@@ -53,6 +53,10 @@ impl Format {
     }
 }
 
+/// Stitches ready to write: points (0.1 mm), commands, and one thread per
+/// color block.
+pub type Stitches = (Vec<(f32, f32)>, Vec<Cmd>, Vec<Thread>);
+
 #[derive(Clone, Debug)]
 pub struct Pattern {
     pub format: Format,

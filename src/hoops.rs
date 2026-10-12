@@ -29,7 +29,7 @@ pub struct Placement {
 impl Placement {
     /// Design size after rotation, in 0.1 mm.
     pub fn size(&self, w: f32, h: f32) -> (f32, f32) {
-        if self.quarter_turns % 2 == 0 { (w, h) } else { (h, w) }
+        if self.quarter_turns.is_multiple_of(2) { (w, h) } else { (h, w) }
     }
 }
 

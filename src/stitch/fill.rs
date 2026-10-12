@@ -202,7 +202,9 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
         FillKind::Gradient => spacing + (fade - spacing) * ((y - y0) / (y1 - y0).max(1.0)).clamp(0.0, 1.0),
         _ => spacing,
     };
-    let mut rows: Vec<(f32, Vec<(f32, f32, bool)>)> = Vec::new();
+    // Each row: its height and its segments (start, end, sewn yet).
+    type Row = (f32, Vec<(f32, f32, bool)>);
+    let mut rows: Vec<Row> = Vec::new();
     let mut y = y0 + spacing / 2.0;
     while y < y1 {
         let mut spans = row_spans(&rc, y, even_odd);

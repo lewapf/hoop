@@ -81,7 +81,7 @@ pub(super) fn covered(p: Pt, shape: &[Contour], even_odd: bool, margin: f32) -> 
 /// each cut end runs on to the shape's edge (at most 1.5 × `margin` along
 /// the line), so the line meets the shape as in the drawing. Pieces
 /// shorter than 1 mm are dropped.
-pub(super) fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f32) -> (Vec<(Contour, bool)>, Vec<(Contour, bool)>) {
+pub(super) fn clip_line(line: &Line, shapes: &[MaskShape], margin: f32) -> (Vec<Line>, Vec<Line>) {
     let (c, closed) = line;
     let b = extent(std::slice::from_ref(line));
     let near: Vec<&(Vec<Contour>, bool)> = shapes
@@ -183,11 +183,11 @@ pub(super) fn layered_order(threads: &[i32], touch: impl Fn(usize, usize) -> boo
     // above[i]: shapes lying on i, which must wait for it.
     let mut above: Vec<Vec<usize>> = vec![Vec::new(); n];
     let mut below = vec![0usize; n];
-    for j in 0..n {
-        for i in 0..j {
+    for (j, below_j) in below.iter_mut().enumerate() {
+        for (i, above_i) in above.iter_mut().enumerate().take(j) {
             if touch(i, j) {
-                below[j] += 1;
-                above[i].push(j);
+                *below_j += 1;
+                above_i.push(j);
             }
         }
     }

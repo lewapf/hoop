@@ -177,12 +177,12 @@ impl HoopApp {
         if !self.wizard.open {
             return;
         }
-        if let Some(rx) = &self.wizard.pick {
-            if let Ok(answer) = rx.try_recv() {
-                self.wizard.pick = None;
-                if answer.is_some() {
-                    self.wizard.file = answer;
-                }
+        if let Some(rx) = &self.wizard.pick
+            && let Ok(answer) = rx.try_recv()
+        {
+            self.wizard.pick = None;
+            if answer.is_some() {
+                self.wizard.file = answer;
             }
         }
         let muted = self.muted();

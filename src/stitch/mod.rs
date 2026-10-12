@@ -17,6 +17,8 @@ pub use fill::*;
 pub type Pt = (f32, f32);
 
 pub type Contour = Vec<Pt>;
+/// A polyline and whether it closes on itself.
+pub type Line = (Contour, bool);
 
 pub fn dist(a: Pt, b: Pt) -> f32 {
     ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt()
@@ -229,10 +231,10 @@ pub fn run_path(st: &mut Stitcher, c: &[Pt], step: f32, triple: bool) {
         return;
     }
     let mut c = c.to_vec();
-    if let Some(l) = st.last() {
-        if dist(l, c[c.len() - 1]) < dist(l, c[0]) {
-            c.reverse();
-        }
+    if let Some(l) = st.last()
+        && dist(l, c[c.len() - 1]) < dist(l, c[0])
+    {
+        c.reverse();
     }
     let pts = walk_open(&c, step);
     st.travel(pts[0], pts.get(1).copied().unwrap_or(pts[0]));
@@ -309,10 +311,10 @@ pub fn satin_path(st: &mut Stitcher, c: &[Pt], width: f32) {
         return;
     }
     let mut c = c.to_vec();
-    if let Some(l) = st.last() {
-        if dist(l, c[c.len() - 1]) < dist(l, c[0]) {
-            c.reverse();
-        }
+    if let Some(l) = st.last()
+        && dist(l, c[c.len() - 1]) < dist(l, c[0])
+    {
+        c.reverse();
     }
     let rows = satin_rows(&c, false, width);
     if rows.len() < 2 {

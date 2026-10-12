@@ -27,15 +27,15 @@ impl HoopApp {
         if !self.usb.open {
             return;
         }
-        if let Some(rx) = &self.usb.job {
-            if let Ok(result) = rx.try_recv() {
-                self.usb.job = None;
-                if let Ok(msg) = &result {
-                    self.toast(msg.clone());
-                }
-                self.usb.message = Some(result);
-                self.usb.drives = usb::drives();
+        if let Some(rx) = &self.usb.job
+            && let Ok(result) = rx.try_recv()
+        {
+            self.usb.job = None;
+            if let Ok(msg) = &result {
+                self.toast(msg.clone());
             }
+            self.usb.message = Some(result);
+            self.usb.drives = usb::drives();
         }
         let accent = self.accent();
         let muted = self.muted();
@@ -85,10 +85,10 @@ impl HoopApp {
                         self.usb.drives = usb::drives();
                         self.usb.chosen = 0;
                     }
-                    if let Some(d) = &self.usb.sent_to {
-                        if ui.add_enabled(!busy, egui::Button::new("Eject")).on_hover_text(t!("Close the drive so it can be pulled out safely")).clicked() {
-                            eject = Some(d.clone());
-                        }
+                    if let Some(d) = &self.usb.sent_to
+                        && ui.add_enabled(!busy, egui::Button::new("Eject")).on_hover_text(t!("Close the drive so it can be pulled out safely")).clicked()
+                    {
+                        eject = Some(d.clone());
                     }
                 });
             },
@@ -96,21 +96,19 @@ impl HoopApp {
         if !open {
             self.usb.open = false;
         }
-        if send {
-            if let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.usb.bytes.clone().or_else(|| self.jef_bytes())) {
-                let file = format!("{}.jef", usb::short_name(&self.usb.name));
-                let (tx, rx) = channel();
-                let ctx = ctx.clone();
-                self.usb.sent_to = Some(drive.clone());
-                std::thread::spawn(move || {
-                    let r = usb::send(&drive, &file, &bytes)
-                        .map(|p| t!("Sent {file} to {v1}", file = file, v1 = p.parent().map(|d| d.display().to_string()).unwrap_or_default()));
-                    let _ = tx.send(r);
-                    ctx.request_repaint();
-                });
-                self.usb.job = Some(rx);
-                self.usb.message = None;
-            }
+        if send && let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.usb.bytes.clone().or_else(|| self.jef_bytes())) {
+            let file = format!("{}.jef", usb::short_name(&self.usb.name));
+            let (tx, rx) = channel();
+            let ctx = ctx.clone();
+            self.usb.sent_to = Some(drive.clone());
+            std::thread::spawn(move || {
+                let r = usb::send(&drive, &file, &bytes)
+                    .map(|p| t!("Sent {file} to {v1}", file = file, v1 = p.parent().map(|d| d.display().to_string()).unwrap_or_default()));
+                let _ = tx.send(r);
+                ctx.request_repaint();
+            });
+            self.usb.job = Some(rx);
+            self.usb.message = None;
         }
         if let Some(drive) = eject {
             let (tx, rx) = channel();

@@ -75,7 +75,7 @@ pub(super) fn average(colors: impl Iterator<Item = [u8; 3]>) -> [u8; 3] {
 }
 
 pub(super) struct Collect {
-    shapes: Vec<(Kind, Vec<(Contour, bool)>, [u8; 3])>,
+    shapes: Vec<(Kind, Vec<Line>, [u8; 3])>,
     images: usize,
 }
 

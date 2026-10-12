@@ -94,13 +94,14 @@ pub(super) mod ops {
         let mut cmds = Vec::with_capacity(p.cmds.len());
         let mut removed = 0;
         for (i, (&q, &c)) in p.points.iter().zip(&p.cmds).enumerate() {
-            if c == Cmd::Stitch && i > 0 {
-                if let (Some(&l), Some(&lc)) = (points.last(), cmds.last()) {
-                    let d = (q.0 - l.0).hypot(q.1 - l.1);
-                    if d < min && lc == Cmd::Stitch {
-                        removed += 1;
-                        continue;
-                    }
+            if c == Cmd::Stitch
+                && i > 0
+                && let (Some(&l), Some(&lc)) = (points.last(), cmds.last())
+            {
+                let d = (q.0 - l.0).hypot(q.1 - l.1);
+                if d < min && lc == Cmd::Stitch {
+                    removed += 1;
+                    continue;
                 }
             }
             points.push(q);
@@ -269,11 +270,11 @@ impl HoopApp {
                 .min_by(|a, b| a.1.total_cmp(&b.1))
                 .map(|(i, _)| i)
         };
-        if response.clicked() || response.drag_started() {
-            if let Some(p) = pointer {
-                self.stitch_edit.picked = nearest(p);
-                self.stitch_edit.dragging = response.drag_started() && self.stitch_edit.picked.is_some();
-            }
+        if (response.clicked() || response.drag_started())
+            && let Some(p) = pointer
+        {
+            self.stitch_edit.picked = nearest(p);
+            self.stitch_edit.dragging = response.drag_started() && self.stitch_edit.picked.is_some();
         }
         let picked = self.stitch_edit.picked;
         if self.stitch_edit.dragging {

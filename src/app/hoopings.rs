@@ -63,12 +63,12 @@ impl HoopApp {
         if !self.hoopings.open {
             return;
         }
-        if let Some(rx) = &self.hoopings.job {
-            if let Ok(folder) = rx.try_recv() {
-                self.hoopings.job = None;
-                if let Some(folder) = folder {
-                    self.save_hoopings(&folder);
-                }
+        if let Some(rx) = &self.hoopings.job
+            && let Ok(folder) = rx.try_recv()
+        {
+            self.hoopings.job = None;
+            if let Some(folder) = folder {
+                self.save_hoopings(&folder);
             }
         }
         let muted = self.muted();

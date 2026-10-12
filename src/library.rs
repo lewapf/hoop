@@ -91,10 +91,10 @@ fn write_png(path: &Path, px: &[u8]) {
 /// A thumbnail for a design file, from the cache or drawn now.
 pub fn thumbnail(path: &Path) -> Option<Thumb> {
     let cached = cache_path(path);
-    if let Some(c) = &cached {
-        if let Some(t) = read_png(c) {
-            return Some(t);
-        }
+    if let Some(c) = &cached
+        && let Some(t) = read_png(c)
+    {
+        return Some(t);
     }
     let t = match kind_of(path)? {
         Kind::Stitches => stitch_thumb(path)?,

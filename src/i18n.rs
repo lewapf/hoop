@@ -69,12 +69,11 @@ pub fn plural_index(lang: &str, n: u64) -> usize {
 /// The translated form of a line with a count in it.
 pub fn plural(n: u64, one: &'static str, other: &'static str) -> &'static str {
     let lang = language();
-    if let Some(forms) = PLURALS.read().ok().and_then(|p| p.get(one).cloned()) {
-        if let Some(f) = forms.get(plural_index(&lang, n)).or(forms.last()) {
-            if !f.is_empty() {
-                return f;
-            }
-        }
+    if let Some(forms) = PLURALS.read().ok().and_then(|p| p.get(one).cloned())
+        && let Some(f) = forms.get(plural_index(&lang, n)).or(forms.last())
+        && !f.is_empty()
+    {
+        return f;
     }
     if n == 1 { one } else { other }
 }
@@ -112,16 +111,16 @@ fn user_dir() -> Option<PathBuf> {
 /// Languages with a catalog, as (code, name in that language).
 pub fn available() -> Vec<(String, String)> {
     let mut out: Vec<(String, String)> = BUNDLED.iter().map(|(c, po)| (c.to_string(), language_name(c, po))).collect();
-    if let Some(dir) = user_dir() {
-        if let Ok(rd) = std::fs::read_dir(dir) {
-            for e in rd.flatten() {
-                let p = e.path();
-                if p.extension().is_some_and(|x| x == "po") {
-                    let code = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-                    if !out.iter().any(|(c, _)| *c == code) {
-                        let text = std::fs::read_to_string(&p).unwrap_or_default();
-                        out.push((code.clone(), language_name(&code, &text)));
-                    }
+    if let Some(dir) = user_dir()
+        && let Ok(rd) = std::fs::read_dir(dir)
+    {
+        for e in rd.flatten() {
+            let p = e.path();
+            if p.extension().is_some_and(|x| x == "po") {
+                let code = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                if !out.iter().any(|(c, _)| *c == code) {
+                    let text = std::fs::read_to_string(&p).unwrap_or_default();
+                    out.push((code.clone(), language_name(&code, &text)));
                 }
             }
         }
@@ -247,10 +246,11 @@ pub fn parse_po_entries(text: &str) -> Vec<Entry> {
     // What continuation lines add to: 0 msgid, 1 msgid_plural, 2 + k msgstr[k].
     let mut field = 0usize;
     let finish = |cur: &mut Option<Entry>, fuzzy: bool, out: &mut Vec<Entry>| {
-        if let Some(e) = cur.take() {
-            if !e.id.is_empty() && !fuzzy {
-                out.push(e);
-            }
+        if let Some(e) = cur.take()
+            && !e.id.is_empty()
+            && !fuzzy
+        {
+            out.push(e);
         }
     };
     for line in text.lines() {
@@ -337,23 +337,23 @@ pub fn fill(template: &str, args: &[(&str, &dyn Display)]) -> String {
             i += 2;
             continue;
         }
-        if c == b'{' {
-            if let Some(end) = template[i..].find('}') {
-                let inner = &template[i + 1..i + end];
-                let (name, spec) = inner.split_once(':').unwrap_or((inner, ""));
-                let key = if name.is_empty() {
-                    next += 1;
-                    (next - 1).to_string()
-                } else {
-                    name.to_string()
-                };
-                match args.iter().find(|(n, _)| *n == key) {
-                    Some((_, v)) => out.push_str(&apply(*v, spec)),
-                    None => out.push_str(&template[i..=i + end]),
-                }
-                i += end + 1;
-                continue;
+        if c == b'{'
+            && let Some(end) = template[i..].find('}')
+        {
+            let inner = &template[i + 1..i + end];
+            let (name, spec) = inner.split_once(':').unwrap_or((inner, ""));
+            let key = if name.is_empty() {
+                next += 1;
+                (next - 1).to_string()
+            } else {
+                name.to_string()
+            };
+            match args.iter().find(|(n, _)| *n == key) {
+                Some((_, v)) => out.push_str(&apply(*v, spec)),
+                None => out.push_str(&template[i..=i + end]),
             }
+            i += end + 1;
+            continue;
         }
         let ch = template[i..].chars().next().unwrap();
         out.push(ch);
@@ -479,7 +479,8 @@ pub fn extract(src: &str) -> Vec<(String, Option<String>)> {
         rest = &rest[at + 2..];
         match name {
             "t" | "n" => {
-                if let Some(r) = rest.strip_prefix('"') {
+                // rustfmt may put the text on the next line.
+                if let Some(r) = rest.trim_start().strip_prefix('"') {
                     let (s, after) = literal(r);
                     rest = after;
                     if !out.iter().any(|e| e.0 == s) {
@@ -594,6 +595,8 @@ mod tests {
         let src = r#"let a = t!("Open"); let b = t!("{n} rows", n = 3); print!("no"); n!("Table line"); t!("Open");"#;
         let names: Vec<String> = extract(src).into_iter().map(|e| e.0).collect();
         assert_eq!(names, vec!["Open", "{n} rows", "Table line"]);
+        let wrapped: Vec<String> = extract("t!(\n    \"Long line {x}\",\n    x = 1\n)").into_iter().map(|e| e.0).collect();
+        assert_eq!(wrapped, vec!["Long line {x}"]);
         let p = extract(r#"tn!(count, "{n} problem", "{n} problems", x = 1)"#);
         assert_eq!(p, vec![("{n} problem".to_string(), Some("{n} problems".to_string()))]);
     }

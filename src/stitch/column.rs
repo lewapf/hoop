@@ -261,10 +261,11 @@ fn skeleton(f: &Field) -> (Vec<Pt>, Vec<Edge>) {
         // Two node clusters touching directly.
         for &k in cluster {
             for q in nbrs(k) {
-                if let Some(o) = node_of[q] {
-                    if o > id && !edges.iter().any(|e| (e.a == Some(id) && e.b == Some(o)) || (e.a == Some(o) && e.b == Some(id))) {
-                        edges.push(Edge { a: Some(id), b: Some(o), pts: vec![node_pos[id], node_pos[o]], closed: false });
-                    }
+                if let Some(o) = node_of[q]
+                    && o > id
+                    && !edges.iter().any(|e| (e.a == Some(id) && e.b == Some(o)) || (e.a == Some(o) && e.b == Some(id)))
+                {
+                    edges.push(Edge { a: Some(id), b: Some(o), pts: vec![node_pos[id], node_pos[o]], closed: false });
                 }
             }
         }
@@ -282,8 +283,8 @@ fn skeleton(f: &Field) -> (Vec<Pt>, Vec<Edge>) {
         }
     }
     // Single cells, left by small round blobs like the dot of an i.
-    for k in 0..w * h {
-        if m[k] && nbrs(k).is_empty() {
+    for k in (0..w * h).filter(|&k| m[k]) {
+        if nbrs(k).is_empty() {
             let c = f.center(k);
             edges.push(Edge { a: None, b: None, pts: vec![(c.0 - 1.0, c.1), (c.0 + 1.0, c.1)], closed: false });
         }
@@ -740,11 +741,12 @@ pub fn column_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &
             let mut p = row.side(s_, pull);
             // Inside a tight curve the needle would keep landing in the same
             // spot: shorten every other stitch there.
-            let slot = (i % 2) as usize;
-            if let Some(q) = last_side[slot] {
-                if dist(p, q) < step * 0.7 && i % 4 >= 2 {
-                    p = (row.c.0 + (p.0 - row.c.0) * 0.6, row.c.1 + (p.1 - row.c.1) * 0.6);
-                }
+            let slot = i % 2;
+            if let Some(q) = last_side[slot]
+                && dist(p, q) < step * 0.7
+                && i % 4 >= 2
+            {
+                p = (row.c.0 + (p.0 - row.c.0) * 0.6, row.c.1 + (p.1 - row.c.1) * 0.6);
             }
             last_side[slot] = Some(p);
             let span = dist(prev, p);
@@ -872,7 +874,7 @@ mod tests {
                 .iter()
                 .filter(|p| {
                     let d = (p.1.atan2(p.0) - a0).rem_euclid(std::f32::consts::TAU);
-                    d < 0.2 || d > std::f32::consts::TAU - 0.2
+                    !(0.2..=std::f32::consts::TAU - 0.2).contains(&d)
                 })
                 .count();
             assert!(near > 12, "octant {q}: {near}");

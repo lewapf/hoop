@@ -11,7 +11,7 @@ mod svg;
 mod threads;
 
 use crate::formats::{self, Cmd, Format, Pattern};
-use crate::lettering::{self, Contour, EdgeKind, FillKind, Pt, Settings, Stitcher};
+use crate::lettering::{self, Contour, EdgeKind, FillKind, Line, MaskShape, Pt, Settings, Stitcher};
 
 pub use builtin::*;
 pub use sew::*;
@@ -580,7 +580,7 @@ mod samples {
 }
 
 /// One-click looks for artwork, changing only how shapes are stitched.
-pub const PRESETS: [(&str, &str, fn(&mut ArtSettings)); 4] = [
+pub const PRESETS: [lettering::Preset<ArtSettings>; 4] = [
     (n!("Solid"), n!("Dense tatami, hidden parts cut away, satin lines"), |s| {
         lettering::style(&mut s.style, FillKind::Tatami, 45.0, EdgeKind::None);
         s.knockout = true;

@@ -51,10 +51,10 @@ impl HoopApp {
     }
 
     pub(super) fn restore_chart(&mut self) {
-        if let Some(name) = self.prefs.get("threads.chart") {
-            if let Some(i) = self.threads.charts.iter().position(|c| c.name == name) {
-                self.threads.chosen = i;
-            }
+        if let Some(name) = self.prefs.get("threads.chart")
+            && let Some(i) = self.threads.charts.iter().position(|c| c.name == name)
+        {
+            self.threads.chosen = i;
         }
     }
 
@@ -62,21 +62,21 @@ impl HoopApp {
         if !self.threads.open {
             return;
         }
-        if let Some(rx) = &self.threads.job {
-            if let Ok(r) = rx.try_recv() {
-                self.threads.job = None;
-                let name = self.chart().name.clone();
-                self.threads.charts = threads::load_all();
-                if let Ok(got) = &r {
-                    if let Some(i) = self.threads.charts.iter().position(|c| &c.name == got) {
-                        self.threads.chosen = i;
-                        self.prefs.set("threads.chart", got);
-                    }
-                } else if let Some(i) = self.threads.charts.iter().position(|c| c.name == name) {
+        if let Some(rx) = &self.threads.job
+            && let Ok(r) = rx.try_recv()
+        {
+            self.threads.job = None;
+            let name = self.chart().name.clone();
+            self.threads.charts = threads::load_all();
+            if let Ok(got) = &r {
+                if let Some(i) = self.threads.charts.iter().position(|c| &c.name == got) {
                     self.threads.chosen = i;
+                    self.prefs.set("threads.chart", got);
                 }
-                self.threads.message = Some(r.map(|n| t!("{n} is ready.", n = n)));
+            } else if let Some(i) = self.threads.charts.iter().position(|c| c.name == name) {
+                self.threads.chosen = i;
             }
+            self.threads.message = Some(r.map(|n| t!("{n} is ready.", n = n)));
         }
         let muted = self.muted();
         let accent = self.accent();

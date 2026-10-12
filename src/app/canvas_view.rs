@@ -266,15 +266,15 @@ impl HoopApp {
         if response.hovered() {
             let (scroll, zoom, pointer) = ui.input(|i| (i.smooth_scroll_delta.y, i.zoom_delta(), i.pointer.hover_pos()));
             let factor = zoom * (scroll * 0.0025).exp();
-            if (factor - 1.0).abs() > 1e-4 {
-                if let Some(p) = pointer {
-                    let old = self.view.scale;
-                    let new = (old * factor).clamp(0.05, 40.0);
-                    let anchor = p - rect.center();
-                    self.view.pan = anchor - (anchor - self.view.pan) * (new / old);
-                    self.view.scale = new;
-                    self.user_view = true;
-                }
+            if (factor - 1.0).abs() > 1e-4
+                && let Some(p) = pointer
+            {
+                let old = self.view.scale;
+                let new = (old * factor).clamp(0.05, 40.0);
+                let anchor = p - rect.center();
+                self.view.pan = anchor - (anchor - self.view.pan) * (new / old);
+                self.view.scale = new;
+                self.user_view = true;
             }
         }
 

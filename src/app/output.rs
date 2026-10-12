@@ -87,7 +87,7 @@ impl HoopApp {
 
     /// What's on the hoop as points centered on the hoop, commands and one
     /// thread per color block.
-    pub(super) fn hoop_stitches(&self) -> Option<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>)> {
+    pub(super) fn hoop_stitches(&self) -> Option<formats::Stitches> {
         if !self.pinned.is_empty() {
             return self.combined_stitches();
         }
@@ -102,11 +102,11 @@ impl HoopApp {
 
     /// The pinned parts and the current design as one design, keeping their
     /// places relative to each other and centering the whole on the hoop.
-    pub(super) fn combined_stitches(&self) -> Option<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>)> {
+    pub(super) fn combined_stitches(&self) -> Option<formats::Stitches> {
         let mut points: Vec<(f32, f32)> = Vec::new();
         let mut cmds: Vec<Cmd> = Vec::new();
         let mut threads: Vec<formats::Thread> = Vec::new();
-        let mut parts: Vec<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>)> =
+        let mut parts: Vec<formats::Stitches> =
             self.pinned.iter().map(|p| (p.pattern.points.clone(), p.pattern.cmds.clone(), p.blocks.iter().map(|b| b.thread.clone()).collect())).collect();
         if let Some(d) = &self.design {
             let t = Transform::new(d.bounds, &self.setup.at);

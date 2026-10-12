@@ -152,10 +152,10 @@ impl Tuning {
     /// stitch settings.
     pub fn apply(&self, s: &mut Settings) {
         // The sheet tests row fills; satin and open styles keep their own spacing.
-        if let Some(r) = self.rows {
-            if matches!(s.fill, FillKind::Tatami | FillKind::Wave | FillKind::Gradient | FillKind::Contour) {
-                s.density_mm = r;
-            }
+        if let Some(r) = self.rows
+            && matches!(s.fill, FillKind::Tatami | FillKind::Wave | FillKind::Gradient | FillKind::Contour)
+        {
+            s.density_mm = r;
         }
         if let Some(p) = self.pull {
             s.pull_mm = p;

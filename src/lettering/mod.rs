@@ -504,7 +504,10 @@ mod samples {
 
 /// One-click looks for lettering. They change only the stitch style, never
 /// the text, font, size or threads.
-pub const PRESETS: [(&str, &str, fn(&mut Settings)); 10] = [
+/// A quick style: name, what it does, and how it sets the settings.
+pub type Preset<S> = (&'static str, &'static str, fn(&mut S));
+
+pub const PRESETS: [Preset<Settings>; 10] = [
     (n!("Classic"), n!("Tatami fill with a satin border"), |s| {
         style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
         s.edge_width_mm = 1.6;
