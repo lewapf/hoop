@@ -36,6 +36,9 @@ You can change everything afterwards in the panels on the right.
   the fabric to pan, scroll to zoom, double-click to see the whole hoop.
 - **Right dock:** the settings of the current tab, in pages (Text, Style,
   Hoop, Stitch, View…).
+- **Collapsing:** the small arrow next to each panel's tabs folds it
+  away to a thin strip; click the arrow on the strip, or press `F9` /
+  `F10`, to bring it back.
 - **Status bar:** pointer position, size, stitch count, whether it fits,
   and the result of the design check.
 
@@ -300,6 +303,7 @@ Lines left empty stay in English.
 | `1`–`4` | Pick a hoop |
 | `F` / `D` | Whole hoop / zoom to the design |
 | `G` / `J` / `T` / `H` | Grid / jumps / thread texture / density |
+| `F9` / `F10` | Hide or show the left / right panel |
 | `F1` | This manual (Help → User manual) |
 | `?` | Shortcut list |
 | `Q` | Quit |

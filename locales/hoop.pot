@@ -476,6 +476,12 @@ msgstr ""
 msgid "View"
 msgstr ""
 
+msgid "Show the left panel · F9"
+msgstr ""
+
+msgid "Show the right panel · F10"
+msgstr ""
+
 msgid "Check ({v0})"
 msgstr ""
 
@@ -489,6 +495,12 @@ msgid "Colors"
 msgstr ""
 
 msgid "Objects"
+msgstr ""
+
+msgid "Hide this panel · F9"
+msgstr ""
+
+msgid "Hide this panel · F10"
 msgstr ""
 
 msgid "File"
@@ -1304,6 +1316,12 @@ msgid "New project wizard"
 msgstr ""
 
 msgid "F1"
+msgstr ""
+
+msgid "F9 / F10"
+msgstr ""
+
+msgid "Hide or show the left / right panel"
 msgstr ""
 
 msgid "Ctrl+V"

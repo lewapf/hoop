@@ -50,6 +50,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("Ctrl+,"), n!("Settings: language, folders, machine, threads")),
     (n!("N"), n!("New project wizard")),
     (n!("F1"), n!("User manual")),
+    (n!("F9 / F10"), n!("Hide or show the left / right panel")),
     (n!("Ctrl+V"), n!("Paste SVG code as artwork")),
     (n!("Space"), n!("Play or pause the stitch-out")),
     (n!("Home / End"), n!("Back to the first stitch / show everything")),
@@ -701,6 +702,12 @@ impl HoopApp {
         }
         if press(Modifiers::NONE, Key::N) || press(Modifiers::COMMAND, Key::N) {
             self.open_wizard();
+        }
+        if press(Modifiers::NONE, Key::F9) {
+            self.show_left = !self.show_left;
+        }
+        if press(Modifiers::NONE, Key::F10) {
+            self.show_right = !self.show_right;
         }
         if press(Modifiers::NONE, Key::F1) {
             self.manual.open = !self.manual.open;
@@ -1413,7 +1420,7 @@ impl HoopApp {
         if let Some(c) = p.get("fabric").and_then(|v| u32::from_str_radix(v, 16).ok()) {
             self.fabric = [(c >> 16) as u8, (c >> 8) as u8, c as u8];
         }
-        for (key, flag) in [("grid", &mut self.grid), ("jumps", &mut self.jumps), ("texture", &mut self.textured), ("sizes", &mut self.sizes)] {
+        for (key, flag) in [("grid", &mut self.grid), ("jumps", &mut self.jumps), ("texture", &mut self.textured), ("sizes", &mut self.sizes), ("show_left", &mut self.show_left), ("show_right", &mut self.show_right)] {
             if let Some(v) = p.num(key) {
                 *flag = v;
             }
@@ -1448,6 +1455,8 @@ impl HoopApp {
         self.prefs.set("jumps", self.jumps);
         self.prefs.set("texture", self.textured);
         self.prefs.set("sizes", self.sizes);
+        self.prefs.set("show_left", self.show_left);
+        self.prefs.set("show_right", self.show_right);
         self.prefs.set("speed", self.speed);
         self.prefs.set("playback", self.play_rate);
         let font = self.fonts.get(self.letter.font).map_or("", |f| f.name.as_str()).to_string();

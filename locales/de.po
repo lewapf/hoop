@@ -2540,3 +2540,18 @@ msgstr "Schrift des Themas"
 
 msgid "The font of the Omarchy theme, usually monospace"
 msgstr "Die Schrift des Omarchy-Themas, meist dicktengleich"
+
+msgid "Show the left panel · F9"
+msgstr "Linke Leiste zeigen · F9"
+
+msgid "Show the right panel · F10"
+msgstr "Rechte Leiste zeigen · F10"
+
+msgid "Hide this panel · F9"
+msgstr "Diese Leiste verbergen · F9"
+
+msgid "Hide this panel · F10"
+msgstr "Diese Leiste verbergen · F10"
+
+msgid "Hide or show the left / right panel"
+msgstr "Linke / rechte Leiste verbergen oder zeigen"

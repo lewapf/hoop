@@ -101,6 +101,21 @@ fn item(ui: &mut egui::Ui, enabled: bool, text: &str, keys: &str) -> bool {
     clicked
 }
 
+/// A small arrow button for collapsing and opening the side panels.
+fn chevron(ui: &mut egui::Ui, left: bool, tip: &str) -> bool {
+    let (rect, resp) = ui.allocate_exact_size(vec2(22.0, 22.0), Sense::click());
+    let v = ui.visuals();
+    if resp.hovered() {
+        ui.painter().rect_filled(rect, 4, v.widgets.hovered.weak_bg_fill);
+    }
+    let c = rect.center();
+    let d = if left { -1.0 } else { 1.0 };
+    let stroke = egui::Stroke::new(1.6, v.text_color());
+    ui.painter().line_segment([c + vec2(-3.0 * d, -5.0), c + vec2(3.0 * d, 0.0)], stroke);
+    ui.painter().line_segment([c + vec2(3.0 * d, 0.0), c + vec2(-3.0 * d, 5.0)], stroke);
+    resp.on_hover_text(tip).clicked()
+}
+
 fn check(ui: &mut egui::Ui, value: &mut bool, text: &str, keys: &str) {
     if ui.add(egui::Button::selectable(*value, text).shortcut_text(keys)).clicked() {
         *value = !*value;
@@ -116,8 +131,16 @@ impl HoopApp {
         egui::Panel::top("tools").frame(bar.inner_margin(egui::Margin::symmetric(6, 3))).show(ui, |ui| self.tool_bar(ui, canvas_rect));
         egui::Panel::bottom("status").frame(bar.inner_margin(egui::Margin::symmetric(10, 3))).show(ui, |ui| self.status_bar(ui));
         let dock = egui::Frame::new().fill(fill).inner_margin(egui::Margin { left: 8, right: 8, top: 6, bottom: 0 });
+        // A collapsed panel leaves a thin strip with an arrow to open it.
+        let strip = egui::Frame::new().fill(fill).inner_margin(egui::Margin { left: 2, right: 2, top: 6, bottom: 0 });
         if self.show_left {
             egui::Panel::left("dock").resizable(true).default_size(250.0).size_range(210.0..=420.0).frame(dock).show(ui, |ui| self.left_dock(ui));
+        } else {
+            egui::Panel::left("dock-strip").resizable(false).exact_size(26.0).frame(strip).show(ui, |ui| {
+                if chevron(ui, false, &t!("Show the left panel · F9")) {
+                    self.show_left = true;
+                }
+            });
         }
         if self.show_right {
             egui::Panel::right("controls")
@@ -126,6 +149,12 @@ impl HoopApp {
                 .size_range(350.0..=620.0)
                 .frame(dock)
                 .show(ui, |ui| self.right_dock(ui, canvas_rect));
+        } else {
+            egui::Panel::right("controls-strip").resizable(false).exact_size(26.0).frame(strip).show(ui, |ui| {
+                if chevron(ui, true, &t!("Show the right panel · F10")) {
+                    self.show_right = true;
+                }
+            });
         }
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
     }
@@ -142,7 +171,17 @@ impl HoopApp {
         } else if self.dock == Dock::Objects {
             self.dock = Dock::Colors;
         }
-        tab_row(ui, &mut self.dock, &options, accent);
+        let mut hide = false;
+        ui.horizontal_top(|ui| {
+            let w = ui.available_width() - 26.0;
+            ui.allocate_ui(vec2(w, 0.0), |ui| tab_row(ui, &mut self.dock, &options, accent));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                hide = chevron(ui, true, &t!("Hide this panel · F9"));
+            });
+        });
+        if hide {
+            self.show_left = false;
+        }
         ui.add_space(6.0);
         match self.dock {
             Dock::Library => self.library_page(ui),
@@ -161,7 +200,14 @@ impl HoopApp {
         if !tabs(self.mode).contains(&self.tab[m]) {
             self.tab[m] = tabs(self.mode)[0];
         }
-        tab_row(ui, &mut self.tab[m], &options, accent);
+        let mut hide = false;
+        ui.horizontal_top(|ui| {
+            hide = chevron(ui, false, &t!("Hide this panel · F10"));
+            ui.vertical(|ui| tab_row(ui, &mut self.tab[m], &options, accent));
+        });
+        if hide {
+            self.show_right = false;
+        }
         ui.add_space(8.0);
         let tab = self.tab[m];
         egui::ScrollArea::vertical().id_salt(("page", m, tab as usize)).auto_shrink([false, false]).show(ui, |ui| {
@@ -301,8 +347,8 @@ impl HoopApp {
                     self.threads.open = true;
                 }
                 ui.separator();
-                check(ui, &mut self.show_left, t!("Objects and colors panel"), "");
-                check(ui, &mut self.show_right, t!("Properties panel"), "");
+                check(ui, &mut self.show_left, t!("Objects and colors panel"), "F9");
+                check(ui, &mut self.show_right, t!("Properties panel"), "F10");
             });
             ui.menu_button(t!("Design"), |ui| {
                 for (m, text, key) in [(Mode::Viewer, t!("Viewer"), "V"), (Mode::Lettering, t!("Lettering"), "L"), (Mode::Artwork, t!("Artwork"), "A")] {
