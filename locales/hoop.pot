@@ -2181,9 +2181,6 @@ msgstr ""
 msgid "The picture couldn't be taken. Try again."
 msgstr ""
 
-msgid "Line"
-msgstr ""
-
 msgid "Square"
 msgstr ""
 
@@ -2199,10 +2196,7 @@ msgstr ""
 msgid "Banner"
 msgstr ""
 
-msgid "{name} isn't an SVG Hoop can read: {e}."
-msgstr ""
-
-msgid "{name} has no shapes to stitch.{v0}"
+msgid "Line"
 msgstr ""
 
 msgid "No shapes yet. Add one from Shapes, or open an SVG or a picture."
@@ -2218,6 +2212,12 @@ msgid "Tack-down (lay the fabric first)"
 msgstr ""
 
 msgid "Nothing to stitch with these settings. Turn on a fill or a line style."
+msgstr ""
+
+msgid "{name} isn't an SVG Hoop can read: {e}."
+msgstr ""
+
+msgid "{name} has no shapes to stitch.{v0}"
 msgstr ""
 
 msgid "Rows {mm:.2} mm"

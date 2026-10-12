@@ -43,45 +43,50 @@ in Settings, and `check::artwork`/`check::lettering` take it for their limits.
 ## Layout
 
 ```
-src/main.rs       eframe setup: app id "hoop", MSAA 4, vsync OFF (see Gotchas)
-src/app.rs        app state, canvas, panels' contents (big; egui immediate mode)
-src/app/shell.rs  menu bar, tool bar, status bar, left/right docks and tabs
-src/app/checks.rs Check list, density overlay, fixes, save preflight
-src/check.rs      design check: density grid, needle hits, stitch lengths,
-                  artwork shape widths, lettering rules (thresholds on top)
-src/app/shapes.rs artwork shape editing: selection, drag/snap, handles,
-                  points, Arrange actions, Objects list, Shape tab
-src/canvas.rs     fabric, hoop and stitch drawing; Transform (rotate/mirror/offset)
-src/formats.rs    file readers, JEF writer, Pattern/Block, thread charts,
-                  thread length, quality warnings
-src/hoops.rs      hoop list and fit math
-src/lettering.rs  text layout + the shared stitch engine (Stitcher, fills,
-                  edges, contour fill, patches, presets)
-src/artwork.rs    SVG → shapes (usvg), artwork stitching, thread grouping,
-                  per-thread looks, presets
-src/trace.rs      picture → artwork (k-means, despeckle, marching squares,
-                  Chaikin, RDP, hole matching)
-src/testsew.rs    test pieces: crop stitches to an area (ties only where it
-                  cuts a run), the calibration sheet
-src/app/testpiece.rs  Test stitch-out window, area drag on the hoop, overlay
-src/usb.rs        lsblk parsing, udisksctl mount/eject, EMB/Embf writing
-src/i18n.rs       translations: t!/tn!/n! macros, .po parsing, plural rules
-src/column.rs     turning satin columns (distance field, thinning, rays)
-src/special.rs    stipple and cross-stitch fills, blanket and scallop edges
-src/export.rs     DST, EXP, PES, PEC, VP3 writers (+ JEF via formats.rs)
-src/worksheet.rs  hand-written PDF: worksheet and actual-size template
-src/library.rs    design folder scan and thumbnails (cached, resvg)
-src/threads.rs    thread charts from .gpl files, Lab matching, My threads
-src/split.rs      multi-hooping: parts, registration crosses
-src/app/library.rs, threadwin.rs, team.rs, tools.rs, hoopings.rs,
-src/app/stitchedit.rs, draw.rs   the UI for the above
-locales/hoop.pot  every translatable line
-src/prefs.rs      ~/.local/state/hoop/prefs (key = value lines)
-src/theme.rs      Omarchy theme colors, watched from a background thread
-assets/fonts/     8 bundled OFL display fonts (Google Fonts)
-tests/fixtures/   heart_5x5_fill.jef (machine-tested), GEARBRMN.dst
-pkgbuild/         PKGBUILD, .desktop, icon, MIME xml
-tools/jef-preview.html  standalone web viewer, used for headless visual checks
+src/main.rs          eframe setup: app id "hoop", MSAA 4, vsync OFF (see Gotchas)
+src/stitch/          the stitch engine every design uses — add new stitch
+                     types here
+  mod.rs             Stitcher (ties, travel, jumps), run and satin lines,
+                     row/mask spans, area and thickness
+  fill.rs            FillKind, Underlay, fill_shape (rows, wave, zigzag,
+                     gradient, crosshatch), contour rings, resolve (Auto)
+  column.rs          turning satin columns (distance field, thinning, rays)
+  special.rs         stipple, cross-stitch, blanket and scallop edges
+  route.rs           travel inside a shape (A* over a grid)
+src/lettering/       text: Settings (also the style every fill reads),
+  mod.rs             TextShape, EdgeKind, generate, presets
+  fonts.rs           bundled and system fonts, glyph outlines
+  layout.rs          placement, kerning, arc, circle badge, envelopes
+  patch.rs           patch backgrounds and the fob eyelet
+src/artwork/         SVG and picture artwork
+  mod.rs             Artwork, ArtSettings, ShapeEdit, frame helpers, presets
+  svg.rs             reading SVGs into shapes and color layers
+  builtin.rs         built-in shapes and the blank drawing
+  sew.rs             generate: knockout, line clipping, layered order,
+                     angle-line parts
+  threads.rs         thread groups and merging
+src/app.rs           app state, start-up, prefs, frame loop
+src/app/             one file per job: canvas_view, pages, lettering_panel,
+                     artwork_panel, output, usbwin, history, widgets,
+                     style_cards, shell (menus, docks), shapes, checks,
+                     testpiece, library, threadwin, team, tools, hoopings,
+                     stitchedit, draw, settings, wizard, manual
+src/check.rs         design check: density grid, needle hits, lengths, widths
+src/canvas.rs        fabric, hoop and stitch drawing; Transform
+src/formats.rs       readers, JEF writer, Pattern/Block, Janome/PEC charts
+src/export.rs        DST, EXP, PES, PEC, VP3 writers
+src/worksheet.rs     PDF worksheet
+src/trace.rs         picture → artwork
+src/testsew.rs       test pieces, calibration sheet, Tuning
+src/split.rs         multi-hooping
+src/threads.rs       thread charts (.gpl), Lab matching
+src/library.rs       folder scan, thumbnails
+src/i18n.rs          t!/tn!/n!, .po catalogs, plural rules
+src/hoops.rs, prefs.rs, theme.rs, usb.rs
+assets/fonts (lettering), assets/ui (Plex Sans), assets/shapes (Phosphor)
+locales/             hoop.pot, pl.po, de.po
+docs/MANUAL.md       the user manual shown by Help → User manual
+tools/jef-preview.html  standalone web viewer for headless visual checks
 ```
 
 Units everywhere: **0.1 mm, y pointing down**, design or hoop center at the
