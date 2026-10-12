@@ -36,6 +36,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("Ctrl+U", "Send to the USB stick for the machine"),
     ("Ctrl+T", "Test stitch-out: sew a small part, or the calibration sheet"),
     ("Ctrl+Shift+S", "Save a picture of the preview"),
+    ("Ctrl+P", "Save a worksheet PDF with an actual-size template"),
     ("Ctrl+V", "Paste SVG code as artwork"),
     ("Space", "Play or pause the stitch-out"),
     ("Home / End", "Back to the first stitch / show everything"),
@@ -342,7 +343,25 @@ impl HoopApp {
         if let Some(path) = file {
             app.open(&cc.egui_ctx, &path);
         }
+        app.debug_start();
         app
+    }
+
+    /// For screenshots in tests: HOOP_MODE=viewer|lettering|artwork and
+    /// HOOP_TAB=<tab label> pick what the window opens on.
+    fn debug_start(&mut self) {
+        if let Ok(m) = std::env::var("HOOP_MODE") {
+            match m.as_str() {
+                "lettering" => self.set_mode(Mode::Lettering),
+                "artwork" => self.set_mode(Mode::Artwork),
+                _ => self.set_mode(Mode::Viewer),
+            }
+        }
+        if let Ok(t) = std::env::var("HOOP_TAB") {
+            if let Some(tab) = shell::tab_named(self.mode, &t) {
+                self.tab[self.mode as usize] = tab;
+            }
+        }
     }
 
     fn apply_theme(&self, ctx: &egui::Context) {
@@ -602,6 +621,9 @@ impl HoopApp {
         }
         if press(Modifiers::COMMAND | Modifiers::SHIFT, Key::S) {
             self.save_picture();
+        }
+        if press(Modifiers::COMMAND, Key::P) && self.design.is_some() {
+            self.save_worksheet();
         }
         if press(Modifiers::COMMAND, Key::U) {
             self.open_usb();
@@ -979,6 +1001,9 @@ impl HoopApp {
                         });
                     });
                 });
+                if ui.button("Save worksheet…").on_hover_text("A PDF with the thread sequence and an actual-size template · Ctrl+P").clicked() {
+                    self.save_worksheet();
+                }
             });
         }
 
@@ -1819,6 +1844,24 @@ impl HoopApp {
         let bytes = export::write(out, &stem, &points, &cmds, &threads);
         let title = if out == Out::Jef { "Save as JEF" } else { "Export" };
         self.ask_save(title, format!("{stem}.{}", out.ext()), out.filter(), out.ext(), bytes);
+    }
+
+    /// Saves a PDF worksheet: facts, thread sequence and an actual-size template.
+    pub(super) fn save_worksheet(&mut self) {
+        let Some((points, cmds, threads)) = self.hoop_stitches() else { return };
+        let hoop = HOOPS[self.setup.hoop];
+        let stem = self.design_stem();
+        let name = self.design.as_ref().map_or(stem.clone(), |d| d.name.clone());
+        let bytes = crate::worksheet::pdf(&crate::worksheet::Sheet {
+            name: &name,
+            hoop: &format!("{} {} × {} mm", hoop.name, hoop.w, hoop.h),
+            points: &points,
+            cmds: &cmds,
+            threads: &threads,
+            spm: SPEEDS[self.speed],
+            date: &formats::today(),
+        });
+        self.ask_save("Save worksheet", format!("{stem}-worksheet.pdf"), "PDF", "pdf", bytes);
     }
 
     /// The JEF for what's on the hoop: the design, or every pinned part with it.

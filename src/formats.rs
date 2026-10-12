@@ -466,8 +466,15 @@ pub fn nearest_pec(c: [u8; 3]) -> u8 {
     (0..PEC_THREADS.len()).min_by_key(|&i| d(PEC_THREADS[i].0)).map_or(20, |i| i as u8 + 1)
 }
 
+/// Today's date as "YYYY-MM-DD" (UTC).
+pub fn today() -> String {
+    let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs() as i64);
+    let (y, m, d) = civil(secs.div_euclid(86_400));
+    format!("{y:04}-{m:02}-{d:02}")
+}
+
 /// Days since 1970-01-01 to a civil date (Howard Hinnant's algorithm).
-fn civil(days: i64) -> (i64, u32, u32) {
+pub fn civil(days: i64) -> (i64, u32, u32) {
     let z = days + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z - era * 146_097;

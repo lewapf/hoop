@@ -12,6 +12,7 @@ mod theme;
 mod trace;
 mod testsew;
 mod usb;
+mod worksheet;
 
 fn main() -> eframe::Result {
     let file = std::env::args_os().nth(1).map(std::path::PathBuf::from);

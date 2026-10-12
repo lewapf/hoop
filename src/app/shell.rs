@@ -45,6 +45,10 @@ fn tabs(mode: Mode) -> &'static [Tab] {
     }
 }
 
+pub(super) fn tab_named(mode: Mode, name: &str) -> Option<Tab> {
+    tabs(mode).iter().copied().find(|t| t.label().eq_ignore_ascii_case(name))
+}
+
 /// Pages of the left dock.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Dock {
@@ -219,6 +223,9 @@ impl HoopApp {
                 }
                 if item(ui, has, "Save picture…", "Ctrl+Shift+S") {
                     self.save_picture();
+                }
+                if item(ui, has, "Save worksheet (PDF)…", "Ctrl+P") {
+                    self.save_worksheet();
                 }
                 ui.separator();
                 if item(ui, true, "Quit", "Q") {
