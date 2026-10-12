@@ -2,7 +2,8 @@
 //! without crossing itself, as in quilting), cross-stitch, and the blanket
 //! and scallop edges.
 
-use crate::lettering::{self, Contour, MaskShape, Pt, Settings, Stitcher, dist, mask_spans, row_spans, subtract};
+use crate::stitch::{self, Contour, MaskShape, Pt, Stitcher, dist, mask_spans, row_spans, subtract};
+use crate::lettering::Settings;
 
 /// Cells of a grid whose centers lie inside the shape, at least `margin`
 /// from its edge. Returns (origin x, origin y, columns, rows, inside flags).
@@ -119,14 +120,14 @@ fn stipple(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskSha
     }
     let half = cell / 2.0;
     let center = |i: usize, j: usize| (x0 + i as f32 * half, y0 + j as f32 * half);
-    let rings = lettering::iso_lines(&fine, fw, fh, 0.5, &center);
+    let rings = stitch::iso_lines(&fine, fw, fh, 0.5, &center);
     let stitch_len = (s.stitch_mm * 10.0).clamp(15.0, 25.0);
     for ring in rings {
         if ring.len() < 4 {
             continue;
         }
         let smooth = chaikin(&ring, 4);
-        let path = lettering::densify(&smooth, stitch_len);
+        let path = stitch::densify(&smooth, stitch_len);
         let from = st.last().unwrap_or(path[0]);
         let start = (0..path.len()).min_by(|&a, &b| dist(path[a], from).total_cmp(&dist(path[b], from))).unwrap_or(0);
         let n = path.len();
@@ -186,7 +187,7 @@ fn cross(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape
 /// stitch into the shape every `step`, the classic appliqué finish.
 pub fn blanket_contour(st: &mut Stitcher, c: &Contour, width: f32) {
     let step = 25.0;
-    let pts = lettering::densify(c, 2.0);
+    let pts = stitch::densify(c, 2.0);
     if pts.len() < 3 {
         return;
     }
@@ -212,7 +213,7 @@ pub fn blanket_contour(st: &mut Stitcher, c: &Contour, width: f32) {
 
 /// Scallops: half circles along the outline, bulging outward.
 pub fn scallop_contour(st: &mut Stitcher, c: &Contour, width: f32, triple: bool) {
-    let pts = lettering::densify(c, 2.0);
+    let pts = stitch::densify(c, 2.0);
     if pts.len() < 3 {
         return;
     }

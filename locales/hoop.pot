@@ -2394,10 +2394,7 @@ msgstr ""
 msgid "Free arm"
 msgstr ""
 
-msgid "Edge run"
-msgstr ""
-
-msgid "Double zigzag"
+msgid "Couldn't read {v0}: {e}."
 msgstr ""
 
 msgid "Straight"
@@ -2427,10 +2424,13 @@ msgstr ""
 msgid "Hello"
 msgstr ""
 
-msgid "Couldn't read {v0}: {e}."
+msgid "Registration marks (remove after)"
 msgstr ""
 
-msgid "Registration marks (remove after)"
+msgid "Edge run"
+msgstr ""
+
+msgid "Double zigzag"
 msgstr ""
 
 msgid "Satin columns"

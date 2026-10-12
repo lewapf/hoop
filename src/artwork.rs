@@ -1108,7 +1108,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                         .collect()
                 };
                 let mask = above(false);
-                st.region = crate::route::Region::new(&contours, even_odd, &mask, &above(true));
+                st.region = crate::stitch::route::Region::new(&contours, even_odd, &mask, &above(true));
                 if st_ref.fill != FillKind::None {
                     if let Some(p) = it.entry {
                         st.travel(p, p);

@@ -9,7 +9,8 @@
 //! tight curves are shortened so needle holes don't pile up, and parts a
 //! branch shares with one sewn before it are left out.
 
-use crate::lettering::{self, Contour, MaskShape, Pt, Settings, Stitcher, dist, mask_spans, row_spans, subtract};
+use crate::stitch::{self, Contour, MaskShape, Pt, Stitcher, dist, mask_spans, row_spans, subtract};
+use crate::lettering::Settings;
 
 /// Distance from each grid cell to the outside of a shape.
 pub struct Field {
@@ -58,14 +59,14 @@ impl Field {
             for j in 0..h {
                 buf[j] = f[j * w + i];
             }
-            lettering::edt_1d(&buf[..h], &mut out[..h]);
+            stitch::edt_1d(&buf[..h], &mut out[..h]);
             for j in 0..h {
                 f[j * w + i] = out[j];
             }
         }
         for j in 0..h {
             buf[..w].copy_from_slice(&f[j * w..j * w + w]);
-            lettering::edt_1d(&buf[..w], &mut out[..w]);
+            stitch::edt_1d(&buf[..w], &mut out[..w]);
             for i in 0..w {
                 // Cell centers next to the outside are about half a cell from the edge.
                 f[j * w + i] = if out[i] > 0.0 { (out[i].sqrt() - 0.5).max(0.25) * cell } else { 0.0 };
@@ -701,9 +702,9 @@ pub fn column_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &
             continue;
         }
         let wide = match s.underlay_kind {
-            lettering::Underlay::Edge => false,
-            lettering::Underlay::Zigzag | lettering::Underlay::Double | lettering::Underlay::Tatami => true,
-            lettering::Underlay::Auto => r.iter().map(|w| w.left + w.right).sum::<f32>() / r.len() as f32 > 45.0,
+            stitch::Underlay::Edge => false,
+            stitch::Underlay::Zigzag | stitch::Underlay::Double | stitch::Underlay::Tatami => true,
+            stitch::Underlay::Auto => r.iter().map(|w| w.left + w.right).sum::<f32>() / r.len() as f32 > 45.0,
         };
         let centers: Vec<Pt> = r.iter().map(|w| w.c).collect();
         if s.underlay {
@@ -770,13 +771,13 @@ pub fn column_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &
     // filled with tatami so nothing is left bare.
     let field: Vec<f32> = (0..f.w * f.h).map(|k| if f.d[k] > 0.0 && !covered[k] { 1.0 } else { 0.0 }).collect();
     let center = |i: usize, j: usize| f.center(j * f.w + i);
-    let rings: Vec<Contour> = lettering::iso_lines(&field, f.w, f.h, 0.5, &center)
+    let rings: Vec<Contour> = stitch::iso_lines(&field, f.w, f.h, 0.5, &center)
         .into_iter()
-        .filter(|r| lettering::shape_area(std::slice::from_ref(r), true) > 300.0)
+        .filter(|r| stitch::shape_area(std::slice::from_ref(r), true) > 300.0)
         .collect();
-    if !rings.is_empty() && lettering::thickness(&rings, true) > 6.0 {
+    if !rings.is_empty() && stitch::thickness(&rings, true) > 6.0 {
         let t = Settings { pull_mm: 0.0, ..s.clone() };
-        lettering::fill_shape(st, &rings, true, &[], lettering::FillKind::Tatami, s.fill_angle, &t);
+        stitch::fill_shape(st, &rings, true, &[], stitch::FillKind::Tatami, s.fill_angle, &t);
     }
 }
 

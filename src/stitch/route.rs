@@ -7,7 +7,7 @@
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
-use crate::lettering::{Contour, MaskShape, Pt, dist, mask_spans, row_spans, subtract};
+use crate::stitch::{Contour, MaskShape, Pt, dist, mask_spans, row_spans, subtract};
 
 /// A shape on a grid of square cells.
 pub struct Region {
