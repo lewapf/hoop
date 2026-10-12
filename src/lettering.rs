@@ -78,6 +78,8 @@ pub enum PatchShape {
     Rounded,
     Oval,
     Circle,
+    /// A rounded tag with a tab and a satin eyelet for a key ring.
+    Fob,
 }
 
 /// What is sewn under a fill to hold the fabric and lift the top stitches.
@@ -229,6 +231,9 @@ pub struct Settings {
     pub patch_border_thread: i32,
     /// Fabric appliqué instead of a stitched background.
     pub patch_applique: bool,
+    /// Made in the hoop: a stop for backing fabric under the hoop and a
+    /// tack-down before the border, so the piece is finished front and back.
+    pub patch_ith: bool,
     pub underlay: bool,
     pub underlay_kind: Underlay,
     /// Widest part, in mm, that the Auto style still sews as a satin column.
@@ -269,6 +274,7 @@ impl Default for Settings {
             patch_thread: 2,
             patch_border_thread: 30,
             patch_applique: false,
+            patch_ith: false,
             underlay: true,
             underlay_kind: Underlay::Auto,
             column_max_mm: 7.0,
@@ -1316,9 +1322,9 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             // Placement line shows where the fabric goes; the machine stops,
             // the fabric is laid on, the tack-down holds it, and the machine
             // stops again so the extra can be trimmed before the cover stitch.
-            use_thread(&mut st, s.patch_thread, Some("Placement line"));
+            use_thread(&mut st, s.patch_thread, Some(t!("Placement line")));
             run_contour(&mut st, outline, 25.0, false);
-            use_thread(&mut st, s.patch_thread, Some("Tack-down (lay the fabric first)"));
+            use_thread(&mut st, s.patch_thread, Some(t!("Tack-down (lay the fabric first)")));
             run_contour(&mut st, outline, 20.0, false);
             run_contour(&mut st, outline, 20.0, false);
         } else if s.patch_fill != FillKind::None {
@@ -1329,6 +1335,10 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             run_contour(&mut st, outline, 25.0, false);
             let bg = Settings { density_mm: s.patch_fill.default_rows_mm(), underlay: false, ..s.clone() };
             fill_shape(&mut st, std::slice::from_ref(outline), false, &mask, s.patch_fill, s.fill_angle + 90.0, &bg);
+            if s.patch_fill == FillKind::Crosshatch {
+                // Lace: the second layer of the lattice.
+                fill_shape(&mut st, std::slice::from_ref(outline), false, &mask, s.patch_fill, s.fill_angle, &bg);
+            }
             st.region = None;
         }
     }
@@ -1352,6 +1362,12 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
         }
     }
 
+    // In the hoop: backing fabric goes under the hoop and is held by a
+    // tack-down that the border then covers.
+    if let (Some(outline), true) = (&patch, s.patch_ith) {
+        use_thread(&mut st, s.patch_border_thread, Some(t!("Back (tape backing fabric under the hoop)")));
+        run_contour(&mut st, outline, 20.0, false);
+    }
     // The border goes on last so it covers the edge of the background fill.
     if let Some(outline) = &patch {
         // Appliqué needs a border wide enough to cover the trimmed fabric edge.
@@ -1359,6 +1375,10 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
         if border > 0.0 {
             use_thread(&mut st, s.patch_border_thread, None);
             satin_contour(&mut st, outline, border * 10.0);
+        }
+        if let Some(eye) = fob_eyelet(&glyphs, s) {
+            // Satin round the key-ring hole; cut it open after sewing.
+            satin_contour(&mut st, &eye, 12.0);
         }
     }
     st.finish();
@@ -1407,7 +1427,41 @@ fn patch_outline(glyphs: &[Vec<Contour>], s: &Settings) -> Option<Contour> {
             let r = (hw * hw + hh * hh).sqrt() + pad;
             ellipse(r, r)
         }
+        PatchShape::Fob => {
+            // A pill round the text with a tab to the left for the ring.
+            let h = hh + pad;
+            let (left, right) = (cx - hw - pad - 2.0 * h, cx + hw + pad);
+            let mut c = Vec::new();
+            for i in 0..=24 {
+                let t = (-90.0 + i as f32 * 7.5f32).to_radians();
+                c.push((right - h + h * t.cos(), cy + h * t.sin()));
+            }
+            for i in 0..=24 {
+                let t = (90.0 + i as f32 * 7.5f32).to_radians();
+                c.push((left + h + h * t.cos(), cy + h * t.sin()));
+            }
+            c
+        }
     })
+}
+
+/// The key-ring hole of a fob: a circle in the middle of its tab.
+fn fob_eyelet(glyphs: &[Vec<Contour>], s: &Settings) -> Option<Contour> {
+    if s.patch != PatchShape::Fob {
+        return None;
+    }
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for p in glyphs.iter().flatten().flatten() {
+        b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
+    }
+    let pad = s.patch_pad_mm * 10.0;
+    let h = (b.3 - b.1) / 2.0 + pad;
+    let (cx, cy) = (b.0 - pad - h, (b.1 + b.3) / 2.0);
+    let r = (h * 0.45).clamp(25.0, 45.0);
+    Some((0..48).map(|i| {
+        let t = i as f32 / 48.0 * std::f32::consts::TAU;
+        (cx + r * t.cos(), cy + r * t.sin())
+    }).collect())
 }
 
 #[cfg(test)]
@@ -1553,7 +1607,7 @@ mod samples {
 
 /// One-click looks for lettering. They change only the stitch style, never
 /// the text, font, size or threads.
-pub const PRESETS: [(&str, &str, fn(&mut Settings)); 7] = [
+pub const PRESETS: [(&str, &str, fn(&mut Settings)); 10] = [
     (n!("Classic"), n!("Tatami fill with a satin border"), |s| {
         style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
         s.edge_width_mm = 1.6;
@@ -1575,6 +1629,34 @@ pub const PRESETS: [(&str, &str, fn(&mut Settings)); 7] = [
     (n!("Shaded"), n!("Gradient fill with a running outline"), |s| {
         style(s, FillKind::Gradient, 90.0, EdgeKind::Running);
         s.fade_mm = 3.0;
+    }),
+    (n!("Key fob"), n!("In the hoop: an appliqué tag with a key-ring eyelet, finished on both sides"), |s| {
+        style(s, FillKind::Column, 90.0, EdgeKind::None);
+        s.height_mm = 10.0;
+        s.patch = PatchShape::Fob;
+        s.patch_pad_mm = 4.0;
+        s.patch_border_mm = 3.0;
+        s.patch_applique = true;
+        s.patch_fill = FillKind::None;
+        s.patch_ith = true;
+    }),
+    (n!("Coaster"), n!("In the hoop: a round coaster, appliqué front and backed fabric"), |s| {
+        style(s, FillKind::Column, 90.0, EdgeKind::None);
+        s.patch = PatchShape::Circle;
+        s.patch_pad_mm = 12.0;
+        s.patch_border_mm = 3.5;
+        s.patch_applique = true;
+        s.patch_fill = FillKind::None;
+        s.patch_ith = true;
+    }),
+    (n!("Lace"), n!("Free-standing lace: a lattice that holds together once the water-soluble stabilizer is rinsed away"), |s| {
+        style(s, FillKind::Column, 90.0, EdgeKind::None);
+        s.patch = PatchShape::Circle;
+        s.patch_pad_mm = 8.0;
+        s.patch_border_mm = 3.0;
+        s.patch_applique = false;
+        s.patch_fill = FillKind::Crosshatch;
+        s.patch_ith = false;
     }),
 ];
 

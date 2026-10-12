@@ -121,6 +121,7 @@ impl Prefs {
         self.set("letter.patch_thread", s.patch_thread);
         self.set("letter.patch_border_thread", s.patch_border_thread);
         self.set("letter.patch_applique", s.patch_applique);
+        self.set("letter.patch_ith", s.patch_ith);
     }
 
     /// Lettering settings from the last session; the font is looked up by
@@ -163,6 +164,7 @@ impl Prefs {
             Some("Rounded") => PatchShape::Rounded,
             Some("Oval") => PatchShape::Oval,
             Some("Circle") => PatchShape::Circle,
+            Some("Fob") => PatchShape::Fob,
             _ => PatchShape::None,
         };
         if let Some(v) = self.get("letter.patch_fill").and_then(fill_kind) {
@@ -173,6 +175,9 @@ impl Prefs {
         }
         if let Some(v) = self.num("letter.patch_border_thread") {
             s.patch_border_thread = v;
+        }
+        if let Some(v) = self.num("letter.patch_ith") {
+            s.patch_ith = v;
         }
         if let Some(v) = self.num("letter.patch_applique") {
             s.patch_applique = v;

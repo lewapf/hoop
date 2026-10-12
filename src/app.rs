@@ -1548,7 +1548,7 @@ impl HoopApp {
             segmented(
                 ui,
                 &mut s.patch,
-                &[(PatchShape::None, t!("Off")), (PatchShape::Rect, t!("Box")), (PatchShape::Rounded, t!("Round")), (PatchShape::Oval, t!("Oval")), (PatchShape::Circle, t!("Circle"))],
+                &[(PatchShape::None, t!("Off")), (PatchShape::Rect, t!("Box")), (PatchShape::Rounded, t!("Round")), (PatchShape::Oval, t!("Oval")), (PatchShape::Circle, t!("Circle")), (PatchShape::Fob, t!("Fob"))],
                 accent,
             );
             if s.patch != PatchShape::None {
@@ -1558,10 +1558,11 @@ impl HoopApp {
                 ui.horizontal_wrapped(|ui| {
                     ui.label(RichText::new(t!("Background")).color(muted));
                     for (k, app, name, about) in [
-                        (FillKind::Tatami, false, "Filled", t!("Stitched solid")),
-                        (FillKind::Open, false, "Light", t!("An open fill, the fabric shows through")),
-                        (FillKind::None, false, "Fabric", t!("No background stitching")),
-                        (FillKind::None, true, "Appliqué", t!("A piece of fabric sewn on: placement line, stop, tack-down, stop, then the cover stitch")),
+                        (FillKind::Tatami, false, t!("Filled"), t!("Stitched solid")),
+                        (FillKind::Open, false, t!("Light"), t!("An open fill, the fabric shows through")),
+                        (FillKind::Crosshatch, false, t!("Lace"), t!("A double lattice for free-standing lace on water-soluble stabilizer")),
+                        (FillKind::None, false, t!("Fabric"), t!("No background stitching")),
+                        (FillKind::None, true, t!("Appliqué"), t!("A piece of fabric sewn on: placement line, stop, tack-down, stop, then the cover stitch")),
                     ] {
                         let on = s.patch_fill == k && s.patch_applique == app;
                         if ui.selectable_label(on, name).on_hover_text(about).clicked() {
@@ -1578,6 +1579,10 @@ impl HoopApp {
                 }
                 if s.patch_border_mm > 0.0 {
                     jef_picker_labeled(ui, "patch-border", t!("Border"), &mut s.patch_border_thread);
+                }
+                ui.checkbox(&mut s.patch_ith, t!("In the hoop: finish the back")).on_hover_text(t!("Before the border the machine stops: tape backing fabric under the hoop; a tack-down holds it and the border covers both edges. Cut out round the border."));
+                if s.patch_fill == FillKind::Crosshatch {
+                    ui.label(RichText::new(t!("Lace: hoop two layers of water-soluble stabilizer, sew, then rinse the stabilizer away.")).size(12.0).color(muted));
                 }
             }
         });

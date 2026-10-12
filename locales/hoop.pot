@@ -1449,6 +1449,9 @@ msgstr ""
 msgid "Oval"
 msgstr ""
 
+msgid "Fob"
+msgstr ""
+
 msgid "Padding"
 msgstr ""
 
@@ -1464,10 +1467,25 @@ msgstr ""
 msgid "Background"
 msgstr ""
 
+msgid "Filled"
+msgstr ""
+
 msgid "Stitched solid"
 msgstr ""
 
+msgid "Light"
+msgstr ""
+
 msgid "An open fill, the fabric shows through"
+msgstr ""
+
+msgid "Lace"
+msgstr ""
+
+msgid "A double lattice for free-standing lace on water-soluble stabilizer"
+msgstr ""
+
+msgid "Fabric"
 msgstr ""
 
 msgid "No background stitching"
@@ -1483,6 +1501,15 @@ msgid "Guide"
 msgstr ""
 
 msgid "Fill"
+msgstr ""
+
+msgid "In the hoop: finish the back"
+msgstr ""
+
+msgid "Before the border the machine stops: tape backing fabric under the hoop; a tack-down holds it and the border covers both edges. Cut out round the border."
+msgstr ""
+
+msgid "Lace: hoop two layers of water-soluble stabilizer, sew, then rinse the stabilizer away."
 msgstr ""
 
 msgid "Reset lettering"
@@ -1795,9 +1822,6 @@ msgid "Cap"
 msgstr ""
 
 msgid "Caps and stiff canvas: sew from the center out; zigzag underlay helps on the curve."
-msgstr ""
-
-msgid "Fabric"
 msgstr ""
 
 msgid "Sets row spacing, pull, stitch length and underlay for the material."
