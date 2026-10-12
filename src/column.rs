@@ -969,7 +969,17 @@ pub(crate) mod debug {
         let fonts = crate::lettering::bundled_fonts();
         let font = &fonts[std::env::var("F").ok().and_then(|v| v.parse().ok()).unwrap_or(0)];
         let fill = match std::env::var("FILL").as_deref() { Ok("auto") => crate::lettering::FillKind::Auto, _ => crate::lettering::FillKind::Column };
-        let s = Settings { text: std::env::var("T").unwrap_or("Be".into()), height_mm: std::env::var("H").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0), fill, edge: crate::lettering::EdgeKind::None, ..Settings::default() };
+        let shape = std::env::var("SHAPE").ok().and_then(|v| crate::lettering::TextShape::ALL.into_iter().find(|t| format!("{t:?}") == v)).unwrap_or(crate::lettering::TextShape::Straight);
+        let s = Settings {
+            text: std::env::var("T").unwrap_or("Be".into()).replace("\\n", "\n"),
+            height_mm: std::env::var("H").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0),
+            fill,
+            shape,
+            envelope_mm: std::env::var("ENV").ok().and_then(|v| v.parse().ok()).unwrap_or(8.0),
+            circle_mm: 70.0,
+            edge: crate::lettering::EdgeKind::None,
+            ..Settings::default()
+        };
         let p = crate::lettering::generate(font, &s).unwrap();
         let g = crate::lettering::outlines(font, &s);
         render(&format!("{out}/letters.png"), &g, &p.points, &p.cmds, std::env::var("PX").ok().and_then(|v| v.parse().ok()).unwrap_or(8.0));

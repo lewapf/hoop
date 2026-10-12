@@ -371,10 +371,10 @@ pub fn lettering(report: &mut Report, s: &Settings, tune: &Tuning) {
         report.issues.push(Issue {
             level: Level::Warning,
             title: t!("Small letters with a row fill").into(),
-            detail: t!("Below 10 mm the letter strokes are narrow; satin keeps them crisp.").into(),
+            detail: t!("Below 10 mm the letter strokes are narrow; satin columns keep them crisp.").into(),
             at: None,
             shape: None,
-            fix: Some(Fix::LetterFill(FillKind::Satin)),
+            fix: Some(Fix::LetterFill(FillKind::Column)),
         });
     }
     let satin_max = tune.satin_max.unwrap_or(5.0);
@@ -531,7 +531,7 @@ mod tests {
     fn small_tatami_letters_are_flagged() {
         let mut r = stitches(&rows(4.5, 1));
         lettering(&mut r, &Settings { height_mm: 8.0, ..Default::default() }, &Tuning::default());
-        assert!(r.issues.iter().any(|i| i.fix == Some(Fix::LetterFill(FillKind::Satin))));
+        assert!(r.issues.iter().any(|i| i.fix == Some(Fix::LetterFill(FillKind::Column))));
     }
 
     #[test]

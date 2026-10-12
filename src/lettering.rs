@@ -72,6 +72,60 @@ pub enum PatchShape {
     Circle,
 }
 
+/// The line the text sits on, or the envelope it is bent into.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextShape {
+    Straight,
+    /// Along an arc of `arc_deg`.
+    Arc,
+    /// Badge: the first line round the top of a circle, the second round
+    /// the bottom (both upright), more lines straight in the middle.
+    Circle,
+    /// The top edge bows up.
+    Arch,
+    /// The bottom edge bows down.
+    Valley,
+    /// Both edges bow out.
+    Bulge,
+    /// Both edges bow in.
+    Pinch,
+    /// The whole text bows up, letters kept upright.
+    Bridge,
+    Wave,
+    /// Letters grow from left to right.
+    Grow,
+    /// Three initials with the middle one bigger.
+    Monogram,
+}
+
+impl TextShape {
+    pub const ALL: [TextShape; 11] = [
+        TextShape::Straight, TextShape::Arc, TextShape::Circle, TextShape::Arch, TextShape::Valley, TextShape::Bulge,
+        TextShape::Pinch, TextShape::Bridge, TextShape::Wave, TextShape::Grow, TextShape::Monogram,
+    ];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            TextShape::Straight => n!("Straight"),
+            TextShape::Arc => n!("Arc"),
+            TextShape::Circle => n!("Circle badge"),
+            TextShape::Arch => n!("Arch"),
+            TextShape::Valley => n!("Valley"),
+            TextShape::Bulge => n!("Bulge"),
+            TextShape::Pinch => n!("Pinch"),
+            TextShape::Bridge => n!("Bridge"),
+            TextShape::Wave => n!("Wave"),
+            TextShape::Grow => n!("Grow"),
+            TextShape::Monogram => n!("Monogram"),
+        }
+    }
+
+    /// Whether the shape takes the envelope amount.
+    pub fn bends(self) -> bool {
+        matches!(self, TextShape::Arch | TextShape::Valley | TextShape::Bulge | TextShape::Pinch | TextShape::Bridge | TextShape::Wave | TextShape::Grow)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Align {
     Left,
@@ -95,6 +149,11 @@ pub struct Settings {
     pub spacing_mm: f32,
     pub line_spacing: f32,
     pub arc_deg: f32,
+    pub shape: TextShape,
+    /// Inner diameter of the circle badge.
+    pub circle_mm: f32,
+    /// How far envelopes bend the text.
+    pub envelope_mm: f32,
     pub fill: FillKind,
     pub fill_angle: f32,
     pub density_mm: f32,
@@ -136,6 +195,9 @@ impl Default for Settings {
             spacing_mm: 0.5,
             line_spacing: 1.3,
             arc_deg: 0.0,
+            shape: TextShape::Straight,
+            circle_mm: 60.0,
+            envelope_mm: 8.0,
             fill: FillKind::Tatami,
             fill_angle: 45.0,
             density_mm: 0.4,
@@ -311,6 +373,73 @@ pub fn densify(c: &Contour, max: f32) -> Contour {
 }
 
 /// Lays the text out and returns the contours of each glyph in 0.1 mm, centered.
+/// Puts the first line round the top of a circle and the second round the
+/// bottom, both reading left to right with letters upright; further lines
+/// stay straight in the middle.
+fn circle_badge(glyphs: &mut [Vec<Contour>], line_of: &[usize], s: &Settings, pitch: f32) {
+    let cap = s.height_mm * 10.0;
+    let r_in = (s.circle_mm * 10.0 / 2.0).max(cap);
+    let r_out = r_in + cap;
+    let middle: Vec<usize> = line_of.iter().copied().filter(|&l| l >= 2).collect();
+    let (first_mid, last_mid) = (middle.iter().copied().min().unwrap_or(2), middle.iter().copied().max().unwrap_or(2));
+    // Middle lines are stacked around the center: baseline of the middle of them at cap/2.
+    let mid_shift = -((first_mid + last_mid) as f32 / 2.0) * pitch + cap / 2.0;
+    for (g, &line) in glyphs.iter_mut().zip(line_of) {
+        let base = line as f32 * pitch;
+        for c in g.iter_mut() {
+            if line < 2 {
+                *c = densify(c, 8.0);
+            }
+            for p in c.iter_mut() {
+                let rel = p.1 - base;
+                *p = match line {
+                    0 => {
+                        let rho = r_in - rel;
+                        let th = p.0 / r_in;
+                        (rho * th.sin(), -rho * th.cos())
+                    }
+                    1 => {
+                        let rho = r_out + rel;
+                        let th = -p.0 / r_out;
+                        (-rho * th.sin(), rho * th.cos())
+                    }
+                    _ => (p.0, p.1 + mid_shift),
+                };
+            }
+        }
+    }
+}
+
+/// Bends the text's box: `amount` is how far the edges move, in 0.1 mm.
+fn envelope(glyphs: &mut [Vec<Contour>], shape: TextShape, amount: f32) {
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for p in glyphs.iter().flatten().flatten() {
+        b = (b.0.min(p.0), b.1.min(p.1), b.2.max(p.0), b.3.max(p.1));
+    }
+    let (w, h) = ((b.2 - b.0).max(1.0), (b.3 - b.1).max(1.0));
+    let cy = (b.1 + b.3) / 2.0;
+    for g in glyphs.iter_mut() {
+        for c in g.iter_mut() {
+            *c = densify(c, 8.0);
+            for p in c.iter_mut() {
+                let u = (p.0 - b.0) / w;
+                let v = (p.1 - b.1) / h;
+                let bow = 4.0 * u * (1.0 - u);
+                p.1 = match shape {
+                    TextShape::Arch => p.1 - amount * bow * (1.0 - v),
+                    TextShape::Valley => p.1 + amount * bow * v,
+                    TextShape::Bulge => p.1 + amount * bow * (2.0 * v - 1.0),
+                    TextShape::Pinch => p.1 - amount * bow * (2.0 * v - 1.0) * (h / (h + 2.0 * amount)).min(0.9),
+                    TextShape::Bridge => p.1 - amount * bow,
+                    TextShape::Wave => p.1 + amount * (u * std::f32::consts::TAU).sin(),
+                    TextShape::Grow => cy + (p.1 - cy) * (1.0 + (amount / h).min(0.9) * (2.0 * u - 1.0)),
+                    _ => p.1,
+                };
+            }
+        }
+    }
+}
+
 fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
     let cap = face.capital_height().filter(|h| *h > 0).unwrap_or(face.ascender()) as f32;
     let k = s.height_mm * 10.0 / cap;
@@ -326,14 +455,25 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
             .find_map(|t| t.glyphs_kerning(a, b))
             .unwrap_or(0) as f32
     };
+    let cap_h = s.height_mm * 10.0;
     let mut rows: Vec<(f32, Vec<Vec<Contour>>)> = Vec::new();
     for (row, line) in lines.iter().enumerate() {
         let mut pen = 0.0;
         let mut prev = None;
         let mut line_glyphs = Vec::new();
         let y0 = row as f32 * pitch;
+        let count = line.chars().filter(|c| !c.is_whitespace()).count();
+        let mut nth = 0;
         for ch in line.chars() {
             let Some(id) = face.glyph_index(ch) else { continue };
+            // A monogram's middle initial is half again as tall, centered
+            // on the others.
+            let big = s.shape == TextShape::Monogram && count % 2 == 1 && !ch.is_whitespace() && nth == count / 2;
+            if !ch.is_whitespace() {
+                nth += 1;
+            }
+            let kk = if big { k * 1.5 } else { k };
+            let drop = if big { cap_h * 0.25 } else { 0.0 };
             if let Some(p) = prev {
                 pen += kern(p, id) * k;
             }
@@ -344,19 +484,22 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
             let contours: Vec<Contour> = o
                 .contours
                 .into_iter()
-                .map(|c| c.into_iter().map(|(x, y)| (pen + x * k + y * k * slant, y0 - y * k)).collect())
+                .map(|c| c.into_iter().map(|(x, y)| (pen + x * kk + y * kk * slant, y0 + drop - y * kk)).collect())
                 .collect();
             if !contours.is_empty() {
                 line_glyphs.push(contours);
             }
-            pen += face.glyph_hor_advance(id).unwrap_or(0) as f32 * k + s.spacing_mm * 10.0;
+            pen += face.glyph_hor_advance(id).unwrap_or(0) as f32 * kk + s.spacing_mm * 10.0;
         }
         rows.push((pen - s.spacing_mm * 10.0, line_glyphs));
     }
     let widest = rows.iter().map(|r| r.0).fold(0.0, f32::max);
     let mut glyphs = Vec::new();
-    for (width, mut line_glyphs) in rows {
-        let shift = match s.align {
+    let mut line_of = Vec::new();
+    for (row, (width, mut line_glyphs)) in rows.into_iter().enumerate() {
+        // Badge lines are centered on the circle whatever the alignment.
+        let align = if s.shape == TextShape::Circle && row < 2 { Align::Center } else { s.align };
+        let shift = match align {
             Align::Left => -widest / 2.0,
             Align::Center => -width / 2.0,
             Align::Right => widest / 2.0 - width,
@@ -364,7 +507,13 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
         for p in line_glyphs.iter_mut().flatten().flatten() {
             p.0 += shift;
         }
+        line_of.extend(std::iter::repeat_n(row, line_glyphs.len()));
         glyphs.extend(line_glyphs);
+    }
+    match s.shape {
+        TextShape::Circle => circle_badge(&mut glyphs, &line_of, s, pitch),
+        sh if sh.bends() => envelope(&mut glyphs, sh, s.envelope_mm * 10.0),
+        _ => {}
     }
 
     let all = || glyphs.iter().flatten().flatten();
@@ -374,7 +523,7 @@ fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
         maxx = maxx.max(p.0);
     }
     let bend = s.arc_deg.to_radians();
-    if bend.abs() > 0.01 && maxx > minx {
+    if s.shape == TextShape::Arc && bend.abs() > 0.01 && maxx > minx {
         // Bend the baseline of the first line onto a circle whose arc length
         // over the text width matches the requested angle.
         let r = (maxx - minx) / bend;
@@ -1296,25 +1445,25 @@ mod samples {
 /// One-click looks for lettering. They change only the stitch style, never
 /// the text, font, size or threads.
 pub const PRESETS: [(&str, &str, fn(&mut Settings)); 7] = [
-    ("Classic", "Tatami fill with a satin border", |s| {
+    (n!("Classic"), n!("Tatami fill with a satin border"), |s| {
         style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
         s.edge_width_mm = 1.6;
     }),
-    ("Satin", "Smooth, shiny satin letters. Best for small text", |s| style(s, FillKind::Satin, 90.0, EdgeKind::None)),
-    ("Outline", "Only a triple-run outline", |s| style(s, FillKind::None, 45.0, EdgeKind::Triple)),
-    ("Bold", "Tatami with a wide satin border", |s| {
+    (n!("Satin"), n!("Satin columns that follow each stroke, as digitizers sew lettering. Best for small text"), |s| style(s, FillKind::Column, 90.0, EdgeKind::None)),
+    (n!("Outline"), n!("Only a triple-run outline"), |s| style(s, FillKind::None, 45.0, EdgeKind::Triple)),
+    (n!("Bold"), n!("Tatami with a wide satin border"), |s| {
         style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
         s.edge_width_mm = 2.8;
     }),
-    ("Vintage", "Open crosshatch inside a thin border", |s| {
+    (n!("Vintage"), n!("Open crosshatch inside a thin border"), |s| {
         style(s, FillKind::Crosshatch, 45.0, EdgeKind::Satin);
         s.edge_width_mm = 1.2;
     }),
-    ("Wavy", "Wave fill with a satin border", |s| {
+    (n!("Wavy"), n!("Wave fill with a satin border"), |s| {
         style(s, FillKind::Wave, 0.0, EdgeKind::Satin);
         s.edge_width_mm = 1.4;
     }),
-    ("Shaded", "Gradient fill with a running outline", |s| {
+    (n!("Shaded"), n!("Gradient fill with a running outline"), |s| {
         style(s, FillKind::Gradient, 90.0, EdgeKind::Running);
         s.fade_mm = 3.0;
     }),

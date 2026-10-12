@@ -13,6 +13,7 @@ mod checks;
 mod library;
 mod shapes;
 mod shell;
+mod team;
 mod testpiece;
 mod threadwin;
 
@@ -253,6 +254,7 @@ pub struct HoopApp {
     open_later: Option<PathBuf>,
     library: library::Library,
     threads: threadwin::ThreadCharts,
+    team: team::Team,
 }
 
 impl HoopApp {
@@ -332,6 +334,7 @@ impl HoopApp {
             open_later: None,
             library: Default::default(),
             threads: Default::default(),
+            team: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -1448,8 +1451,31 @@ impl HoopApp {
         card(ui, t!("Shape"), accent, |ui| {
             slider_row(ui, t!("Height"), &mut s.height_mm, 5.0..=120.0, " mm", 1).on_hover_text(t!("Height of capital letters"));
             slider_row(ui, t!("Spacing"), &mut s.spacing_mm, -5.0..=15.0, " mm", 1).on_hover_text(t!("Extra space between letters"));
-            slider_row(ui, t!("Arc"), &mut s.arc_deg, -360.0..=360.0, "°", 0)
-                .on_hover_text(t!("Bend the text into an arch (positive) or a smile (negative). 360° closes the circle."));
+            ui.horizontal(|ui| {
+                ui.label(t!("Layout"));
+                egui::ComboBox::from_id_salt("text-shape").selected_text(crate::i18n::tr(s.shape.name())).width(ui.available_width() - 8.0).show_ui(ui, |ui| {
+                    for sh in lettering::TextShape::ALL {
+                        ui.selectable_value(&mut s.shape, sh, crate::i18n::tr(sh.name()));
+                    }
+                });
+            });
+            match s.shape {
+                lettering::TextShape::Arc => {
+                    slider_row(ui, t!("Arc"), &mut s.arc_deg, -360.0..=360.0, "°", 0)
+                        .on_hover_text(t!("Bend the text into an arch (positive) or a smile (negative). 360° closes the circle."));
+                }
+                lettering::TextShape::Circle => {
+                    slider_row(ui, t!("Circle"), &mut s.circle_mm, 20.0..=180.0, " mm", 0).on_hover_text(t!("Inside diameter of the ring of text"));
+                    ui.label(RichText::new(t!("Line 1 runs round the top, line 2 round the bottom, more lines sit in the middle.")).size(12.0).color(muted));
+                }
+                lettering::TextShape::Monogram => {
+                    ui.label(RichText::new(t!("Type three initials; the middle one is sewn larger.")).size(12.0).color(muted));
+                }
+                sh if sh.bends() => {
+                    slider_row(ui, t!("Amount"), &mut s.envelope_mm, -40.0..=40.0, " mm", 1).on_hover_text(t!("How far the envelope bends the text"));
+                }
+                _ => {}
+            }
             slider_row(ui, t!("Slant"), &mut s.slant_deg, -30.0..=30.0, "°", 0).on_hover_text(t!("Lean the letters like italics"));
             if s.text.lines().count() > 1 {
                 slider_row(ui, t!("Lines"), &mut s.line_spacing, 0.8..=2.5, "×", 2).on_hover_text(t!("Distance between lines, in letter heights"));
@@ -1504,6 +1530,9 @@ impl HoopApp {
         }
         if let Some(tip) = tip_later {
             self.toast(tip.to_string());
+        }
+        if tab == Tab::Text {
+            self.team_card(ui);
         }
         if tab == Tab::Text && ui.button(t!("Reset lettering")).on_hover_text(t!("Back to the default style, keeping the font")).clicked() {
             let font = self.letter.font;
@@ -2271,6 +2300,7 @@ impl eframe::App for HoopApp {
                 self.finish_picture(&image, rect, ppp);
             }
         }
+        self.poll_team();
         if let Some((rx, _, _)) = &self.saver {
             match rx.try_recv() {
                 Ok(target) => {
@@ -2414,12 +2444,12 @@ fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fits: bool, s
 }
 
 /// A wrapping row of named style buttons; returns the one clicked.
-fn preset_chips(ui: &mut egui::Ui, presets: &[(&str, &str)]) -> Option<usize> {
+fn preset_chips(ui: &mut egui::Ui, presets: &[(&'static str, &'static str)]) -> Option<usize> {
     let mut picked = None;
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
         for (i, (name, about)) in presets.iter().enumerate() {
-            if ui.add(egui::Button::new(*name).corner_radius(12)).on_hover_text(*about).clicked() {
+            if ui.add(egui::Button::new(crate::i18n::tr(name)).corner_radius(12)).on_hover_text(crate::i18n::tr(about)).clicked() {
                 picked = Some(i);
             }
         }

@@ -570,6 +570,34 @@ msgstr ""
 msgid "Drag the design to move it · scroll to zoom · ? for keys"
 msgstr ""
 
+msgid "Team names"
+msgstr ""
+
+msgid "One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts."
+msgstr ""
+
+msgid "ANNA\nBEN\nCHARLOTTE"
+msgstr ""
+
+msgid "Save {n} design…"
+msgid_plural "Save {n} designs…"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Pick a folder; each name becomes NAME.jef"
+msgstr ""
+
+msgid "Folder for the team names"
+msgstr ""
+
+msgid "Saved {n} design to {folder}"
+msgid_plural "Saved {n} designs to {folder}"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Couldn't save: {list}"
+msgstr ""
+
 msgid "No artwork open."
 msgstr ""
 
@@ -1186,10 +1214,31 @@ msgstr ""
 msgid "Extra space between letters"
 msgstr ""
 
+msgid "Layout"
+msgstr ""
+
 msgid "Arc"
 msgstr ""
 
 msgid "Bend the text into an arch (positive) or a smile (negative). 360° closes the circle."
+msgstr ""
+
+msgid "Circle"
+msgstr ""
+
+msgid "Inside diameter of the ring of text"
+msgstr ""
+
+msgid "Line 1 runs round the top, line 2 round the bottom, more lines sit in the middle."
+msgstr ""
+
+msgid "Type three initials; the middle one is sewn larger."
+msgstr ""
+
+msgid "Amount"
+msgstr ""
+
+msgid "How far the envelope bends the text"
 msgstr ""
 
 msgid "Slant"
@@ -1226,9 +1275,6 @@ msgid "Round"
 msgstr ""
 
 msgid "Oval"
-msgstr ""
-
-msgid "Circle"
 msgstr ""
 
 msgid "Padding"
@@ -1771,7 +1817,7 @@ msgstr ""
 msgid "Small letters with a row fill"
 msgstr ""
 
-msgid "Below 10 mm the letter strokes are narrow; satin keeps them crisp."
+msgid "Below 10 mm the letter strokes are narrow; satin columns keep them crisp."
 msgstr ""
 
 msgid "Wide satin edge"
@@ -1838,6 +1884,33 @@ msgid "Optional"
 msgstr ""
 
 msgid "Free arm"
+msgstr ""
+
+msgid "Straight"
+msgstr ""
+
+msgid "Circle badge"
+msgstr ""
+
+msgid "Arch"
+msgstr ""
+
+msgid "Valley"
+msgstr ""
+
+msgid "Bulge"
+msgstr ""
+
+msgid "Pinch"
+msgstr ""
+
+msgid "Bridge"
+msgstr ""
+
+msgid "Grow"
+msgstr ""
+
+msgid "Monogram"
 msgstr ""
 
 msgid "Hello"

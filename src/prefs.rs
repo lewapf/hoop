@@ -101,13 +101,14 @@ impl Prefs {
         self.set("letter.text", &s.text);
         self.set("letter.font", font_name);
         for (k, v) in [
-            ("height", s.height_mm), ("spacing", s.spacing_mm), ("lines", s.line_spacing), ("arc", s.arc_deg),
+            ("height", s.height_mm), ("spacing", s.spacing_mm), ("lines", s.line_spacing), ("arc", s.arc_deg), ("circle", s.circle_mm), ("envelope", s.envelope_mm),
             ("angle", s.fill_angle), ("rows", s.density_mm), ("stitch", s.stitch_mm), ("swing", s.wave_amp_mm),
             ("wave", s.wave_len_mm), ("fade", s.fade_mm), ("pull", s.pull_mm), ("slant", s.slant_deg), ("edge_width", s.edge_width_mm),
             ("patch_pad", s.patch_pad_mm), ("patch_border", s.patch_border_mm),
         ] {
             self.set(&format!("letter.{k}"), v);
         }
+        self.set("letter.shape", format!("{:?}", s.shape));
         self.set("letter.fill", format!("{:?}", s.fill));
         self.set("letter.edge", format!("{:?}", s.edge));
         self.set("letter.align", format!("{:?}", s.align));
@@ -137,6 +138,14 @@ impl Prefs {
         f("spacing", &mut s.spacing_mm);
         f("lines", &mut s.line_spacing);
         f("arc", &mut s.arc_deg);
+        f("circle", &mut s.circle_mm);
+        f("envelope", &mut s.envelope_mm);
+        s.shape = match self.get("letter.shape") {
+            Some(v) => crate::lettering::TextShape::ALL.into_iter().find(|t| format!("{t:?}") == v).unwrap_or(crate::lettering::TextShape::Straight),
+            // Older settings only had the arc.
+            None if s.arc_deg.abs() > 0.01 => crate::lettering::TextShape::Arc,
+            None => crate::lettering::TextShape::Straight,
+        };
         f("angle", &mut s.fill_angle);
         f("rows", &mut s.density_mm);
         f("stitch", &mut s.stitch_mm);
