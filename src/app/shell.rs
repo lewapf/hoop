@@ -179,6 +179,9 @@ impl HoopApp {
         let picked = art && !self.sel.is_empty();
         egui::MenuBar::new().ui(ui, |ui| {
             ui.menu_button(t!("File"), |ui| {
+                if item(ui, true, t!("New project…"), "N") {
+                    self.open_wizard();
+                }
                 if item(ui, true, t!("Open…"), "O") {
                     self.pick_file();
                 }

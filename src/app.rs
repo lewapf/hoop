@@ -21,6 +21,7 @@ mod team;
 mod testpiece;
 mod threadwin;
 mod tools;
+mod wizard;
 
 use shell::{Dock, Tab};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
@@ -46,6 +47,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("Ctrl+Shift+S"), n!("Save a picture of the preview")),
     (n!("Ctrl+P"), n!("Save a worksheet PDF with an actual-size template")),
     (n!("Ctrl+,"), n!("Settings: language, folders, machine, threads")),
+    (n!("N"), n!("New project wizard")),
     (n!("Ctrl+V"), n!("Paste SVG code as artwork")),
     (n!("Space"), n!("Play or pause the stitch-out")),
     (n!("Home / End"), n!("Back to the first stitch / show everything")),
@@ -270,6 +272,7 @@ pub struct HoopApp {
     backdrop: Option<draw::Backdrop>,
     pen: draw::Pen,
     settings: settings::SettingsWindow,
+    wizard: wizard::Wizard,
 }
 
 impl HoopApp {
@@ -356,6 +359,7 @@ impl HoopApp {
             backdrop: None,
             pen: Default::default(),
             settings: Default::default(),
+            wizard: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -406,6 +410,12 @@ impl HoopApp {
             Ok("test") => self.test.open = true,
             Ok("help") => self.help = true,
             Ok("settings") => self.settings.open = true,
+            Ok("wizard") => {
+                self.open_wizard();
+                if let Ok(m) = std::env::var("HOOP_WIZARD_MAKE") {
+                    self.wizard_debug(ctx, &m);
+                }
+            }
             Ok("split") => {
                 self.open_hoopings();
                 if let Some(h) = std::env::var("HOOP_SPLIT_HOOP").ok().and_then(|v| v.parse().ok()) {
@@ -683,6 +693,9 @@ impl HoopApp {
         }
         if press(Modifiers::COMMAND, Key::P) && self.design.is_some() {
             self.save_worksheet();
+        }
+        if press(Modifiers::NONE, Key::N) || press(Modifiers::COMMAND, Key::N) {
+            self.open_wizard();
         }
         if press(Modifiers::COMMAND, Key::Comma) {
             self.settings.open = !self.settings.open;
@@ -1309,7 +1322,7 @@ impl HoopApp {
             painter.text(
                 rect.center_bottom() - vec2(0.0, 28.0),
                 egui::Align2::CENTER_CENTER,
-                t!("Press O to open a design, or drop a file here"),
+                t!("Press O to open a design, N for the new project wizard, or drop a file here"),
                 egui::FontId::proportional(15.0),
                 Color32::from_white_alpha(230),
             );
@@ -2411,6 +2424,7 @@ impl eframe::App for HoopApp {
         self.threads_window(ctx);
         self.hoopings_window(ctx);
         self.settings_window(ctx);
+        self.wizard_window(ctx);
     }
 }
 
