@@ -19,6 +19,7 @@ mod hoopings;
 mod lettering_panel;
 mod library;
 mod manual;
+mod optimizewin;
 mod output;
 mod pages;
 mod settings;
@@ -318,6 +319,7 @@ pub struct HoopApp {
     wizard: wizard::Wizard,
     manual: manual::Manual,
     demo: Option<demo::Demo>,
+    optimize: optimizewin::OptimizeWin,
 }
 
 impl HoopApp {
@@ -407,6 +409,7 @@ impl HoopApp {
             wizard: Default::default(),
             manual: Default::default(),
             demo: None,
+            optimize: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -465,6 +468,7 @@ impl HoopApp {
             Ok("help") => self.help = true,
             Ok("settings") => self.settings.open = true,
             Ok("manual") => self.manual.open = true,
+            Ok("optimize") => self.optimize.open = true,
             Ok("wizard") => {
                 self.open_wizard();
                 if let Ok(m) = std::env::var("HOOP_WIZARD_MAKE") {
@@ -856,6 +860,7 @@ impl eframe::App for HoopApp {
         self.settings_window(ctx);
         self.wizard_window(ctx);
         self.manual_window(ctx);
+        self.optimize_window(ctx);
     }
 }
 

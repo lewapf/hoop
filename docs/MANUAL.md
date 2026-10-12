@@ -115,6 +115,11 @@ clip art work best; photos do not.
     empty fabric to pick several.
   - Drag shapes on the hoop to move them, use the corner handle to
     resize, and the round knob to turn.
+- **Optimize…** (top of Objects) tidies the list, with a preview of the
+  result before you apply it: name shapes by thread ("Black line 3"),
+  break fills made of separate pieces into one shape per piece, join
+  lines that touch end to end, and remove specks and exact copies.
+  Breaking lines into single loops is there too, off by default.
 - **Shape page:**
   - Add built-in shapes.
   - **Stitching:**

@@ -2686,3 +2686,75 @@ msgstr "Ten kolor pasuje do tkaniny. Zostaw tu widoczną tkaninę zamiast haftu 
 
 msgid "background"
 msgstr "tło"
+
+msgid "Optimize objects"
+msgstr "Optymalizuj obiekty"
+
+msgid "Optimize…"
+msgstr "Optymalizuj…"
+
+msgid "Name shapes by thread, break apart compound fills, join touching lines, drop specks"
+msgstr "Nazwij kształty według nici, rozdziel złożone wypełnienia, połącz stykające się linie, usuń drobinki"
+
+msgid "Tidies the Objects list so shapes are easier to pick and style. Undo (Ctrl+Z) puts everything back."
+msgstr "Porządkuje listę Obiektów, aby łatwiej wybierać i stylizować kształty. Cofnij (Ctrl+Z) przywraca wszystko."
+
+msgid "Name by thread"
+msgstr "Nazwij według nici"
+
+msgid "\"Black line 3\", \"Green fill 2\" instead of \"Line 31\""
+msgstr "„Czarny linia 3”, „Zielony wypełn. 2” zamiast „Linia 31”"
+
+msgid "Break apart fills"
+msgstr "Rozdziel wypełnienia"
+
+msgid "A fill made of separate pieces (five diamonds in one shape) becomes one shape per piece, each with its holes"
+msgstr "Wypełnienie z osobnych części (pięć rombów w jednym kształcie) staje się osobnym kształtem dla każdej części, z jej otworami"
+
+msgid "Break apart lines"
+msgstr "Rozdziel linie"
+
+msgid "Every loop or stroke of a line becomes its own shape. Makes long lists; useful to style one outline"
+msgstr "Każda pętla lub kreska linii staje się osobnym kształtem. Daje długie listy; przydatne do stylizowania jednego konturu"
+
+msgid "Join touching lines"
+msgstr "Połącz stykające się linie"
+
+msgid "Lines of one color and width that meet end to end become one, so the needle doesn't stop and jump between them"
+msgstr "Linie jednego koloru i szerokości stykające się końcami stają się jedną, więc igła nie zatrzymuje się i nie przeskakuje między nimi"
+
+msgid "Remove specks and duplicates"
+msgstr "Usuń drobinki i duplikaty"
+
+msgid "Shapes smaller than Detail (Style → Clean-up) and exact copies"
+msgstr "Kształty mniejsze niż Detal (Styl → Porządki) i dokładne kopie"
+
+msgid "{before} → {after} objects"
+msgstr "Obiekty: {before} → {after}"
+
+msgid "Apply"
+msgstr "Zastosuj"
+
+msgid "{color} fill {n}"
+msgstr "{color} wypełn. {n}"
+
+msgid "{color} line {n}"
+msgstr "{color} linia {n}"
+
+msgid "{n} piece split off"
+msgid_plural "{n} pieces split off"
+msgstr[0] "{n} część oddzielona"
+msgstr[1] "{n} części oddzielone"
+msgstr[2] "{n} części oddzielonych"
+
+msgid "{n} line joined"
+msgid_plural "{n} lines joined"
+msgstr[0] "{n} linia połączona"
+msgstr[1] "{n} linie połączone"
+msgstr[2] "{n} linii połączonych"
+
+msgid "{n} shape removed"
+msgid_plural "{n} shapes removed"
+msgstr[0] "{n} kształt usunięty"
+msgstr[1] "{n} kształty usunięte"
+msgstr[2] "{n} kształtów usuniętych"

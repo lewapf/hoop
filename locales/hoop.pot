@@ -610,6 +610,63 @@ msgstr ""
 msgid "User manual"
 msgstr ""
 
+msgid "Optimize objects"
+msgstr ""
+
+msgid "Tidies the Objects list so shapes are easier to pick and style. Undo (Ctrl+Z) puts everything back."
+msgstr ""
+
+msgid "Name by thread"
+msgstr ""
+
+msgid "\"Black line 3\", \"Green fill 2\" instead of \"Line 31\""
+msgstr ""
+
+msgid "Break apart fills"
+msgstr ""
+
+msgid "A fill made of separate pieces (five diamonds in one shape) becomes one shape per piece, each with its holes"
+msgstr ""
+
+msgid "Break apart lines"
+msgstr ""
+
+msgid "Every loop or stroke of a line becomes its own shape. Makes long lists; useful to style one outline"
+msgstr ""
+
+msgid "Join touching lines"
+msgstr ""
+
+msgid "Lines of one color and width that meet end to end become one, so the needle doesn't stop and jump between them"
+msgstr ""
+
+msgid "Remove specks and duplicates"
+msgstr ""
+
+msgid "Shapes smaller than Detail (Style → Clean-up) and exact copies"
+msgstr ""
+
+msgid "{n} piece split off"
+msgid_plural "{n} pieces split off"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} line joined"
+msgid_plural "{n} lines joined"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} shape removed"
+msgid_plural "{n} shapes removed"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{before} → {after} objects"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
 msgid "Pinned to the hoop. Make or open the next part."
 msgstr ""
 
@@ -940,6 +997,12 @@ msgid "Open an SVG or a picture, or start from shapes, to see its parts here."
 msgstr ""
 
 msgid "Add shape"
+msgstr ""
+
+msgid "Optimize…"
+msgstr ""
+
+msgid "Name shapes by thread, break apart compound fills, join touching lines, drop specks"
 msgstr ""
 
 msgid "{v0} shapes · {v1} picked"
@@ -2298,6 +2361,12 @@ msgid "Banner"
 msgstr ""
 
 msgid "Line"
+msgstr ""
+
+msgid "{color} fill {n}"
+msgstr ""
+
+msgid "{color} line {n}"
 msgstr ""
 
 msgid "No shapes yet. Add one from Shapes, or open an SVG or a picture."

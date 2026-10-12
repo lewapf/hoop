@@ -641,7 +641,7 @@ impl HoopApp {
             ui.label(RichText::new(t!("Open an SVG or a picture, or start from shapes, to see its parts here.")).size(12.0).color(muted));
             return;
         };
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             ui.menu_button(t!("Add shape"), |ui| {
                 for name in artwork::BUILT_IN {
                     if ui.button(crate::i18n::tr(name)).clicked() {
@@ -650,6 +650,9 @@ impl HoopApp {
                     }
                 }
             });
+            if ui.button(t!("Optimize…")).on_hover_text(t!("Name shapes by thread, break apart compound fills, join touching lines, drop specks")).clicked() {
+                self.optimize.open = true;
+            }
             ui.label(RichText::new(t!("{v0} shapes · {v1} picked", v0 = s.shapes.len(), v1 = self.sel.len())).size(12.0).color(muted));
         });
         ui.separator();

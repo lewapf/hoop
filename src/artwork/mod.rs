@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use std::path::Path;
 
 mod builtin;
+mod optimize;
 mod sew;
 mod svg;
 mod threads;
@@ -14,6 +15,7 @@ use crate::formats::{self, Cmd, Format, Pattern};
 use crate::lettering::{self, Contour, EdgeKind, FillKind, Line, MaskShape, Pt, Settings, Stitcher};
 
 pub use builtin::*;
+pub use optimize::*;
 pub use sew::*;
 pub use svg::*;
 pub use threads::*;
