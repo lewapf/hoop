@@ -12,6 +12,7 @@ mod route;
 mod theme;
 mod trace;
 mod testsew;
+mod threads;
 mod usb;
 mod worksheet;
 

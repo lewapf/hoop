@@ -14,6 +14,7 @@ mod library;
 mod shapes;
 mod shell;
 mod testpiece;
+mod threadwin;
 
 use shell::{Dock, Tab};
 use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
@@ -251,6 +252,7 @@ pub struct HoopApp {
     /// A recent file picked in the panel, opened once the panel is drawn.
     open_later: Option<PathBuf>,
     library: library::Library,
+    threads: threadwin::ThreadCharts,
 }
 
 impl HoopApp {
@@ -329,6 +331,7 @@ impl HoopApp {
             want_font: None,
             open_later: None,
             library: Default::default(),
+            threads: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -340,6 +343,7 @@ impl HoopApp {
         let ctx = cc.egui_ctx.clone();
         app.theme.watch(move || ctx.request_repaint());
         app.restore();
+        app.restore_chart();
         app.reset_history();
         load_ui_font(&cc.egui_ctx);
         app.apply_theme(&cc.egui_ctx);
@@ -360,8 +364,13 @@ impl HoopApp {
                 _ => self.set_mode(Mode::Viewer),
             }
         }
-        if std::env::var("HOOP_DOCK").is_ok_and(|d| d == "library") {
-            self.dock = Dock::Library;
+        match std::env::var("HOOP_DOCK").as_deref() {
+            Ok("library") => self.dock = Dock::Library,
+            Ok("colors") => self.dock = Dock::Colors,
+            _ => {}
+        }
+        if std::env::var("HOOP_WINDOW").is_ok_and(|w| w == "threads") {
+            self.threads.open = true;
         }
         if let Ok(t) = std::env::var("HOOP_TAB") {
             if let Some(tab) = shell::tab_named(self.mode, &t) {
@@ -1056,6 +1065,8 @@ impl HoopApp {
         {
             let focus = self.focus;
             let mut toggle = None;
+            let matched: Vec<Option<formats::Thread>> = self.design.as_ref().unwrap().blocks.iter().map(|b| self.chart_thread(&b.thread)).collect();
+            let chart_name = self.chart().name.clone();
             let d = self.design.as_mut().unwrap();
             let meters: Vec<f32> = d.blocks.iter().map(|b| d.pattern.thread_meters(b)).collect();
             let mut copied = false;
@@ -1079,6 +1090,14 @@ impl HoopApp {
                                 let code = if b.thread.code.is_empty() { String::new() } else { format!("{} · ", b.thread.code) };
                                 ui.label(RichText::new(format!("{code}{:.1} m · {} st", meters[k], b.stitches)).size(11.5).color(muted))
                                     .on_hover_text(format!("{} stitches, about {:.1} m of thread", b.stitches, meters[k]));
+                                if let Some(t) = &matched[k] {
+                                    ui.horizontal(|ui| {
+                                        let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
+                                        ui.painter().circle_filled(r.center(), 5.0, rgb(t.color));
+                                        ui.add(egui::Label::new(RichText::new(format!("{} {}", t.code, t.name)).size(11.5)).truncate())
+                                            .on_hover_text(format!("{chart_name}: {} {}", t.code, t.name));
+                                    });
+                                }
                             });
                         });
                     });
@@ -1094,7 +1113,10 @@ impl HoopApp {
                         .blocks
                         .iter()
                         .enumerate()
-                        .map(|(k, b)| format!("{}. {} {} — {} stitches, about {:.1} m", k + 1, b.thread.name, b.thread.code, b.stitches, meters[k]))
+                        .map(|(k, b)| {
+                            let alt = matched[k].as_ref().map_or(String::new(), |t| format!(" ({chart_name} {} {})", t.code, t.name));
+                            format!("{}. {} {}{alt} — {} stitches, about {:.1} m", k + 1, b.thread.name, b.thread.code, b.stitches, meters[k])
+                        })
                         .collect();
                     ui.ctx().copy_text(format!("{}\n{}", d.name, list.join("\n")));
                     copied = true;
@@ -1102,6 +1124,9 @@ impl HoopApp {
             }
             if copied {
                 self.toast("Thread list copied".into());
+            }
+            if ui.small_button(format!("Thread chart: {chart_name}…")).on_hover_text("Pick a brand and mark the threads you have").clicked() {
+                self.threads.open = true;
             }
             if let Some(k) = toggle {
                 self.focus = if self.focus == Some(k) { None } else { Some(k) };
@@ -1858,7 +1883,10 @@ impl HoopApp {
         let hoop = HOOPS[self.setup.hoop];
         let stem = self.design_stem();
         let name = self.design.as_ref().map_or(stem.clone(), |d| d.name.clone());
+        let threads: Vec<formats::Thread> = threads.iter().map(|t| self.chart_thread(t).unwrap_or_else(|| t.clone())).collect();
+        let chart = self.chart().name.clone();
         let bytes = crate::worksheet::pdf(&crate::worksheet::Sheet {
+            chart: &chart,
             name: &name,
             hoop: &format!("{} {} × {} mm", hoop.name, hoop.w, hoop.h),
             points: &points,
@@ -2278,6 +2306,7 @@ impl eframe::App for HoopApp {
         self.help_overlay(ctx);
         self.test_window(ctx);
         self.usb_window(ctx);
+        self.threads_window(ctx);
     }
 }
 

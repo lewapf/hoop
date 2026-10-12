@@ -269,6 +269,10 @@ impl HoopApp {
                 check(ui, &mut self.sizes, "Size label", "");
                 check(ui, &mut self.density, "Thread density", "H");
                 ui.separator();
+                if item(ui, true, "Thread charts and my threads…", "") {
+                    self.threads.open = true;
+                }
+                ui.separator();
                 check(ui, &mut self.show_left, "Objects and colors panel", "");
                 check(ui, &mut self.show_right, "Properties panel", "");
             });

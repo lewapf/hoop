@@ -7,6 +7,8 @@ use crate::formats::{Cmd, Thread};
 
 pub struct Sheet<'a> {
     pub name: &'a str,
+    /// Thread chart the threads come from, for the table heading.
+    pub chart: &'a str,
     pub hoop: &'a str,
     /// Points in 0.1 mm, y down, centered on the hoop.
     pub points: &'a [(f32, f32)],
@@ -210,7 +212,7 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     y += 18.0;
     p.gray(0.45);
     let cols = [m, m + 22.0, m + 50.0, m + 260.0, m + 340.0, m + 410.0];
-    for (x, t) in cols.iter().zip(["#", "", "Thread", "Code", "Stitches", "Length"]) {
+    for (x, t) in cols.iter().zip(["#", "", &format!("Thread ({})", sheet.chart), "Code", "Stitches", "Length"]) {
         p.text(*x, y, 9.0, false, t);
     }
     y += 6.0;
@@ -321,7 +323,7 @@ mod tests {
     fn heart_pdf() -> Vec<u8> {
         let p = read("heart.jef", HEART).unwrap();
         let threads: Vec<Thread> = p.blocks().into_iter().map(|b| b.thread).collect();
-        pdf(&Sheet { name: "Heart (5×5)", hoop: "SQ14b 140 × 140 mm", points: &p.points, cmds: &p.cmds, threads: &threads, spm: 600, date: "2026-10-12" })
+        pdf(&Sheet { name: "Heart (5×5)", chart: "Janome", hoop: "SQ14b 140 × 140 mm", points: &p.points, cmds: &p.cmds, threads: &threads, spm: 600, date: "2026-10-12" })
     }
 
     #[test]
