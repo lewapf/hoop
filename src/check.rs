@@ -61,9 +61,12 @@ pub struct Issue {
 }
 
 /// Thread laid per area, in mm of thread per mm². One layer of tatami at
-/// 0.45 mm rows is about 2.2; satin at 0.4 mm about 2.5.
+/// 0.4 mm rows is about 2.5; satin at the standard 0.4 mm between needle
+/// points on each side about 5, since its stitches cross. "Too dense" is
+/// about four layers; a satin border bending round a corner over the edge
+/// of a fill comes close to that by design.
 pub const DENSE: f32 = 6.5;
-pub const TOO_DENSE: f32 = 9.0;
+pub const TOO_DENSE: f32 = 10.0;
 /// Needle hits per mm² before the fabric gets perforated.
 const HITS: f32 = 25.0;
 

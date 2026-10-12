@@ -39,6 +39,27 @@ pub(super) fn angle_parts(lines: &[(Pt, Pt)], contours: &[Contour], default: f32
         .collect()
 }
 
+/// The area a satin line of width `w` covers, as a mask shape.
+fn line_band((c, closed): &Line, w: f32) -> Option<lettering::MaskShape> {
+    if c.len() < 2 {
+        return None;
+    }
+    let rows = crate::stitch::satin_rows(c, *closed, w);
+    if rows.len() < 2 {
+        return None;
+    }
+    let (a, mut b): (Contour, Contour) = rows.into_iter().unzip();
+    if *closed {
+        // A ring: both rails, the hole between them by even-odd.
+        Some((vec![a, b], true))
+    } else {
+        b.reverse();
+        let mut poly = a;
+        poly.extend(b);
+        Some((vec![poly], false))
+    }
+}
+
 /// The part of a convex polygon nearer `a` than `b` (Sutherland–Hodgman).
 pub(super) fn clip_half(poly: &Contour, a: Pt, b: Pt) -> Contour {
     let m = ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
@@ -486,14 +507,29 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     if !s.knockout {
                         return Vec::new();
                     }
-                    items
+                    let mut out: Vec<lettering::MaskShape> = items
                         .iter()
                         .filter(|o| o.doc > it.doc && masks(o))
                         .filter(|o| !dense || o.look == Look::Applique || lettering::covers(styled(o.look).fill, styled(o.look).density_mm))
                         .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
-                        .collect()
+                        .collect();
+                    // Satin lines drawn on top cover what's under them, so the
+                    // fill stops 0.25 mm inside each side of the line.
+                    if s.stroke == EdgeKind::Satin {
+                        for o in items.iter().filter(|o| o.doc > it.doc) {
+                            if let Kind::Stroke { width } = o.kind {
+                                let w = (width * scale).max(s.stroke_min_mm * 10.0).min(70.0) - 5.0;
+                                if w > 2.0 {
+                                    out.extend(o.lines.iter().filter_map(|l| line_band(l, w)));
+                                }
+                            }
+                        }
+                    }
+                    out
                 };
-                let mask = above(false);
+                let mut mask = above(false);
+                // The fill stops short under its own satin edge.
+                mask.extend(lettering::edge_mask(&contours, st_ref));
                 st.region = crate::stitch::route::Region::new(&contours, even_odd, &mask, &above(true));
                 if st_ref.fill != FillKind::None {
                     if let Some(p) = it.entry {

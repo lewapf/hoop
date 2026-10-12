@@ -633,7 +633,9 @@ pub fn column_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &
             walls.push((c[i], c[(i + 1) % c.len()]));
         }
     }
-    let step = (s.density_mm * 10.0).clamp(2.5, 10.0);
+    // The density is the spacing of needle points on one side; stitches
+    // alternate sides, so rows come at half of it.
+    let step = (s.density_mm * 10.0 / 2.0).clamp(1.5, 5.0);
     let pull = s.pull_mm * 10.0;
     // Satin wider than this is split by a needle point in the middle.
     let split = 70.0;
@@ -852,7 +854,7 @@ mod tests {
         // Everything stays inside the bar.
         assert!(pts.iter().all(|p| p.0 > -1.0 && p.0 < 401.0 && p.1 > -1.0 && p.1 < 51.0));
         // A satin stitch every 0.4 mm along the bar, plus the underlay.
-        assert!(pts.len() > 100 && pts.len() < 200, "{}", pts.len());
+        assert!(pts.len() > 200 && pts.len() < 320, "{}", pts.len());
     }
 
     #[test]
@@ -979,6 +981,8 @@ pub(crate) mod debug {
             Ok("stipple") => crate::lettering::FillKind::Stipple,
             Ok("cross") => crate::lettering::FillKind::Cross,
             Ok("none") => crate::lettering::FillKind::None,
+            Ok("tatami") => crate::lettering::FillKind::Tatami,
+            Ok("wave") => crate::lettering::FillKind::Wave,
             _ => crate::lettering::FillKind::Column,
         };
         let edge = match std::env::var("EDGE").as_deref() {
@@ -1000,7 +1004,7 @@ pub(crate) mod debug {
             envelope_mm: std::env::var("ENV").ok().and_then(|v| v.parse().ok()).unwrap_or(8.0),
             circle_mm: 70.0,
             density_mm: std::env::var("ROWS").ok().and_then(|v| v.parse().ok()).unwrap_or(fill.default_rows_mm()),
-            edge_width_mm: 2.5,
+            edge_width_mm: std::env::var("EW").ok().and_then(|v| v.parse().ok()).unwrap_or(2.5),
             edge,
             ..Settings::default()
         };

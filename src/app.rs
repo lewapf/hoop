@@ -453,6 +453,9 @@ impl HoopApp {
             Ok("check") => self.dock = Dock::Check,
             _ => {}
         }
+        if std::env::var("HOOP_DENSITY").is_ok() {
+            self.density = true;
+        }
         if let Some(i) = std::env::var("HOOP_SELECT").ok().and_then(|v| v.parse::<usize>().ok()) {
             self.sel = vec![i];
         }

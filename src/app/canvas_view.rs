@@ -212,6 +212,14 @@ impl HoopApp {
         if self.fit_pending && rect.width() > 10.0 {
             self.fit_view(rect, false);
             self.fit_pending = false;
+            // For screenshots: HOOP_ZOOM=factor,x,y zooms in on (x, y) mm.
+            if let Some(z) =
+                std::env::var("HOOP_ZOOM").ok().map(|v| v.split(',').filter_map(|n| n.parse::<f32>().ok()).collect::<Vec<_>>()).filter(|z| z.len() == 3)
+            {
+                self.view.scale *= z[0];
+                self.view.pan = -vec2(z[1] * 10.0, z[2] * 10.0) * self.view.scale;
+                self.user_view = true;
+            }
         }
         let painter = ui.painter_at(rect);
         let frame = Frame { painter: &painter, rect, view: self.view };

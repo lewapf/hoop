@@ -107,6 +107,31 @@ pub enum EdgeKind {
     Scallop,
 }
 
+/// Where a fill should stop short under a satin edge. The edge covers
+/// half its width inside the outline; the fill keeps 0.4 mm of overlap
+/// with it so no gap shows, and leaves the rest to the satin instead of
+/// stacking two layers. Returned as mask shapes: a band round each outline.
+pub fn edge_mask(glyph: &[Contour], s: &Settings) -> Vec<MaskShape> {
+    if s.edge != EdgeKind::Satin {
+        return Vec::new();
+    }
+    let reach = s.edge_width_mm * 10.0 / 2.0 - 2.5;
+    if reach <= 1.0 {
+        return Vec::new();
+    }
+    glyph
+        .iter()
+        .filter(|c| c.len() >= 3)
+        .map(|c| {
+            // Both rails of a band as wide as twice the reach, centered on
+            // the outline; outside the shape it has nothing to mask.
+            let rows = crate::stitch::satin_rows(c, true, 2.0 * reach);
+            let (a, b): (Contour, Contour) = rows.into_iter().unzip();
+            (vec![a, b], true)
+        })
+        .collect()
+}
+
 /// Sews the edge style round one outline.
 pub fn edge_contour(st: &mut Stitcher, c: &Contour, s: &Settings) {
     match s.edge {
@@ -235,12 +260,13 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
             return;
         }
         st.region = Region::new(g, false, &[], &[]);
+        let under_edge = edge_mask(g, s);
         if s.underlay {
-            underlay(st, g, false, &[], s.fill, s.fill_angle, s);
+            underlay(st, g, false, &under_edge, s.fill, s.fill_angle, s);
         }
-        fill_glyph(st, g, s.fill, s.fill_angle, s);
+        fill_shape(st, g, false, &under_edge, s.fill, s.fill_angle, s);
         if s.fill == FillKind::Crosshatch {
-            fill_glyph(st, g, s.fill, s.fill_angle + 90.0, s);
+            fill_shape(st, g, false, &under_edge, s.fill, s.fill_angle + 90.0, s);
         }
         st.region = None;
     };

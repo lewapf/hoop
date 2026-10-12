@@ -262,11 +262,29 @@ pub(crate) fn satin_rows(line: &[Pt], closed: bool, width: f32) -> Vec<(Pt, Pt)>
     if n < 2 {
         return Vec::new();
     }
-    let half = width / 2.0;
+    let mut half = width / 2.0;
+    // Round a small closed outline the inner edge would fold over itself
+    // and the stitches fan out like a star; keep the satin to about the
+    // outline's own radius.
+    let loops = closed || (line.len() > 2 && dist(line[0], line[line.len() - 1]) < 1.0);
+    if loops {
+        let area = (0..line.len())
+            .map(|i| {
+                let (a, b) = (line[i], line[(i + 1) % line.len()]);
+                a.0 * b.1 - b.0 * a.1
+            })
+            .sum::<f32>()
+            .abs()
+            / 2.0;
+        let radius = (area / std::f32::consts::PI).sqrt();
+        half = half.min((radius * 0.45).max(4.0));
+    }
     let reach = (half.max(3.0)).round() as usize;
     let mut out: Vec<(Pt, Pt)> = Vec::new();
     let mut last: Option<(Pt, Pt, Pt)> = None;
-    let step = 4.0;
+    // Satin spacing counts needle points on one side (0.4 mm peak to
+    // peak), and stitches alternate sides, so each row moves half that.
+    let step = 2.0;
     for i in 0..n {
         let (a, b) = if closed {
             let m = n - 1;
@@ -280,27 +298,44 @@ pub(crate) fn satin_rows(line: &[Pt], closed: bool, width: f32) -> Vec<(Pt, Pt)>
         let (l, r) = ((c.0 + nrm.0, c.1 + nrm.1), (c.0 - nrm.0, c.1 - nrm.1));
         let keep = match last {
             None => true,
-            Some((lc, ll, lr)) => dist(c, lc).max(dist(l, ll)).max(dist(r, lr)) >= step || i == n - 1,
+            Some((lc, ll, lr)) => {
+                // Along the line a row every step. Where only the outside
+                // moves (the fan round a corner) rows come a little wider
+                // apart there, so the inside isn't buried in stitches.
+                let center = dist(c, lc);
+                let edge = dist(l, ll).max(dist(r, lr));
+                center >= step || edge >= step * (1.0 + 2.5 * (1.0 - center / step)) || i == n - 1
+            }
         };
         if keep {
             out.push((l, r));
             last = Some((c, l, r));
         }
     }
-    // Shorten every other stitch where one side crowds.
-    for k in 2..out.len() {
-        let (l, r) = out[k];
-        let (pl, pr) = out[k - 2];
+    // Where one side crowds (the inside of a corner or a tight curve), the
+    // needle would keep landing in nearly the same spot. Each crowded
+    // stitch is shortened, alternately more and less, so the holes spread
+    // over the column instead of piling up on its edge. Rows alternate
+    // sides, so only the side a row is sewn to matters.
+    let mut last: [Option<Pt>; 2] = [None, None];
+    let mut deep = false;
+    for (k, row) in out.iter_mut().enumerate() {
+        let side = k % 2;
+        let (l, r) = *row;
         let c = ((l.0 + r.0) / 2.0, (l.1 + r.1) / 2.0);
-        let pull = |p: Pt| (c.0 + (p.0 - c.0) * 0.6, c.1 + (p.1 - c.1) * 0.6);
-        if k % 4 >= 2 {
-            if dist(l, pl) < step * 0.5 {
-                out[k].0 = pull(l);
-            }
-            if dist(r, pr) < step * 0.5 {
-                out[k].1 = pull(r);
+        let p = if side == 0 { l } else { r };
+        let mut q = p;
+        if last[side].is_some_and(|prev| dist(p, prev) < step * 0.75) {
+            deep = !deep;
+            let f = if deep { 0.45 } else { 0.7 };
+            q = (c.0 + (p.0 - c.0) * f, c.1 + (p.1 - c.1) * f);
+            if side == 0 {
+                row.0 = q;
+            } else {
+                row.1 = q;
             }
         }
+        last[side] = Some(q);
     }
     out
 }
@@ -435,6 +470,23 @@ pub fn shape_area(glyph: &[Contour], even_odd: bool) -> f32 {
     let mut y = y0 + step / 2.0;
     while y < y1 {
         area += row_spans(glyph, y, even_odd).iter().map(|(a, b)| b - a).sum::<f32>() * step;
+        y += step;
+    }
+    area
+}
+
+/// Area of a shape left after cutting out the mask shapes on top of it.
+pub fn masked_area(glyph: &[Contour], even_odd: bool, mask: &[MaskShape]) -> f32 {
+    let (mut y0, mut y1) = (f32::MAX, f32::MIN);
+    for p in glyph.iter().flatten() {
+        (y0, y1) = (y0.min(p.1), y1.max(p.1));
+    }
+    let step = ((y1 - y0) / 400.0).max(1.0);
+    let mut area = 0.0;
+    let mut y = y0 + step / 2.0;
+    while y < y1 {
+        let spans = subtract(row_spans(glyph, y, even_odd), &mask_spans(mask, y));
+        area += spans.iter().map(|(a, b)| b - a).sum::<f32>() * step;
         y += step;
     }
     area

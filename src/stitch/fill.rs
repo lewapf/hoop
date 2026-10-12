@@ -132,21 +132,34 @@ pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Ma
     }
 }
 
-pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f32, s: &Settings) {
-    fill_shape(st, glyph, false, &[], kind, angle, s);
-}
-
-/// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
-/// left unstitched so layers don't pile up.
-/// The style a shape really gets: Auto becomes a column when the shape's
-/// widest part fits a satin stitch, tatami otherwise.
+/// The style a shape really gets. Auto becomes tatami where the shape is
+/// wider than a satin stitch, a turning column where it is long and
+/// narrow, and straight satin where it is small and compact.
 pub fn resolve(kind: FillKind, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], s: &Settings) -> FillKind {
     if kind != FillKind::Auto {
         return kind;
     }
-    if crate::stitch::column::widest(glyph, even_odd, mask) <= s.column_max_mm * 10.0 { FillKind::Column } else { FillKind::Tatami }
+    let widest = crate::stitch::column::widest(glyph, even_odd, mask);
+    if widest > s.column_max_mm * 10.0 {
+        return FillKind::Tatami;
+    }
+    // Shapes on top that cut holes in it (jewels in a band) would make a
+    // column loop round each hole and fan out like a star; tatami lets
+    // them sit on top cleanly.
+    let whole = shape_area(glyph, even_odd);
+    if !mask.is_empty() && masked_area(glyph, even_odd, mask) < 0.85 * whole {
+        return FillKind::Tatami;
+    }
+    // Columns need a center line to follow. A long part (a stroke, a
+    // letter, a ring) has one; a compact one (a dot, a jewel, a small
+    // diamond) only has a center point, and a column round it fans out
+    // like a star. Those get straight satin across instead.
+    let long = whole / (widest * widest).max(1.0);
+    if long >= 1.6 { FillKind::Column } else { FillKind::Satin }
 }
 
+/// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
+/// left unstitched so layers don't pile up.
 pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
     if let Some(r) = &mut st.region {
         r.clear_sewn();
@@ -535,4 +548,42 @@ pub fn iso_lines(field: &[f32], w: usize, h: usize, level: f32, center: &dyn Fn(
         }
     }
     rings
+}
+
+#[cfg(test)]
+mod auto_tests {
+    use super::*;
+
+    #[test]
+    fn auto_uses_columns_for_long_parts_and_satin_for_compact_ones() {
+        let s = Settings::default();
+        let strip = vec![vec![(0.0, 0.0), (400.0, 0.0), (400.0, 40.0), (0.0, 40.0)]];
+        let dot: Contour = (0..48)
+            .map(|k| {
+                let a = k as f32 / 48.0 * std::f32::consts::TAU;
+                (25.0 * a.cos(), 25.0 * a.sin())
+            })
+            .collect();
+        let diamond = vec![vec![(0.0, -30.0), (30.0, 0.0), (0.0, 30.0), (-30.0, 0.0)]];
+        let big = vec![vec![(0.0, 0.0), (400.0, 0.0), (400.0, 400.0), (0.0, 400.0)]];
+        assert_eq!(resolve(FillKind::Auto, &strip, false, &[], &s), FillKind::Column);
+        assert_eq!(resolve(FillKind::Auto, &[dot], false, &[], &s), FillKind::Satin);
+        assert_eq!(resolve(FillKind::Auto, &diamond, false, &[], &s), FillKind::Satin);
+        assert_eq!(resolve(FillKind::Auto, &big, false, &[], &s), FillKind::Tatami);
+        // A strip with most of it covered by shapes on top: tatami.
+        let jewels: Vec<MaskShape> = (0..4)
+            .map(|k| {
+                (
+                    vec![vec![
+                        (k as f32 * 100.0 + 10.0, -5.0),
+                        (k as f32 * 100.0 + 70.0, -5.0),
+                        (k as f32 * 100.0 + 70.0, 45.0),
+                        (k as f32 * 100.0 + 10.0, 45.0),
+                    ]],
+                    false,
+                )
+            })
+            .collect();
+        assert_eq!(resolve(FillKind::Auto, &strip, false, &jewels, &s), FillKind::Tatami);
+    }
 }

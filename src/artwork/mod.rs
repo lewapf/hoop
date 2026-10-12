@@ -601,3 +601,120 @@ pub const PRESETS: [lettering::Preset<ArtSettings>; 4] = [
         s.stroke = EdgeKind::Triple;
     }),
 ];
+
+#[cfg(test)]
+mod crest_debug {
+    use super::*;
+
+    /// HOOP_SVG=file HOOP_OUT=dir: renders the artwork's stitches over its
+    /// outlines, cropped to HOOP_CROP=x0,y0,x1,y1 in 0.1 mm when given.
+    #[test]
+    #[ignore]
+    fn render_artwork() {
+        let path = std::env::var("HOOP_SVG").unwrap();
+        let out = std::env::var("HOOP_OUT").unwrap_or_else(|_| "/tmp".into());
+        let art = load(std::path::Path::new(&path)).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        if std::env::var("NO_LINES").is_ok() {
+            s.stroke = EdgeKind::None;
+        }
+        if std::env::var("RUN_LINES").is_ok() {
+            s.stroke = EdgeKind::Running;
+        }
+        if std::env::var("ONLY_LINES").is_ok() {
+            s.style.fill = FillKind::None;
+        }
+        let p = generate(&art, &s).unwrap();
+        let r = crate::check::stitches(&p);
+        let peak = r.coverage.iter().copied().fold(0.0, f32::max);
+        let over = r.coverage.iter().filter(|&&v| v > crate::check::TOO_DENSE).count();
+        eprintln!("peak {peak:.1}, cells over the limit {over}");
+        let (scale, (cx, cy)) = frame(&art, &s);
+        let mut glyphs: Vec<Vec<Contour>> = s
+            .shapes
+            .iter()
+            .filter(|e| !e.hidden)
+            .map(|e| e.lines(&art).iter().map(|(c, _)| c.iter().map(|&q| ((q.0 - cx) * scale, (q.1 - cy) * scale)).collect()).collect())
+            .collect();
+        let mut pts = p.points.clone();
+        let mut cmds = p.cmds.clone();
+        if let Ok(c) = std::env::var("HOOP_CROP") {
+            let v: Vec<f32> = c.split(',').map(|x| x.parse().unwrap()).collect();
+            let inside = |q: &Pt| q.0 >= v[0] && q.0 <= v[2] && q.1 >= v[1] && q.1 <= v[3];
+            for g in glyphs.iter_mut() {
+                g.retain(|c| c.iter().any(inside));
+            }
+            let keep: Vec<bool> = pts.iter().map(inside).collect();
+            let mut k = 0;
+            pts.retain(|_| {
+                k += 1;
+                keep[k - 1]
+            });
+            let mut k = 0;
+            cmds.retain(|_| {
+                k += 1;
+                keep[k - 1]
+            });
+        }
+        crate::stitch::column::debug::render(&format!("{out}/crest.png"), &glyphs, &pts, &cmds, 14.0);
+    }
+}
+
+#[cfg(test)]
+mod density_split {
+    use super::*;
+
+    /// Thread length per 1 mm cell, unsmoothed, over a fixed grid.
+    fn grid(p: &Pattern) -> std::collections::HashMap<(i32, i32), f32> {
+        let mut g = std::collections::HashMap::new();
+        for i in 1..p.cmds.len() {
+            if p.cmds[i] != Cmd::Stitch {
+                continue;
+            }
+            let (a, b) = (p.points[i - 1], p.points[i]);
+            let n = (lettering::dist(a, b) / 2.0).ceil().max(1.0) as usize;
+            let seg = lettering::dist(a, b) / 10.0 / n as f32;
+            for k in 0..n {
+                let t = (k as f32 + 0.5) / n as f32;
+                let q = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
+                *g.entry(((q.0 / 10.0).floor() as i32, (q.1 / 10.0).floor() as i32)).or_insert(0.0) += seg;
+            }
+        }
+        g
+    }
+
+    #[test]
+    #[ignore]
+    fn split() {
+        let path = std::env::var("HOOP_SVG").unwrap();
+        let art = load(std::path::Path::new(&path)).unwrap();
+        let mk = |f: &dyn Fn(&mut ArtSettings)| {
+            let mut s = ArtSettings::for_artwork(&art);
+            f(&mut s);
+            generate(&art, &s).unwrap()
+        };
+        let all = grid(&mk(&|_| {}));
+        let fills = grid(&mk(&|s| s.stroke = EdgeKind::None));
+        let lines = grid(&mk(&|s| s.style.fill = FillKind::None));
+        let mut hot: Vec<((i32, i32), f32)> = all.iter().map(|(k, v)| (*k, *v)).filter(|(_, v)| *v > 12.0).collect();
+        hot.sort_by(|a, b| b.1.total_cmp(&a.1));
+        eprintln!("cells over 12 mm/mm²: {}", hot.len());
+        let (mut sf, mut sl) = (0.0, 0.0);
+        for (k, v) in hot.iter().take(400) {
+            let (f, l) = (fills.get(k).copied().unwrap_or(0.0), lines.get(k).copied().unwrap_or(0.0));
+            sf += f;
+            sl += l;
+            let _ = v;
+        }
+        let n = hot.len().clamp(1, 400) as f32;
+        eprintln!(
+            "in those cells, average: all {:.1}, fills alone {:.1}, lines alone {:.1}",
+            hot.iter().take(400).map(|h| h.1).sum::<f32>() / n,
+            sf / n,
+            sl / n
+        );
+        for (k, v) in hot.iter().take(8) {
+            eprintln!("  cell {k:?}: all {v:.1}, fills {:.1}, lines {:.1}", fills.get(k).copied().unwrap_or(0.0), lines.get(k).copied().unwrap_or(0.0));
+        }
+    }
+}
