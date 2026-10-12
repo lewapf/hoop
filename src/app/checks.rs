@@ -8,7 +8,7 @@ use crate::check::{self, Fix, Issue, Level};
 /// Where a finished design goes once the check is passed or waved through.
 #[derive(Clone, Copy, PartialEq)]
 pub(super) enum Output {
-    Jef,
+    Save(crate::export::Out),
     Usb,
 }
 
@@ -199,12 +199,12 @@ impl HoopApp {
                         self.show_left = true;
                         close = true;
                     }
-                    let label = if out == Output::Jef { "Save anyway" } else { "Send anyway" };
+                    let label = if matches!(out, Output::Save(_)) { "Save anyway" } else { "Send anyway" };
                     if ui.button(label).clicked() {
                         self.preflight_passed = true;
                         close = true;
                         match out {
-                            Output::Jef => self.save_jef(),
+                            Output::Save(o) => self.export(o),
                             Output::Usb => self.open_usb(),
                         }
                     }

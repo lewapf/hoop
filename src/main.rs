@@ -2,6 +2,7 @@ mod app;
 mod artwork;
 mod canvas;
 mod check;
+mod export;
 mod formats;
 mod hoops;
 mod lettering;

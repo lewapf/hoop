@@ -4,6 +4,7 @@ use std::sync::mpsc::{Receiver, channel};
 use egui::{Color32, Key, KeyboardShortcut, Modifiers, RichText, Sense, Vec2, vec2};
 
 use crate::canvas::{self, DesignStyle, Frame, Transform, View};
+use crate::export::{self, Out};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
@@ -1805,18 +1806,32 @@ impl HoopApp {
     }
 
     fn save_jef(&mut self) {
-        if !self.checked(checks::Output::Jef) {
+        self.export(Out::Jef);
+    }
+
+    /// Saves what's on the hoop in `out`'s format.
+    pub(super) fn export(&mut self, out: Out) {
+        if !self.checked(checks::Output::Save(out)) {
             return;
         }
-        let Some(bytes) = self.jef_bytes() else { return };
-        let name = if self.pinned.is_empty() { format!("{}.jef", self.design_stem()) } else { format!("{}-combined.jef", self.design_stem()) };
-        self.ask_save("Save as JEF", name, "Janome JEF", "jef", bytes);
+        let Some((points, cmds, threads)) = self.hoop_stitches() else { return };
+        let stem = if self.pinned.is_empty() { self.design_stem() } else { format!("{}-combined", self.design_stem()) };
+        let bytes = export::write(out, &stem, &points, &cmds, &threads);
+        let title = if out == Out::Jef { "Save as JEF" } else { "Export" };
+        self.ask_save(title, format!("{stem}.{}", out.ext()), out.filter(), out.ext(), bytes);
     }
 
     /// The JEF for what's on the hoop: the design, or every pinned part with it.
     fn jef_bytes(&self) -> Option<Vec<u8>> {
+        let (points, cmds, threads) = self.hoop_stitches()?;
+        Some(formats::write_jef(&points, &cmds, &export::jef_numbers(&threads)))
+    }
+
+    /// What's on the hoop as points centered on the hoop, commands and one
+    /// thread per color block.
+    fn hoop_stitches(&self) -> Option<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>)> {
         if !self.pinned.is_empty() {
-            return self.combined_bytes();
+            return self.combined_stitches();
         }
         let d = self.design.as_ref()?;
         // Rotation and mirroring are baked in; the offset isn't, because the
@@ -1824,18 +1839,12 @@ impl HoopApp {
         let at = Placement { dx: 0.0, dy: 0.0, ..self.setup.at };
         let t = Transform::new(d.bounds, &at);
         let points: Vec<(f32, f32)> = d.pattern.points.iter().map(|&p| t.apply(p)).collect();
-        let palette: Vec<(i32, formats::Thread)> = formats::jef_palette().collect();
-        let threads: Vec<i32> = d
-            .blocks
-            .iter()
-            .map(|b| palette.iter().find(|(_, t)| *t == b.thread).map_or_else(|| formats::nearest_jef(b.thread.color), |(i, _)| *i))
-            .collect();
-        Some(formats::write_jef(&points, &d.pattern.cmds, &threads))
+        Some((points, d.pattern.cmds.clone(), d.blocks.iter().map(|b| b.thread.clone()).collect()))
     }
 
-    /// Saves the pinned parts and the current design as one JEF, keeping their
+    /// The pinned parts and the current design as one design, keeping their
     /// places relative to each other and centering the whole on the hoop.
-    fn combined_bytes(&self) -> Option<Vec<u8>> {
+    fn combined_stitches(&self) -> Option<(Vec<(f32, f32)>, Vec<Cmd>, Vec<formats::Thread>)> {
         let mut points: Vec<(f32, f32)> = Vec::new();
         let mut cmds: Vec<Cmd> = Vec::new();
         let mut threads: Vec<formats::Thread> = Vec::new();
@@ -1871,12 +1880,7 @@ impl HoopApp {
         let b = self.hoop_bounds()?;
         let (cx, cy) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
         let centered: Vec<(f32, f32)> = points.iter().map(|&(x, y)| (x - cx, y - cy)).collect();
-        let palette: Vec<(i32, formats::Thread)> = formats::jef_palette().collect();
-        let numbers: Vec<i32> = threads
-            .iter()
-            .map(|t| palette.iter().find(|(_, p)| p == t).map_or_else(|| formats::nearest_jef(t.color), |(i, _)| *i))
-            .collect();
-        Some(formats::write_jef(&centered, &cmds, &numbers))
+        Some((centered, cmds, threads))
     }
 
     fn open_usb(&mut self) {

@@ -201,6 +201,16 @@ impl HoopApp {
                 if item(ui, has, "Save as JEF…", "Ctrl+S") {
                     self.save_jef();
                 }
+                ui.add_enabled_ui(has, |ui| {
+                    ui.menu_button("Export as", |ui| {
+                        for o in crate::export::Out::ALL.into_iter().skip(1) {
+                            if ui.button(o.label()).clicked() {
+                                self.export(o);
+                                ui.close();
+                            }
+                        }
+                    });
+                });
                 if item(ui, out, "Send to USB…", "Ctrl+U") {
                     self.open_usb();
                 }

@@ -456,6 +456,16 @@ pub fn nearest_jef(c: [u8; 3]) -> i32 {
     (0..JEF_THREADS.len()).min_by_key(|&i| d(JEF_THREADS[i].0)).map_or(1, |i| i as i32 + 1)
 }
 
+/// The Brother thread (1-based PEC index) closest to a color.
+pub fn nearest_pec(c: [u8; 3]) -> u8 {
+    let d = |t: u32| {
+        let [r, g, b] = rgb(t);
+        let (dr, dg, db) = (r as i32 - c[0] as i32, g as i32 - c[1] as i32, b as i32 - c[2] as i32);
+        2 * dr * dr + 4 * dg * dg + 3 * db * db
+    };
+    (0..PEC_THREADS.len()).min_by_key(|&i| d(PEC_THREADS[i].0)).map_or(20, |i| i as u8 + 1)
+}
+
 /// Days since 1970-01-01 to a civil date (Howard Hinnant's algorithm).
 fn civil(days: i64) -> (i64, u32, u32) {
     let z = days + 719_468;
