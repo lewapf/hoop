@@ -68,28 +68,28 @@ impl HoopApp {
     pub(super) fn check_list(&mut self, ui: &mut egui::Ui) {
         let muted = self.muted();
         let Some(report) = &self.check else {
-            ui.label(RichText::new("Open or make a design to check how it will sew.").size(12.0).color(muted));
+            ui.label(RichText::new(t!("Open or make a design to check how it will sew.")).size(12.0).color(muted));
             return;
         };
         let (problems, warnings) = (report.count(Level::Problem), report.count(Level::Warning));
         let (color, headline) = match (problems, warnings) {
-            (0, 0) => (OK, "Ready to sew".to_string()),
-            (0, w) => (WARN, format!("{w} thing{} to look at", if w == 1 { "" } else { "s" })),
-            (p, _) => (BAD, format!("{p} problem{} to fix", if p == 1 { "" } else { "s" })),
+            (0, 0) => (OK, t!("Ready to sew").to_string()),
+            (0, w) => (WARN, tn!(w, "{n} thing to look at", "{n} things to look at")),
+            (p, _) => (BAD, tn!(p, "{n} problem to fix", "{n} problems to fix")),
         };
         ui.horizontal(|ui| {
             let (r, _) = ui.allocate_exact_size(vec2(12.0, 12.0), Sense::hover());
             ui.painter().circle_filled(r.center(), 6.0, color);
             ui.label(RichText::new(headline).strong().color(color));
         });
-        ui.checkbox(&mut self.density, "Show thread density on the hoop  H").on_hover_text("Amber where thread is dense, red where it piles up");
+        ui.checkbox(&mut self.density, t!("Show thread density on the hoop  H")).on_hover_text(t!("Amber where thread is dense, red where it piles up"));
         ui.separator();
         let issues: Vec<Issue> = report.issues.clone();
         let mut show = None;
         let mut fix = None;
         egui::ScrollArea::vertical().id_salt("check").auto_shrink([false, false]).show(ui, |ui| {
             if issues.is_empty() {
-                ui.label(RichText::new("Density, stitch lengths and shape widths all look right for this design.").size(12.0).color(muted));
+                ui.label(RichText::new(t!("Density, stitch lengths and shape widths all look right for this design.")).size(12.0).color(muted));
             }
             for (k, issue) in issues.iter().enumerate() {
                 ui.horizontal(|ui| {
@@ -99,11 +99,11 @@ impl HoopApp {
                 });
                 ui.add(egui::Label::new(RichText::new(&issue.detail).size(12.0).color(muted)).wrap());
                 ui.horizontal(|ui| {
-                    if (issue.at.is_some() || issue.shape.is_some()) && ui.small_button("Show").on_hover_text("Zoom to it on the hoop").clicked() {
+                    if (issue.at.is_some() || issue.shape.is_some()) && ui.small_button(t!("Show")).on_hover_text(t!("Zoom to it on the hoop")).clicked() {
                         show = Some(k);
                     }
                     if let Some(f) = issue.fix
-                        && ui.small_button(f.label()).on_hover_text("Fix it this way").clicked()
+                        && ui.small_button(f.label()).on_hover_text(t!("Fix it this way")).clicked()
                     {
                         fix = Some(f);
                     }
@@ -111,7 +111,7 @@ impl HoopApp {
                 ui.add_space(6.0);
             }
             ui.separator();
-            ui.label(RichText::new(format!("{} stitches checked. In the density view, uncolored parts carry about one layer of thread, the way machine embroidery is meant to be.", report.stitches)).size(11.5).color(muted));
+            ui.label(RichText::new(t!("{stitches} stitches checked. In the density view, uncolored parts carry about one layer of thread, the way machine embroidery is meant to be.", stitches = report.stitches)).size(11.5).color(muted));
         });
         if let Some(k) = show {
             self.show_issue(&issues[k]);
@@ -164,7 +164,7 @@ impl HoopApp {
             }
             Fix::EdgeWidth(mm) => self.letter.edge_width_mm = mm,
         }
-        self.toast(format!("Changed: {}", f.label()));
+        self.toast(t!("Changed: {fix}", fix = f.label()));
     }
 
     /// Saving and sending stop once to list problems the check found.
@@ -182,24 +182,24 @@ impl HoopApp {
         let Some(out) = self.preflight else { return };
         let problems: Vec<String> = self.check.as_ref().map_or(Vec::new(), |r| r.issues.iter().filter(|i| i.level == Level::Problem).map(|i| i.title.clone()).collect());
         let mut close = false;
-        egui::Window::new("This design has problems")
+        egui::Window::new(t!("This design has problems"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
             .show(ctx, |ui| {
                 ui.set_max_width(380.0);
-                ui.label("The check found things that will likely sew badly:");
+                ui.label(t!("The check found things that will likely sew badly:"));
                 for p in &problems {
                     ui.label(RichText::new(format!("•  {p}")).color(BAD));
                 }
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    if ui.add(primary("Review", self.accent())).clicked() {
+                    if ui.add(primary(t!("Review"), self.accent())).clicked() {
                         self.dock = Dock::Check;
                         self.show_left = true;
                         close = true;
                     }
-                    let label = if matches!(out, Output::Save(_)) { "Save anyway" } else { "Send anyway" };
+                    let label = if matches!(out, Output::Save(_)) { t!("Save anyway") } else { t!("Send anyway") };
                     if ui.button(label).clicked() {
                         self.preflight_passed = true;
                         close = true;
@@ -208,7 +208,7 @@ impl HoopApp {
                             Output::Usb => self.open_usb(),
                         }
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(t!("Cancel")).clicked() {
                         close = true;
                     }
                 });
@@ -240,7 +240,7 @@ impl HoopApp {
             let bg = egui::Rect::from_min_size(at, vec2(236.0, 30.0));
             painter.rect_filled(bg, 6, Color32::from_black_alpha(170));
             let mut x = at.x + 10.0;
-            for (label, cov) in [("dense", 5.5), ("heavy", 7.5), ("too much", 10.0)] {
+            for (label, cov) in [("dense", 5.5), ("heavy", 7.5), (t!("too much"), 10.0)] {
                 let sw = egui::Rect::from_min_size(egui::pos2(x, at.y + 9.0), vec2(12.0, 12.0));
                 painter.rect_filled(sw, 2, heat(cov).unwrap_or(Color32::TRANSPARENT).to_opaque());
                 let g = painter.layout_no_wrap(label.into(), egui::FontId::proportional(12.0), Color32::WHITE);

@@ -57,27 +57,27 @@ impl HoopApp {
         let dir = self.library.dir.clone().unwrap();
         let mut go: Option<PathBuf> = None;
         ui.horizontal(|ui| {
-            if ui.add_enabled(dir.parent().is_some(), egui::Button::new("Up")).on_hover_text("The folder above").clicked() {
+            if ui.add_enabled(dir.parent().is_some(), egui::Button::new("Up")).on_hover_text(t!("The folder above")).clicked() {
                 go = dir.parent().map(|p| p.to_path_buf());
             }
-            if ui.button("Folder…").on_hover_text("Pick the folder to browse").clicked() {
+            if ui.button(t!("Folder…")).on_hover_text(t!("Pick the folder to browse")).clicked() {
                 if let Some(d) = rfd::FileDialog::new().set_directory(&dir).pick_folder() {
                     go = Some(d);
                 }
             }
-            if ui.button("Reload").clicked() {
+            if ui.button(t!("Reload")).clicked() {
                 go = Some(dir.clone());
             }
         });
         let name = dir.file_name().map_or_else(|| dir.display().to_string(), |n| n.to_string_lossy().into_owned());
         ui.add(egui::Label::new(RichText::new(name).strong()).truncate()).on_hover_text(dir.display().to_string());
-        ui.add(egui::TextEdit::singleline(&mut self.library.filter).hint_text("Find by name").desired_width(ui.available_width()));
+        ui.add(egui::TextEdit::singleline(&mut self.library.filter).hint_text(t!("Find by name")).desired_width(ui.available_width()));
         ui.add_space(4.0);
 
         let needle = self.library.filter.to_lowercase();
         let shown: Vec<Entry> = self.library.entries.iter().filter(|e| needle.is_empty() || e.name.to_lowercase().contains(&needle)).cloned().collect();
         if shown.is_empty() {
-            ui.label(RichText::new("No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures.").size(12.0).color(muted));
+            ui.label(RichText::new(t!("No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures.")).size(12.0).color(muted));
         }
         let open_now = self.design.as_ref().map(|d| d.name.clone());
         let mut open: Option<PathBuf> = None;

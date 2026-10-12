@@ -119,11 +119,11 @@ pub struct SheetRow {
 }
 
 pub const SHEET_ROWS: [SheetRow; 5] = [
-    SheetRow { letter: "A", holds: "Satin columns", question: "Widest satin that still lies flat and tight", samples: &SATIN_WIDTHS },
-    SheetRow { letter: "B", holds: "Narrow fill strips", question: "Narrowest strip that filled cleanly", samples: &FILL_WIDTHS },
-    SheetRow { letter: "C", holds: "Fill row spacing", question: "Most open rows that still hide the fabric", samples: &ROW_SPACINGS },
-    SheetRow { letter: "D", holds: "Edge over fill, pull compensation", question: "Circle with no gap between fill and edge", samples: &PULLS },
-    SheetRow { letter: "E", holds: "Small letters", question: "Smallest letters that read well", samples: &LETTER_HEIGHTS },
+    SheetRow { letter: "A", holds: n!("Satin columns"), question: n!("Widest satin that still lies flat and tight"), samples: &SATIN_WIDTHS },
+    SheetRow { letter: "B", holds: n!("Narrow fill strips"), question: n!("Narrowest strip that filled cleanly"), samples: &FILL_WIDTHS },
+    SheetRow { letter: "C", holds: n!("Fill row spacing"), question: n!("Most open rows that still hide the fabric"), samples: &ROW_SPACINGS },
+    SheetRow { letter: "D", holds: n!("Edge over fill, pull compensation"), question: n!("Circle with no gap between fill and edge"), samples: &PULLS },
+    SheetRow { letter: "E", holds: n!("Small letters"), question: n!("Smallest letters that read well"), samples: &LETTER_HEIGHTS },
 ];
 
 /// What the test sheet showed works with this machine, thread and fabric,
@@ -238,7 +238,7 @@ pub fn sheet(font: &FontSource) -> Result<Pattern, String> {
         text(&mut st, font, row.letter, 6.0, (-580.0, y))?;
     }
     for (k, h) in LETTER_HEIGHTS.into_iter().enumerate() {
-        text(&mut st, font, "Abg", h, (-350.0 + 320.0 * k as f32, rows[4]))?;
+        text(&mut st, font, t!("Abg"), h, (-350.0 + 320.0 * k as f32, rows[4]))?;
     }
     st.finish();
     let threads = vec![formats::jef_thread(SHEET_FILL, 0), formats::jef_thread(SHEET_EDGE, 1)];

@@ -36,14 +36,14 @@ pub enum Fix {
 impl Fix {
     pub fn label(&self) -> String {
         match self {
-            Fix::Rows(mm) => format!("Rows {mm:.2} mm"),
-            Fix::Knockout => "Cut hidden parts".into(),
-            Fix::ShapeLook(_, Look::Outline) => "Stitch as outline".into(),
-            Fix::ShapeLook(_, Look::Fill(k)) => format!("Use {k:?}"),
-            Fix::ShapeLook(_, _) => "Change".into(),
-            Fix::Height(mm) => format!("Make {mm:.0} mm tall"),
-            Fix::LetterFill(k) => format!("Use {k:?}"),
-            Fix::EdgeWidth(mm) => format!("Edge {mm:.1} mm"),
+            Fix::Rows(mm) => t!("Rows {mm:.2} mm", mm = mm),
+            Fix::Knockout => t!("Cut hidden parts").into(),
+            Fix::ShapeLook(_, Look::Outline) => t!("Stitch as outline").into(),
+            Fix::ShapeLook(_, Look::Fill(k)) => t!("Use {style}", style = crate::i18n::tr(crate::lettering::fill_name(*k))),
+            Fix::ShapeLook(_, _) => t!("Change").into(),
+            Fix::Height(mm) => t!("Make {mm:.0} mm tall", mm = mm),
+            Fix::LetterFill(k) => t!("Use {style}", style = crate::i18n::tr(crate::lettering::fill_name(*k))),
+            Fix::EdgeWidth(mm) => t!("Edge {mm:.1} mm", mm = mm),
         }
     }
 }
@@ -187,13 +187,8 @@ pub fn stitches(p: &Pattern) -> Report {
     if let Some(&(n, at)) = too.first() {
         issues.push(Issue {
             level: Level::Problem,
-            title: "Far too much thread in one place".into(),
-            detail: format!(
-                "{} spot{} ({} mm² in all) carry about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see them.",
-                too.len(),
-                if too.len() == 1 { "" } else { "s" },
-                too.iter().map(|c| c.0).sum::<usize>()
-            ),
+            title: t!("Far too much thread in one place").into(),
+            detail: tn!(too.len(), "{n} spot ({area} mm² in all) carries about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see it.", "{n} spots ({area} mm² in all) carry about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see them.", area = too.iter().map(|c| c.0).sum::<usize>()),
             at: Some(at),
             shape: None,
             fix: None,
@@ -203,8 +198,8 @@ pub fn stitches(p: &Pattern) -> Report {
         let area: usize = dense.iter().map(|c| c.0).sum();
         issues.push(Issue {
             level: Level::Warning,
-            title: "Dense areas".into(),
-            detail: format!("About {area} mm² carry two layers of stitching or more, often fills under fills. It sews, but stiffly."),
+            title: t!("Dense areas").into(),
+            detail: t!("About {area} mm² carry two layers of stitching or more, often fills under fills. It sews, but stiffly.", area = area),
             at: Some(at),
             shape: None,
             fix: None,
@@ -215,12 +210,8 @@ pub fn stitches(p: &Pattern) -> Report {
     if let Some(&(_, at)) = piles.first() {
         issues.push(Issue {
             level: Level::Warning,
-            title: "Needle hits pile up".into(),
-            detail: format!(
-                "In {} spot{} the needle goes in over {HITS:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.",
-                piles.len(),
-                if piles.len() == 1 { "" } else { "s" }
-            ),
+            title: t!("Needle hits pile up").into(),
+            detail: tn!(piles.len(), "In {n} spot the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.", "In {n} spots the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.", hits = HITS),
             at: Some(at),
             shape: None,
             fix: None,
@@ -229,8 +220,8 @@ pub fn stitches(p: &Pattern) -> Report {
     if short.len() * 50 > stitches.max(1) {
         issues.push(Issue {
             level: Level::Warning,
-            title: format!("{} very short stitches", short.len()),
-            detail: "Stitches under 0.3 mm land in their own holes and can break the thread.".into(),
+            title: t!("{v0} very short stitches", v0 = short.len()),
+            detail: t!("Stitches under 0.3 mm land in their own holes and can break the thread.").into(),
             at: short.get(short.len() / 2).copied(),
             shape: None,
             fix: None,
@@ -239,8 +230,8 @@ pub fn stitches(p: &Pattern) -> Report {
     if !long.is_empty() {
         issues.push(Issue {
             level: Level::Warning,
-            title: format!("{} stitches longer than 8 mm", long.len()),
-            detail: "Long loose stitches snag on wear and washing. Use tatami there or a narrower satin.".into(),
+            title: t!("{v0} stitches longer than 8 mm", v0 = long.len()),
+            detail: t!("Long loose stitches snag on wear and washing. Use tatami there or a narrower satin.").into(),
             at: long.first().copied(),
             shape: None,
             fix: None,
@@ -250,8 +241,8 @@ pub fn stitches(p: &Pattern) -> Report {
     if jumps > 60 {
         issues.push(Issue {
             level: Level::Note,
-            title: format!("{jumps} jumps"),
-            detail: "Every jump is a thread to trim. Fewer, larger shapes sew faster.".into(),
+            title: tn!(jumps, "{n} jump", "{n} jumps"),
+            detail: t!("Every jump is a thread to trim. Fewer, larger shapes sew faster.").into(),
             at: None,
             shape: None,
             fix: None,
@@ -265,7 +256,7 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
     // Limits from the test sheet when it was sewn, else general rules.
     let fill_min = tune.fill_min.unwrap_or(0.9);
     let satin_max = tune.satin_max.unwrap_or(7.0);
-    let sheet = |general: &str, mm: Option<f32>, what: &str| mm.map_or_else(|| general.to_string(), |v| format!(" Your test sheet: {what} {v} mm."));
+    let sheet = |general: &str, mm: Option<f32>, what: &str| mm.map_or_else(|| general.to_string(), |v| t!(" Your test sheet: {what} {v} mm.", what = what, v = v));
     let (scale, mid) = artwork::frame(art, s);
     let to_mm = |p: (f32, f32)| ((p.0 - mid.0) * scale, (p.1 - mid.1) * scale);
     let mut thin = 0;
@@ -297,11 +288,8 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                     if thin <= 5 {
                         report.issues.push(Issue {
                             level: Level::Problem,
-                            title: format!("{} is too thin to fill", e.name),
-                            detail: format!(
-                                "About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{}",
-                                sheet("", tune.fill_min, "narrowest clean fill")
-                            ),
+                            title: t!("{name} is too thin to fill", name = e.name),
+                            detail: t!("About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{v0}", t = t, v0 = sheet("", tune.fill_min, "narrowest clean fill")),
                             at,
                             shape: Some(i),
                             fix: Some(Fix::ShapeLook(i, Look::Outline)),
@@ -310,8 +298,8 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                 } else if t < 2.5 && matches!(fill, FillKind::Tatami | FillKind::Wave | FillKind::Gradient | FillKind::Contour | FillKind::Crosshatch) {
                     report.issues.push(Issue {
                         level: Level::Warning,
-                        title: format!("{} is narrow for {fill:?}", e.name),
-                        detail: format!("About {t:.1} mm wide. A satin column gives narrow parts a clean, shiny finish that turns with the shape."),
+                        title: t!("{name} is narrow for {fill}", name = e.name, fill = crate::i18n::tr(lettering::fill_name(fill))),
+                        detail: t!("About {t:.1} mm wide. A satin column gives narrow parts a clean, shiny finish that turns with the shape.", t = t),
                         at,
                         shape: Some(i),
                         fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Column))),
@@ -319,11 +307,8 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                 } else if matches!(fill, FillKind::Satin | FillKind::Column) && t > satin_max + 1.0 {
                     report.issues.push(Issue {
                         level: Level::Warning,
-                        title: format!("{} is wide for satin", e.name),
-                        detail: format!(
-                            "About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{}",
-                            sheet(" Satin over 7 mm is split.", tune.satin_max, "widest tight satin")
-                        ),
+                        title: t!("{name} is wide for satin", name = e.name),
+                        detail: t!("About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{v0}", t = t, v0 = sheet(" Satin over 7 mm is split.", tune.satin_max, "widest tight satin")),
                         at,
                         shape: Some(i),
                         fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Tatami))),
@@ -335,11 +320,8 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                 if s.stroke == EdgeKind::Satin && w > tune.satin_max.unwrap_or(6.0) {
                     report.issues.push(Issue {
                         level: Level::Warning,
-                        title: format!("{} is a wide satin line", e.name),
-                        detail: format!(
-                            "{w:.1} mm wide; wide satin snags.{}",
-                            sheet(" Satin lines are capped at 7 mm.", tune.satin_max, "widest tight satin")
-                        ),
+                        title: t!("{name} is a wide satin line", name = e.name),
+                        detail: t!("{w:.1} mm wide; wide satin snags.{v0}", w = w, v0 = sheet(" Satin lines are capped at 7 mm.", tune.satin_max, "widest tight satin")),
                         at,
                         shape: Some(i),
                         fix: None,
@@ -351,17 +333,17 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
     if thin > 5 {
         report.issues.push(Issue {
             level: Level::Problem,
-            title: format!("{} more shapes too thin to fill", thin - 5),
-            detail: "Raise Detail in Style → Clean-up to leave out slivers, or stitch them as outlines.".into(),
+            title: t!("{v0} more shapes too thin to fill", v0 = thin - 5),
+            detail: t!("Raise Detail in Style → Clean-up to leave out slivers, or stitch them as outlines.").into(),
             at: None,
             shape: None,
             fix: None,
         });
     }
-    let has_dense = report.issues.iter().any(|i| i.title.contains("thread in one place") || i.title == "Dense areas");
+    let has_dense = report.issues.iter().any(|i| i.title == t!("Far too much thread in one place") || i.title == t!("Dense areas"));
     if has_dense && !s.knockout {
         for i in &mut report.issues {
-            if i.fix.is_none() && (i.title.contains("thread in one place") || i.title == "Dense areas") {
+            if i.fix.is_none() && (i.title == t!("Far too much thread in one place") || i.title == t!("Dense areas")) {
                 i.fix = Some(Fix::Knockout);
                 i.detail.push_str(" Cutting away hidden parts helps.");
             }
@@ -376,10 +358,10 @@ pub fn lettering(report: &mut Report, s: &Settings, tune: &Tuning) {
     if s.height_mm < smallest {
         report.issues.push(Issue {
             level: Level::Problem,
-            title: format!("Letters under {smallest} mm"),
+            title: t!("Letters under {smallest} mm", smallest = smallest),
             detail: match tune.letters_min {
-                Some(mm) => format!("Your test sheet showed {mm} mm as the smallest letters that read well."),
-                None => "Small letters lose their shape in thread. 6 mm is about the smallest that reads well.".into(),
+                Some(mm) => t!("Your test sheet showed {mm} mm as the smallest letters that read well.", mm = mm),
+                None => t!("Small letters lose their shape in thread. 6 mm is about the smallest that reads well.").into(),
             },
             at: None,
             shape: None,
@@ -388,8 +370,8 @@ pub fn lettering(report: &mut Report, s: &Settings, tune: &Tuning) {
     } else if s.height_mm < 10.0 && matches!(s.fill, FillKind::Tatami | FillKind::Wave | FillKind::Gradient | FillKind::Crosshatch | FillKind::Contour) {
         report.issues.push(Issue {
             level: Level::Warning,
-            title: "Small letters with a row fill".into(),
-            detail: "Below 10 mm the letter strokes are narrow; satin keeps them crisp.".into(),
+            title: t!("Small letters with a row fill").into(),
+            detail: t!("Below 10 mm the letter strokes are narrow; satin keeps them crisp.").into(),
             at: None,
             shape: None,
             fix: Some(Fix::LetterFill(FillKind::Satin)),
@@ -399,10 +381,10 @@ pub fn lettering(report: &mut Report, s: &Settings, tune: &Tuning) {
     if s.edge == EdgeKind::Satin && s.edge_width_mm > satin_max {
         report.issues.push(Issue {
             level: Level::Warning,
-            title: "Wide satin edge".into(),
+            title: t!("Wide satin edge").into(),
             detail: match tune.satin_max {
-                Some(mm) => format!("Your test sheet showed satin up to {mm} mm lying tight."),
-                None => "Satin edges over 5 mm get loose and snag.".into(),
+                Some(mm) => t!("Your test sheet showed satin up to {mm} mm lying tight.", mm = mm),
+                None => t!("Satin edges over 5 mm get loose and snag.").into(),
             },
             at: None,
             shape: None,
@@ -413,8 +395,8 @@ pub fn lettering(report: &mut Report, s: &Settings, tune: &Tuning) {
     if fill_rows && s.density_mm < 0.3 {
         report.issues.push(Issue {
             level: Level::Warning,
-            title: "Fill rows very close".into(),
-            detail: "Rows under 0.3 mm pile thread on thread. 0.4–0.45 mm covers well.".into(),
+            title: t!("Fill rows very close").into(),
+            detail: t!("Rows under 0.3 mm pile thread on thread. 0.4–0.45 mm covers well.").into(),
             at: None,
             shape: None,
             fix: Some(Fix::Rows(tune.rows.unwrap_or(0.4))),

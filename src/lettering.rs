@@ -41,6 +41,23 @@ impl FillKind {
     }
 }
 
+/// The style's name as shown, in English; translate with `i18n::tr`.
+pub fn fill_name(k: FillKind) -> &'static str {
+    match k {
+        FillKind::None => n!("None"),
+        FillKind::Tatami => n!("Tatami"),
+        FillKind::Satin => n!("Satin"),
+        FillKind::Wave => n!("Wave"),
+        FillKind::Zigzag => n!("Zigzag"),
+        FillKind::Crosshatch => n!("Hatch"),
+        FillKind::Gradient => n!("Gradient"),
+        FillKind::Open => n!("Open"),
+        FillKind::Contour => n!("Contour"),
+        FillKind::Column => n!("Column"),
+        FillKind::Auto => n!("Auto"),
+    }
+}
+
 /// Whether a fill sews closely enough to hide a travel run under it.
 pub fn covers(kind: FillKind, rows_mm: f32) -> bool {
     matches!(kind, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Zigzag | FillKind::Contour | FillKind::Column | FillKind::Auto) && rows_mm <= 0.8
@@ -113,7 +130,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
-            text: "Hello".into(),
+            text: t!("Hello").into(),
             font: 0,
             height_mm: 25.0,
             spacing_mm: 0.5,
@@ -163,7 +180,7 @@ impl FontSource {
             FontData::Bundled(b) => Ok((std::borrow::Cow::Borrowed(*b), 0)),
             FontData::File(path, index) => std::fs::read(path)
                 .map(|b| (std::borrow::Cow::Owned(b), *index))
-                .map_err(|e| format!("Couldn't read {}: {e}.", path.display())),
+                .map_err(|e| t!("Couldn't read {v0}: {e}.", v0 = path.display(), e = e)),
         }
     }
 }

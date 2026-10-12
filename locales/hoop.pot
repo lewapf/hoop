@@ -1,0 +1,1979 @@
+# Hoop translation template.
+# Copy to <language>.po (for example pl.po), fill in each msgstr and set
+# Language and Language-Name. Lines left empty stay in English.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: \n"
+"Language-Name: \n"
+
+msgid "Open or make a design to check how it will sew."
+msgstr ""
+
+msgid "Ready to sew"
+msgstr ""
+
+msgid "{n} thing to look at"
+msgid_plural "{n} things to look at"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} problem to fix"
+msgid_plural "{n} problems to fix"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Show thread density on the hoop  H"
+msgstr ""
+
+msgid "Amber where thread is dense, red where it piles up"
+msgstr ""
+
+msgid "Density, stitch lengths and shape widths all look right for this design."
+msgstr ""
+
+msgid "Show"
+msgstr ""
+
+msgid "Zoom to it on the hoop"
+msgstr ""
+
+msgid "Fix it this way"
+msgstr ""
+
+msgid "{stitches} stitches checked. In the density view, uncolored parts carry about one layer of thread, the way machine embroidery is meant to be."
+msgstr ""
+
+msgid "Changed: {fix}"
+msgstr ""
+
+msgid "This design has problems"
+msgstr ""
+
+msgid "The check found things that will likely sew badly:"
+msgstr ""
+
+msgid "Review"
+msgstr ""
+
+msgid "Save anyway"
+msgstr ""
+
+msgid "Send anyway"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "too much"
+msgstr ""
+
+msgid "The folder above"
+msgstr ""
+
+msgid "Folder…"
+msgstr ""
+
+msgid "Pick the folder to browse"
+msgstr ""
+
+msgid "Reload"
+msgstr ""
+
+msgid "Find by name"
+msgstr ""
+
+msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures."
+msgstr ""
+
+msgid "{name} copy"
+msgstr ""
+
+msgid "Too many points to show. Press Simplify first."
+msgstr ""
+
+msgid "Open an SVG or a picture, or start from shapes, to see its parts here."
+msgstr ""
+
+msgid "Add shape"
+msgstr ""
+
+msgid "{v0} shapes · {v1} picked"
+msgstr ""
+
+msgid "Show or hide this shape"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."
+msgstr ""
+
+msgid "Arrange"
+msgstr ""
+
+msgid "Sew last, on top · Shift+]"
+msgstr ""
+
+msgid "One step up · ]"
+msgstr ""
+
+msgid "One step down · ["
+msgstr ""
+
+msgid "Sew first, underneath · Shift+["
+msgstr ""
+
+msgid "Align left edges"
+msgstr ""
+
+msgid "Align middles across"
+msgstr ""
+
+msgid "Align right edges"
+msgstr ""
+
+msgid "Align top edges"
+msgstr ""
+
+msgid "Align middles up and down"
+msgstr ""
+
+msgid "Align bottom edges"
+msgstr ""
+
+msgid "Duplicate · Ctrl+D"
+msgstr ""
+
+msgid "One shape aligns to the drawing's frame; several align to each other."
+msgstr ""
+
+msgid "Thread color"
+msgstr ""
+
+msgid "Stitch with this color's thread (set in Threads)"
+msgstr ""
+
+msgid "Stitch as"
+msgstr ""
+
+msgid "Thread's look"
+msgstr ""
+
+msgid "Fill style"
+msgstr ""
+
+msgid "Outline"
+msgstr ""
+
+msgid "Appliqué"
+msgstr ""
+
+msgid "Mixed"
+msgstr ""
+
+msgid "Whatever the Threads tab sets for this color"
+msgstr ""
+
+msgid "Only the outline: for thin shapes"
+msgstr ""
+
+msgid "Satin suits parts under about 7 mm wide, tatami wider ones, outline anything under 1 mm."
+msgstr ""
+
+msgid "{v0} shapes picked. Drag them on the hoop or nudge with the arrow keys."
+msgstr ""
+
+msgid "Transform"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Move X"
+msgstr ""
+
+msgid "Or drag the shape on the hoop, or nudge with the arrow keys"
+msgstr ""
+
+msgid "Move Y"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Or drag a corner handle"
+msgstr ""
+
+msgid "Turn"
+msgstr ""
+
+msgid "Or drag the round knob; Shift snaps to 15°"
+msgstr ""
+
+msgid "{v0:.1} × {v1:.1} mm on the fabric"
+msgstr ""
+
+msgid "Points"
+msgstr ""
+
+msgid "Edit points"
+msgstr ""
+
+msgid "Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one."
+msgstr ""
+
+msgid "Simplify"
+msgstr ""
+
+msgid "Fewer points, smoother to edit; keeps the shape within 0.3 mm"
+msgstr ""
+
+msgid "Back to the shape as drawn"
+msgstr ""
+
+msgid "{n} point"
+msgid_plural "{n} points"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Design"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Style"
+msgstr ""
+
+msgid "Patch"
+msgstr ""
+
+msgid "Source"
+msgstr ""
+
+msgid "Shape"
+msgstr ""
+
+msgid "Threads"
+msgstr ""
+
+msgid "Hoop"
+msgstr ""
+
+msgid "Stitch"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Check ({v0})"
+msgstr ""
+
+msgid "Check"
+msgstr ""
+
+msgid "Library"
+msgstr ""
+
+msgid "Colors"
+msgstr ""
+
+msgid "Objects"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "Open…"
+msgstr ""
+
+msgid "Open recent"
+msgstr ""
+
+msgid "New from shapes"
+msgstr ""
+
+msgid "Paste SVG code…"
+msgstr ""
+
+msgid "Save as JEF…"
+msgstr ""
+
+msgid "Export as"
+msgstr ""
+
+msgid "Send to USB…"
+msgstr ""
+
+msgid "Test stitch-out…"
+msgstr ""
+
+msgid "Save picture…"
+msgstr ""
+
+msgid "Save worksheet (PDF)…"
+msgstr ""
+
+msgid "Quit"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Undo"
+msgstr ""
+
+msgid "Redo"
+msgstr ""
+
+msgid "Select all shapes"
+msgstr ""
+
+msgid "Deselect"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Hide"
+msgstr ""
+
+msgid "Show all shapes"
+msgstr ""
+
+msgid "Whole hoop"
+msgstr ""
+
+msgid "Zoom to design"
+msgstr ""
+
+msgid "Template grid"
+msgstr ""
+
+msgid "Jump stitches"
+msgstr ""
+
+msgid "Thread texture"
+msgstr ""
+
+msgid "Size label"
+msgstr ""
+
+msgid "Thread density"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "System ({lang})"
+msgstr ""
+
+msgid "Translations are .po files in ~/.local/share/hoop/locale"
+msgstr ""
+
+msgid "Thread charts and my threads…"
+msgstr ""
+
+msgid "Objects and colors panel"
+msgstr ""
+
+msgid "Properties panel"
+msgstr ""
+
+msgid "Viewer"
+msgstr ""
+
+msgid "Lettering"
+msgstr ""
+
+msgid "Artwork"
+msgstr ""
+
+msgid "Rotate right"
+msgstr ""
+
+msgid "Rotate left"
+msgstr ""
+
+msgid "Mirror"
+msgstr ""
+
+msgid "Center in hoop"
+msgstr ""
+
+msgid "{name}  {w} × {h} mm"
+msgstr ""
+
+msgid "Pin to hoop"
+msgstr ""
+
+msgid "Clear pinned parts"
+msgstr ""
+
+msgid "Insert"
+msgstr ""
+
+msgid "Bring to front"
+msgstr ""
+
+msgid "Bring forward"
+msgstr ""
+
+msgid "Send backward"
+msgstr ""
+
+msgid "Send to back"
+msgstr ""
+
+msgid "Align"
+msgstr ""
+
+msgid "Left edges"
+msgstr ""
+
+msgid "Centers across"
+msgstr ""
+
+msgid "Right edges"
+msgstr ""
+
+msgid "Top edges"
+msgstr ""
+
+msgid "Middles up and down"
+msgstr ""
+
+msgid "Bottom edges"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Keyboard shortcuts"
+msgstr ""
+
+msgid "About Hoop"
+msgstr ""
+
+msgid "Hoop {v0} · embroidery for the Janome MC9900"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Open a design, SVG or picture · O"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save as JEF · Ctrl+S"
+msgstr ""
+
+msgid "To USB"
+msgstr ""
+
+msgid "Write the JEF straight to the machine's USB stick · Ctrl+U"
+msgstr ""
+
+msgid "Test"
+msgstr ""
+
+msgid "Sew a small part first, or the calibration sheet · Ctrl+T"
+msgstr ""
+
+msgid "Turn left"
+msgstr ""
+
+msgid "Rotate 90° left · Shift+R"
+msgstr ""
+
+msgid "Turn right"
+msgstr ""
+
+msgid "Rotate 90° right · R"
+msgstr ""
+
+msgid "Center"
+msgstr ""
+
+msgid "Pin"
+msgstr ""
+
+msgid "Keep this design on the hoop and start the next part · P"
+msgstr ""
+
+msgid "Show the whole hoop · F"
+msgstr ""
+
+msgid "Zoom to the design · D"
+msgstr ""
+
+msgid "Pause"
+msgstr ""
+
+msgid "Play"
+msgstr ""
+
+msgid "Play the stitch-out · Space"
+msgstr ""
+
+msgid "X {v0:>6.1}  Y {v1:>6.1} mm"
+msgstr ""
+
+msgid "{v0:.1} × {v1:.1} mm"
+msgstr ""
+
+msgid "{n} stitch"
+msgid_plural "{n} stitches"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} color"
+msgid_plural "{n} colors"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "fits"
+msgstr ""
+
+msgid "doesn't fit"
+msgstr ""
+
+msgid "{count} pinned"
+msgstr ""
+
+msgid "Check: ready to sew"
+msgstr ""
+
+msgid "Check: {n} warning"
+msgid_plural "Check: {n} warnings"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Check: {n} problem"
+msgid_plural "Check: {n} problems"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Open the Check list"
+msgstr ""
+
+msgid "Drag a shape to move it · drag empty fabric to pick several · Shift+drag moves the design · middle-drag pans"
+msgstr ""
+
+msgid "Drag the design to move it · scroll to zoom · ? for keys"
+msgstr ""
+
+msgid "No artwork open."
+msgstr ""
+
+msgid "Saved designs don't record which stitches are edges."
+msgstr ""
+
+msgid "Open or make a design first, or sew the calibration sheet below."
+msgstr ""
+
+msgid "Draw a box on the hoop around the part to test."
+msgstr ""
+
+msgid "No stitches lie fully inside the box. Draw it over the part to test."
+msgstr ""
+
+msgid "Test sheet loaded. Save or send it, sew it, then enter what looked best."
+msgstr ""
+
+msgid "Test sheet results cleared. General rules apply again."
+msgstr ""
+
+msgid "Using your test sheet results."
+msgstr ""
+
+msgid "Drag a box around the part to test · Esc to stop"
+msgstr ""
+
+msgid "Test area  {v0:.0} × {v1:.0} mm"
+msgstr ""
+
+msgid "Small samples of each stitch type on one 123 × 111 mm sheet for the SQ14b hoop: about 10 minutes in 2 threads. Sew it once for each kind of fabric."
+msgstr ""
+
+msgid "Open test sheet"
+msgstr ""
+
+msgid "After sewing it: what looked best?"
+msgstr ""
+
+msgid "Samples run left to right on each row. Hoop uses your answers for new designs and in the Check list."
+msgstr ""
+
+msgid "Not sewn"
+msgstr ""
+
+msgid "Use these results"
+msgstr ""
+
+msgid "Forget results"
+msgstr ""
+
+msgid "Not sewn yet, so Hoop uses general rules."
+msgstr ""
+
+msgid "satin up to {v0}"
+msgstr ""
+
+msgid "fills from {v0}"
+msgstr ""
+
+msgid "rows {mm}"
+msgstr ""
+
+msgid "pull {mm}"
+msgstr ""
+
+msgid "letters from {v0}"
+msgstr ""
+
+msgid "In use: {v0}."
+msgstr ""
+
+msgid "{stitches} stitches · {n} thread · about {minutes:.0} min"
+msgid_plural "{stitches} stitches · {n} threads · about {minutes:.0} min"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{v0:.1} × {v1:.1} mm, centered on the hoop when sent"
+msgstr ""
+
+msgid "Test stitch-out"
+msgstr ""
+
+msgid "Test a part"
+msgstr ""
+
+msgid "Calibration sheet"
+msgstr ""
+
+msgid "Sew a small part on scrap before the whole design, with the same fabric, stabilizer and thread."
+msgstr ""
+
+msgid "1  What to sew"
+msgstr ""
+
+msgid "Whole design"
+msgstr ""
+
+msgid "Part of it"
+msgstr ""
+
+msgid "Drag on the hoop…"
+msgstr ""
+
+msgid "Draw again"
+msgstr ""
+
+msgid "Draw on hoop"
+msgstr ""
+
+msgid "Drag a box on the hoop"
+msgstr ""
+
+msgid "Around picked shapes"
+msgstr ""
+
+msgid "Pick shapes on the hoop or in Objects first"
+msgstr ""
+
+msgid "Box {v0:.0} × {v1:.0} mm. "
+msgstr ""
+
+msgid "{what}Box a tight corner, the smallest letters or any detail you're unsure of. Only stitches fully inside are sewn; cut runs get tie stitches."
+msgstr ""
+
+msgid "Outlines only, no fills"
+msgstr ""
+
+msgid "Saved files don't record which stitches are edges. Make the design in Lettering or Artwork to test outlines."
+msgstr ""
+
+msgid "Edges where the fills go: checks shape, size and placement in a fraction of the time."
+msgstr ""
+
+msgid "Outlines need a design made in Lettering or Artwork."
+msgstr ""
+
+msgid "2  Sew it"
+msgstr ""
+
+msgid "Show the full design"
+msgstr ""
+
+msgid "That's the whole design. Pick a part or outlines above for a shorter test."
+msgstr ""
+
+msgid "Save test…"
+msgstr ""
+
+msgid "Save test as JEF"
+msgstr ""
+
+msgid "Janome JEF"
+msgstr ""
+
+msgid "{n} is ready."
+msgstr ""
+
+msgid "Thread charts"
+msgstr ""
+
+msgid "Thread lists use"
+msgstr ""
+
+msgid "The machine file keeps Janome thread numbers. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."
+msgstr ""
+
+msgid "Get more charts"
+msgstr ""
+
+msgid "Downloaded from the Ink/Stitch project (GPL) into ~/.local/share/hoop/threads. Charts in Inkscape's palettes folder show up too."
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Get"
+msgstr ""
+
+msgid "Downloading…"
+msgstr ""
+
+msgid "My threads · {v0} ticked"
+msgstr ""
+
+msgid "Only mine"
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "Find by name or number"
+msgstr ""
+
+msgid "{code} {name} · click to mark as mine"
+msgstr ""
+
+msgid "Done"
+msgstr ""
+
+msgid "Natural linen"
+msgstr ""
+
+msgid "White cotton"
+msgstr ""
+
+msgid "Heather gray"
+msgstr ""
+
+msgid "Denim"
+msgstr ""
+
+msgid "Navy"
+msgstr ""
+
+msgid "Black"
+msgstr ""
+
+msgid "Brick red"
+msgstr ""
+
+msgid "Sage"
+msgstr ""
+
+msgid "Real time"
+msgstr ""
+
+msgid "O"
+msgstr ""
+
+msgid "Open a file"
+msgstr ""
+
+msgid "Viewer / lettering / artwork"
+msgstr ""
+
+msgid "Ctrl+S"
+msgstr ""
+
+msgid "Save as JEF"
+msgstr ""
+
+msgid "Ctrl+U"
+msgstr ""
+
+msgid "Send to the USB stick for the machine"
+msgstr ""
+
+msgid "Ctrl+T"
+msgstr ""
+
+msgid "Test stitch-out: sew a small part, or the calibration sheet"
+msgstr ""
+
+msgid "Ctrl+Shift+S"
+msgstr ""
+
+msgid "Save a picture of the preview"
+msgstr ""
+
+msgid "Ctrl+P"
+msgstr ""
+
+msgid "Save a worksheet PDF with an actual-size template"
+msgstr ""
+
+msgid "Ctrl+V"
+msgstr ""
+
+msgid "Paste SVG code as artwork"
+msgstr ""
+
+msgid "Space"
+msgstr ""
+
+msgid "Play or pause the stitch-out"
+msgstr ""
+
+msgid "Home / End"
+msgstr ""
+
+msgid "Back to the first stitch / show everything"
+msgstr ""
+
+msgid "Previous / next thread"
+msgstr ""
+
+msgid "Step one stitch back / forward"
+msgstr ""
+
+msgid "Arrows"
+msgstr ""
+
+msgid "Move the design 1 mm (Shift: 10 mm)"
+msgstr ""
+
+msgid "R / Shift+R"
+msgstr ""
+
+msgid "Rotate 90° right / left"
+msgstr ""
+
+msgid "M"
+msgstr ""
+
+msgid "P"
+msgstr ""
+
+msgid "Pin the design to the hoop to combine it with the next"
+msgstr ""
+
+msgid "C"
+msgstr ""
+
+msgid "Center in the hoop"
+msgstr ""
+
+msgid "Pick a hoop"
+msgstr ""
+
+msgid "Show the whole hoop / zoom to the design"
+msgstr ""
+
+msgid "Grid / jump stitches / thread texture"
+msgstr ""
+
+msgid "H"
+msgstr ""
+
+msgid "Thread density view (from the Check list)"
+msgstr ""
+
+msgid "Click shape"
+msgstr ""
+
+msgid "Artwork: select a shape to move, resize or recolor it"
+msgstr ""
+
+msgid "Arrows · [ / ]"
+msgstr ""
+
+msgid "Selected shape: move it / send it down or up"
+msgstr ""
+
+msgid "Ctrl+D · Del · Esc"
+msgstr ""
+
+msgid "Selected shape: duplicate / delete / deselect"
+msgstr ""
+
+msgid "Ctrl+Z / Ctrl+Shift+Z"
+msgstr ""
+
+msgid "Undo / redo any change"
+msgstr ""
+
+msgid "Show these shortcuts"
+msgstr ""
+
+msgid "Q"
+msgstr ""
+
+msgid "Couldn't open {name}: {e}."
+msgstr ""
+
+msgid "{name} — Hoop"
+msgstr ""
+
+msgid "Open an embroidery design"
+msgstr ""
+
+msgid "JEF"
+msgstr ""
+
+msgid "DST"
+msgstr ""
+
+msgid "EXP"
+msgstr ""
+
+msgid "PES"
+msgstr ""
+
+msgid "PEC"
+msgstr ""
+
+msgid "SVG"
+msgstr ""
+
+msgid "PNG"
+msgstr ""
+
+msgid "JPG"
+msgstr ""
+
+msgid "JPEG"
+msgstr ""
+
+msgid "Undone"
+msgstr ""
+
+msgid "Redone"
+msgstr ""
+
+msgid "{format} · {v1:.1} × {v2:.1} mm"
+msgstr ""
+
+msgid "Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop."
+msgstr ""
+
+msgid "Recent"
+msgstr ""
+
+msgid "Fits the {v0}"
+msgstr ""
+
+msgid "Closest edge is {m:.1} mm away."
+msgstr ""
+
+msgid "{over_w:.1} mm too wide"
+msgstr ""
+
+msgid "{over_h:.1} mm too tall"
+msgstr ""
+
+msgid " Rotate it 90° (R) and it fits."
+msgstr ""
+
+msgid " Pick a bigger hoop."
+msgstr ""
+
+msgid "Doesn't fit this hoop"
+msgstr ""
+
+msgid "Off the sewing area"
+msgstr ""
+
+msgid "Sticks out {by:.1} mm on the {side}. Press C to center."
+msgstr ""
+
+msgid "Rotate 90°"
+msgstr ""
+
+msgid "Use {hoop}"
+msgstr ""
+
+msgid "Shrink to fit"
+msgstr ""
+
+msgid "Grow to fill hoop"
+msgstr ""
+
+msgid "Combine"
+msgstr ""
+
+msgid "Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file."
+msgstr ""
+
+msgid "{v0:.0} × {v1:.0} mm"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "P · keep this design where it is and start the next part"
+msgstr ""
+
+msgid "Clear pinned"
+msgstr ""
+
+msgid "Position"
+msgstr ""
+
+msgid "Left 90°"
+msgstr ""
+
+msgid "Rotate left · Shift+R"
+msgstr ""
+
+msgid "Right 90°"
+msgstr ""
+
+msgid "Rotate right · R"
+msgstr ""
+
+msgid "{v0}°{v1}  ·  X {v2}  Y {v3} mm"
+msgstr ""
+
+msgid "Stitch-out"
+msgstr ""
+
+msgid "Replay"
+msgstr ""
+
+msgid "All {total} stitches"
+msgstr ""
+
+msgid "{shown} / {total} · thread {thread}"
+msgstr ""
+
+msgid "≈ {mins} min + {n} change"
+msgid_plural "≈ {mins} min + {n} changes"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "≈ {mins} min"
+msgstr ""
+
+msgid "Stitches"
+msgstr ""
+
+msgid "{v0} · {trims} trims"
+msgstr ""
+
+msgid "Sewing time"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
+msgid "Machine speed"
+msgstr ""
+
+msgid "{spm} spm"
+msgstr ""
+
+msgid "Save worksheet…"
+msgstr ""
+
+msgid "A PDF with the thread sequence and an actual-size template · Ctrl+P"
+msgstr ""
+
+msgid "Display"
+msgstr ""
+
+msgid "Other fabric color"
+msgstr ""
+
+msgid "Thread texture  T"
+msgstr ""
+
+msgid "Template grid, 10 mm  G"
+msgstr ""
+
+msgid "Jump stitches  J"
+msgstr ""
+
+msgid "Size label under the design"
+msgstr ""
+
+msgid "A PNG of the hoop preview, to share · Ctrl+Shift+S"
+msgstr ""
+
+msgid "Press ? for every shortcut."
+msgstr ""
+
+msgid "Thread colors of the design show here, in sewing order."
+msgstr ""
+
+msgid "{code}{v0:.1} m · {stitches} st"
+msgstr ""
+
+msgid "{stitches} stitches, about {v1:.1} m of thread"
+msgstr ""
+
+msgid "Click to show this thread on its own"
+msgstr ""
+
+msgid "{format} files don't store thread colors. Click a swatch to set the real ones."
+msgstr ""
+
+msgid "Copy thread list"
+msgstr ""
+
+msgid "For shopping or notes"
+msgstr ""
+
+msgid "{v0}. {name} {code}{alt} — {stitches} stitches, about {v4:.1} m"
+msgstr ""
+
+msgid "Thread list copied"
+msgstr ""
+
+msgid "Thread chart: {chart_name}…"
+msgstr ""
+
+msgid "Pick a brand and mark the threads you have"
+msgstr ""
+
+msgid "Press O to open a design, or drop a file here"
+msgstr ""
+
+msgid "Lettering — Hoop"
+msgstr ""
+
+msgid "Search fonts"
+msgstr ""
+
+msgid "Looking for installed fonts…"
+msgstr ""
+
+msgid "Quick styles"
+msgstr ""
+
+msgid "Height"
+msgstr ""
+
+msgid "Height of capital letters"
+msgstr ""
+
+msgid "Spacing"
+msgstr ""
+
+msgid "Extra space between letters"
+msgstr ""
+
+msgid "Arc"
+msgstr ""
+
+msgid "Bend the text into an arch (positive) or a smile (negative). 360° closes the circle."
+msgstr ""
+
+msgid "Slant"
+msgstr ""
+
+msgid "Lean the letters like italics"
+msgstr ""
+
+msgid "Lines"
+msgstr ""
+
+msgid "Distance between lines, in letter heights"
+msgstr ""
+
+msgid "Left"
+msgstr ""
+
+msgid "Right"
+msgstr ""
+
+msgid "Edge"
+msgstr ""
+
+msgid "A background shape for badges and name patches"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Box"
+msgstr ""
+
+msgid "Round"
+msgstr ""
+
+msgid "Oval"
+msgstr ""
+
+msgid "Circle"
+msgstr ""
+
+msgid "Padding"
+msgstr ""
+
+msgid "Space between the text and the patch edge"
+msgstr ""
+
+msgid "Border"
+msgstr ""
+
+msgid "Satin border width; 0 for none"
+msgstr ""
+
+msgid "Background"
+msgstr ""
+
+msgid "Stitched solid"
+msgstr ""
+
+msgid "An open fill, the fabric shows through"
+msgstr ""
+
+msgid "No background stitching"
+msgstr ""
+
+msgid "A piece of fabric sewn on: placement line, stop, tack-down, stop, then the cover stitch"
+msgstr ""
+
+msgid "The machine stops twice: lay the fabric over the placement line, then trim it close to the tack-down."
+msgstr ""
+
+msgid "Guide"
+msgstr ""
+
+msgid "Fill"
+msgstr ""
+
+msgid "Reset lettering"
+msgstr ""
+
+msgid "Back to the default style, keeping the font"
+msgstr ""
+
+msgid "Pasted SVG"
+msgstr ""
+
+msgid "{n} shape"
+msgid_plural "{n} shapes"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Skipped {n} embedded picture. Only vector shapes can be stitched."
+msgid_plural "Skipped {n} embedded pictures. Only vector shapes can be stitched."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Open an SVG or a picture (PNG, JPG), or drop one on the hoop. Logos and clip art with flat colors work best."
+msgstr ""
+
+msgid "Start from shapes"
+msgstr ""
+
+msgid "An empty design to build from hearts, stars, circles and more"
+msgstr ""
+
+msgid "Paste SVG"
+msgstr ""
+
+msgid "Paste SVG code, or press Ctrl+V anywhere with SVG code copied"
+msgstr ""
+
+msgid "Save JEF…"
+msgstr ""
+
+msgid "Use this SVG"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Trace"
+msgstr ""
+
+msgid "Pictures are reduced to a few flat colors and outlined. Logos and clip art work best; photos don't stitch well."
+msgstr ""
+
+msgid "How many colors the picture is reduced to, background included"
+msgstr ""
+
+msgid "Smooth"
+msgstr ""
+
+msgid "Rounds off pixel corners in the outlines"
+msgstr ""
+
+msgid "Clean"
+msgstr ""
+
+msgid "Removes specks and noise before tracing. Raise it for scanned or blurry pictures."
+msgstr ""
+
+msgid "Leave out the background color"
+msgstr ""
+
+msgid "Width"
+msgstr ""
+
+msgid "Height {v0:.1} mm"
+msgstr ""
+
+msgid "Fit hoop"
+msgstr ""
+
+msgid "Largest size that fits the hoop with 5 mm to spare"
+msgstr ""
+
+msgid "Stitch these colors"
+msgstr ""
+
+msgid "Auto"
+msgstr ""
+
+msgid "Use the Fill card below"
+msgstr ""
+
+msgid "Only the shape's outline"
+msgstr ""
+
+msgid "Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover"
+msgstr ""
+
+msgid "{n} thread in use"
+msgid_plural "{n} threads in use"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Merge the closest threads until {n} are left"
+msgstr ""
+
+msgid "Reduce to"
+msgstr ""
+
+msgid "Group by thread (fewer thread changes)"
+msgstr ""
+
+msgid "Off: stitch in the drawing's own order, changing thread whenever it changes"
+msgstr ""
+
+msgid "Clean-up"
+msgstr ""
+
+msgid "Cut hidden parts"
+msgstr ""
+
+msgid "Leave areas covered by shapes on top unstitched, so layers don't pile up"
+msgstr ""
+
+msgid "Detail"
+msgstr ""
+
+msgid "Shapes smaller than this many mm across are left out"
+msgstr ""
+
+msgid "Outline on fills"
+msgstr ""
+
+msgid "How strokes in the SVG are stitched"
+msgstr ""
+
+msgid "Satin"
+msgstr ""
+
+msgid "Run"
+msgstr ""
+
+msgid "Triple"
+msgstr ""
+
+msgid "Min"
+msgstr ""
+
+msgid "Thinnest satin line; thinner strokes are widened to this"
+msgstr ""
+
+msgid "Reset settings"
+msgstr ""
+
+msgid "Also puts every shape back as it was in the drawing"
+msgstr ""
+
+msgid "Pinned to the hoop. Make or open the next part."
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "{name} {w} × {h} mm"
+msgstr ""
+
+msgid "Save worksheet"
+msgstr ""
+
+msgid "Send to USB"
+msgstr ""
+
+msgid "Plug in the USB stick for the machine."
+msgstr ""
+
+msgid "Hoop looks for removable FAT, exFAT and NTFS drives."
+msgstr ""
+
+msgid "will be opened"
+msgstr ""
+
+msgid "Saved into EMB/Embf, where the MC9900 looks for designs. Up to 8 letters shows best on the machine."
+msgstr ""
+
+msgid "Working…"
+msgstr ""
+
+msgid "Send"
+msgstr ""
+
+msgid "Look again"
+msgstr ""
+
+msgid "Close the drive so it can be pulled out safely"
+msgstr ""
+
+msgid "Sent {file} to {v1}"
+msgstr ""
+
+msgid "{v0} is ejected. You can pull it out."
+msgstr ""
+
+msgid "Save picture"
+msgstr ""
+
+msgid "PNG picture"
+msgstr ""
+
+msgid "Couldn't make the picture: {e}."
+msgstr ""
+
+msgid "Saved {path}"
+msgstr ""
+
+msgid "Couldn't save {v0}: {e}."
+msgstr ""
+
+msgid "Shortcuts"
+msgstr ""
+
+msgid "Drag the design to move it, drag the fabric to pan, scroll to zoom, double-click to show the whole hoop."
+msgstr ""
+
+msgid "Press ? or Esc to close."
+msgstr ""
+
+msgid "The picture couldn't be taken. Try again."
+msgstr ""
+
+msgid "{w} × {h} mm"
+msgstr ""
+
+msgid "Too small"
+msgstr ""
+
+msgid "Hoop {name} · key {v1}"
+msgstr ""
+
+msgid "Column"
+msgstr ""
+
+msgid "Tatami"
+msgstr ""
+
+msgid "Contour"
+msgstr ""
+
+msgid "Wave"
+msgstr ""
+
+msgid "Zigzag"
+msgstr ""
+
+msgid "Hatch"
+msgstr ""
+
+msgid "Gradient"
+msgstr ""
+
+msgid "Thread"
+msgstr ""
+
+msgid "Woven"
+msgstr ""
+
+msgid "Woven cotton: tear-away stabilizer is enough."
+msgstr ""
+
+msgid "Knit"
+msgstr ""
+
+msgid "T-shirts and knits: use cut-away stabilizer and hoop without stretching."
+msgstr ""
+
+msgid "Denim and canvas: tear-away stabilizer, a size 90 needle."
+msgstr ""
+
+msgid "Towel"
+msgstr ""
+
+msgid "Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile."
+msgstr ""
+
+msgid "Fabric"
+msgstr ""
+
+msgid "Sets row spacing, pull and stitch length for the material."
+msgstr ""
+
+msgid "Angle"
+msgstr ""
+
+msgid "Direction of the stitch rows"
+msgstr ""
+
+msgid "Rows"
+msgstr ""
+
+msgid "Distance between fill rows"
+msgstr ""
+
+msgid "Fade"
+msgstr ""
+
+msgid "Row spacing at the light end"
+msgstr ""
+
+msgid "Swing"
+msgstr ""
+
+msgid "How far the rows swing up and down"
+msgstr ""
+
+msgid "Length"
+msgstr ""
+
+msgid "Distance from one wave to the next"
+msgstr ""
+
+msgid "Satin looks best on strokes under 8 mm wide."
+msgstr ""
+
+msgid "The pattern shows in how the thread catches the light."
+msgstr ""
+
+msgid "Open fills let the fabric show through. Nice on felt and canvas."
+msgstr ""
+
+msgid "Rows thin out across each shape. Turn the angle to set the direction."
+msgstr ""
+
+msgid "Rings follow the outline inward. Lovely on round shapes and bold letters."
+msgstr ""
+
+msgid "Satin that turns with the shape, like hand-digitized lettering and borders. For parts up to about 7 mm wide."
+msgstr ""
+
+msgid "Narrow parts become turning satin columns, wide parts tatami at this angle."
+msgstr ""
+
+msgid "More settings"
+msgstr ""
+
+msgid "Distance between fill rows. Smaller is denser."
+msgstr ""
+
+msgid "Stitch length along each row"
+msgstr ""
+
+msgid "Pull"
+msgstr ""
+
+msgid "Stitches pull the fabric in, so rows are made this much longer at each end"
+msgstr ""
+
+msgid "Underlay outline"
+msgstr ""
+
+msgid "A running stitch around each shape first, to hold the fabric"
+msgstr ""
+
+msgid "Line"
+msgstr ""
+
+msgid "Square"
+msgstr ""
+
+msgid "Heart"
+msgstr ""
+
+msgid "Star"
+msgstr ""
+
+msgid "Shield"
+msgstr ""
+
+msgid "Banner"
+msgstr ""
+
+msgid "Shapes"
+msgstr ""
+
+msgid "{name} isn't an SVG Hoop can read: {e}."
+msgstr ""
+
+msgid "{name} has no shapes to stitch.{v0}"
+msgstr ""
+
+msgid "No shapes yet. Add one from Shapes, or open an SVG or a picture."
+msgstr ""
+
+msgid "Every color is turned off or too small to stitch."
+msgstr ""
+
+msgid "Placement line"
+msgstr ""
+
+msgid "Tack-down (lay the fabric first)"
+msgstr ""
+
+msgid "Nothing to stitch with these settings. Turn on a fill or a line style."
+msgstr ""
+
+msgid "Rows {mm:.2} mm"
+msgstr ""
+
+msgid "Stitch as outline"
+msgstr ""
+
+msgid "Use {style}"
+msgstr ""
+
+msgid "Change"
+msgstr ""
+
+msgid "Make {mm:.0} mm tall"
+msgstr ""
+
+msgid "Edge {mm:.1} mm"
+msgstr ""
+
+msgid "Far too much thread in one place"
+msgstr ""
+
+msgid "{n} spot ({area} mm² in all) carries about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see it."
+msgid_plural "{n} spots ({area} mm² in all) carry about four layers of stitching or more. The needle can break and the fabric pucker. Turn on the density view (H) to see them."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Dense areas"
+msgstr ""
+
+msgid "About {area} mm² carry two layers of stitching or more, often fills under fills. It sews, but stiffly."
+msgstr ""
+
+msgid "Needle hits pile up"
+msgstr ""
+
+msgid "In {n} spot the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric."
+msgid_plural "In {n} spots the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{v0} very short stitches"
+msgstr ""
+
+msgid "Stitches under 0.3 mm land in their own holes and can break the thread."
+msgstr ""
+
+msgid "{v0} stitches longer than 8 mm"
+msgstr ""
+
+msgid "Long loose stitches snag on wear and washing. Use tatami there or a narrower satin."
+msgstr ""
+
+msgid "{n} jump"
+msgid_plural "{n} jumps"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Every jump is a thread to trim. Fewer, larger shapes sew faster."
+msgstr ""
+
+msgid " Your test sheet: {what} {v} mm."
+msgstr ""
+
+msgid "{name} is too thin to fill"
+msgstr ""
+
+msgid "About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{v0}"
+msgstr ""
+
+msgid "{name} is narrow for {fill}"
+msgstr ""
+
+msgid "About {t:.1} mm wide. A satin column gives narrow parts a clean, shiny finish that turns with the shape."
+msgstr ""
+
+msgid "{name} is wide for satin"
+msgstr ""
+
+msgid "About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{v0}"
+msgstr ""
+
+msgid "{name} is a wide satin line"
+msgstr ""
+
+msgid "{w:.1} mm wide; wide satin snags.{v0}"
+msgstr ""
+
+msgid "{v0} more shapes too thin to fill"
+msgstr ""
+
+msgid "Raise Detail in Style → Clean-up to leave out slivers, or stitch them as outlines."
+msgstr ""
+
+msgid "Letters under {smallest} mm"
+msgstr ""
+
+msgid "Your test sheet showed {mm} mm as the smallest letters that read well."
+msgstr ""
+
+msgid "Small letters lose their shape in thread. 6 mm is about the smallest that reads well."
+msgstr ""
+
+msgid "Small letters with a row fill"
+msgstr ""
+
+msgid "Below 10 mm the letter strokes are narrow; satin keeps them crisp."
+msgstr ""
+
+msgid "Wide satin edge"
+msgstr ""
+
+msgid "Your test sheet showed satin up to {mm} mm lying tight."
+msgstr ""
+
+msgid "Satin edges over 5 mm get loose and snag."
+msgstr ""
+
+msgid "Fill rows very close"
+msgstr ""
+
+msgid "Rows under 0.3 mm pile thread on thread. 0.4–0.45 mm covers well."
+msgstr ""
+
+msgid "JEF · Janome"
+msgstr ""
+
+msgid "DST · Tajima, most machines"
+msgstr ""
+
+msgid "EXP · Melco, Bernina"
+msgstr ""
+
+msgid "PES · Brother, Baby Lock"
+msgstr ""
+
+msgid "PEC · Brother"
+msgstr ""
+
+msgid "VP3 · Pfaff, Husqvarna Viking"
+msgstr ""
+
+msgid "Tajima DST"
+msgstr ""
+
+msgid "Melco EXP"
+msgstr ""
+
+msgid "Brother PES"
+msgstr ""
+
+msgid "Brother PEC"
+msgstr ""
+
+msgid "Pfaff VP3"
+msgstr ""
+
+msgid "This isn't a file Hoop can read. It opens JEF, DST, EXP, PES and PEC."
+msgstr ""
+
+msgid "The file ends early, so it may be damaged."
+msgstr ""
+
+msgid "The file has no stitches in it."
+msgstr ""
+
+msgid "Standard"
+msgstr ""
+
+msgid "Optional"
+msgstr ""
+
+msgid "Free arm"
+msgstr ""
+
+msgid "Hello"
+msgstr ""
+
+msgid "Couldn't read {v0}: {e}."
+msgstr ""
+
+msgid "Satin columns"
+msgstr ""
+
+msgid "Widest satin that still lies flat and tight"
+msgstr ""
+
+msgid "Narrow fill strips"
+msgstr ""
+
+msgid "Narrowest strip that filled cleanly"
+msgstr ""
+
+msgid "Fill row spacing"
+msgstr ""
+
+msgid "Most open rows that still hide the fabric"
+msgstr ""
+
+msgid "Edge over fill, pull compensation"
+msgstr ""
+
+msgid "Circle with no gap between fill and edge"
+msgstr ""
+
+msgid "Small letters"
+msgstr ""
+
+msgid "Smallest letters that read well"
+msgstr ""
+
+msgid "Abg"
+msgstr ""
+
+msgid "Janome"
+msgstr ""
+
+msgid "No home folder."
+msgstr ""
+
+msgid "Couldn't run curl: {e}"
+msgstr ""
+
+msgid "Download failed: {v0}"
+msgstr ""
+
+msgid "The download wasn't a thread chart."
+msgstr ""
+
+msgid "{name} is fully transparent, so there's nothing to trace."
+msgstr ""
+
+msgid "Couldn't find any shapes in {name}."
+msgstr ""
+
+msgid "USB drive"
+msgstr ""
+
+msgid "Couldn't run udisksctl: {e}."
+msgstr ""
+
+msgid "DESIGN"
+msgstr ""
+
+msgid "Couldn't open the USB drive: {e}"
+msgstr ""
+
+msgid "The USB drive didn't say where it was opened."
+msgstr ""
+
+msgid "Couldn't make the EMB/Embf folder: {e}."
+msgstr ""
+
+msgid "Couldn't write to the USB drive: {e}."
+msgstr ""
+
+msgid "Couldn't close the USB drive: {e}"
+msgstr ""
+
+msgid "Embroidery worksheet · {date} · made with Hoop"
+msgstr ""
+
+msgid "{w:.1} × {h:.1} mm"
+msgstr ""
+
+msgid "{colors} ({n} thread change)"
+msgid_plural "{colors} ({n} thread changes)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "≈ {v0:.0} min at {spm} spm"
+msgstr ""
+
+msgid "Top thread"
+msgstr ""
+
+msgid "≈ {m:.1} m"
+msgstr ""
+
+msgid "Center offset"
+msgstr ""
+
+msgid "{v0:+.1}, {v1:+.1} mm"
+msgstr ""
+
+msgid "Thread sequence"
+msgstr ""
+
+msgid "Thread ({chart})"
+msgstr ""
+
+msgid "Code"
+msgstr ""
+
+msgid "… and {v0} more"
+msgstr ""
+
+msgid "{name} · actual size"
+msgstr ""
+
+msgid "Print at 100 % (no fit to page). The bar below must measure 50 mm. Lay the sheet on the fabric and mark the center cross."
+msgstr ""
+
+msgid "50 mm"
+msgstr ""
+
+msgid "The design is larger than the page, so its edges are cut off here."
+msgstr ""
+
+msgid "hoop center"
+msgstr ""
+

@@ -183,3 +183,32 @@ tab → Stitch as).
   so a logo's text can be satin while its background stays tatami.
 - Keep "Cut hidden parts" on for layered logos, and raise "Detail" to drop
   specks too small to stitch cleanly.
+
+## Translating
+
+Hoop is in English, and every line it shows can be translated. Translations
+are gettext `.po` files, so any PO editor works (Poedit, Lokalize, or a text
+editor).
+
+1. Copy `locales/hoop.pot` to `<language>.po`, for example `pl.po`.
+2. Fill in each `msgstr`. Fill in the `Language:` and `Language-Name:` header
+   lines too, for example `pl` and `Polski`.
+3. Put the file in `~/.local/share/hoop/locale/`. Then pick the language in
+   View → Language. Lines left empty stay in English.
+
+Some lines have placeholders in braces, such as `{name}` or `{w:.1}`. Keep
+them as they are. You can move them anywhere in the sentence. Lines with a
+count (`msgid_plural`) have one `msgstr[k]` for each plural form of the
+language. Hoop knows the plural rules of the common languages, Polish and
+Russian included.
+
+To ship a finished translation with Hoop:
+
+1. Add it to `locales/`.
+2. List it in `BUNDLED` in `src/i18n.rs`.
+
+After changing UI text, refresh the template with
+`cargo test --release update_pot -- --ignored`.
+
+The worksheet PDF uses the PDF base fonts. These have no letters such as ł
+or ś, so the PDF prints them without their accents.

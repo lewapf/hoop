@@ -32,23 +32,23 @@ impl Out {
     /// Menu text: the format and the machines that read it.
     pub fn label(self) -> &'static str {
         match self {
-            Out::Jef => "JEF · Janome",
-            Out::Dst => "DST · Tajima, most machines",
-            Out::Exp => "EXP · Melco, Bernina",
-            Out::Pes => "PES · Brother, Baby Lock",
-            Out::Pec => "PEC · Brother",
-            Out::Vp3 => "VP3 · Pfaff, Husqvarna Viking",
+            Out::Jef => t!("JEF · Janome"),
+            Out::Dst => t!("DST · Tajima, most machines"),
+            Out::Exp => t!("EXP · Melco, Bernina"),
+            Out::Pes => t!("PES · Brother, Baby Lock"),
+            Out::Pec => t!("PEC · Brother"),
+            Out::Vp3 => t!("VP3 · Pfaff, Husqvarna Viking"),
         }
     }
 
     pub fn filter(self) -> &'static str {
         match self {
-            Out::Jef => "Janome JEF",
-            Out::Dst => "Tajima DST",
-            Out::Exp => "Melco EXP",
-            Out::Pes => "Brother PES",
-            Out::Pec => "Brother PEC",
-            Out::Vp3 => "Pfaff VP3",
+            Out::Jef => t!("Janome JEF"),
+            Out::Dst => t!("Tajima DST"),
+            Out::Exp => t!("Melco EXP"),
+            Out::Pes => t!("Brother PES"),
+            Out::Pec => t!("Brother PEC"),
+            Out::Vp3 => t!("Pfaff VP3"),
         }
     }
 }

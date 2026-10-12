@@ -36,7 +36,7 @@ const MAX_SIDE: u32 = 700;
 
 pub fn load(path: &Path) -> Result<Picture, String> {
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-    let img = image::open(path).map_err(|e| format!("Couldn't open {name}: {e}."))?;
+    let img = image::open(path).map_err(|e| t!("Couldn't open {name}: {e}.", name = name, e = e))?;
     let mut rgba = img.to_rgba8();
     let (w, h) = rgba.dimensions();
     if w.max(h) > MAX_SIDE {
@@ -200,7 +200,7 @@ fn despeckle(mut labels: Vec<u8>, w: usize, h: usize, passes: u8) -> Vec<u8> {
 pub fn trace(pic: &Picture, t: &TraceSettings) -> Result<Artwork, String> {
     let centers = palette(&pic.px, t.colors.clamp(2, 12));
     if centers.is_empty() {
-        return Err(format!("{} is fully transparent, so there's nothing to trace.", pic.name));
+        return Err(t!("{name} is fully transparent, so there's nothing to trace.", name = pic.name));
     }
     let (w, h) = (pic.w, pic.h);
     let labels: Vec<u8> = pic
@@ -310,7 +310,7 @@ pub fn trace(pic: &Picture, t: &TraceSettings) -> Result<Artwork, String> {
         }
     }
     if shapes.is_empty() {
-        return Err(format!("Couldn't find any shapes in {}.", pic.name));
+        return Err(t!("Couldn't find any shapes in {name}.", name = pic.name));
     }
     let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
     for p in shapes.iter().filter(|s| !layers[s.layer].background).flat_map(|s| s.lines.iter().flat_map(|l| &l.0)) {

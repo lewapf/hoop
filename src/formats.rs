@@ -72,10 +72,10 @@ impl fmt::Display for ReadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ReadError::UnknownFormat => {
-                f.write_str("This isn't a file Hoop can read. It opens JEF, DST, EXP, PES and PEC.")
+                f.write_str(t!("This isn't a file Hoop can read. It opens JEF, DST, EXP, PES and PEC."))
             }
-            ReadError::Truncated => f.write_str("The file ends early, so it may be damaged."),
-            ReadError::Empty => f.write_str("The file has no stitches in it."),
+            ReadError::Truncated => f.write_str(t!("The file ends early, so it may be damaged.")),
+            ReadError::Empty => f.write_str(t!("The file has no stitches in it.")),
         }
     }
 }

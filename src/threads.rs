@@ -33,7 +33,7 @@ pub const DOWNLOADS: &[(&str, &str)] = &[
 const SOURCE: &str = "https://raw.githubusercontent.com/inkstitch/inkstitch/main/palettes/";
 
 pub fn janome() -> Chart {
-    Chart { name: "Janome".into(), threads: formats::jef_palette().map(|(_, t)| t).collect() }
+    Chart { name: t!("Janome").into(), threads: formats::jef_palette().map(|(_, t)| t).collect() }
 }
 
 /// Reads a GIMP palette. Each color line is "r g b name… code"; the last
@@ -101,19 +101,19 @@ pub fn load_all() -> Vec<Chart> {
 
 /// Fetches one Ink/Stitch chart into Hoop's folder with curl.
 pub fn download(file: &str) -> Result<PathBuf, String> {
-    let dir = user_dir().ok_or("No home folder.")?;
+    let dir = user_dir().ok_or(t!("No home folder."))?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let target = dir.join(file);
     let url = format!("{SOURCE}{}", file.replace(' ', "%20"));
-    let out = std::process::Command::new("curl").args(["-fsSL", "--max-time", "30", "-o"]).arg(&target).arg(&url).output().map_err(|e| format!("Couldn't run curl: {e}"))?;
+    let out = std::process::Command::new("curl").args(["-fsSL", "--max-time", "30", "-o"]).arg(&target).arg(&url).output().map_err(|e| t!("Couldn't run curl: {e}", e = e))?;
     if !out.status.success() {
         let _ = std::fs::remove_file(&target);
-        return Err(format!("Download failed: {}", String::from_utf8_lossy(&out.stderr).trim()));
+        return Err(t!("Download failed: {v0}", v0 = String::from_utf8_lossy(&out.stderr).trim()));
     }
     let ok = std::fs::read_to_string(&target).ok().and_then(|t| parse_gpl(&t, file)).is_some();
     if !ok {
         let _ = std::fs::remove_file(&target);
-        return Err("The download wasn't a thread chart.".into());
+        return Err(t!("The download wasn't a thread chart.").into());
     }
     Ok(target)
 }

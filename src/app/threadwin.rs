@@ -72,7 +72,7 @@ impl HoopApp {
                 } else if let Some(i) = self.threads.charts.iter().position(|c| c.name == name) {
                     self.threads.chosen = i;
                 }
-                self.threads.message = Some(r.map(|n| format!("{n} is ready.")));
+                self.threads.message = Some(r.map(|n| t!("{n} is ready.", n = n)));
             }
         }
         let muted = self.muted();
@@ -81,9 +81,9 @@ impl HoopApp {
         let mut fetch: Option<(&'static str, &'static str)> = None;
         let mut own = self.my_threads();
         let mut own_changed = false;
-        egui::Window::new("Thread charts").open(&mut open).collapsible(false).resizable(true).default_size(vec2(520.0, 560.0)).show(ctx, |ui| {
+        egui::Window::new(t!("Thread charts")).open(&mut open).collapsible(false).resizable(true).default_size(vec2(520.0, 560.0)).show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label("Thread lists use");
+                ui.label(t!("Thread lists use"));
                 let before = self.threads.chosen;
                 egui::ComboBox::from_id_salt("chart").selected_text(&self.chart().name).width(220.0).show_ui(ui, |ui| {
                     for (i, c) in self.threads.charts.iter().enumerate() {
@@ -96,25 +96,25 @@ impl HoopApp {
                 }
             });
             ui.label(
-                RichText::new("The machine file keeps Janome thread numbers. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads.")
+                RichText::new(t!("The machine file keeps Janome thread numbers. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."))
                     .size(12.0)
                     .color(muted),
             );
-            ui.collapsing("Get more charts", |ui| {
-                ui.label(RichText::new("Downloaded from the Ink/Stitch project (GPL) into ~/.local/share/hoop/threads. Charts in Inkscape's palettes folder show up too.").size(12.0).color(muted));
+            ui.collapsing(t!("Get more charts"), |ui| {
+                ui.label(RichText::new(t!("Downloaded from the Ink/Stitch project (GPL) into ~/.local/share/hoop/threads. Charts in Inkscape's palettes folder show up too.")).size(12.0).color(muted));
                 let busy = self.threads.job.is_some();
                 egui::Grid::new("downloads").num_columns(2).spacing([12.0, 4.0]).show(ui, |ui| {
                     for &(name, file) in threads::DOWNLOADS {
                         ui.label(name);
                         let have = threads::is_downloaded(file);
-                        if ui.add_enabled(!busy, egui::Button::new(if have { "Update" } else { "Get" })).clicked() {
+                        if ui.add_enabled(!busy, egui::Button::new(if have { t!("Update") } else { t!("Get") })).clicked() {
                             fetch = Some((name, file));
                         }
                         ui.end_row();
                     }
                 });
                 if busy {
-                    ui.label(RichText::new("Downloading…").color(muted));
+                    ui.label(RichText::new(t!("Downloading…")).color(muted));
                 }
                 if let Some(m) = &self.threads.message {
                     match m {
@@ -125,14 +125,14 @@ impl HoopApp {
             });
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("My threads · {} ticked", own.len())).strong());
-                ui.checkbox(&mut self.threads.only_mine, "Only mine");
-                if ui.small_button("None").clicked() {
+                ui.label(RichText::new(t!("My threads · {v0} ticked", v0 = own.len())).strong());
+                ui.checkbox(&mut self.threads.only_mine, t!("Only mine"));
+                if ui.small_button(t!("None")).clicked() {
                     own.clear();
                     own_changed = true;
                 }
             });
-            ui.add(egui::TextEdit::singleline(&mut self.threads.filter).hint_text("Find by name or number").desired_width(ui.available_width()));
+            ui.add(egui::TextEdit::singleline(&mut self.threads.filter).hint_text(t!("Find by name or number")).desired_width(ui.available_width()));
             let needle = self.threads.filter.to_lowercase();
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 let chart = self.chart().clone();
@@ -162,7 +162,7 @@ impl HoopApp {
                         let text = if t.code.is_empty() { t.name.clone() } else { format!("{}\n{}", t.code, t.name) };
                         let g = ui.painter().layout(text, egui::FontId::proportional(10.5), ui.visuals().text_color(), cell.x - 34.0);
                         ui.painter().galley(egui::pos2(sw.max.x + 5.0, rect.center().y - g.size().y / 2.0), g, ui.visuals().text_color());
-                        if resp.on_hover_text(format!("{} {} · click to mark as mine", t.code, t.name)).clicked() {
+                        if resp.on_hover_text(t!("{code} {name} · click to mark as mine", code = t.code, name = t.name)).clicked() {
                             if mine {
                                 own.retain(|c| *c != k);
                             } else {
@@ -177,7 +177,7 @@ impl HoopApp {
                 });
             });
             ui.add_space(4.0);
-            if ui.add(primary("Done", accent)).clicked() {
+            if ui.add(primary(t!("Done"), accent)).clicked() {
                 self.threads.open = false;
             }
         });

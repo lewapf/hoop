@@ -103,8 +103,8 @@ impl ShapeEdit {
     pub fn of(art: &Artwork, i: usize) -> Self {
         let sh = &art.shapes[i];
         let kind = match sh.kind {
-            Kind::Fill { .. } => "Fill",
-            Kind::Stroke { .. } => "Line",
+            Kind::Fill { .. } => t!("Fill"),
+            Kind::Stroke { .. } => t!("Line"),
         };
         ShapeEdit { source: i, own: None, name: format!("{kind} {}", i + 1), layer: sh.layer, look: None, hidden: false, dx: 0.0, dy: 0.0, scale: 1.0, rotate: 0.0 }
     }
@@ -220,7 +220,7 @@ pub fn near_line(c: &Contour, closed: bool, q: Pt) -> f32 {
 }
 
 /// Built-in shapes that can be added to any artwork.
-pub const BUILT_IN: [&str; 7] = ["Circle", "Square", "Heart", "Star", "Shield", "Banner", "Line"];
+pub const BUILT_IN: [&str; 7] = [n!("Circle"), n!("Square"), n!("Heart"), n!("Star"), n!("Shield"), n!("Banner"), n!("Line")];
 
 /// One built-in shape, `size` user units across, centered on `at`.
 pub fn built_in(name: &str, at: Pt, size: f32, layer: usize) -> Shape {
@@ -300,7 +300,7 @@ pub fn built_in(name: &str, at: Pt, size: f32, layer: usize) -> Shape {
 pub fn blank() -> Artwork {
     let colors = [[0xd0, 0x20, 0x30], [0x1d, 0x2a, 0x5c], [0xe8, 0xb0, 0x20], [0x20, 0x20, 0x20], [0xf4, 0xf4, 0xf0], [0x2a, 0x8a, 0x3e]];
     Artwork {
-        name: "Shapes".into(),
+        name: t!("Shapes").into(),
         shapes: Vec::new(),
         layers: colors.iter().map(|&color| Layer { color, background: false, shapes: 0 }).collect(),
         bounds: (0.0, 0.0, 377.95, 377.95),
@@ -500,7 +500,7 @@ fn walk_group(g: &usvg::Group, out: &mut Collect) {
 
 pub fn load(path: &Path) -> Result<Artwork, String> {
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-    let data = std::fs::read(path).map_err(|e| format!("Couldn't open {name}: {e}."))?;
+    let data = std::fs::read(path).map_err(|e| t!("Couldn't open {name}: {e}.", name = name, e = e))?;
     parse(&name, &data)
 }
 
@@ -508,14 +508,11 @@ pub fn parse(name: &str, data: &[u8]) -> Result<Artwork, String> {
     let mut opt = usvg::Options::default();
     // Text in the SVG is drawn with the installed fonts.
     opt.fontdb_mut().load_system_fonts();
-    let tree = usvg::Tree::from_data(data, &opt).map_err(|e| format!("{name} isn't an SVG Hoop can read: {e}."))?;
+    let tree = usvg::Tree::from_data(data, &opt).map_err(|e| t!("{name} isn't an SVG Hoop can read: {e}.", name = name, e = e))?;
     let mut c = Collect { shapes: Vec::new(), images: 0 };
     walk_group(tree.root(), &mut c);
     if c.shapes.is_empty() {
-        return Err(format!(
-            "{name} has no shapes to stitch.{}",
-            if c.images > 0 { " It only holds pictures; trace them into paths first (Inkscape: Path → Trace Bitmap)." } else { "" }
-        ));
+        return Err(t!("{name} has no shapes to stitch.{v0}", name = name, v0 = if c.images > 0 { " It only holds pictures; trace them into paths first (Inkscape: Path → Trace Bitmap)." } else { "" }));
     }
 
     let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
@@ -871,9 +868,9 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     }
     if items.is_empty() {
         return Err(if s.shapes.iter().all(|e| e.hidden) {
-            "No shapes yet. Add one from Shapes, or open an SVG or a picture.".into()
+            t!("No shapes yet. Add one from Shapes, or open an SVG or a picture.").into()
         } else {
-            "Every color is turned off or too small to stitch.".into()
+            t!("Every color is turned off or too small to stitch.").into()
         });
     }
 
@@ -955,7 +952,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         if applique {
             // Two machine stops even within one thread: lay the fabric, then trim it.
             let outlines: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
-            for (name, passes) in [("Placement line", 1), ("Tack-down (lay the fabric first)", 2)] {
+            for (name, passes) in [(t!("Placement line"), 1), (t!("Tack-down (lay the fabric first)"), 2)] {
                 if !threads.is_empty() {
                     st.color_change();
                 }
@@ -1043,7 +1040,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     }
     st.finish();
     if !st.cmds.contains(&Cmd::Stitch) {
-        return Err("Nothing to stitch with these settings. Turn on a fill or a line style.".into());
+        return Err(t!("Nothing to stitch with these settings. Turn on a fill or a line style.").into());
     }
     Ok(Pattern { format: Format::Svg, points: st.points, cmds: st.cmds, threads })
 }

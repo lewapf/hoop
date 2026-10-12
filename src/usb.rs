@@ -17,7 +17,7 @@ pub struct Drive {
 
 impl Drive {
     pub fn title(&self) -> String {
-        let name = if self.label.is_empty() { "USB drive" } else { &self.label };
+        let name = if self.label.is_empty() { t!("USB drive") } else { &self.label };
         format!("{name} ({})", self.size)
     }
 }
@@ -97,7 +97,7 @@ fn udisks(args: &[&str]) -> Result<String, String> {
         .args(args)
         .arg("--no-user-interaction")
         .output()
-        .map_err(|e| format!("Couldn't run udisksctl: {e}."))?;
+        .map_err(|e| t!("Couldn't run udisksctl: {e}.", e = e))?;
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
     } else {
@@ -108,7 +108,7 @@ fn udisks(args: &[&str]) -> Result<String, String> {
 /// The 8.3 name the machine shows best: up to eight capitals and digits.
 pub fn short_name(stem: &str) -> String {
     let name: String = stem.chars().filter(|c| c.is_ascii_alphanumeric()).map(|c| c.to_ascii_uppercase()).take(8).collect();
-    if name.is_empty() { "DESIGN".into() } else { name }
+    if name.is_empty() { t!("DESIGN").into() } else { name }
 }
 
 /// Finds a folder by name regardless of case, as FAT drives often differ.
@@ -126,13 +126,13 @@ pub fn send(drive: &Drive, file_name: &str, bytes: &[u8]) -> Result<PathBuf, Str
     let root = match &drive.mount {
         Some(m) => m.clone(),
         None => {
-            let out = udisks(&["mount", "-b", &drive.device]).map_err(|e| format!("Couldn't open the USB drive: {e}"))?;
+            let out = udisks(&["mount", "-b", &drive.device]).map_err(|e| t!("Couldn't open the USB drive: {e}", e = e))?;
             // "Mounted /dev/sdb1 at /run/media/user/LABEL"
-            out.trim().rsplit_once(" at ").map(|(_, p)| PathBuf::from(p.trim_end_matches('.'))).ok_or("The USB drive didn't say where it was opened.")?
+            out.trim().rsplit_once(" at ").map(|(_, p)| PathBuf::from(p.trim_end_matches('.'))).ok_or(t!("The USB drive didn't say where it was opened."))?
         }
     };
     let folder = child_dir(&child_dir(&root, "EMB"), "Embf");
-    std::fs::create_dir_all(&folder).map_err(|e| format!("Couldn't make the EMB/Embf folder: {e}."))?;
+    std::fs::create_dir_all(&folder).map_err(|e| t!("Couldn't make the EMB/Embf folder: {e}.", e = e))?;
     let target = folder.join(file_name);
     let tmp = folder.join(format!("{file_name}.tmp"));
     let write = || -> std::io::Result<()> {
@@ -145,7 +145,7 @@ pub fn send(drive: &Drive, file_name: &str, bytes: &[u8]) -> Result<PathBuf, Str
     };
     write().map_err(|e| {
         let _ = std::fs::remove_file(&tmp);
-        format!("Couldn't write to the USB drive: {e}.")
+        t!("Couldn't write to the USB drive: {e}.", e = e)
     })?;
     Ok(target)
 }
@@ -154,7 +154,7 @@ pub fn send(drive: &Drive, file_name: &str, bytes: &[u8]) -> Result<PathBuf, Str
 pub fn eject(drive: &Drive) -> Result<(), String> {
     let _ = Command::new("sync").status();
     if drives().iter().any(|d| d.device == drive.device && d.mount.is_some()) {
-        udisks(&["unmount", "-b", &drive.device]).map_err(|e| format!("Couldn't close the USB drive: {e}"))?;
+        udisks(&["unmount", "-b", &drive.device]).map_err(|e| t!("Couldn't close the USB drive: {e}", e = e))?;
     }
     // Powering off is a nicety; some readers don't support it.
     let _ = udisks(&["power-off", "-b", &drive.disk]);

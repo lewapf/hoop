@@ -168,7 +168,7 @@ impl HoopApp {
                     let mut copy = s.shapes[i].clone();
                     copy.dx += 50.0 / scale;
                     copy.dy += 50.0 / scale;
-                    copy.name = format!("{} copy", copy.name);
+                    copy.name = t!("{name} copy", name = copy.name);
                     s.shapes.push(copy);
                     fresh.push(s.shapes.len() - 1);
                 }
@@ -242,11 +242,12 @@ impl HoopApp {
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
         let size = (art.bounds.2 - art.bounds.0).min(art.bounds.3 - art.bounds.1) * 0.5;
         let mid = ((art.bounds.0 + art.bounds.2) / 2.0, (art.bounds.1 + art.bounds.3) / 2.0);
-        let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
+        let shown = crate::i18n::tr_any(name);
+        let n = s.shapes.iter().filter(|e| e.name.starts_with(&shown)).count();
         s.shapes.push(ShapeEdit {
             source: usize::MAX,
             own: Some(artwork::built_in(name, mid, size, layer)),
-            name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
+            name: if n == 0 { shown.clone() } else { format!("{shown} {}", n + 1) },
             layer,
             look: None,
             hidden: false,
@@ -561,7 +562,7 @@ impl HoopApp {
                     painter.rect_stroke(r, 1, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
                 }
             } else {
-                painter.text(frame.rect.center_top() + vec2(0.0, 24.0), egui::Align2::CENTER_CENTER, "Too many points to show. Press Simplify first.", egui::FontId::proportional(13.0), Color32::WHITE);
+                painter.text(frame.rect.center_top() + vec2(0.0, 24.0), egui::Align2::CENTER_CENTER, t!("Too many points to show. Press Simplify first."), egui::FontId::proportional(13.0), Color32::WHITE);
             }
         } else if self.sel.len() > 1 {
             let b = self.sel.iter().filter_map(|&i| screen_box(frame, m, art, s.shapes.get(i)?)).reduce(|a, b| a.union(b));
@@ -632,19 +633,19 @@ impl HoopApp {
         let muted = self.muted();
         let accent = self.accent();
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else {
-            ui.label(RichText::new("Open an SVG or a picture, or start from shapes, to see its parts here.").size(12.0).color(muted));
+            ui.label(RichText::new(t!("Open an SVG or a picture, or start from shapes, to see its parts here.")).size(12.0).color(muted));
             return;
         };
         ui.horizontal(|ui| {
-            ui.menu_button("Add shape", |ui| {
+            ui.menu_button(t!("Add shape"), |ui| {
                 for name in artwork::BUILT_IN {
-                    if ui.button(name).clicked() {
+                    if ui.button(crate::i18n::tr(name)).clicked() {
                         self.list_add = Some(name);
                         ui.close();
                     }
                 }
             });
-            ui.label(RichText::new(format!("{} shapes · {} picked", s.shapes.len(), self.sel.len())).size(12.0).color(muted));
+            ui.label(RichText::new(t!("{v0} shapes · {v1} picked", v0 = s.shapes.len(), v1 = self.sel.len())).size(12.0).color(muted));
         });
         ui.separator();
         let mods = ui.input(|i| i.modifiers);
@@ -665,7 +666,7 @@ impl HoopApp {
                 }
                 // Eye toggle, swatch, name, tag.
                 let eye = egui::Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(16.0, 16.0));
-                let eye_resp = ui.interact(eye, ui.id().with(("eye", i)), Sense::click()).on_hover_text("Show or hide this shape");
+                let eye_resp = ui.interact(eye, ui.id().with(("eye", i)), Sense::click()).on_hover_text(t!("Show or hide this shape"));
                 if eye_resp.clicked() {
                     e.hidden = !e.hidden;
                 }
@@ -739,13 +740,13 @@ impl HoopApp {
     pub(super) fn shape_tab(&mut self, ui: &mut egui::Ui) {
         let muted = self.muted();
         let accent = self.accent();
-        card(ui, "Add", accent, |ui| {
+        card(ui, t!("Add"), accent, |ui| {
             let w = (ui.available_width() - 12.0) / 4.0;
             for row in artwork::BUILT_IN.chunks(4) {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 4.0;
                     for name in row {
-                        if ui.add(egui::Button::new(*name).min_size(vec2(w, 24.0))).clicked() {
+                        if ui.add(egui::Button::new(crate::i18n::tr(name)).min_size(vec2(w, 24.0))).clicked() {
                             self.list_add = Some(name);
                         }
                     }
@@ -756,16 +757,16 @@ impl HoopApp {
             self.add_built_in(name);
         }
         if self.sel.is_empty() {
-            ui.label(RichText::new("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one.").size(12.0).color(muted));
+            ui.label(RichText::new(t!("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one.")).size(12.0).color(muted));
             return;
         }
         let mut op = None;
-        card(ui, "Arrange", accent, |ui| {
+        card(ui, t!("Arrange"), accent, |ui| {
             let w = (ui.available_width() - 12.0) / 4.0;
             let rows: [[(&str, &str, Arrange); 4]; 3] = [
-                [("Front", "Sew last, on top · Shift+]", Arrange::Front), ("Forward", "One step up · ]", Arrange::Forward), ("Backward", "One step down · [", Arrange::Backward), ("Back", "Sew first, underneath · Shift+[", Arrange::Back)],
-                [("Left", "Align left edges", Arrange::Left), ("Center", "Align middles across", Arrange::CenterX), ("Right", "Align right edges", Arrange::Right), ("Top", "Align top edges", Arrange::Top)],
-                [("Middle", "Align middles up and down", Arrange::Middle), ("Bottom", "Align bottom edges", Arrange::Bottom), ("Copy", "Duplicate · Ctrl+D", Arrange::Duplicate), ("Delete", "Del", Arrange::Delete)],
+                [("Front", t!("Sew last, on top · Shift+]"), Arrange::Front), ("Forward", t!("One step up · ]"), Arrange::Forward), ("Backward", t!("One step down · ["), Arrange::Backward), ("Back", t!("Sew first, underneath · Shift+["), Arrange::Back)],
+                [("Left", t!("Align left edges"), Arrange::Left), ("Center", t!("Align middles across"), Arrange::CenterX), ("Right", t!("Align right edges"), Arrange::Right), ("Top", t!("Align top edges"), Arrange::Top)],
+                [("Middle", t!("Align middles up and down"), Arrange::Middle), ("Bottom", t!("Align bottom edges"), Arrange::Bottom), ("Copy", t!("Duplicate · Ctrl+D"), Arrange::Duplicate), ("Delete", "Del", Arrange::Delete)],
             ];
             for row in rows {
                 ui.horizontal(|ui| {
@@ -778,7 +779,7 @@ impl HoopApp {
                 });
             }
             if self.sel.len() == 1 {
-                ui.label(RichText::new("One shape aligns to the drawing's frame; several align to each other.").size(11.5).color(muted));
+                ui.label(RichText::new(t!("One shape aligns to the drawing's frame; several align to each other.")).size(11.5).color(muted));
             }
         });
         if let Some(op) = op {
@@ -787,7 +788,7 @@ impl HoopApp {
         }
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
         let sel = self.sel.clone();
-        card(ui, "Thread color", accent, |ui| {
+        card(ui, t!("Thread color"), accent, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 3.0;
                 for (l, layer) in art.layers.iter().enumerate() {
@@ -796,7 +797,7 @@ impl HoopApp {
                     if sel.iter().all(|&i| s.shapes[i].layer == l) {
                         ui.painter().rect_stroke(r, 4, egui::Stroke::new(2.0, accent), egui::StrokeKind::Inside);
                     }
-                    if resp.on_hover_text("Stitch with this color's thread (set in Threads)").clicked() {
+                    if resp.on_hover_text(t!("Stitch with this color's thread (set in Threads)")).clicked() {
                         for &i in &sel {
                             s.shapes[i].layer = l;
                         }
@@ -807,73 +808,73 @@ impl HoopApp {
                 }
             });
         });
-        card(ui, "Stitch as", accent, |ui| {
+        card(ui, t!("Stitch as"), accent, |ui| {
             // One look for all picked shapes, or the thread's look (Auto).
             let first = s.shapes[sel[0]].look;
             let same = sel.iter().all(|&i| s.shapes[i].look == first);
             let name = |l: Option<Look>| match l {
-                None => "Thread's look".to_string(),
-                Some(Look::Default) => "Fill style".to_string(),
-                Some(Look::Fill(k)) => format!("{k:?}"),
-                Some(Look::Outline) => "Outline".into(),
-                Some(Look::Applique) => "Appliqué".into(),
+                None => t!("Thread's look").to_string(),
+                Some(Look::Default) => t!("Fill style").to_string(),
+                Some(Look::Fill(k)) => crate::i18n::tr(crate::lettering::fill_name(k)).to_string(),
+                Some(Look::Outline) => t!("Outline").into(),
+                Some(Look::Applique) => t!("Appliqué").into(),
             };
             let mut look = first;
-            egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { "Mixed".into() }).width(ui.available_width()).show_ui(ui, |ui| {
-                ui.selectable_value(&mut look, None, "Thread's look").on_hover_text("Whatever the Threads tab sets for this color");
+            egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { t!("Mixed").into() }).width(ui.available_width()).show_ui(ui, |ui| {
+                ui.selectable_value(&mut look, None, t!("Thread's look")).on_hover_text(t!("Whatever the Threads tab sets for this color"));
                 for k in [FillKind::Auto, FillKind::Column, FillKind::Tatami, FillKind::Satin, FillKind::Contour, FillKind::Wave, FillKind::Open] {
-                    ui.selectable_value(&mut look, Some(Look::Fill(k)), format!("{k:?}"));
+                    ui.selectable_value(&mut look, Some(Look::Fill(k)), crate::i18n::tr(crate::lettering::fill_name(k)).to_string());
                 }
-                ui.selectable_value(&mut look, Some(Look::Outline), "Outline").on_hover_text("Only the outline: for thin shapes");
-                ui.selectable_value(&mut look, Some(Look::Applique), "Appliqué");
+                ui.selectable_value(&mut look, Some(Look::Outline), t!("Outline")).on_hover_text(t!("Only the outline: for thin shapes"));
+                ui.selectable_value(&mut look, Some(Look::Applique), t!("Appliqué"));
             });
             if look != first {
                 for &i in &sel {
                     s.shapes[i].look = look;
                 }
             }
-            ui.label(RichText::new("Satin suits parts under about 7 mm wide, tatami wider ones, outline anything under 1 mm.").size(11.5).color(muted));
+            ui.label(RichText::new(t!("Satin suits parts under about 7 mm wide, tatami wider ones, outline anything under 1 mm.")).size(11.5).color(muted));
         });
         let [i] = sel[..] else {
-            ui.label(RichText::new(format!("{} shapes picked. Drag them on the hoop or nudge with the arrow keys.", sel.len())).size(12.0).color(muted));
+            ui.label(RichText::new(t!("{v0} shapes picked. Drag them on the hoop or nudge with the arrow keys.", v0 = sel.len())).size(12.0).color(muted));
             return;
         };
         let (scale, _) = artwork::frame(art, s);
         let e = &mut s.shapes[i];
-        card(ui, "Transform", accent, |ui| {
+        card(ui, t!("Transform"), accent, |ui| {
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Name").color(muted));
+                ui.label(RichText::new(t!("Name")).color(muted));
                 ui.add(egui::TextEdit::singleline(&mut e.name).desired_width(ui.available_width()));
             });
             // Offsets are user units; show them as mm on the fabric.
             let mm = scale / 10.0;
             let (mut x, mut y) = (e.dx * mm, e.dy * mm);
-            slider_row(ui, "Move X", &mut x, -150.0..=150.0, " mm", 1).on_hover_text("Or drag the shape on the hoop, or nudge with the arrow keys");
-            slider_row(ui, "Move Y", &mut y, -150.0..=150.0, " mm", 1);
+            slider_row(ui, t!("Move X"), &mut x, -150.0..=150.0, " mm", 1).on_hover_text(t!("Or drag the shape on the hoop, or nudge with the arrow keys"));
+            slider_row(ui, t!("Move Y"), &mut y, -150.0..=150.0, " mm", 1);
             if (x - e.dx * mm).abs() > 1e-4 || (y - e.dy * mm).abs() > 1e-4 {
                 (e.dx, e.dy) = (x / mm, y / mm);
             }
             let mut size = e.scale * 100.0;
-            if slider_row(ui, "Size", &mut size, 10.0..=400.0, " %", 0).on_hover_text("Or drag a corner handle").changed() {
+            if slider_row(ui, t!("Size"), &mut size, 10.0..=400.0, " %", 0).on_hover_text(t!("Or drag a corner handle")).changed() {
                 e.scale = (size / 100.0).max(0.05);
             }
-            slider_row(ui, "Turn", &mut e.rotate, -180.0..=180.0, "°", 0).on_hover_text("Or drag the round knob; Shift snaps to 15°");
+            slider_row(ui, t!("Turn"), &mut e.rotate, -180.0..=180.0, "°", 0).on_hover_text(t!("Or drag the round knob; Shift snaps to 15°"));
             let b = artwork::extent(&e.lines(art));
             if b.0 <= b.2 {
-                ui.label(RichText::new(format!("{:.1} × {:.1} mm on the fabric", (b.2 - b.0) * mm, (b.3 - b.1) * mm)).monospace().size(12.0).color(muted));
+                ui.label(RichText::new(t!("{v0:.1} × {v1:.1} mm on the fabric", v0 = (b.2 - b.0) * mm, v1 = (b.3 - b.1) * mm)).monospace().size(12.0).color(muted));
             }
         });
         let e = &mut s.shapes[i];
-        card(ui, "Points", accent, |ui| {
+        card(ui, t!("Points"), accent, |ui| {
             let points: usize = e.base(art).lines.iter().map(|l| l.0.len()).sum();
             ui.horizontal(|ui| {
-                if ui.add(egui::Button::new("Edit points").selected(self.edit_points)).on_hover_text("Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one.").clicked() {
+                if ui.add(egui::Button::new(t!("Edit points")).selected(self.edit_points)).on_hover_text(t!("Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one.")).clicked() {
                     self.edit_points = !self.edit_points;
                     if self.edit_points {
                         e.bake(art);
                     }
                 }
-                if ui.button("Simplify").on_hover_text("Fewer points, smoother to edit; keeps the shape within 0.3 mm").clicked() {
+                if ui.button(t!("Simplify")).on_hover_text(t!("Fewer points, smoother to edit; keeps the shape within 0.3 mm")).clicked() {
                     e.bake(art);
                     if let Some(own) = &mut e.own {
                         let eps = 3.0 / scale;
@@ -886,14 +887,14 @@ impl HoopApp {
                     }
                 }
                 let can_reset = e.moved() || (e.own.is_some() && e.source < art.shapes.len());
-                if ui.add_enabled(can_reset, egui::Button::new("Reset")).on_hover_text("Back to the shape as drawn").clicked() {
+                if ui.add_enabled(can_reset, egui::Button::new("Reset")).on_hover_text(t!("Back to the shape as drawn")).clicked() {
                     (e.dx, e.dy, e.scale, e.rotate) = (0.0, 0.0, 1.0, 0.0);
                     if e.source < art.shapes.len() {
                         e.own = None;
                     }
                 }
             });
-            ui.label(RichText::new(format!("{points} points")).size(12.0).color(muted));
+            ui.label(RichText::new(tn!(points, "{n} point", "{n} points")).size(12.0).color(muted));
         });
     }
 }

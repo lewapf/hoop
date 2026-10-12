@@ -10,10 +10,10 @@ pub struct Hoop {
 }
 
 pub const HOOPS: [Hoop; 4] = [
-    Hoop { name: "SQ14b", w: 140.0, h: 140.0, note: "Standard" },
-    Hoop { name: "RE20b", w: 170.0, h: 200.0, note: "Standard" },
-    Hoop { name: "SQ20b", w: 200.0, h: 200.0, note: "Optional" },
-    Hoop { name: "FA10a", w: 100.0, h: 40.0, note: "Free arm" },
+    Hoop { name: "SQ14b", w: 140.0, h: 140.0, note: n!("Standard") },
+    Hoop { name: "RE20b", w: 170.0, h: 200.0, note: n!("Standard") },
+    Hoop { name: "SQ20b", w: 200.0, h: 200.0, note: n!("Optional") },
+    Hoop { name: "FA10a", w: 100.0, h: 40.0, note: n!("Free arm") },
 ];
 
 /// Where the design sits: rotation in quarter turns, mirroring, and the offset

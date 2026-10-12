@@ -41,10 +41,36 @@ fn pdf_text(s: &str) -> String {
             '≈' => out.push('~'),
             c if c.is_ascii() && !c.is_ascii_control() => out.push(c),
             c if (c as u32) < 256 => out.push_str(&format!("\\{:03o}", c as u32)),
-            _ => out.push('?'),
+            // The rest of WinAnsi, then plain letters for accents it lacks
+            // (Polish, Czech, Turkish, Romanian…), since the base fonts
+            // can't show them.
+            'Š' => out.push_str("\\212"),
+            'š' => out.push_str("\\232"),
+            'Ž' => out.push_str("\\216"),
+            'ž' => out.push_str("\\236"),
+            'Œ' => out.push_str("\\214"),
+            'œ' => out.push_str("\\234"),
+            '—' => out.push_str("\\227"),
+            '…' => out.push_str("\\205"),
+            '„' => out.push_str("\\204"),
+            '“' => out.push_str("\\223"),
+            '”' => out.push_str("\\224"),
+            '€' => out.push_str("\\200"),
+            c => out.push(plain(c)),
         }
     }
     out
+}
+
+/// A letter without its accent, for letters WinAnsi doesn't have.
+fn plain(c: char) -> char {
+    const MAP: &[(&str, char)] = &[
+        ("ąăāа", 'a'), ("ĄĂĀ", 'A'), ("ćčĉċ", 'c'), ("ĆČ", 'C'), ("ďđ", 'd'), ("ĎĐ", 'D'), ("ęěėē", 'e'), ("ĘĚĖĒ", 'E'),
+        ("ğ", 'g'), ("Ğ", 'G'), ("ıīį", 'i'), ("İĪĮ", 'I'), ("łľĺ", 'l'), ("ŁĽĹ", 'L'), ("ńňņ", 'n'), ("ŃŇŅ", 'N'),
+        ("őō", 'o'), ("ŐŌ", 'O'), ("řŕ", 'r'), ("ŘŔ", 'R'), ("śşș", 's'), ("ŚŞȘ", 'S'), ("ťţț", 't'), ("ŤŢȚ", 'T'),
+        ("ůűūų", 'u'), ("ŮŰŪŲ", 'U'), ("źż", 'z'), ("ŹŻ", 'Z'),
+    ];
+    MAP.iter().find(|(set, _)| set.contains(c)).map_or('?', |(_, p)| *p)
 }
 
 struct Page {
@@ -170,7 +196,7 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     p.gray(0.1);
     p.text(m, m + 6.0, 20.0, true, sheet.name);
     p.gray(0.45);
-    p.text(m, m + 24.0, 10.0, false, &format!("Embroidery worksheet · {} · made with Hoop", sheet.date));
+    p.text(m, m + 24.0, 10.0, false, &t!("Embroidery worksheet · {date} · made with Hoop", date = sheet.date));
     p.width(0.6);
     p.line((m, m + 34.0), (W - m, m + 34.0));
 
@@ -187,14 +213,14 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     let fx = bx.0 + bx.2 + 10.0 * MM;
     let changes = bl.len().saturating_sub(1);
     let facts = [
-        ("Size", format!("{w:.1} × {h:.1} mm")),
+        ("Size", t!("{w:.1} × {h:.1} mm", w = w, h = h)),
         ("Hoop", sheet.hoop.to_string()),
         ("Stitches", stitch_count.to_string()),
-        ("Colors", if changes == 0 { "1".into() } else { format!("{} ({changes} thread change{})", bl.len(), if changes == 1 { "" } else { "s" }) }),
+        ("Colors", if changes == 0 { "1".into() } else { tn!(changes, "{colors} ({n} thread change)", "{colors} ({n} thread changes)", colors = bl.len()) }),
         ("Jumps", jumps.to_string()),
-        ("Sewing time", format!("≈ {:.0} min at {} spm", minutes.max(1.0), sheet.spm)),
-        ("Top thread", format!("≈ {total_m:.1} m")),
-        ("Center offset", format!("{:+.1}, {:+.1} mm", cx / 10.0, cy / 10.0)),
+        (t!("Sewing time"), t!("≈ {v0:.0} min at {spm} spm", v0 = minutes.max(1.0), spm = sheet.spm)),
+        (t!("Top thread"), t!("≈ {m:.1} m", m = total_m)),
+        (t!("Center offset"), t!("{v0:+.1}, {v1:+.1} mm", v0 = cx / 10.0, v1 = cy / 10.0)),
     ];
     let mut y = bx.1 + 10.0;
     for (k, v) in facts {
@@ -208,11 +234,11 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     // Thread sequence.
     let mut y = bx.1 + bx.3 + 30.0;
     p.gray(0.1);
-    p.text(m, y, 13.0, true, "Thread sequence");
+    p.text(m, y, 13.0, true, t!("Thread sequence"));
     y += 18.0;
     p.gray(0.45);
     let cols = [m, m + 22.0, m + 50.0, m + 260.0, m + 340.0, m + 410.0];
-    for (x, t) in cols.iter().zip(["#", "", &format!("Thread ({})", sheet.chart), "Code", "Stitches", "Length"]) {
+    for (x, t) in cols.iter().zip(["#", "", &t!("Thread ({chart})", chart = sheet.chart), t!("Code"), t!("Stitches"), t!("Length")]) {
         p.text(*x, y, 9.0, false, t);
     }
     y += 6.0;
@@ -222,7 +248,7 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     for (k, &(a, e)) in bl.iter().enumerate() {
         if y > H - m {
             p.gray(0.45);
-            p.text(m, y, 9.0, false, &format!("… and {} more", bl.len() - k));
+            p.text(m, y, 9.0, false, &t!("… and {v0} more", v0 = bl.len() - k));
             break;
         }
         let t = sheet.threads.get(k).cloned().unwrap_or_else(|| crate::formats::stock_thread(k));
@@ -245,9 +271,9 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     // Page 2: actual size template.
     let mut q = Page::new();
     q.gray(0.1);
-    q.text(m, m + 6.0, 14.0, true, &format!("{} · actual size", sheet.name));
+    q.text(m, m + 6.0, 14.0, true, &t!("{name} · actual size", name = sheet.name));
     q.gray(0.45);
-    q.text(m, m + 22.0, 9.0, false, "Print at 100 % (no fit to page). The bar below must measure 50 mm. Lay the sheet on the fabric and mark the center cross.");
+    q.text(m, m + 22.0, 9.0, false, t!("Print at 100 % (no fit to page). The bar below must measure 50 mm. Lay the sheet on the fabric and mark the center cross."));
     q.width(1.0);
     q.gray(0.1);
     let bar_y = m + 36.0;
@@ -256,13 +282,13 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
         let x = m + k as f32 * 10.0 * MM;
         q.line((x, bar_y - 4.0), (x, bar_y + 4.0));
     }
-    q.text(m + 50.0 * MM + 6.0, bar_y + 3.0, 9.0, false, "50 mm");
+    q.text(m + 50.0 * MM + 6.0, bar_y + 3.0, 9.0, false, t!("50 mm"));
     // The hoop center goes in the middle of the free area.
     let area = (m + 48.0, H - m);
     let o = (W / 2.0, (area.0 + area.1) / 2.0);
     let fits = (b.2 - b.0) / 10.0 * MM < W - 10.0 * MM && (b.3 - b.1) / 10.0 * MM < area.1 - area.0;
     if !fits {
-        q.text(m, bar_y + 20.0, 9.0, false, "The design is larger than the page, so its edges are cut off here.");
+        q.text(m, bar_y + 20.0, 9.0, false, t!("The design is larger than the page, so its edges are cut off here."));
     }
     let map = |(x, y): (f32, f32)| (o.0 + x / 10.0 * MM, o.1 + y / 10.0 * MM);
     stitches(&mut q, sheet, 0.35, &map);
@@ -271,7 +297,7 @@ pub fn pdf(sheet: &Sheet) -> Vec<u8> {
     q.width(0.5);
     q.line((o.0 - 12.0 * MM, o.1), (o.0 + 12.0 * MM, o.1));
     q.line((o.0, o.1 - 12.0 * MM), (o.0, o.1 + 12.0 * MM));
-    q.text(o.0 + 2.0, o.1 - 12.0 * MM - 2.0, 7.0, false, "hoop center");
+    q.text(o.0 + 2.0, o.1 - 12.0 * MM - 2.0, 7.0, false, t!("hoop center"));
     q.gray(0.55);
     q.s.push_str("[3 2] 0 d\n");
     q.rect(map((b.0, b.1)).0, map((b.0, b.1)).1, (b.2 - b.0) / 10.0 * MM, (b.3 - b.1) / 10.0 * MM, false);
@@ -324,6 +350,11 @@ mod tests {
         let p = read("heart.jef", HEART).unwrap();
         let threads: Vec<Thread> = p.blocks().into_iter().map(|b| b.thread).collect();
         pdf(&Sheet { name: "Heart (5×5)", chart: "Janome", hoop: "SQ14b 140 × 140 mm", points: &p.points, cmds: &p.cmds, threads: &threads, spm: 600, date: "2026-10-12" })
+    }
+
+    #[test]
+    fn text_falls_back_to_plain_letters() {
+        assert_eq!(pdf_text("Łódź (5×5) Šip…"), "L\\363dz \\(5\\3275\\) \\212ip\\205");
     }
 
     #[test]
