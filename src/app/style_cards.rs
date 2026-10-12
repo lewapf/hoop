@@ -23,15 +23,15 @@ pub(super) fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color3
         (FillKind::None, ""),
         (FillKind::None, ""),
     ];
-    let w = (ui.available_width() - 12.0) / 3.0;
-    for row in STYLES.chunks(3) {
+    let w = (ui.available_width() - 18.0) / 4.0;
+    for row in STYLES.chunks(4) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 6.0;
             for &(kind, name) in row {
                 if name.is_empty() {
                     continue;
                 }
-                let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), Sense::click());
+                let (rect, resp) = ui.allocate_exact_size(vec2(w, 54.0), Sense::click());
                 let v = ui.visuals();
                 let on = *value == kind;
                 let fill = if on {
@@ -43,7 +43,7 @@ pub(super) fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color3
                 };
                 let p = ui.painter();
                 p.rect(rect, 8, fill, if on { Stroke::new(1.5, accent) } else { Stroke::NONE }, egui::StrokeKind::Inside);
-                let icon = egui::Rect::from_min_size(rect.min + vec2(8.0, 7.0), vec2(w - 16.0, 30.0));
+                let icon = egui::Rect::from_min_size(rect.min + vec2(6.0, 6.0), vec2(w - 12.0, 26.0));
                 let ink = if on { accent } else { v.text_color().gamma_multiply(0.75) };
                 let p = p.with_clip_rect(icon);
                 let line = |a: Pos2, b: Pos2, width: f32| p.line_segment([a, b], Stroke::new(width, ink));
@@ -170,10 +170,10 @@ pub(super) fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color3
                     }
                 }
                 ui.painter().text(
-                    pos2(rect.center().x, rect.bottom() - 13.0),
+                    pos2(rect.center().x, rect.bottom() - 11.0),
                     egui::Align2::CENTER_CENTER,
                     crate::i18n::tr(name),
-                    egui::FontId::proportional(12.0),
+                    egui::FontId::proportional(11.5),
                     if on { accent } else { v.text_color() },
                 );
                 if resp.clicked() {
@@ -212,7 +212,7 @@ pub(super) const FABRICS_SEW: [(&str, f32, f32, f32, lettering::Underlay, &str);
 pub(super) fn fabric_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32) -> Option<&'static str> {
     let mut tip = None;
     let accent = ui.visuals().selection.bg_fill;
-    card(ui, t!("Fabric"), accent, |ui| {
+    card_folded(ui, t!("Fabric"), accent, |ui| {
         ui.label(RichText::new(t!("Sets row spacing, pull, stitch length and underlay for the material.")).size(12.0).color(muted));
         let base = s.fill.default_rows_mm();
         ui.horizontal_wrapped(|ui| {

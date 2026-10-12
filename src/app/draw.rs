@@ -235,7 +235,7 @@ impl HoopApp {
         let mut load = false;
         let mut clear = false;
         let mut start_blank = false;
-        card(ui, t!("Draw"), accent, |ui| {
+        card_folded(ui, t!("Draw"), accent, |ui| {
             ui.label(RichText::new(t!("Trace a picture by hand: put it behind the hoop, then draw shapes over it with the pen.")).size(12.0).color(muted));
             ui.horizontal(|ui| {
                 if ui.button(t!("Backdrop picture…")).clicked() {

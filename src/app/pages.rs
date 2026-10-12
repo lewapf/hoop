@@ -374,7 +374,6 @@ impl HoopApp {
                 }
             });
         }
-        ui.label(RichText::new(t!("Press ? for every shortcut.")).size(12.0).color(muted));
         ui.add_space(14.0);
     }
 

@@ -778,7 +778,7 @@ impl HoopApp {
         }
         self.tool_card(ui);
         let mut op = None;
-        card(ui, t!("Arrange"), accent, |ui| {
+        card_folded(ui, t!("Arrange"), accent, |ui| {
             let w = (ui.available_width() - 12.0) / 4.0;
             let rows: [[(&str, &str, Arrange); 4]; 3] = [
                 [

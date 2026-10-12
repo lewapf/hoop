@@ -60,32 +60,56 @@ pub(super) enum Dock {
 
 /// A row of tabs like a Qt tab widget: the picked one is raised and
 /// underlined. Tabs that don't fit wrap onto another row.
+/// A segmented tab bar across the full width: a rounded track with the
+/// picked tab filled in the accent color. Tabs that don't fit on one row
+/// are spread evenly over two.
 pub(super) fn tab_row<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], accent: Color32) {
-    let raised = ui.visuals().panel_fill.lerp_to_gamma(ui.visuals().text_color(), 0.07);
-    let line = ui.visuals().widgets.noninteractive.bg_stroke.color;
-    ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing = vec2(0.0, 2.0);
-        for &(v, label) in options {
-            let on = *value == v;
-            let galley = ui.painter().layout_no_wrap(label.to_string(), egui::FontId::proportional(13.0), ui.visuals().text_color());
-            let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 12.0, 28.0), Sense::click());
+    let font = egui::FontId::proportional(13.5);
+    let v = ui.visuals().clone();
+    let width = ui.available_width();
+    let galleys: Vec<_> = options.iter().map(|o| ui.painter().layout_no_wrap(o.1.to_string(), font.clone(), v.text_color())).collect();
+    let need: f32 = galleys.iter().map(|g| g.size().x + 18.0).sum::<f32>() + 6.0;
+    let rows = if need <= width || options.len() < 4 { 1 } else { 2 };
+    let per_row = options.len().div_ceil(rows);
+    let row_h = 28.0;
+    let (track, _) = ui.allocate_exact_size(vec2(width, row_h * rows as f32 + 6.0), Sense::hover());
+    let p = ui.painter();
+    p.rect_filled(track, 8, v.extreme_bg_color);
+    p.rect_stroke(track, 8, egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color), egui::StrokeKind::Inside);
+    for (r, chunk) in options.chunks(per_row).enumerate() {
+        let start = r * per_row;
+        // Widths in proportion to the labels, filling the row.
+        let natural: Vec<f32> = (0..chunk.len()).map(|k| galleys[start + k].size().x + 18.0).collect();
+        let total: f32 = natural.iter().sum();
+        let inner = track.width() - 6.0;
+        let mut x = track.left() + 3.0;
+        let y = track.top() + 3.0 + r as f32 * row_h;
+        for (k, &(val, _)) in chunk.iter().enumerate() {
+            let w = natural[k] / total * inner;
+            let rect = egui::Rect::from_min_size(egui::pos2(x, y), vec2(w, row_h));
+            x += w;
+            let resp = ui.interact(rect, ui.id().with(("tab", start + k)), Sense::click());
+            let on = *value == val;
             let p = ui.painter();
             if on {
-                p.rect_filled(rect, egui::CornerRadius { nw: 4, ne: 4, sw: 0, se: 0 }, raised);
-                p.hline(rect.x_range(), rect.bottom() - 1.0, egui::Stroke::new(2.0, accent));
-            } else {
-                if resp.hovered() {
-                    p.rect_filled(rect, egui::CornerRadius { nw: 4, ne: 4, sw: 0, se: 0 }, raised.gamma_multiply(0.6));
-                }
-                p.hline(rect.x_range(), rect.bottom() - 0.5, egui::Stroke::new(1.0, line));
+                p.rect_filled(rect.shrink(1.0), 6, accent);
+            } else if resp.hovered() {
+                p.rect_filled(rect.shrink(1.0), 6, v.widgets.hovered.weak_bg_fill);
             }
-            let color = if on { ui.visuals().strong_text_color() } else { ui.visuals().weak_text_color() };
-            p.galley_with_override_text_color(rect.center() - galley.size() / 2.0, galley, color);
+            let color = if on {
+                contrast(accent)
+            } else if resp.hovered() {
+                v.strong_text_color()
+            } else {
+                v.text_color().gamma_multiply(0.8)
+            };
+            let g = galleys[start + k].clone();
+            p.galley_with_override_text_color(rect.center() - g.size() / 2.0, g, color);
             if resp.clicked() {
-                *value = v;
+                *value = val;
             }
         }
-    });
+    }
 }
 
 /// A flat tool button that shows its frame on hover, like a Qt tool bar.

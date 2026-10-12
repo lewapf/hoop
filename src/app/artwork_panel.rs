@@ -316,7 +316,7 @@ impl HoopApp {
             self.status = Some((tip.to_string(), std::time::Instant::now()));
         }
         fill_card(ui, &mut s.style, muted, accent, false);
-        card(ui, t!("Clean-up"), accent, |ui| {
+        card_folded(ui, t!("Clean-up"), accent, |ui| {
             ui.checkbox(&mut s.knockout, t!("Cut hidden parts")).on_hover_text(t!("Leave areas covered by shapes on top unstitched, so layers don't pile up"));
             slider_row(ui, t!("Detail"), &mut s.min_detail_mm, 0.0..=5.0, " mm", 1).on_hover_text(t!("Shapes smaller than this many mm across are left out"));
         });

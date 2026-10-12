@@ -772,9 +772,6 @@ msgstr ""
 msgid "A PNG of the hoop preview, to share · Ctrl+Shift+S"
 msgstr ""
 
-msgid "Press ? for every shortcut."
-msgstr ""
-
 msgid "Thread colors of the design show here, in sewing order."
 msgstr ""
 

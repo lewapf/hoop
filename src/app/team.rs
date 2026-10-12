@@ -7,7 +7,7 @@ use std::sync::mpsc::{Receiver, channel};
 
 use egui::RichText;
 
-use super::{HoopApp, card, primary};
+use super::{HoopApp, card_folded, primary};
 use crate::canvas::Transform;
 use crate::hoops::Placement;
 use crate::lettering::{self, Settings};
@@ -35,7 +35,7 @@ impl HoopApp {
         let accent = self.accent();
         let count = self.team_list().len();
         let mut save = false;
-        card(ui, t!("Team names"), accent, |ui| {
+        card_folded(ui, t!("Team names"), accent, |ui| {
             ui.label(
                 RichText::new(t!("One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts."))
                     .size(12.0)

@@ -14,18 +14,49 @@ pub(super) fn contrast(c: Color32) -> Color32 {
 
 /// A rounded section with a small heading; every panel section uses one.
 pub(super) fn card(ui: &mut egui::Ui, title: &str, accent: Color32, add: impl FnOnce(&mut egui::Ui)) {
-    let v = ui.visuals();
-    // A Qt-style group box: a thin frame with its title on top.
-    let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.025);
-    let stroke = egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color);
-    ui.label(RichText::new(title).size(12.5).strong().color(v.text_color()));
-    ui.add_space(-2.0);
-    egui::Frame::new().fill(fill).stroke(stroke).corner_radius(4).inner_margin(10).show(ui, |ui| {
-        ui.set_width(ui.available_width());
-        add(ui);
-    });
-    let _ = accent;
-    ui.add_space(8.0);
+    fold_card(ui, title, accent, true, add);
+}
+
+/// A card that starts folded, for settings people rarely change.
+pub(super) fn card_folded(ui: &mut egui::Ui, title: &str, accent: Color32, add: impl FnOnce(&mut egui::Ui)) {
+    fold_card(ui, title, accent, false, add);
+}
+
+/// A group box whose title folds it away. Folding is remembered per card
+/// for the session.
+fn fold_card(ui: &mut egui::Ui, title: &str, accent: Color32, open_default: bool, add: impl FnOnce(&mut egui::Ui)) {
+    let id = ui.make_persistent_id(("card", title));
+    let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, open_default);
+    let open = state.is_open();
+    let v = ui.visuals().clone();
+    let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), 24.0), Sense::click());
+    let p = ui.painter();
+    if resp.hovered() {
+        p.rect_filled(rect.expand2(vec2(2.0, 0.0)), 4, v.widgets.hovered.weak_bg_fill.gamma_multiply(0.6));
+    }
+    // A small triangle: right when folded, down when open.
+    let c = egui::pos2(rect.left() + 7.0, rect.center().y);
+    let tri = if open {
+        vec![c + vec2(-4.0, -2.5), c + vec2(4.0, -2.5), c + vec2(0.0, 3.0)]
+    } else {
+        vec![c + vec2(-2.5, -4.0), c + vec2(3.0, 0.0), c + vec2(-2.5, 4.0)]
+    };
+    let ink = if open { v.strong_text_color() } else { v.weak_text_color() };
+    p.add(egui::Shape::convex_polygon(tri, if resp.hovered() { accent } else { ink }, egui::Stroke::NONE));
+    p.text(egui::pos2(rect.left() + 18.0, rect.center().y), egui::Align2::LEFT_CENTER, title, egui::FontId::proportional(13.5), ink);
+    if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+        state.toggle(ui);
+    }
+    state.store(ui.ctx());
+    if open {
+        let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.025);
+        let stroke = egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color);
+        egui::Frame::new().fill(fill).stroke(stroke).corner_radius(6).inner_margin(10).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            add(ui);
+        });
+    }
+    ui.add_space(if open { 10.0 } else { 2.0 });
 }
 
 pub(super) fn primary(text: &str, accent: Color32) -> egui::Button<'static> {
