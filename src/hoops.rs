@@ -49,11 +49,7 @@ pub fn fit(hoop: (f32, f32), design: (f32, f32), at: &Placement) -> Fit {
     let (hw, hh) = (hoop.0 * 10.0, hoop.1 * 10.0);
     let (dw, dh) = at.size(design.0, design.1);
     if dw > hw || dh > hh {
-        return Fit::TooBig {
-            over_w: ((dw - hw) / 10.0).max(0.0),
-            over_h: ((dh - hh) / 10.0).max(0.0),
-            fits_turned: dh <= hw && dw <= hh,
-        };
+        return Fit::TooBig { over_w: ((dw - hw) / 10.0).max(0.0), over_h: ((dh - hh) / 10.0).max(0.0), fits_turned: dh <= hw && dw <= hh };
     }
     let margins = [
         ("left", hw / 2.0 + at.dx - dw / 2.0),
@@ -68,10 +64,7 @@ pub fn fit(hoop: (f32, f32), design: (f32, f32), at: &Placement) -> Fit {
 /// The smallest standard hoop the design fits without turning it, or the
 /// biggest one when nothing fits. The free-arm hoop is never picked on its own.
 pub fn smallest_fitting(design: (f32, f32)) -> usize {
-    [0, 1, 2]
-        .into_iter()
-        .find(|&i| matches!(fit((HOOPS[i].w, HOOPS[i].h), design, &Placement::default()), Fit::Inside(_)))
-        .unwrap_or(2)
+    [0, 1, 2].into_iter().find(|&i| matches!(fit((HOOPS[i].w, HOOPS[i].h), design, &Placement::default()), Fit::Inside(_))).unwrap_or(2)
 }
 
 #[cfg(test)]

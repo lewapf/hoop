@@ -106,10 +106,23 @@ impl Prefs {
         self.set("letter.text", &s.text);
         self.set("letter.font", font_name);
         for (k, v) in [
-            ("height", s.height_mm), ("spacing", s.spacing_mm), ("lines", s.line_spacing), ("arc", s.arc_deg), ("circle", s.circle_mm), ("envelope", s.envelope_mm),
-            ("angle", s.fill_angle), ("rows", s.density_mm), ("stitch", s.stitch_mm), ("swing", s.wave_amp_mm),
-            ("wave", s.wave_len_mm), ("fade", s.fade_mm), ("pull", s.pull_mm), ("slant", s.slant_deg), ("edge_width", s.edge_width_mm),
-            ("patch_pad", s.patch_pad_mm), ("patch_border", s.patch_border_mm),
+            ("height", s.height_mm),
+            ("spacing", s.spacing_mm),
+            ("lines", s.line_spacing),
+            ("arc", s.arc_deg),
+            ("circle", s.circle_mm),
+            ("envelope", s.envelope_mm),
+            ("angle", s.fill_angle),
+            ("rows", s.density_mm),
+            ("stitch", s.stitch_mm),
+            ("swing", s.wave_amp_mm),
+            ("wave", s.wave_len_mm),
+            ("fade", s.fade_mm),
+            ("pull", s.pull_mm),
+            ("slant", s.slant_deg),
+            ("edge_width", s.edge_width_mm),
+            ("patch_pad", s.patch_pad_mm),
+            ("patch_border", s.patch_border_mm),
         ] {
             self.set(&format!("letter.{k}"), v);
         }

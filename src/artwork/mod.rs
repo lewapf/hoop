@@ -286,11 +286,7 @@ impl ArtSettings {
             stroke: EdgeKind::Satin,
             stroke_min_mm: 1.0,
             group_colors: true,
-            layers: art
-                .layers
-                .iter()
-                .map(|l| LayerChoice { thread: formats::nearest_jef(l.color), enabled: !l.background, look: Look::Default })
-                .collect(),
+            layers: art.layers.iter().map(|l| LayerChoice { thread: formats::nearest_jef(l.color), enabled: !l.background, look: Look::Default }).collect(),
             shapes: (0..art.shapes.len()).map(|i| ShapeEdit::of(art, i)).collect(),
         }
     }
@@ -455,7 +451,10 @@ mod tests {
         let threads = [1, 2, 1, 1];
         assert_eq!(layered_order(&threads, |a, b| cover[a].overlaps(&cover[b])), vec![0, 3, 1, 2]);
         // A thin line inside a ring's hole doesn't touch the ring.
-        let ring = vec![(vec![(0.0, 0.0), (300.0, 0.0), (300.0, 300.0), (0.0, 300.0)], true), (vec![(50.0, 50.0), (50.0, 250.0), (250.0, 250.0), (250.0, 50.0)], true)];
+        let ring = vec![
+            (vec![(0.0, 0.0), (300.0, 0.0), (300.0, 300.0), (0.0, 300.0)], true),
+            (vec![(50.0, 50.0), (50.0, 250.0), (250.0, 250.0), (250.0, 50.0)], true),
+        ];
         let line = vec![(vec![(100.0, 150.0), (200.0, 150.0)], false)];
         assert!(!Coverage::new(&ring, Some(false), 0.0).overlaps(&Coverage::new(&line, None, 5.0)));
     }
@@ -602,4 +601,3 @@ pub const PRESETS: [(&str, &str, fn(&mut ArtSettings)); 4] = [
         s.stroke = EdgeKind::Triple;
     }),
 ];
-

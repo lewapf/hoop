@@ -48,11 +48,7 @@ pub(super) mod ops {
             let pts = &p.points[b.start..b.end];
             let cs = &p.cmds[b.start..b.end];
             for (i, (&q, &c)) in pts.iter().zip(cs).enumerate() {
-                let c = if i == 0 {
-                    if n == 0 { if c == Cmd::ColorChange { Cmd::Jump } else { c } } else { Cmd::ColorChange }
-                } else {
-                    c
-                };
+                let c = if i == 0 { if n == 0 { if c == Cmd::ColorChange { Cmd::Jump } else { c } } else { Cmd::ColorChange } } else { c };
                 // A thread change happens where the needle is; then it jumps
                 // to the block's first point.
                 if i == 0 && n > 0 {
@@ -188,7 +184,11 @@ impl HoopApp {
                 }
             });
             let on = self.stitch_edit.on;
-            if ui.add(egui::Button::selectable(on, t!("Pick stitches on the hoop"))).on_hover_text(t!("Click a needle point to pick it, drag to move it, Del to delete it, arrows to nudge; Esc to stop")).clicked() {
+            if ui
+                .add(egui::Button::selectable(on, t!("Pick stitches on the hoop")))
+                .on_hover_text(t!("Click a needle point to pick it, drag to move it, Del to delete it, arrows to nudge; Esc to stop"))
+                .clicked()
+            {
                 self.stitch_edit.on = !on;
                 self.stitch_edit.picked = None;
             }
@@ -292,7 +292,9 @@ impl HoopApp {
             let nudge = ui.input(|inp| {
                 let step = if inp.modifiers.shift { 10.0 } else { 1.0 };
                 let mut v = (0.0, 0.0);
-                for (k, dx, dy) in [(egui::Key::ArrowLeft, -1.0, 0.0), (egui::Key::ArrowRight, 1.0, 0.0), (egui::Key::ArrowUp, 0.0, -1.0), (egui::Key::ArrowDown, 0.0, 1.0)] {
+                for (k, dx, dy) in
+                    [(egui::Key::ArrowLeft, -1.0, 0.0), (egui::Key::ArrowRight, 1.0, 0.0), (egui::Key::ArrowUp, 0.0, -1.0), (egui::Key::ArrowDown, 0.0, 1.0)]
+                {
                     if inp.key_pressed(k) {
                         v = (v.0 + dx * step, v.1 + dy * step);
                     }

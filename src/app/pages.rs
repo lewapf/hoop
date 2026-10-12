@@ -45,7 +45,8 @@ impl HoopApp {
                     if ui.add(primary(t!("Open…"), accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
                         self.pick_file();
                     }
-                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save as JEF…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
+                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save as JEF…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked()
+                    {
                         self.save_jef();
                     }
                 });
@@ -54,7 +55,9 @@ impl HoopApp {
         if tab == Tab::Design {
             self.stitch_tools_card(ui);
         }
-        if tab == Tab::Hoop && let Some(d) = &self.design {
+        if tab == Tab::Hoop
+            && let Some(d) = &self.design
+        {
             let fit = match (self.pinned.is_empty(), self.hoop_bounds()) {
                 (false, Some(b)) => {
                     let at = Placement { dx: (b.0 + b.2) / 2.0, dy: (b.1 + b.3) / 2.0, ..Default::default() };
@@ -66,12 +69,18 @@ impl HoopApp {
                 Fit::Inside(m) => (true, t!("Fits the {v0}", v0 = HOOPS[self.setup.hoop].name), t!("Closest edge is {m:.1} mm away.", m = m)),
                 Fit::TooBig { over_w, over_h, fits_turned } => {
                     let mut parts = Vec::new();
-                    if over_w > 0.0 { parts.push(t!("{over_w:.1} mm too wide", over_w = over_w)); }
-                    if over_h > 0.0 { parts.push(t!("{over_h:.1} mm too tall", over_h = over_h)); }
+                    if over_w > 0.0 {
+                        parts.push(t!("{over_w:.1} mm too wide", over_w = over_w));
+                    }
+                    if over_h > 0.0 {
+                        parts.push(t!("{over_h:.1} mm too tall", over_h = over_h));
+                    }
                     let hint = if fits_turned { t!(" Rotate it 90° (R) and it fits.") } else { t!(" Pick a bigger hoop.") };
                     (false, t!("Doesn't fit this hoop").into(), format!("{}.{hint}", parts.join(", ")))
                 }
-                Fit::OffEdge { side, by } => (false, t!("Off the sewing area").into(), t!("Sticks out {by:.1} mm on the {side}. Press C to center.", by = by, side = side)),
+                Fit::OffEdge { side, by } => {
+                    (false, t!("Off the sewing area").into(), t!("Sticks out {by:.1} mm on the {side}. Press C to center.", by = by, side = side))
+                }
             };
             let color = if ok { OK } else { BAD };
             // One-click ways out of a bad fit.
@@ -96,24 +105,29 @@ impl HoopApp {
                 Fit::Inside(_) => {}
             }
             let mut chosen = None;
-            egui::Frame::new().fill(color.gamma_multiply(0.12)).stroke(egui::Stroke::new(1.0, color.gamma_multiply(0.5))).corner_radius(10).inner_margin(12).show(ui, |ui| {
-                ui.set_width(ui.available_width());
-                ui.horizontal(|ui| {
-                    let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
-                    ui.painter().circle_filled(r.center(), 5.0, color);
-                    ui.label(RichText::new(title).color(color).strong());
-                });
-                ui.label(RichText::new(detail).color(muted));
-                if !actions.is_empty() {
-                    ui.horizontal_wrapped(|ui| {
-                        for (label, fix) in &actions {
-                            if ui.button(label).clicked() {
-                                chosen = Some(*fix);
-                            }
-                        }
+            egui::Frame::new()
+                .fill(color.gamma_multiply(0.12))
+                .stroke(egui::Stroke::new(1.0, color.gamma_multiply(0.5)))
+                .corner_radius(10)
+                .inner_margin(12)
+                .show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    ui.horizontal(|ui| {
+                        let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
+                        ui.painter().circle_filled(r.center(), 5.0, color);
+                        ui.label(RichText::new(title).color(color).strong());
                     });
-                }
-            });
+                    ui.label(RichText::new(detail).color(muted));
+                    if !actions.is_empty() {
+                        ui.horizontal_wrapped(|ui| {
+                            for (label, fix) in &actions {
+                                if ui.button(label).clicked() {
+                                    chosen = Some(*fix);
+                                }
+                            }
+                        });
+                    }
+                });
             ui.add_space(10.0);
             if let Some(fix) = chosen {
                 self.apply_fix(fix, canvas_rect);
@@ -126,13 +140,23 @@ impl HoopApp {
             let mut pin = false;
             card(ui, t!("Combine"), accent, |ui| {
                 if self.pinned.is_empty() {
-                    ui.label(RichText::new(t!("Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file.")).size(12.0).color(muted));
+                    ui.label(
+                        RichText::new(t!(
+                            "Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file."
+                        ))
+                        .size(12.0)
+                        .color(muted),
+                    );
                 }
                 for (i, p) in self.pinned.iter().enumerate() {
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(format!("{}", i + 1)).monospace().color(muted));
                         ui.label(&p.name);
-                        ui.label(RichText::new(t!("{v0:.0} × {v1:.0} mm", v0 = (p.bounds.2 - p.bounds.0) / 10.0, v1 = (p.bounds.3 - p.bounds.1) / 10.0)).size(12.0).color(muted));
+                        ui.label(
+                            RichText::new(t!("{v0:.0} × {v1:.0} mm", v0 = (p.bounds.2 - p.bounds.0) / 10.0, v1 = (p.bounds.3 - p.bounds.1) / 10.0))
+                                .size(12.0)
+                                .color(muted),
+                        );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if ui.small_button(t!("Remove")).clicked() {
                                 remove = Some(i);
@@ -141,7 +165,11 @@ impl HoopApp {
                     });
                 }
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Pin to hoop"))).on_hover_text(t!("P · keep this design where it is and start the next part")).clicked() {
+                    if ui
+                        .add_enabled(self.design.is_some(), egui::Button::new(t!("Pin to hoop")))
+                        .on_hover_text(t!("P · keep this design where it is and start the next part"))
+                        .clicked()
+                    {
                         pin = true;
                     }
                     if !self.pinned.is_empty() && ui.button(t!("Clear pinned")).clicked() {
@@ -168,9 +196,8 @@ impl HoopApp {
                     ui.horizontal(|ui| {
                         for (j, h) in row.1.iter().enumerate() {
                             let i = row.0 * 2 + j;
-                            let fits = design_size.is_none_or(|s| {
-                                !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. })
-                            });
+                            let fits =
+                                design_size.is_none_or(|s| !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. }));
                             if hoop_tile(ui, w, i, h, fits, self.setup.hoop == i, accent, muted).clicked() {
                                 self.change(|s| s.hoop = i);
                                 self.fit_view(canvas_rect, false);
@@ -194,12 +221,38 @@ impl HoopApp {
                         self.change(|s| s.at.mirror = !s.at.mirror);
                     }
                     if ui.add(b(t!("Center"))).on_hover_text("C").clicked() {
-                        self.change(|s| { s.at.dx = 0.0; s.at.dy = 0.0; });
+                        self.change(|s| {
+                            s.at.dx = 0.0;
+                            s.at.dy = 0.0;
+                        });
                     }
                 });
                 let at = self.setup.at;
-                let signed = |v: f32| format!("{}{:.1}", if v > 0.0 { "+" } else if v < 0.0 { "−" } else { "" }, (v / 10.0).abs());
-                ui.label(RichText::new(t!("{v0}°{v1}  ·  X {v2}  Y {v3} mm", v0 = at.quarter_turns as u32 * 90, v1 = if at.mirror { " mirrored" } else { "" }, v2 = signed(at.dx), v3 = signed(-at.dy))).monospace().size(12.0).color(muted));
+                let signed = |v: f32| {
+                    format!(
+                        "{}{:.1}",
+                        if v > 0.0 {
+                            "+"
+                        } else if v < 0.0 {
+                            "−"
+                        } else {
+                            ""
+                        },
+                        (v / 10.0).abs()
+                    )
+                };
+                ui.label(
+                    RichText::new(t!(
+                        "{v0}°{v1}  ·  X {v2}  Y {v3} mm",
+                        v0 = at.quarter_turns as u32 * 90,
+                        v1 = if at.mirror { " mirrored" } else { "" },
+                        v2 = signed(at.dx),
+                        v3 = signed(-at.dy)
+                    ))
+                    .monospace()
+                    .size(12.0)
+                    .color(muted),
+                );
             });
         }
 
@@ -207,7 +260,13 @@ impl HoopApp {
             let total = self.total();
             card(ui, t!("Stitch-out"), accent, |ui| {
                 ui.horizontal(|ui| {
-                    let label = if self.playing { t!("Pause") } else if self.shown >= total { t!("Replay") } else { t!("Play") };
+                    let label = if self.playing {
+                        t!("Pause")
+                    } else if self.shown >= total {
+                        t!("Replay")
+                    } else {
+                        t!("Play")
+                    };
                     if ui.add(primary(label, accent).min_size(vec2(72.0, 28.0))).on_hover_text(t!("Space")).clicked() {
                         self.toggle_play();
                     }
@@ -220,7 +279,11 @@ impl HoopApp {
                 });
                 ui.horizontal(|ui| {
                     let thread = self.design.as_ref().and_then(|d| d.blocks.iter().position(|b| self.shown <= b.end)).unwrap_or(0) + 1;
-                    let text = if self.shown >= total { t!("All {total} stitches", total = total) } else { t!("{shown} / {total} · thread {thread}", shown = self.shown, total = total, thread = thread) };
+                    let text = if self.shown >= total {
+                        t!("All {total} stitches", total = total)
+                    } else {
+                        t!("{shown} / {total} · thread {thread}", shown = self.shown, total = total, thread = thread)
+                    };
                     ui.label(RichText::new(text).monospace().size(12.0).color(muted));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         egui::ComboBox::from_id_salt("rate").selected_text(crate::i18n::tr(PLAYBACK[self.play_rate].1)).width(84.0).show_ui(ui, |ui| {
@@ -283,29 +346,33 @@ impl HoopApp {
         }
 
         if tab == Tab::View {
-        card(ui, t!("Display"), accent, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                for (name, c) in FABRICS {
-                    let selected = self.fabric == c;
-                    let (rect, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
-                    if selected {
-                        ui.painter().circle_stroke(rect.center(), 12.5, egui::Stroke::new(2.0, accent));
+            card(ui, t!("Display"), accent, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    for (name, c) in FABRICS {
+                        let selected = self.fabric == c;
+                        let (rect, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
+                        if selected {
+                            ui.painter().circle_stroke(rect.center(), 12.5, egui::Stroke::new(2.0, accent));
+                        }
+                        ui.painter().circle(rect.center(), 10.0, rgb(c), egui::Stroke::new(1.0, Color32::from_black_alpha(90)));
+                        if resp.on_hover_text(crate::i18n::tr(name)).clicked() {
+                            self.fabric = c;
+                        }
                     }
-                    ui.painter().circle(rect.center(), 10.0, rgb(c), egui::Stroke::new(1.0, Color32::from_black_alpha(90)));
-                    if resp.on_hover_text(crate::i18n::tr(name)).clicked() {
-                        self.fabric = c;
-                    }
+                    ui.color_edit_button_srgb(&mut self.fabric).on_hover_text(t!("Other fabric color"));
+                });
+                ui.checkbox(&mut self.textured, t!("Thread texture  T"));
+                ui.checkbox(&mut self.grid, t!("Template grid, 10 mm  G"));
+                ui.checkbox(&mut self.jumps, t!("Jump stitches  J"));
+                ui.checkbox(&mut self.sizes, t!("Size label under the design"));
+                if ui
+                    .add_enabled(self.design.is_some(), egui::Button::new(t!("Save picture…")))
+                    .on_hover_text(t!("A PNG of the hoop preview, to share · Ctrl+Shift+S"))
+                    .clicked()
+                {
+                    self.save_picture();
                 }
-                ui.color_edit_button_srgb(&mut self.fabric).on_hover_text(t!("Other fabric color"));
             });
-            ui.checkbox(&mut self.textured, t!("Thread texture  T"));
-            ui.checkbox(&mut self.grid, t!("Template grid, 10 mm  G"));
-            ui.checkbox(&mut self.jumps, t!("Jump stitches  J"));
-            ui.checkbox(&mut self.sizes, t!("Size label under the design"));
-            if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save picture…"))).on_hover_text(t!("A PNG of the hoop preview, to share · Ctrl+Shift+S")).clicked() {
-                self.save_picture();
-            }
-        });
         }
         ui.label(RichText::new(t!("Press ? for every shortcut.")).size(12.0).color(muted));
         ui.add_space(14.0);
@@ -349,8 +416,16 @@ impl HoopApp {
                                 ui.spacing_mut().item_spacing.y = 0.0;
                                 ui.add(egui::Label::new(format!("{}. {}", k + 1, b.thread.name)).truncate());
                                 let code = if b.thread.code.is_empty() { String::new() } else { format!("{} · ", b.thread.code) };
-                                ui.label(RichText::new(t!("{code}{v0:.1} m · {stitches} st", code = code, v0 = meters[k], stitches = b.stitches)).size(11.5).color(muted))
-                                    .on_hover_text(t!("{stitches} stitches, about {v1:.1} m of thread", stitches = b.stitches, v1 = meters[k]));
+                                ui.label(
+                                    RichText::new(t!("{code}{v0:.1} m · {stitches} st", code = code, v0 = meters[k], stitches = b.stitches))
+                                        .size(11.5)
+                                        .color(muted),
+                                )
+                                .on_hover_text(t!(
+                                    "{stitches} stitches, about {v1:.1} m of thread",
+                                    stitches = b.stitches,
+                                    v1 = meters[k]
+                                ));
                                 if let Some(t) = &matched[k] {
                                     ui.horizontal(|ui| {
                                         let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
@@ -362,7 +437,8 @@ impl HoopApp {
                             });
                         });
                     });
-                    let row = ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text(t!("Click to show this thread on its own"));
+                    let row =
+                        ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text(t!("Click to show this thread on its own"));
                     if row.clicked() {
                         toggle = Some(k);
                     }
@@ -375,7 +451,11 @@ impl HoopApp {
                     }
                 }
                 if !d.pattern.format.stores_colors() {
-                    ui.label(RichText::new(t!("{format} files don't store thread colors. Click a swatch to set the real ones.", format = d.pattern.format)).size(12.0).color(muted));
+                    ui.label(
+                        RichText::new(t!("{format} files don't store thread colors. Click a swatch to set the real ones.", format = d.pattern.format))
+                            .size(12.0)
+                            .color(muted),
+                    );
                 }
                 if ui.small_button(t!("Copy thread list")).on_hover_text(t!("For shopping or notes")).clicked() {
                     let list: Vec<String> = d
@@ -384,7 +464,15 @@ impl HoopApp {
                         .enumerate()
                         .map(|(k, b)| {
                             let alt = matched[k].as_ref().map_or(String::new(), |t| format!(" ({chart_name} {} {})", t.code, t.name));
-                            t!("{v0}. {name} {code}{alt} — {stitches} stitches, about {v4:.1} m", v0 = k + 1, name = b.thread.name, code = b.thread.code, alt = alt, stitches = b.stitches, v4 = meters[k])
+                            t!(
+                                "{v0}. {name} {code}{alt} — {stitches} stitches, about {v4:.1} m",
+                                v0 = k + 1,
+                                name = b.thread.name,
+                                code = b.thread.code,
+                                alt = alt,
+                                stitches = b.stitches,
+                                v4 = meters[k]
+                            )
                         })
                         .collect();
                     ui.ctx().copy_text(format!("{}\n{}", d.name, list.join("\n")));
@@ -394,7 +482,11 @@ impl HoopApp {
             if copied {
                 self.toast(t!("Thread list copied").into());
             }
-            if ui.small_button(t!("Thread chart: {chart_name}…", chart_name = chart_name)).on_hover_text(t!("Pick a brand and mark the threads you have")).clicked() {
+            if ui
+                .small_button(t!("Thread chart: {chart_name}…", chart_name = chart_name))
+                .on_hover_text(t!("Pick a brand and mark the threads you have"))
+                .clicked()
+            {
                 self.threads.open = true;
             }
             if let Some((k, op)) = block_op {
@@ -403,7 +495,6 @@ impl HoopApp {
             if let Some(k) = toggle {
                 self.focus = if self.focus == Some(k) { None } else { Some(k) };
             }
-
         }
     }
 

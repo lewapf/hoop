@@ -116,65 +116,73 @@ impl HoopApp {
         let accent = self.accent();
         let sections: Vec<&str> = MANUAL.lines().filter_map(|l| l.strip_prefix("## ")).collect();
         let mut jump = self.manual.jump.take();
-        egui::Window::new(t!("User manual")).open(&mut open).default_size(vec2(780.0, 640.0)).max_width(ctx.content_rect().width() - 80.0).resizable(true).collapsible(false).show(ctx, |ui| {
-            ui.horizontal_top(|ui| {
-                // Contents.
-                ui.vertical(|ui| {
-                    ui.set_width(190.0);
-                    for (k, s) in sections.iter().enumerate() {
-                        if ui.add(egui::Button::new(RichText::new(*s).size(13.0)).frame(false)).clicked() {
-                            jump = Some(k);
+        egui::Window::new(t!("User manual"))
+            .open(&mut open)
+            .default_size(vec2(780.0, 640.0))
+            .max_width(ctx.content_rect().width() - 80.0)
+            .resizable(true)
+            .collapsible(false)
+            .show(ctx, |ui| {
+                ui.horizontal_top(|ui| {
+                    // Contents.
+                    ui.vertical(|ui| {
+                        ui.set_width(190.0);
+                        for (k, s) in sections.iter().enumerate() {
+                            if ui.add(egui::Button::new(RichText::new(*s).size(13.0)).frame(false)).clicked() {
+                                jump = Some(k);
+                            }
                         }
-                    }
-                });
-                ui.separator();
-                let width = ui.available_width() - 12.0;
-                egui::ScrollArea::vertical().id_salt("manual").auto_shrink([false, false]).show(ui, |ui| ui.vertical(|ui| {
-                    ui.set_width(width);
-                    let mut section = 0;
-                    for b in blocks() {
-                        match b {
-                            Block::Title(h) => {
-                                ui.label(RichText::new(h).size(24.0).strong());
-                            }
-                            Block::Section(h) => {
-                                ui.add_space(12.0);
-                                let r = ui.label(RichText::new(h).size(18.0).strong().color(accent));
-                                if jump == Some(section) {
-                                    r.scroll_to_me(Some(egui::Align::TOP));
-                                }
-                                section += 1;
-                            }
-                            Block::Para(t) => {
-                                rich(ui, &t, 14.0);
-                                ui.add_space(4.0);
-                            }
-                            Block::Item(depth, mark, t) => {
-                                ui.horizontal_top(|ui| {
-                                    ui.add_space(depth as f32 * 18.0);
-                                    ui.label(mark);
-                                    rich(ui, &t, 14.0);
-                                });
-                            }
-                            Block::Table(rows) => {
-                                egui::Grid::new(("manual-table", section)).striped(true).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
-                                    for (r, row) in rows.iter().enumerate() {
-                                        for cell in row {
-                                            if r == 0 {
-                                                ui.label(RichText::new(cell).strong());
-                                            } else {
-                                                rich(ui, cell, 13.5);
-                                            }
-                                        }
-                                        ui.end_row();
+                    });
+                    ui.separator();
+                    let width = ui.available_width() - 12.0;
+                    egui::ScrollArea::vertical().id_salt("manual").auto_shrink([false, false]).show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            ui.set_width(width);
+                            let mut section = 0;
+                            for b in blocks() {
+                                match b {
+                                    Block::Title(h) => {
+                                        ui.label(RichText::new(h).size(24.0).strong());
                                     }
-                                });
+                                    Block::Section(h) => {
+                                        ui.add_space(12.0);
+                                        let r = ui.label(RichText::new(h).size(18.0).strong().color(accent));
+                                        if jump == Some(section) {
+                                            r.scroll_to_me(Some(egui::Align::TOP));
+                                        }
+                                        section += 1;
+                                    }
+                                    Block::Para(t) => {
+                                        rich(ui, &t, 14.0);
+                                        ui.add_space(4.0);
+                                    }
+                                    Block::Item(depth, mark, t) => {
+                                        ui.horizontal_top(|ui| {
+                                            ui.add_space(depth as f32 * 18.0);
+                                            ui.label(mark);
+                                            rich(ui, &t, 14.0);
+                                        });
+                                    }
+                                    Block::Table(rows) => {
+                                        egui::Grid::new(("manual-table", section)).striped(true).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
+                                            for (r, row) in rows.iter().enumerate() {
+                                                for cell in row {
+                                                    if r == 0 {
+                                                        ui.label(RichText::new(cell).strong());
+                                                    } else {
+                                                        rich(ui, cell, 13.5);
+                                                    }
+                                                }
+                                                ui.end_row();
+                                            }
+                                        });
+                                    }
+                                }
                             }
-                        }
-                    }
-                }));
+                        })
+                    });
+                });
             });
-        });
         if !open {
             self.manual.open = false;
         }

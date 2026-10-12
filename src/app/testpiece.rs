@@ -247,7 +247,11 @@ impl HoopApp {
         }
         self.store();
         self.check = None;
-        self.toast(if t.is_empty() { t!("Test sheet results cleared. General rules apply again.").into() } else { t!("Using your test sheet results.").into() });
+        self.toast(if t.is_empty() {
+            t!("Test sheet results cleared. General rules apply again.").into()
+        } else {
+            t!("Using your test sheet results.").into()
+        });
     }
 
     /// Dragging a rectangle on the hoop while the area is being picked.
@@ -323,7 +327,13 @@ impl HoopApp {
     fn sheet_page(&mut self, ui: &mut egui::Ui, answers: &mut Tuning, sheet: &mut bool, use_answers: &mut bool, clear: &mut bool) {
         let accent = self.accent();
         let muted = self.muted();
-        hint(ui, t!("Small samples of each stitch type on one 123 × 111 mm sheet for the SQ14b hoop: about 10 minutes in 2 threads. Sew it once for each kind of fabric."), muted);
+        hint(
+            ui,
+            t!(
+                "Small samples of each stitch type on one 123 × 111 mm sheet for the SQ14b hoop: about 10 minutes in 2 threads. Sew it once for each kind of fabric."
+            ),
+            muted,
+        );
         ui.add_space(6.0);
         *sheet = ui.add(primary(t!("Open test sheet"), accent)).clicked();
         ui.add_space(10.0);
@@ -391,7 +401,13 @@ impl HoopApp {
                 let minutes = (stitches as f32 / speed + threads.saturating_sub(1) as f32).max(1.0);
                 let b = p.bounds();
                 Ok((
-                    tn!(threads, "{stitches} stitches · {n} thread · about {minutes:.0} min", "{stitches} stitches · {n} threads · about {minutes:.0} min", stitches = stitches, minutes = minutes),
+                    tn!(
+                        threads,
+                        "{stitches} stitches · {n} thread · about {minutes:.0} min",
+                        "{stitches} stitches · {n} threads · about {minutes:.0} min",
+                        stitches = stitches,
+                        minutes = minutes
+                    ),
                     t!("{v0:.1} × {v1:.1} mm, centered on the hoop when sent", v0 = (b.2 - b.0) / 10.0, v1 = (b.3 - b.1) / 10.0),
                 ))
             }

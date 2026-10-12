@@ -3,49 +3,54 @@ use std::sync::mpsc::{Receiver, channel};
 
 use egui::{Color32, Key, KeyboardShortcut, Modifiers, RichText, Sense, Vec2, vec2};
 
+use crate::artwork::{self, ArtSettings, Look};
 use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::export::{self, Out};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, HOOPS, Placement};
-use crate::artwork::{self, ArtSettings, Look};
 
-mod checks;
 mod artwork_panel;
 mod canvas_view;
-mod history;
-mod lettering_panel;
-mod output;
-mod pages;
-mod style_cards;
-mod usbwin;
-mod widgets;
+mod checks;
 mod draw;
+mod history;
 mod hoopings;
+mod lettering_panel;
 mod library;
 mod manual;
-mod shapes;
+mod output;
+mod pages;
 mod settings;
+mod shapes;
 mod shell;
 mod stitchedit;
+mod style_cards;
 mod team;
 mod testpiece;
 mod threadwin;
 mod tools;
+mod usbwin;
+mod widgets;
 mod wizard;
 
+use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
+use crate::prefs::Prefs;
+use crate::theme::Theme;
+use crate::trace::{self, TraceSettings};
+use crate::usb;
 use shell::{Dock, Tab};
 use style_cards::*;
 use widgets::*;
-use crate::lettering::{self, Align, EdgeKind, FillKind, FontSource, PatchShape, Settings};
-use crate::prefs::Prefs;
-use crate::trace::{self, TraceSettings};
-use crate::usb;
-use crate::theme::Theme;
 
 const FABRICS: [(&str, [u8; 3]); 8] = [
-    (n!("Natural linen"), [0xd6, 0xc9, 0xb0]), (n!("White cotton"), [0xf6, 0xf5, 0xf0]),
-    (n!("Heather gray"), [0x9c, 0x9b, 0x9d]), (n!("Denim"), [0x3e, 0x57, 0x78]), (n!("Navy"), [0x1e, 0x2a, 0x44]),
-    (n!("Black"), [0x1c, 0x1b, 0x1d]), (n!("Brick red"), [0x9e, 0x2a, 0x2b]), (n!("Sage"), [0x9a, 0xab, 0x8d]),
+    (n!("Natural linen"), [0xd6, 0xc9, 0xb0]),
+    (n!("White cotton"), [0xf6, 0xf5, 0xf0]),
+    (n!("Heather gray"), [0x9c, 0x9b, 0x9d]),
+    (n!("Denim"), [0x3e, 0x57, 0x78]),
+    (n!("Navy"), [0x1e, 0x2a, 0x44]),
+    (n!("Black"), [0x1c, 0x1b, 0x1d]),
+    (n!("Brick red"), [0x9e, 0x2a, 0x2b]),
+    (n!("Sage"), [0x9a, 0xab, 0x8d]),
 ];
 const SPEEDS: [u32; 4] = [400, 600, 800, 860];
 const PLAYBACK: [(f32, &str); 4] = [(1.0, n!("Real time")), (10.0, "10×"), (30.0, "30×"), (120.0, "120×")];
@@ -164,22 +169,42 @@ struct Setup {
 }
 
 enum Drag {
-    Move { start: (f32, f32), from: Placement },
+    Move {
+        start: (f32, f32),
+        from: Placement,
+    },
     Pan,
     /// Moving the picked artwork shapes: where the drag started and each
     /// shape's offset then (SVG user units), the box of the moving shapes,
     /// and the x and y lines they snap to.
-    Shape { start: (f32, f32), from: Vec<(usize, (f32, f32))>, moving: (f32, f32, f32, f32), snap: (Vec<f32>, Vec<f32>) },
+    Shape {
+        start: (f32, f32),
+        from: Vec<(usize, (f32, f32))>,
+        moving: (f32, f32, f32, f32),
+        snap: (Vec<f32>, Vec<f32>),
+    },
     /// Picking shapes with a rubber band, from this screen point; `add`
     /// keeps the shapes already picked.
-    Band { start: egui::Pos2, add: bool },
+    Band {
+        start: egui::Pos2,
+        add: bool,
+    },
     /// Moving one point of the selected shape: line and point index.
-    Node { line: usize, point: usize },
+    Node {
+        line: usize,
+        point: usize,
+    },
     /// Resizing the selected shape by a corner: size and pointer distance
     /// from the shape's middle when the drag started.
-    Scale { from: f32, start: f32 },
+    Scale {
+        from: f32,
+        start: f32,
+    },
     /// Turning the selected shape: its turn and the pointer's angle at the start.
-    Turn { from: f32, start: f32 },
+    Turn {
+        from: f32,
+        start: f32,
+    },
 }
 
 pub struct HoopApp {
@@ -550,7 +575,33 @@ impl HoopApp {
         std::thread::spawn(move || {
             let file = rfd::FileDialog::new()
                 .set_title(t!("Open an embroidery design"))
-                .add_filter("Designs, artwork and pictures", &["jef", "dst", "exp", "pes", "pec", "svg", "svgz", "png", "jpg", "jpeg", "webp", "bmp", "gif", t!("JEF"), t!("DST"), t!("EXP"), t!("PES"), t!("PEC"), t!("SVG"), t!("PNG"), t!("JPG"), t!("JPEG")])
+                .add_filter(
+                    "Designs, artwork and pictures",
+                    &[
+                        "jef",
+                        "dst",
+                        "exp",
+                        "pes",
+                        "pec",
+                        "svg",
+                        "svgz",
+                        "png",
+                        "jpg",
+                        "jpeg",
+                        "webp",
+                        "bmp",
+                        "gif",
+                        t!("JEF"),
+                        t!("DST"),
+                        t!("EXP"),
+                        t!("PES"),
+                        t!("PEC"),
+                        t!("SVG"),
+                        t!("PNG"),
+                        t!("JPG"),
+                        t!("JPEG"),
+                    ],
+                )
                 .pick_file();
             let _ = tx.send(file);
             ctx.request_repaint();
@@ -575,7 +626,14 @@ impl HoopApp {
         if let Some(c) = p.get("fabric").and_then(|v| u32::from_str_radix(v, 16).ok()) {
             self.fabric = [(c >> 16) as u8, (c >> 8) as u8, c as u8];
         }
-        for (key, flag) in [("grid", &mut self.grid), ("jumps", &mut self.jumps), ("texture", &mut self.textured), ("sizes", &mut self.sizes), ("show_left", &mut self.show_left), ("show_right", &mut self.show_right)] {
+        for (key, flag) in [
+            ("grid", &mut self.grid),
+            ("jumps", &mut self.jumps),
+            ("texture", &mut self.textured),
+            ("sizes", &mut self.sizes),
+            ("show_left", &mut self.show_left),
+            ("show_right", &mut self.show_right),
+        ] {
             if let Some(v) = p.num(key) {
                 *flag = v;
             }
@@ -640,22 +698,22 @@ impl HoopApp {
             return;
         }
         let muted = self.muted();
-        egui::Window::new(t!("Shortcuts"))
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
-            .show(ctx, |ui| {
-                egui::Grid::new("keys").num_columns(2).spacing([18.0, 5.0]).show(ui, |ui| {
-                    for (k, what) in SHORTCUTS {
-                        ui.label(RichText::new(crate::i18n::tr(k)).monospace().strong());
-                        ui.label(crate::i18n::tr(what));
-                        ui.end_row();
-                    }
-                });
-                ui.add_space(6.0);
-                ui.label(RichText::new(t!("Drag the design to move it, drag the fabric to pan, scroll to zoom, double-click to show the whole hoop.")).size(12.0).color(muted));
-                ui.label(RichText::new(t!("Press ? or Esc to close.")).size(12.0).color(muted));
+        egui::Window::new(t!("Shortcuts")).collapsible(false).resizable(false).anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO).show(ctx, |ui| {
+            egui::Grid::new("keys").num_columns(2).spacing([18.0, 5.0]).show(ui, |ui| {
+                for (k, what) in SHORTCUTS {
+                    ui.label(RichText::new(crate::i18n::tr(k)).monospace().strong());
+                    ui.label(crate::i18n::tr(what));
+                    ui.end_row();
+                }
             });
+            ui.add_space(6.0);
+            ui.label(
+                RichText::new(t!("Drag the design to move it, drag the fabric to pan, scroll to zoom, double-click to show the whole hoop."))
+                    .size(12.0)
+                    .color(muted),
+            );
+            ui.label(RichText::new(t!("Press ? or Esc to close.")).size(12.0).color(muted));
+        });
     }
 }
 
@@ -789,4 +847,3 @@ impl eframe::App for HoopApp {
 const OK: Color32 = Color32::from_rgb(0x55, 0xc2, 0x8c);
 const BAD: Color32 = Color32::from_rgb(0xf0, 0x6b, 0x5f);
 const WARN: Color32 = Color32::from_rgb(0xe2, 0xa6, 0x4a);
-

@@ -110,10 +110,13 @@ pub fn thumbnail(path: &Path) -> Option<Thumb> {
 
 fn pixmap_rgba(p: &tiny_skia::Pixmap) -> Thumb {
     // tiny-skia stores premultiplied colors.
-    p.pixels().iter().flat_map(|c| {
-        let c = c.demultiply();
-        [c.red(), c.green(), c.blue(), c.alpha()]
-    }).collect()
+    p.pixels()
+        .iter()
+        .flat_map(|c| {
+            let c = c.demultiply();
+            [c.red(), c.green(), c.blue(), c.alpha()]
+        })
+        .collect()
 }
 
 fn stitch_thumb(path: &Path) -> Option<Thumb> {

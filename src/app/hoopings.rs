@@ -75,10 +75,8 @@ impl HoopApp {
         let accent = self.accent();
         let mut open = true;
         let mut pick = false;
-        let summary: Vec<(usize, usize)> = self
-            .hooping_parts()
-            .map(|parts| parts.iter().map(|p| (p.pattern.count(Cmd::Stitch), p.pattern.threads.len())).collect())
-            .unwrap_or_default();
+        let summary: Vec<(usize, usize)> =
+            self.hooping_parts().map(|parts| parts.iter().map(|p| (p.pattern.count(Cmd::Stitch), p.pattern.threads.len())).collect()).unwrap_or_default();
         egui::Window::new(t!("Split into hoopings")).open(&mut open).collapsible(false).resizable(false).default_pos(egui::pos2(80.0, 120.0)).show(ctx, |ui| {
             ui.set_width(360.0);
             ui.label(RichText::new(t!("For designs bigger than the hoop: each part is sewn in its own hooping. Objects stay whole where they fit; the rest is cut at the part edges.")).size(12.0).color(muted));

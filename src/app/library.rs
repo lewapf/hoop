@@ -75,7 +75,11 @@ impl HoopApp {
                 go = Some(dir.clone());
             }
             if let Some(shapes) = shapes_dir() {
-                if ui.add(egui::Button::selectable(dir == shapes, t!("Shapes"))).on_hover_text(t!("109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)")).clicked() {
+                if ui
+                    .add(egui::Button::selectable(dir == shapes, t!("Shapes")))
+                    .on_hover_text(t!("109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)"))
+                    .clicked()
+                {
                     go = Some(if dir == shapes { designs_dir() } else { shapes });
                 }
             }
@@ -142,7 +146,12 @@ impl HoopApp {
                             ui.painter().galley(r.min + vec2(2.0, 0.5), g, muted);
                         }
                         let label = egui::Rect::from_min_size(pic.left_bottom(), vec2(tile, 18.0));
-                        let text = egui::WidgetText::from(RichText::new(&e.name).size(11.0)).into_galley(ui, Some(egui::TextWrapMode::Truncate), tile, egui::TextStyle::Body);
+                        let text = egui::WidgetText::from(RichText::new(&e.name).size(11.0)).into_galley(
+                            ui,
+                            Some(egui::TextWrapMode::Truncate),
+                            tile,
+                            egui::TextStyle::Body,
+                        );
                         ui.painter().galley(label.center_top() - vec2(text.size().x / 2.0, -2.0), text, ui.visuals().text_color());
                         let resp = resp.on_hover_text(&e.name);
                         if resp.clicked() {

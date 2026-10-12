@@ -101,66 +101,81 @@ impl HoopApp {
             return;
         }
         if tab == Tab::Source || !has_art {
-        card(ui, t!("Artwork"), accent, |ui| {
-            match &self.artwork {
-                Some(a) => {
-                    ui.label(RichText::new(&a.name).strong().size(15.0));
-                    let shapes = a.shapes.len();
-                    ui.label(RichText::new(format!("{} · {}", tn!(shapes, "{n} shape", "{n} shapes"), tn!(a.layers.len(), "{n} color", "{n} colors"))).color(muted));
-                    if a.skipped_images > 0 {
-                        ui.label(RichText::new(tn!(a.skipped_images, "Skipped {n} embedded picture. Only vector shapes can be stitched.", "Skipped {n} embedded pictures. Only vector shapes can be stitched.")).size(12.0).color(muted));
-                    }
-                }
-                None => {
-                    ui.label(RichText::new(t!("Open an SVG or a picture (PNG, JPG), or drop one on the hoop. Logos and clip art with flat colors work best.")).color(muted));
-                    if ui.button(t!("Start from shapes")).on_hover_text(t!("An empty design to build from hearts, stars, circles and more")).clicked() {
-                        self.picture = None;
-                        self.use_artwork(Ok(artwork::blank()));
-                    }
-                }
-            }
-            ui.add_space(4.0);
-            let w = (ui.available_width() - 12.0) / 3.0;
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 6.0;
-                if ui.add(primary(t!("Open…"), accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
-                    self.pick_file();
-                }
-                if ui.add(egui::Button::new(t!("Paste SVG")).selected(self.paste_open).min_size(vec2(w, 30.0)))
-                    .on_hover_text(t!("Paste SVG code, or press Ctrl+V anywhere with SVG code copied"))
-                    .clicked()
-                {
-                    self.paste_open = !self.paste_open;
-                }
-                if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save JEF…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
-                    self.save_jef();
-                }
-            });
-            if self.paste_open {
-                ui.add_space(4.0);
-                egui::ScrollArea::vertical().id_salt("svg-text").max_height(220.0).show(ui, |ui| {
-                    ui.add(
-                        egui::TextEdit::multiline(&mut self.paste_text)
-                            .code_editor()
-                            .desired_rows(8)
-                            .desired_width(f32::INFINITY)
-                            .hint_text("<svg xmlns=\"http://www.w3.org/2000/svg\" …>\n  …\n</svg>"),
-                    );
-                });
-                ui.horizontal(|ui| {
-                    let ready = !self.paste_text.trim().is_empty();
-                    if ui.add_enabled(ready, primary(t!("Use this SVG"), accent)).clicked() {
-                        let text = self.paste_text.clone();
-                        if self.paste_svg(&text) {
-                            self.paste_open = false;
+            card(ui, t!("Artwork"), accent, |ui| {
+                match &self.artwork {
+                    Some(a) => {
+                        ui.label(RichText::new(&a.name).strong().size(15.0));
+                        let shapes = a.shapes.len();
+                        ui.label(
+                            RichText::new(format!("{} · {}", tn!(shapes, "{n} shape", "{n} shapes"), tn!(a.layers.len(), "{n} color", "{n} colors")))
+                                .color(muted),
+                        );
+                        if a.skipped_images > 0 {
+                            ui.label(
+                                RichText::new(tn!(
+                                    a.skipped_images,
+                                    "Skipped {n} embedded picture. Only vector shapes can be stitched.",
+                                    "Skipped {n} embedded pictures. Only vector shapes can be stitched."
+                                ))
+                                .size(12.0)
+                                .color(muted),
+                            );
                         }
                     }
-                    if ui.button(t!("Clear")).clicked() {
-                        self.paste_text.clear();
+                    None => {
+                        ui.label(
+                            RichText::new(t!("Open an SVG or a picture (PNG, JPG), or drop one on the hoop. Logos and clip art with flat colors work best."))
+                                .color(muted),
+                        );
+                        if ui.button(t!("Start from shapes")).on_hover_text(t!("An empty design to build from hearts, stars, circles and more")).clicked() {
+                            self.picture = None;
+                            self.use_artwork(Ok(artwork::blank()));
+                        }
+                    }
+                }
+                ui.add_space(4.0);
+                let w = (ui.available_width() - 12.0) / 3.0;
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 6.0;
+                    if ui.add(primary(t!("Open…"), accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
+                        self.pick_file();
+                    }
+                    if ui
+                        .add(egui::Button::new(t!("Paste SVG")).selected(self.paste_open).min_size(vec2(w, 30.0)))
+                        .on_hover_text(t!("Paste SVG code, or press Ctrl+V anywhere with SVG code copied"))
+                        .clicked()
+                    {
+                        self.paste_open = !self.paste_open;
+                    }
+                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save JEF…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
+                        self.save_jef();
                     }
                 });
-            }
-        });
+                if self.paste_open {
+                    ui.add_space(4.0);
+                    egui::ScrollArea::vertical().id_salt("svg-text").max_height(220.0).show(ui, |ui| {
+                        ui.add(
+                            egui::TextEdit::multiline(&mut self.paste_text)
+                                .code_editor()
+                                .desired_rows(8)
+                                .desired_width(f32::INFINITY)
+                                .hint_text("<svg xmlns=\"http://www.w3.org/2000/svg\" …>\n  …\n</svg>"),
+                        );
+                    });
+                    ui.horizontal(|ui| {
+                        let ready = !self.paste_text.trim().is_empty();
+                        if ui.add_enabled(ready, primary(t!("Use this SVG"), accent)).clicked() {
+                            let text = self.paste_text.clone();
+                            if self.paste_svg(&text) {
+                                self.paste_open = false;
+                            }
+                        }
+                        if ui.button(t!("Clear")).clicked() {
+                            self.paste_text.clear();
+                        }
+                    });
+                }
+            });
         }
         if !has_art {
             return;
@@ -168,7 +183,11 @@ impl HoopApp {
         if tab == Tab::Source && self.picture.is_some() {
             let mut t = self.trace_set;
             card(ui, t!("Trace"), accent, |ui| {
-                ui.label(RichText::new(t!("Pictures are reduced to a few flat colors and outlined. Logos and clip art work best; photos don't stitch well.")).size(12.0).color(muted));
+                ui.label(
+                    RichText::new(t!("Pictures are reduced to a few flat colors and outlined. Logos and clip art work best; photos don't stitch well."))
+                        .size(12.0)
+                        .color(muted),
+                );
                 int_row(ui, t!("Colors"), &mut t.colors, 2..=10, t!("How many colors the picture is reduced to, background included"));
                 int_row(ui, t!("Smooth"), &mut t.smooth, 0..=3, t!("Rounds off pixel corners in the outlines"));
                 int_row(ui, t!("Clean"), &mut t.clean, 0..=3, t!("Removes specks and noise before tracing. Raise it for scanned or blurry pictures."));
@@ -192,100 +211,98 @@ impl HoopApp {
         let hoop = self.hoop_size();
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
         if tab == Tab::Source {
-        card(ui, t!("Size"), accent, |ui| {
-            slider_row(ui, t!("Width"), &mut s.width_mm, 10.0..=360.0, " mm", 1);
-            ui.horizontal(|ui| {
-                ui.label(RichText::new(t!("Height {v0:.1} mm", v0 = s.width_mm * art.aspect())).color(muted));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button(t!("Fit hoop")).on_hover_text(t!("Largest size that fits the hoop with 5 mm to spare")).clicked() {
-                        let by_w = hoop.0 - 10.0;
-                        let by_h = (hoop.1 - 10.0) / art.aspect().max(1e-3);
-                        s.width_mm = by_w.min(by_h).floor().max(10.0);
-                    }
+            card(ui, t!("Size"), accent, |ui| {
+                slider_row(ui, t!("Width"), &mut s.width_mm, 10.0..=360.0, " mm", 1);
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new(t!("Height {v0:.1} mm", v0 = s.width_mm * art.aspect())).color(muted));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button(t!("Fit hoop")).on_hover_text(t!("Largest size that fits the hoop with 5 mm to spare")).clicked() {
+                            let by_w = hoop.0 - 10.0;
+                            let by_h = (hoop.1 - 10.0) / art.aspect().max(1e-3);
+                            s.width_mm = by_w.min(by_h).floor().max(10.0);
+                        }
+                    });
                 });
             });
-        });
-
         }
         if tab == Tab::Threads {
-        card(ui, t!("Threads"), accent, |ui| {
-            // Colors no shape uses any more are left out.
-            let used_layers: Vec<bool> = (0..art.layers.len()).map(|l| s.shapes.iter().any(|e| e.layer == l && !e.hidden)).collect();
-            let mut groups = artwork::thread_groups(art, s);
-            groups.retain(|g| g.1.iter().any(|&i| used_layers[i]));
-            for (g, (thread, members)) in groups.iter().enumerate() {
-                let mut on = members.iter().all(|&i| s.layers[i].enabled);
-                let mut t = *thread;
-                ui.horizontal(|ui| {
-                    if ui.checkbox(&mut on, "").on_hover_text(t!("Stitch these colors")).changed() {
+            card(ui, t!("Threads"), accent, |ui| {
+                // Colors no shape uses any more are left out.
+                let used_layers: Vec<bool> = (0..art.layers.len()).map(|l| s.shapes.iter().any(|e| e.layer == l && !e.hidden)).collect();
+                let mut groups = artwork::thread_groups(art, s);
+                groups.retain(|g| g.1.iter().any(|&i| used_layers[i]));
+                for (g, (thread, members)) in groups.iter().enumerate() {
+                    let mut on = members.iter().all(|&i| s.layers[i].enabled);
+                    let mut t = *thread;
+                    ui.horizontal(|ui| {
+                        if ui.checkbox(&mut on, "").on_hover_text(t!("Stitch these colors")).changed() {
+                            for &i in members {
+                                s.layers[i].enabled = on;
+                            }
+                        }
+                        // The SVG colors that use this thread, up to four.
+                        ui.spacing_mut().item_spacing.x = 3.0;
+                        for &i in members.iter().take(4) {
+                            let (r, _) = ui.allocate_exact_size(vec2(10.0, 22.0), Sense::hover());
+                            ui.painter().rect_filled(r.shrink2(vec2(0.0, 3.0)), 3, rgb(art.layers[i].color));
+                        }
+                        if members.len() > 4 {
+                            ui.label(RichText::new(format!("+{}", members.len() - 4)).size(11.0).color(muted));
+                        }
+                        ui.spacing_mut().item_spacing.x = 6.0;
+                        ui.label(RichText::new("→").color(muted));
+                        thread_menu(ui, ("group", g), &mut t);
+
+                        if members.iter().any(|&i| art.layers[i].background) {
+                            ui.label(RichText::new("background").size(11.0).color(muted));
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add_space(28.0);
+                        ui.label(RichText::new(t!("Stitch as")).size(12.0).color(muted));
+                        let mut look = s.layers[members[0]].look;
+                        let name = match look {
+                            Look::Default => t!("Auto").to_string(),
+                            Look::Fill(k) => crate::i18n::tr(crate::lettering::fill_name(k)).to_string(),
+                            Look::Outline => t!("Outline").into(),
+                            Look::Applique => t!("Appliqué").into(),
+                        };
+                        egui::ComboBox::from_id_salt(("look", g)).selected_text(name).width(78.0).show_ui(ui, |ui| {
+                            ui.selectable_value(&mut look, Look::Default, t!("Auto")).on_hover_text(t!("Use the Fill card below"));
+                            for k in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Open] {
+                                ui.selectable_value(&mut look, Look::Fill(k), crate::i18n::tr(crate::lettering::fill_name(k)).to_string());
+                            }
+                            ui.selectable_value(&mut look, Look::Outline, t!("Outline")).on_hover_text(t!("Only the shape's outline"));
+                            ui.selectable_value(&mut look, Look::Applique, t!("Appliqué"))
+                                .on_hover_text(t!("Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover"));
+                        });
                         for &i in members {
-                            s.layers[i].enabled = on;
+                            s.layers[i].look = look;
+                        }
+                    });
+                    if t != *thread {
+                        for &i in members {
+                            s.layers[i].thread = t;
                         }
                     }
-                    // The SVG colors that use this thread, up to four.
-                    ui.spacing_mut().item_spacing.x = 3.0;
-                    for &i in members.iter().take(4) {
-                        let (r, _) = ui.allocate_exact_size(vec2(10.0, 22.0), Sense::hover());
-                        ui.painter().rect_filled(r.shrink2(vec2(0.0, 3.0)), 3, rgb(art.layers[i].color));
-                    }
-                    if members.len() > 4 {
-                        ui.label(RichText::new(format!("+{}", members.len() - 4)).size(11.0).color(muted));
-                    }
-                    ui.spacing_mut().item_spacing.x = 6.0;
-                    ui.label(RichText::new("→").color(muted));
-                    thread_menu(ui, ("group", g), &mut t);
-
-                    if members.iter().any(|&i| art.layers[i].background) {
-                        ui.label(RichText::new("background").size(11.0).color(muted));
-                    }
-                });
+                }
+                let used = groups.iter().filter(|g| g.1.iter().any(|&i| s.layers[i].enabled)).count();
                 ui.horizontal(|ui| {
-                    ui.add_space(28.0);
-                    ui.label(RichText::new(t!("Stitch as")).size(12.0).color(muted));
-                let mut look = s.layers[members[0]].look;
-                let name = match look {
-                    Look::Default => t!("Auto").to_string(),
-                    Look::Fill(k) => crate::i18n::tr(crate::lettering::fill_name(k)).to_string(),
-                    Look::Outline => t!("Outline").into(),
-                    Look::Applique => t!("Appliqué").into(),
-                };
-                egui::ComboBox::from_id_salt(("look", g)).selected_text(name).width(78.0).show_ui(ui, |ui| {
-                    ui.selectable_value(&mut look, Look::Default, t!("Auto")).on_hover_text(t!("Use the Fill card below"));
-                    for k in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Open] {
-                        ui.selectable_value(&mut look, Look::Fill(k), crate::i18n::tr(crate::lettering::fill_name(k)).to_string());
-                    }
-                    ui.selectable_value(&mut look, Look::Outline, t!("Outline")).on_hover_text(t!("Only the shape's outline"));
-                    ui.selectable_value(&mut look, Look::Applique, t!("Appliqué"))
-                        .on_hover_text(t!("Sew a piece of fabric on: placement line, stop, tack-down, stop, satin cover"));
-                });
-                for &i in members {
-                    s.layers[i].look = look;
-                }
-                });
-                if t != *thread {
-                    for &i in members {
-                        s.layers[i].thread = t;
-                    }
-                }
-            }
-            let used = groups.iter().filter(|g| g.1.iter().any(|&i| s.layers[i].enabled)).count();
-            ui.horizontal(|ui| {
-                ui.label(RichText::new(tn!(used, "{n} thread in use", "{n} threads in use")).color(muted));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    for n in [2usize, 4, 6, 8] {
-                        if n < used && ui.small_button(n.to_string()).on_hover_text(t!("Merge the closest threads until {n} are left", n = n)).clicked() {
-                            artwork::reduce_threads(art, s, n);
+                    ui.label(RichText::new(tn!(used, "{n} thread in use", "{n} threads in use")).color(muted));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        for n in [2usize, 4, 6, 8] {
+                            if n < used && ui.small_button(n.to_string()).on_hover_text(t!("Merge the closest threads until {n} are left", n = n)).clicked() {
+                                artwork::reduce_threads(art, s, n);
+                            }
                         }
-                    }
-                    if used > 3 {
-                        ui.label(RichText::new(t!("Reduce to")).size(12.0).color(muted));
-                    }
+                        if used > 3 {
+                            ui.label(RichText::new(t!("Reduce to")).size(12.0).color(muted));
+                        }
+                    });
                 });
+                ui.checkbox(&mut s.group_colors, t!("Group by thread (fewer thread changes)"))
+                    .on_hover_text(t!("Off: stitch in the drawing's own order, changing thread whenever it changes"));
             });
-            ui.checkbox(&mut s.group_colors, t!("Group by thread (fewer thread changes)"))
-                .on_hover_text(t!("Off: stitch in the drawing's own order, changing thread whenever it changes"));
-        });
-
         }
         if tab != Tab::Style {
             return;
@@ -306,10 +323,16 @@ impl HoopApp {
         edge_card(ui, &mut s.style, accent, t!("Outline on fills"), false);
         card(ui, t!("Lines"), accent, |ui| {
             ui.label(RichText::new(t!("How strokes in the SVG are stitched")).size(12.0).color(muted));
-            segmented(ui, &mut s.stroke, &[(EdgeKind::Satin, t!("Satin")), (EdgeKind::Running, t!("Run")), (EdgeKind::Triple, t!("Triple")), (EdgeKind::None, t!("None"))], accent);
+            segmented(
+                ui,
+                &mut s.stroke,
+                &[(EdgeKind::Satin, t!("Satin")), (EdgeKind::Running, t!("Run")), (EdgeKind::Triple, t!("Triple")), (EdgeKind::None, t!("None"))],
+                accent,
+            );
             if s.stroke == EdgeKind::Satin {
                 ui.add_space(4.0);
-                slider_row(ui, t!("Min"), &mut s.stroke_min_mm, 0.5..=4.0, " mm", 1).on_hover_text(t!("Thinnest satin line; thinner strokes are widened to this"));
+                slider_row(ui, t!("Min"), &mut s.stroke_min_mm, 0.5..=4.0, " mm", 1)
+                    .on_hover_text(t!("Thinnest satin line; thinner strokes are widened to this"));
             }
         });
         if ui.button(t!("Reset settings")).on_hover_text(t!("Also puts every shape back as it was in the drawing")).clicked() {

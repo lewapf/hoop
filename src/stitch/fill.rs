@@ -61,7 +61,8 @@ pub fn fill_name(k: FillKind) -> &'static str {
 
 /// Whether a fill sews closely enough to hide a travel run under it.
 pub fn covers(kind: FillKind, rows_mm: f32) -> bool {
-    matches!(kind, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Zigzag | FillKind::Contour | FillKind::Column | FillKind::Auto) && rows_mm <= 0.8
+    matches!(kind, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Zigzag | FillKind::Contour | FillKind::Column | FillKind::Auto)
+        && rows_mm <= 0.8
 }
 
 /// What is sewn under a fill to hold the fabric and lift the top stitches.

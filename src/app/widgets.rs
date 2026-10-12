@@ -88,7 +88,13 @@ pub(super) fn slider_row(ui: &mut egui::Ui, label: &str, v: &mut f32, range: std
 pub(super) fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fits: bool, selected: bool, accent: Color32, muted: Color32) -> egui::Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(w, 58.0), Sense::click());
     let v = ui.visuals();
-    let fill = if selected { accent.gamma_multiply(0.2) } else if resp.hovered() { v.widgets.hovered.weak_bg_fill } else { v.extreme_bg_color };
+    let fill = if selected {
+        accent.gamma_multiply(0.2)
+    } else if resp.hovered() {
+        v.widgets.hovered.weak_bg_fill
+    } else {
+        v.extreme_bg_color
+    };
     let stroke = if selected { egui::Stroke::new(1.5, accent) } else { egui::Stroke::NONE };
     let p = ui.painter();
     p.rect(rect, 8, fill, stroke, egui::StrokeKind::Inside);
@@ -125,7 +131,8 @@ pub(super) fn thread_menu(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt
         egui::Grid::new(("chart", ui.id().with(id))).spacing([4.0, 4.0]).show(ui, |ui| {
             for (n, (i, t)) in formats::jef_palette().enumerate() {
                 let (r, resp) = ui.allocate_exact_size(vec2(24.0, 24.0), Sense::click());
-                let stroke = if i == *value { egui::Stroke::new(2.5, ui.visuals().selection.bg_fill) } else { egui::Stroke::new(1.0, Color32::from_black_alpha(80)) };
+                let stroke =
+                    if i == *value { egui::Stroke::new(2.5, ui.visuals().selection.bg_fill) } else { egui::Stroke::new(1.0, Color32::from_black_alpha(80)) };
                 ui.painter().rect(r, 5, rgb(t.color), stroke, egui::StrokeKind::Inside);
                 if resp.on_hover_text(format!("{} {}", t.name, t.code)).clicked() {
                     *value = i;
@@ -158,7 +165,11 @@ pub(super) fn jef_picker_labeled(ui: &mut egui::Ui, id: &str, label: &str, value
             egui::Grid::new(("chart", id)).spacing([4.0, 4.0]).show(ui, |ui| {
                 for (n, (i, t)) in formats::jef_palette().enumerate() {
                     let (r, resp) = ui.allocate_exact_size(vec2(24.0, 24.0), Sense::click());
-                    let stroke = if i == *value { egui::Stroke::new(2.5, ui.visuals().selection.bg_fill) } else { egui::Stroke::new(1.0, Color32::from_black_alpha(80)) };
+                    let stroke = if i == *value {
+                        egui::Stroke::new(2.5, ui.visuals().selection.bg_fill)
+                    } else {
+                        egui::Stroke::new(1.0, Color32::from_black_alpha(80))
+                    };
                     ui.painter().rect(r, 5, rgb(t.color), stroke, egui::StrokeKind::Inside);
                     if resp.on_hover_text(format!("{} {}", t.name, t.code)).clicked() {
                         *value = i;
@@ -188,21 +199,15 @@ pub(super) fn load_ui_font(ctx: &egui::Context, theme_font_everywhere: bool) {
         });
     }
     let run = |cmd: &str, args: &[&str]| {
-        std::process::Command::new(cmd)
-            .args(args)
-            .output()
-            .ok()
-            .filter(|o| o.status.success())
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        std::process::Command::new(cmd).args(args).output().ok().filter(|o| o.status.success()).map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
     };
     // IBM Plex Sans (OFL, built in) for the interface; the theme's font,
     // usually monospace, for numbers. "ui_font = theme" uses the theme's
     // font everywhere.
     let mut fonts = egui::FontDefinitions::default();
     fonts.font_data.insert("plex".into(), std::sync::Arc::new(egui::FontData::from_static(include_bytes!("../../assets/ui/IBMPlexSans-Regular.ttf"))));
-    let theme_font = run("omarchy", &["font", "current"])
-        .and_then(|family| run("fc-match", &["-f", "%{file}", &family]))
-        .and_then(|file| std::fs::read(file).ok());
+    let theme_font =
+        run("omarchy", &["font", "current"]).and_then(|family| run("fc-match", &["-f", "%{file}", &family])).and_then(|file| std::fs::read(file).ok());
     if let Some(bytes) = theme_font {
         fonts.font_data.insert("omarchy".into(), std::sync::Arc::new(egui::FontData::from_owned(bytes)));
         fonts.families.entry(egui::FontFamily::Monospace).or_default().insert(0, "omarchy".into());

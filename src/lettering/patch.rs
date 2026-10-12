@@ -16,10 +16,12 @@ pub(crate) fn patch_outline(glyphs: &[Vec<Contour>], s: &Settings) -> Option<Con
     let (cx, cy) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
     let (hw, hh) = ((b.2 - b.0) / 2.0, (b.3 - b.1) / 2.0);
     let ellipse = |a: f32, bb: f32| -> Contour {
-        (0..96).map(|i| {
-            let t = i as f32 / 96.0 * std::f32::consts::TAU;
-            (cx + a * t.cos(), cy + bb * t.sin())
-        }).collect()
+        (0..96)
+            .map(|i| {
+                let t = i as f32 / 96.0 * std::f32::consts::TAU;
+                (cx + a * t.cos(), cy + bb * t.sin())
+            })
+            .collect()
     };
     Some(match s.patch {
         PatchShape::None => return None,
@@ -73,8 +75,12 @@ pub(crate) fn fob_eyelet(glyphs: &[Vec<Contour>], s: &Settings) -> Option<Contou
     let h = (b.3 - b.1) / 2.0 + pad;
     let (cx, cy) = (b.0 - pad - h, (b.1 + b.3) / 2.0);
     let r = (h * 0.45).clamp(25.0, 45.0);
-    Some((0..48).map(|i| {
-        let t = i as f32 / 48.0 * std::f32::consts::TAU;
-        (cx + r * t.cos(), cy + r * t.sin())
-    }).collect())
+    Some(
+        (0..48)
+            .map(|i| {
+                let t = i as f32 / 48.0 * std::f32::consts::TAU;
+                (cx + r * t.cos(), cy + r * t.sin())
+            })
+            .collect(),
+    )
 }

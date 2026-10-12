@@ -80,12 +80,7 @@ pub(crate) fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>>
     let slant = s.slant_deg.to_radians().tan();
     let kern = |a: ttf_parser::GlyphId, b: ttf_parser::GlyphId| -> f32 {
         let Some(table) = face.tables().kern else { return 0.0 };
-        table
-            .subtables
-            .into_iter()
-            .filter(|t| t.horizontal && !t.variable)
-            .find_map(|t| t.glyphs_kerning(a, b))
-            .unwrap_or(0) as f32
+        table.subtables.into_iter().filter(|t| t.horizontal && !t.variable).find_map(|t| t.glyphs_kerning(a, b)).unwrap_or(0) as f32
     };
     let cap_h = s.height_mm * 10.0;
     let mut rows: Vec<(f32, Vec<Vec<Contour>>)> = Vec::new();
@@ -113,11 +108,8 @@ pub(crate) fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>>
             let mut o = Outline { contours: Vec::new(), current: Vec::new() };
             face.outline_glyph(id, &mut o);
             o.close();
-            let contours: Vec<Contour> = o
-                .contours
-                .into_iter()
-                .map(|c| c.into_iter().map(|(x, y)| (pen + x * kk + y * kk * slant, y0 + drop - y * kk)).collect())
-                .collect();
+            let contours: Vec<Contour> =
+                o.contours.into_iter().map(|c| c.into_iter().map(|(x, y)| (pen + x * kk + y * kk * slant, y0 + drop - y * kk)).collect()).collect();
             if !contours.is_empty() {
                 line_glyphs.push(contours);
             }

@@ -105,8 +105,20 @@ fn marks(cell: Rect, all: &[Rect]) -> Vec<Pt> {
         }
         let overlap_y = (cell.1.max(o.1), cell.3.min(o.3));
         let overlap_x = (cell.0.max(o.0), cell.2.min(o.2));
-        let x_edge = if near(cell.2, o.0) { Some(cell.2) } else if near(cell.0, o.2) { Some(cell.0) } else { None };
-        let y_edge = if near(cell.3, o.1) { Some(cell.3) } else if near(cell.1, o.3) { Some(cell.1) } else { None };
+        let x_edge = if near(cell.2, o.0) {
+            Some(cell.2)
+        } else if near(cell.0, o.2) {
+            Some(cell.0)
+        } else {
+            None
+        };
+        let y_edge = if near(cell.3, o.1) {
+            Some(cell.3)
+        } else if near(cell.1, o.3) {
+            Some(cell.1)
+        } else {
+            None
+        };
         if let Some(x) = x_edge.filter(|_| overlap_y.1 - overlap_y.0 > 1.0) {
             for t in [0.25, 0.75] {
                 out.push((x, overlap_y.0 + (overlap_y.1 - overlap_y.0) * t));
@@ -143,10 +155,12 @@ pub fn split(points: &[Pt], cmds: &[Cmd], threads: &[Thread], hoop: (f32, f32)) 
         }
         let mid = center(rb);
         let home = cells.iter().position(|c| inside(*c, mid)).unwrap_or_else(|| {
-            (0..cells.len()).min_by(|&a, &b| {
-                let (ca, cb) = (center(cells[a]), center(cells[b]));
-                (ca.0 - mid.0).hypot(ca.1 - mid.1).total_cmp(&(cb.0 - mid.0).hypot(cb.1 - mid.1))
-            }).unwrap()
+            (0..cells.len())
+                .min_by(|&a, &b| {
+                    let (ca, cb) = (center(cells[a]), center(cells[b]));
+                    (ca.0 - mid.0).hypot(ca.1 - mid.1).total_cmp(&(cb.0 - mid.0).hypot(cb.1 - mid.1))
+                })
+                .unwrap()
         });
         if fits(&run.pts, cells[home]) {
             pieces[home].push((k, run.pts.clone(), run.thread));
@@ -206,7 +220,11 @@ pub fn split(points: &[Pt], cmds: &[Cmd], threads: &[Thread], hoop: (f32, f32)) 
             }
         }
         st.finish();
-        parts.push(Part { cell: *cell, center: center(*cell), pattern: Pattern { format: formats::Format::Jef, points: st.points, cmds: st.cmds, threads: ths } });
+        parts.push(Part {
+            cell: *cell,
+            center: center(*cell),
+            pattern: Pattern { format: formats::Format::Jef, points: st.points, cmds: st.cmds, threads: ths },
+        });
     }
     parts
 }

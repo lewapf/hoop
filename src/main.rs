@@ -12,21 +12,17 @@ mod library;
 mod prefs;
 mod split;
 mod stitch;
-mod theme;
-mod trace;
 mod testsew;
+mod theme;
 mod threads;
+mod trace;
 mod usb;
 mod worksheet;
 
 fn main() -> eframe::Result {
     let file = std::env::args_os().nth(1).map(std::path::PathBuf::from);
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_app_id("hoop")
-            .with_title("Hoop")
-            .with_inner_size([1280.0, 860.0])
-            .with_min_inner_size([720.0, 480.0]),
+        viewport: egui::ViewportBuilder::default().with_app_id("hoop").with_title("Hoop").with_inner_size([1280.0, 860.0]).with_min_inner_size([720.0, 480.0]),
         // Stitches are drawn as plain triangles, so multisampling smooths their edges.
         multisampling: 4,
         // With vsync, presenting a frame blocks while the window is hidden on

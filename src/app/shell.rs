@@ -1,8 +1,8 @@
 //! The window around the hoop: menu bar, tool bar, the Objects/Colors dock
 //! on the left, the tabbed properties dock on the right and the status bar.
 
-use super::*;
 use super::shapes::Arrange;
+use super::*;
 
 /// Pages of the right dock. Each mode shows its own ones first, then the
 /// shared Hoop, Stitch-out and View pages.
@@ -377,7 +377,10 @@ impl HoopApp {
                 ui.menu_button(t!("Hoop"), |ui| {
                     for (i, h) in HOOPS.iter().enumerate() {
                         let text = t!("{name}  {w} × {h} mm", name = h.name, w = h.w, h = h.h);
-                        if ui.add(egui::Button::selectable(self.setup.hoop == i, text).shortcut_text(if i < 4 { ["1", "2", "3", "4"][i] } else { "" })).clicked() {
+                        if ui
+                            .add(egui::Button::selectable(self.setup.hoop == i, text).shortcut_text(if i < 4 { ["1", "2", "3", "4"][i] } else { "" }))
+                            .clicked()
+                        {
                             self.change(|s| s.hoop = i);
                             self.fit_view(canvas_rect, false);
                             ui.close();
@@ -572,7 +575,11 @@ impl HoopApp {
                     (0, w) => (WARN, tn!(w, "Check: {n} warning", "Check: {n} warnings")),
                     (p, _) => (BAD, tn!(p, "Check: {n} problem", "Check: {n} problems")),
                 };
-                if ui.add(egui::Label::new(RichText::new(label).size(12.0).color(color)).sense(Sense::click())).on_hover_text(t!("Open the Check list")).clicked() {
+                if ui
+                    .add(egui::Label::new(RichText::new(label).size(12.0).color(color)).sense(Sense::click()))
+                    .on_hover_text(t!("Open the Check list"))
+                    .clicked()
+                {
                     self.dock = Dock::Check;
                     self.show_left = true;
                 }
@@ -580,7 +587,9 @@ impl HoopApp {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(text(format!("{:.0}%", self.view.scale * 100.0 / self.hoop_scale.max(1e-6))));
                 let hint = match self.mode {
-                    Mode::Artwork if self.design.is_some() => t!("Drag a shape to move it · drag empty fabric to pick several · Shift+drag moves the design · middle-drag pans"),
+                    Mode::Artwork if self.design.is_some() => {
+                        t!("Drag a shape to move it · drag empty fabric to pick several · Shift+drag moves the design · middle-drag pans")
+                    }
                     _ => t!("Drag the design to move it · scroll to zoom · ? for keys"),
                 };
                 ui.add(egui::Label::new(text(hint.into())).truncate());

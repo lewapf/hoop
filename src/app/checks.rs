@@ -180,39 +180,36 @@ impl HoopApp {
 
     pub(super) fn preflight_window(&mut self, ctx: &egui::Context) {
         let Some(out) = self.preflight else { return };
-        let problems: Vec<String> = self.check.as_ref().map_or(Vec::new(), |r| r.issues.iter().filter(|i| i.level == Level::Problem).map(|i| i.title.clone()).collect());
+        let problems: Vec<String> =
+            self.check.as_ref().map_or(Vec::new(), |r| r.issues.iter().filter(|i| i.level == Level::Problem).map(|i| i.title.clone()).collect());
         let mut close = false;
-        egui::Window::new(t!("This design has problems"))
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
-            .show(ctx, |ui| {
-                ui.set_max_width(380.0);
-                ui.label(t!("The check found things that will likely sew badly:"));
-                for p in &problems {
-                    ui.label(RichText::new(format!("•  {p}")).color(BAD));
+        egui::Window::new(t!("This design has problems")).collapsible(false).resizable(false).anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO).show(ctx, |ui| {
+            ui.set_max_width(380.0);
+            ui.label(t!("The check found things that will likely sew badly:"));
+            for p in &problems {
+                ui.label(RichText::new(format!("•  {p}")).color(BAD));
+            }
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                if ui.add(primary(t!("Review"), self.accent())).clicked() {
+                    self.dock = Dock::Check;
+                    self.show_left = true;
+                    close = true;
                 }
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    if ui.add(primary(t!("Review"), self.accent())).clicked() {
-                        self.dock = Dock::Check;
-                        self.show_left = true;
-                        close = true;
+                let label = if matches!(out, Output::Save(_)) { t!("Save anyway") } else { t!("Send anyway") };
+                if ui.button(label).clicked() {
+                    self.preflight_passed = true;
+                    close = true;
+                    match out {
+                        Output::Save(o) => self.export(o),
+                        Output::Usb => self.open_usb(),
                     }
-                    let label = if matches!(out, Output::Save(_)) { t!("Save anyway") } else { t!("Send anyway") };
-                    if ui.button(label).clicked() {
-                        self.preflight_passed = true;
-                        close = true;
-                        match out {
-                            Output::Save(o) => self.export(o),
-                            Output::Usb => self.open_usb(),
-                        }
-                    }
-                    if ui.button(t!("Cancel")).clicked() {
-                        close = true;
-                    }
-                });
+                }
+                if ui.button(t!("Cancel")).clicked() {
+                    close = true;
+                }
             });
+        });
         if close {
             self.preflight = None;
         }

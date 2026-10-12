@@ -453,7 +453,7 @@ fn write_vp3(points: &[(f32, f32)], cmds: &[Cmd], threads: &[Thread]) -> Vec<u8>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::formats::{read, Format};
+    use crate::formats::{Format, read};
 
     const HEART: &[u8] = include_bytes!("../tests/fixtures/heart_5x5_fill.jef");
 

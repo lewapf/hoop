@@ -36,7 +36,11 @@ impl HoopApp {
         let count = self.team_list().len();
         let mut save = false;
         card(ui, t!("Team names"), accent, |ui| {
-            ui.label(RichText::new(t!("One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts.")).size(12.0).color(muted));
+            ui.label(
+                RichText::new(t!("One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts."))
+                    .size(12.0)
+                    .color(muted),
+            );
             ui.add(egui::TextEdit::multiline(&mut self.team.names).desired_rows(4).desired_width(f32::INFINITY).hint_text(t!("ANNA\nBEN\nCHARLOTTE")));
             let busy = self.team.job.is_some();
             let label = tn!(count, "Save {n} design…", "Save {n} designs…");
@@ -74,7 +78,8 @@ impl HoopApp {
                 let threads: Vec<_> = p.blocks().into_iter().map(|b| b.thread).collect();
                 crate::formats::write_jef(&points, &p.cmds, &crate::export::jef_numbers(&threads))
             });
-            match bytes.map_err(|e| e.to_string()).and_then(|b| std::fs::write(folder.join(format!("{}.jef", file_stem(&name))), b).map_err(|e| e.to_string())) {
+            match bytes.map_err(|e| e.to_string()).and_then(|b| std::fs::write(folder.join(format!("{}.jef", file_stem(&name))), b).map_err(|e| e.to_string()))
+            {
                 Ok(()) => saved += 1,
                 Err(e) => failed.push(format!("{name}: {e}")),
             }

@@ -53,8 +53,17 @@ pub enum TextShape {
 
 impl TextShape {
     pub const ALL: [TextShape; 11] = [
-        TextShape::Straight, TextShape::Arc, TextShape::Circle, TextShape::Arch, TextShape::Valley, TextShape::Bulge,
-        TextShape::Pinch, TextShape::Bridge, TextShape::Wave, TextShape::Grow, TextShape::Monogram,
+        TextShape::Straight,
+        TextShape::Arc,
+        TextShape::Circle,
+        TextShape::Arch,
+        TextShape::Valley,
+        TextShape::Bulge,
+        TextShape::Pinch,
+        TextShape::Bridge,
+        TextShape::Wave,
+        TextShape::Grow,
+        TextShape::Monogram,
     ];
 
     pub fn name(self) -> &'static str {
@@ -363,7 +372,9 @@ mod tests {
     #[test]
     fn every_fill_style_stitches_inside_the_letters() {
         let font = &bundled_fonts()[1];
-        for fill in [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient, FillKind::Open, FillKind::Contour] {
+        for fill in
+            [FillKind::Tatami, FillKind::Satin, FillKind::Wave, FillKind::Zigzag, FillKind::Crosshatch, FillKind::Gradient, FillKind::Open, FillKind::Contour]
+        {
             let s = Settings { text: "HO".into(), fill, density_mm: fill.default_rows_mm(), edge: EdgeKind::None, underlay: false, ..Default::default() };
             let p = generate(font, &s).unwrap();
             let solid = generate(font, &Settings { fill: FillKind::Tatami, ..s.clone() }).unwrap().bounds();
@@ -408,7 +419,16 @@ mod tests {
     #[test]
     fn applique_adds_two_stops_before_the_text() {
         let font = &bundled_fonts()[1];
-        let s = Settings { text: "AB".into(), patch: PatchShape::Oval, patch_applique: true, patch_thread: 1, edge_thread: 1, fill_thread: 1, patch_border_thread: 1, ..Default::default() };
+        let s = Settings {
+            text: "AB".into(),
+            patch: PatchShape::Oval,
+            patch_applique: true,
+            patch_thread: 1,
+            edge_thread: 1,
+            fill_thread: 1,
+            patch_border_thread: 1,
+            ..Default::default()
+        };
         let p = generate(font, &s).unwrap();
         let names: Vec<&str> = p.threads.iter().map(|t| t.name.as_str()).collect();
         assert_eq!(names[0], "Placement line");
@@ -452,8 +472,23 @@ mod samples {
         let Some(out) = std::env::var_os("HOOP_OUT") else { return };
         let fonts = bundled_fonts();
         let cases: Vec<(String, usize, Settings)> = vec![
-            ("contour".into(), 0, Settings { text: "GO".into(), height_mm: 45.0, fill: FillKind::Contour, density_mm: 0.5, edge: EdgeKind::None, ..Default::default() }),
-            ("column".into(), std::env::var("F").ok().and_then(|v| v.parse().ok()).unwrap_or(0), Settings { text: std::env::var("HOOP_TEXT").unwrap_or("Bremen".into()), height_mm: std::env::var("HOOP_H").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0), fill: FillKind::Column, density_mm: 0.4, edge: EdgeKind::None, ..Default::default() }),
+            (
+                "contour".into(),
+                0,
+                Settings { text: "GO".into(), height_mm: 45.0, fill: FillKind::Contour, density_mm: 0.5, edge: EdgeKind::None, ..Default::default() },
+            ),
+            (
+                "column".into(),
+                std::env::var("F").ok().and_then(|v| v.parse().ok()).unwrap_or(0),
+                Settings {
+                    text: std::env::var("HOOP_TEXT").unwrap_or("Bremen".into()),
+                    height_mm: std::env::var("HOOP_H").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0),
+                    fill: FillKind::Column,
+                    density_mm: 0.4,
+                    edge: EdgeKind::None,
+                    ..Default::default()
+                },
+            ),
         ];
         let only = std::env::var("HOOP_CASE").ok();
         let cases: Vec<_> = cases.into_iter().filter(|c| only.as_ref().is_none_or(|o| *o == c.0)).collect();
@@ -474,7 +509,9 @@ pub const PRESETS: [(&str, &str, fn(&mut Settings)); 10] = [
         style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);
         s.edge_width_mm = 1.6;
     }),
-    (n!("Satin"), n!("Satin columns that follow each stroke, as digitizers sew lettering. Best for small text"), |s| style(s, FillKind::Column, 90.0, EdgeKind::None)),
+    (n!("Satin"), n!("Satin columns that follow each stroke, as digitizers sew lettering. Best for small text"), |s| {
+        style(s, FillKind::Column, 90.0, EdgeKind::None)
+    }),
     (n!("Outline"), n!("Only a triple-run outline"), |s| style(s, FillKind::None, 45.0, EdgeKind::Triple)),
     (n!("Bold"), n!("Tatami with a wide satin border"), |s| {
         style(s, FillKind::Tatami, 45.0, EdgeKind::Satin);

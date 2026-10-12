@@ -203,11 +203,7 @@ pub fn trace(pic: &Picture, t: &TraceSettings) -> Result<Artwork, String> {
         return Err(t!("{name} is fully transparent, so there's nothing to trace.", name = pic.name));
     }
     let (w, h) = (pic.w, pic.h);
-    let labels: Vec<u8> = pic
-        .px
-        .iter()
-        .map(|p| if p[3] < 128 { u8::MAX } else { nearest(&centers, [p[0] as f32, p[1] as f32, p[2] as f32]) as u8 })
-        .collect();
+    let labels: Vec<u8> = pic.px.iter().map(|p| if p[3] < 128 { u8::MAX } else { nearest(&centers, [p[0] as f32, p[1] as f32, p[2] as f32]) as u8 }).collect();
     let labels = despeckle(labels, w, h, t.clean);
 
     // The color covering most of the border is the background.
@@ -384,7 +380,15 @@ mod samples {
             let mut s = crate::artwork::ArtSettings::for_artwork(&art);
             s.width_mm = 90.0;
             let p = crate::artwork::generate(&art, &s).unwrap();
-            eprintln!("{path}: {}x{} px, {} colors, {} shapes, {} stitches, {:?}", pic.w, pic.h, art.layers.len(), art.shapes.len(), p.count(crate::formats::Cmd::Stitch), t0.elapsed());
+            eprintln!(
+                "{path}: {}x{} px, {} colors, {} shapes, {} stitches, {:?}",
+                pic.w,
+                pic.h,
+                art.layers.len(),
+                art.shapes.len(),
+                p.count(crate::formats::Cmd::Stitch),
+                t0.elapsed()
+            );
             let threads: Vec<i32> = p.threads.iter().map(|t| crate::formats::nearest_jef(t.color)).collect();
             let b = p.bounds();
             let pts: Vec<Pt> = p.points.iter().map(|&(x, y)| (x - (b.0 + b.2) / 2.0, y - (b.1 + b.3) / 2.0)).collect();

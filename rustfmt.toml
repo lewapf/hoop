@@ -1,0 +1,3 @@
+# The project keeps related code on one line where it reads well.
+max_width = 160
+use_small_heuristics = "Max"

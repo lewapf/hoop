@@ -354,11 +354,8 @@ impl HoopApp {
             && let Some(p) = origin
         {
             let u = m.to_user(frame.to_world(p));
-            let handle = single
-                .and_then(|i| s.shapes.get(i))
-                .filter(|_| !self.edit_points)
-                .and_then(|e| shape_handles(frame, m, art, e))
-                .and_then(|h| h.hit(p));
+            let handle =
+                single.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(frame, m, art, e)).and_then(|h| h.hit(p));
             if let (Some(i), Some(h)) = (single, handle) {
                 let e = &s.shapes[i];
                 let c = pivot(art, e);
@@ -416,10 +413,8 @@ impl HoopApp {
                     let grid = 5.0 / m.scale;
                     let mut fit = |d: &mut f32, edges: [f32; 3], targets: &[f32], vertical: bool| {
                         let shift = *d;
-                        let best = edges
-                            .iter()
-                            .flat_map(|&e| targets.iter().map(move |&t| (t - (e + shift), t)))
-                            .min_by(|a, b| a.0.abs().total_cmp(&b.0.abs()));
+                        let best =
+                            edges.iter().flat_map(|&e| targets.iter().map(move |&t| (t - (e + shift), t))).min_by(|a, b| a.0.abs().total_cmp(&b.0.abs()));
                         match best {
                             Some((gap, t)) if !mods.alt && gap.abs() <= near => {
                                 *d += gap;
@@ -495,7 +490,8 @@ impl HoopApp {
             None => {
                 let p = response.hover_pos()?;
                 let single = (self.sel.len() == 1).then(|| self.sel[0]);
-                let handle = single.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(frame, m, art, e)).and_then(|h| h.hit(p));
+                let handle =
+                    single.and_then(|i| s.shapes.get(i)).filter(|_| !self.edit_points).and_then(|e| shape_handles(frame, m, art, e)).and_then(|h| h.hit(p));
                 match handle {
                     Some(Handle::Corner) => cursor(egui::CursorIcon::ResizeNwSe),
                     Some(Handle::Turn) => cursor(egui::CursorIcon::Alias),
@@ -564,7 +560,13 @@ impl HoopApp {
                     painter.rect_stroke(r, 1, egui::Stroke::new(1.5, accent), egui::StrokeKind::Middle);
                 }
             } else {
-                painter.text(frame.rect.center_top() + vec2(0.0, 24.0), egui::Align2::CENTER_CENTER, t!("Too many points to show. Press Simplify first."), egui::FontId::proportional(13.0), Color32::WHITE);
+                painter.text(
+                    frame.rect.center_top() + vec2(0.0, 24.0),
+                    egui::Align2::CENTER_CENTER,
+                    t!("Too many points to show. Press Simplify first."),
+                    egui::FontId::proportional(13.0),
+                    Color32::WHITE,
+                );
             }
         } else if self.sel.len() > 1 {
             let b = self.sel.iter().filter_map(|&i| screen_box(frame, m, art, s.shapes.get(i)?)).reduce(|a, b| a.union(b));
@@ -681,7 +683,15 @@ impl HoopApp {
                     artwork::Kind::Fill { .. } => "fill",
                     artwork::Kind::Stroke { .. } => "line",
                 };
-                let tag = if e.source >= art.shapes.len() { "added" } else if e.own.is_some() { "edited" } else if e.moved() { "moved" } else { kind };
+                let tag = if e.source >= art.shapes.len() {
+                    "added"
+                } else if e.own.is_some() {
+                    "edited"
+                } else if e.moved() {
+                    "moved"
+                } else {
+                    kind
+                };
                 painter.text(rect.left_center() + vec2(48.0, 0.0), egui::Align2::LEFT_CENTER, &e.name, egui::FontId::proportional(13.5), ink);
                 painter.text(rect.right_center() - vec2(6.0, 0.0), egui::Align2::RIGHT_CENTER, tag, egui::FontId::proportional(11.0), muted);
                 if resp.clicked() {
@@ -759,7 +769,11 @@ impl HoopApp {
             self.add_built_in(name);
         }
         if self.sel.is_empty() {
-            ui.label(RichText::new(t!("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one.")).size(12.0).color(muted));
+            ui.label(
+                RichText::new(t!("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."))
+                    .size(12.0)
+                    .color(muted),
+            );
             return;
         }
         self.tool_card(ui);
@@ -767,9 +781,24 @@ impl HoopApp {
         card(ui, t!("Arrange"), accent, |ui| {
             let w = (ui.available_width() - 12.0) / 4.0;
             let rows: [[(&str, &str, Arrange); 4]; 3] = [
-                [(t!("Front"), t!("Sew last, on top · Shift+]"), Arrange::Front), (t!("Forward"), t!("One step up · ]"), Arrange::Forward), (t!("Backward"), t!("One step down · ["), Arrange::Backward), (t!("Back"), t!("Sew first, underneath · Shift+["), Arrange::Back)],
-                [(t!("Left"), t!("Align left edges"), Arrange::Left), (t!("Center"), t!("Align middles across"), Arrange::CenterX), (t!("Right"), t!("Align right edges"), Arrange::Right), (t!("Top"), t!("Align top edges"), Arrange::Top)],
-                [(t!("Middle"), t!("Align middles up and down"), Arrange::Middle), (t!("Bottom"), t!("Align bottom edges"), Arrange::Bottom), (t!("Copy"), t!("Duplicate · Ctrl+D"), Arrange::Duplicate), (t!("Delete"), "Del", Arrange::Delete)],
+                [
+                    (t!("Front"), t!("Sew last, on top · Shift+]"), Arrange::Front),
+                    (t!("Forward"), t!("One step up · ]"), Arrange::Forward),
+                    (t!("Backward"), t!("One step down · ["), Arrange::Backward),
+                    (t!("Back"), t!("Sew first, underneath · Shift+["), Arrange::Back),
+                ],
+                [
+                    (t!("Left"), t!("Align left edges"), Arrange::Left),
+                    (t!("Center"), t!("Align middles across"), Arrange::CenterX),
+                    (t!("Right"), t!("Align right edges"), Arrange::Right),
+                    (t!("Top"), t!("Align top edges"), Arrange::Top),
+                ],
+                [
+                    (t!("Middle"), t!("Align middles up and down"), Arrange::Middle),
+                    (t!("Bottom"), t!("Align bottom edges"), Arrange::Bottom),
+                    (t!("Copy"), t!("Duplicate · Ctrl+D"), Arrange::Duplicate),
+                    (t!("Delete"), "Del", Arrange::Delete),
+                ],
             ];
             for row in rows {
                 ui.horizontal(|ui| {
@@ -823,14 +852,17 @@ impl HoopApp {
                 Some(Look::Applique) => t!("Appliqué").into(),
             };
             let mut look = first;
-            egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { t!("Mixed").into() }).width(ui.available_width()).show_ui(ui, |ui| {
-                ui.selectable_value(&mut look, None, t!("Thread's look")).on_hover_text(t!("Whatever the Threads tab sets for this color"));
-                for k in [FillKind::Auto, FillKind::Column, FillKind::Tatami, FillKind::Satin, FillKind::Contour, FillKind::Wave, FillKind::Open] {
-                    ui.selectable_value(&mut look, Some(Look::Fill(k)), crate::i18n::tr(crate::lettering::fill_name(k)).to_string());
-                }
-                ui.selectable_value(&mut look, Some(Look::Outline), t!("Outline")).on_hover_text(t!("Only the outline: for thin shapes"));
-                ui.selectable_value(&mut look, Some(Look::Applique), t!("Appliqué"));
-            });
+            egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { t!("Mixed").into() }).width(ui.available_width()).show_ui(
+                ui,
+                |ui| {
+                    ui.selectable_value(&mut look, None, t!("Thread's look")).on_hover_text(t!("Whatever the Threads tab sets for this color"));
+                    for k in [FillKind::Auto, FillKind::Column, FillKind::Tatami, FillKind::Satin, FillKind::Contour, FillKind::Wave, FillKind::Open] {
+                        ui.selectable_value(&mut look, Some(Look::Fill(k)), crate::i18n::tr(crate::lettering::fill_name(k)).to_string());
+                    }
+                    ui.selectable_value(&mut look, Some(Look::Outline), t!("Outline")).on_hover_text(t!("Only the outline: for thin shapes"));
+                    ui.selectable_value(&mut look, Some(Look::Applique), t!("Appliqué"));
+                },
+            );
             if look != first {
                 for &i in &sel {
                     s.shapes[i].look = look;
@@ -864,14 +896,20 @@ impl HoopApp {
             slider_row(ui, t!("Turn"), &mut e.rotate, -180.0..=180.0, "°", 0).on_hover_text(t!("Or drag the round knob; Shift snaps to 15°"));
             let b = artwork::extent(&e.lines(art));
             if b.0 <= b.2 {
-                ui.label(RichText::new(t!("{v0:.1} × {v1:.1} mm on the fabric", v0 = (b.2 - b.0) * mm, v1 = (b.3 - b.1) * mm)).monospace().size(12.0).color(muted));
+                ui.label(
+                    RichText::new(t!("{v0:.1} × {v1:.1} mm on the fabric", v0 = (b.2 - b.0) * mm, v1 = (b.3 - b.1) * mm)).monospace().size(12.0).color(muted),
+                );
             }
         });
         let e = &mut s.shapes[i];
         card(ui, t!("Points"), accent, |ui| {
             let points: usize = e.base(art).lines.iter().map(|l| l.0.len()).sum();
             ui.horizontal(|ui| {
-                if ui.add(egui::Button::new(t!("Edit points")).selected(self.edit_points)).on_hover_text(t!("Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one.")).clicked() {
+                if ui
+                    .add(egui::Button::new(t!("Edit points")).selected(self.edit_points))
+                    .on_hover_text(t!("Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one."))
+                    .clicked()
+                {
                     self.edit_points = !self.edit_points;
                     if self.edit_points {
                         e.bake(art);

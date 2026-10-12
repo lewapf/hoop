@@ -193,160 +193,194 @@ impl HoopApp {
         let mut create = false;
         let mut pick: Option<Option<PathBuf>> = None;
         let mut finish: Option<u8> = None;
-        egui::Window::new(t!("New project")).open(&mut open).collapsible(false).resizable(false).anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO).show(ctx, |ui| {
-            ui.set_width(460.0);
-            let w = &mut self.wizard;
-            ui.label(RichText::new(t!("Step {k} of {n}", k = w.step + 1, n = STEPS)).size(12.0).color(muted));
-            ui.add_space(4.0);
-            match w.step {
-                0 => {
-                    ui.heading(t!("What would you like to make?"));
-                    for m in Make::ALL {
-                        let r = ui.add(egui::Button::selectable(w.make == m, RichText::new(crate::i18n::tr(m.title())).strong()).min_size(vec2(440.0, 0.0)));
-                        ui.label(RichText::new(crate::i18n::tr(m.about())).size(11.5).color(muted));
-                        if r.clicked() {
-                            w.make = m;
-                        }
-                    }
-                }
-                1 => {
-                    ui.heading(t!("What will you sew on?"));
-                    ui.horizontal_wrapped(|ui| {
-                        for (i, f) in FABRICS_SEW.iter().enumerate() {
-                            if ui.selectable_label(w.fabric == i, crate::i18n::tr(f.0)).clicked() {
-                                w.fabric = i;
+        egui::Window::new(t!("New project")).open(&mut open).collapsible(false).resizable(false).anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO).show(
+            ctx,
+            |ui| {
+                ui.set_width(460.0);
+                let w = &mut self.wizard;
+                ui.label(RichText::new(t!("Step {k} of {n}", k = w.step + 1, n = STEPS)).size(12.0).color(muted));
+                ui.add_space(4.0);
+                match w.step {
+                    0 => {
+                        ui.heading(t!("What would you like to make?"));
+                        for m in Make::ALL {
+                            let r =
+                                ui.add(egui::Button::selectable(w.make == m, RichText::new(crate::i18n::tr(m.title())).strong()).min_size(vec2(440.0, 0.0)));
+                            ui.label(RichText::new(crate::i18n::tr(m.about())).size(11.5).color(muted));
+                            if r.clicked() {
+                                w.make = m;
                             }
                         }
-                    });
-                    ui.add_space(6.0);
-                    ui.label(RichText::new(crate::i18n::tr(FABRICS_SEW[w.fabric].5)).color(muted));
-                    if matches!(w.make, Make::Lace) {
-                        ui.label(RichText::new(t!("Lace is sewn on two layers of water-soluble stabilizer, whatever the fabric choice.")).size(12.0).color(muted));
                     }
-                }
-                2 => match w.make {
-                    Make::Logo | Make::Shape => {
-                        ui.heading(if w.make == Make::Logo { t!("Pick the logo or picture") } else { t!("Pick a shape") });
-                        if w.make == Make::Shape {
-                            if let Some(dir) = library::shapes_dir() {
-                                let mut names: Vec<String> = std::fs::read_dir(&dir)
-                                    .map(|rd| rd.flatten().filter_map(|e| e.path().file_stem().map(|s| s.to_string_lossy().into_owned())).filter(|n| n != "LICENSE").collect())
-                                    .unwrap_or_default();
-                                names.sort();
-                                egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
-                                    ui.horizontal_wrapped(|ui| {
-                                        for n in names {
-                                            let path = dir.join(format!("{n}.svg"));
-                                            let on = w.file.as_ref() == Some(&path);
-                                            if ui.selectable_label(on, n.replace('-', " ")).clicked() {
-                                                w.file = Some(path);
-                                            }
-                                        }
-                                    });
-                                });
-                            }
-                        } else if ui.button(t!("Choose a file…")).clicked() {
-                            pick = Some(None);
-                        }
-                        if let Some(f) = &w.file {
-                            ui.label(RichText::new(f.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()).strong());
-                        }
-                    }
-                    Make::Monogram => {
-                        ui.heading(t!("Your initials"));
-                        ui.add(egui::TextEdit::singleline(&mut w.text).char_limit(3).font(egui::TextStyle::Heading));
-                    }
-                    _ => {
-                        ui.heading(t!("Your text"));
-                        ui.label(RichText::new(if w.make == Make::Badge { t!("Line 1 goes round the top, line 2 round the bottom.") } else { t!("One or more lines.") }).size(12.0).color(muted));
-                        ui.add(egui::TextEdit::multiline(&mut w.text).desired_rows(2).font(egui::TextStyle::Heading).desired_width(f32::INFINITY));
-                    }
-                },
-                3 => {
-                    ui.heading(t!("How big?"));
-                    let label = if w.make.text_based() { t!("Letter height") } else { t!("Width") };
-                    let range = if w.make.text_based() { 5.0..=80.0 } else { 20.0..=200.0 };
-                    ui.horizontal(|ui| {
-                        ui.label(label);
-                        ui.add(egui::Slider::new(&mut w.size_mm, range).suffix(" mm").fixed_decimals(0));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label(t!("Hoop"));
-                        egui::ComboBox::from_id_salt("wiz-hoop").selected_text(HOOPS[w.hoop].name).show_ui(ui, |ui| {
-                            for (i, h) in HOOPS.iter().enumerate() {
-                                ui.selectable_value(&mut w.hoop, i, format!("{}  {} × {} mm", h.name, h.w, h.h));
+                    1 => {
+                        ui.heading(t!("What will you sew on?"));
+                        ui.horizontal_wrapped(|ui| {
+                            for (i, f) in FABRICS_SEW.iter().enumerate() {
+                                if ui.selectable_label(w.fabric == i, crate::i18n::tr(f.0)).clicked() {
+                                    w.fabric = i;
+                                }
                             }
                         });
+                        ui.add_space(6.0);
+                        ui.label(RichText::new(crate::i18n::tr(FABRICS_SEW[w.fabric].5)).color(muted));
+                        if matches!(w.make, Make::Lace) {
+                            ui.label(
+                                RichText::new(t!("Lace is sewn on two layers of water-soluble stabilizer, whatever the fabric choice."))
+                                    .size(12.0)
+                                    .color(muted),
+                            );
+                        }
+                    }
+                    2 => match w.make {
+                        Make::Logo | Make::Shape => {
+                            ui.heading(if w.make == Make::Logo { t!("Pick the logo or picture") } else { t!("Pick a shape") });
+                            if w.make == Make::Shape {
+                                if let Some(dir) = library::shapes_dir() {
+                                    let mut names: Vec<String> = std::fs::read_dir(&dir)
+                                        .map(|rd| {
+                                            rd.flatten()
+                                                .filter_map(|e| e.path().file_stem().map(|s| s.to_string_lossy().into_owned()))
+                                                .filter(|n| n != "LICENSE")
+                                                .collect()
+                                        })
+                                        .unwrap_or_default();
+                                    names.sort();
+                                    egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
+                                        ui.horizontal_wrapped(|ui| {
+                                            for n in names {
+                                                let path = dir.join(format!("{n}.svg"));
+                                                let on = w.file.as_ref() == Some(&path);
+                                                if ui.selectable_label(on, n.replace('-', " ")).clicked() {
+                                                    w.file = Some(path);
+                                                }
+                                            }
+                                        });
+                                    });
+                                }
+                            } else if ui.button(t!("Choose a file…")).clicked() {
+                                pick = Some(None);
+                            }
+                            if let Some(f) = &w.file {
+                                ui.label(RichText::new(f.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()).strong());
+                            }
+                        }
+                        Make::Monogram => {
+                            ui.heading(t!("Your initials"));
+                            ui.add(egui::TextEdit::singleline(&mut w.text).char_limit(3).font(egui::TextStyle::Heading));
+                        }
+                        _ => {
+                            ui.heading(t!("Your text"));
+                            ui.label(
+                                RichText::new(if w.make == Make::Badge {
+                                    t!("Line 1 goes round the top, line 2 round the bottom.")
+                                } else {
+                                    t!("One or more lines.")
+                                })
+                                .size(12.0)
+                                .color(muted),
+                            );
+                            ui.add(egui::TextEdit::multiline(&mut w.text).desired_rows(2).font(egui::TextStyle::Heading).desired_width(f32::INFINITY));
+                        }
+                    },
+                    3 => {
+                        ui.heading(t!("How big?"));
+                        let label = if w.make.text_based() { t!("Letter height") } else { t!("Width") };
+                        let range = if w.make.text_based() { 5.0..=80.0 } else { 20.0..=200.0 };
+                        ui.horizontal(|ui| {
+                            ui.label(label);
+                            ui.add(egui::Slider::new(&mut w.size_mm, range).suffix(" mm").fixed_decimals(0));
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label(t!("Hoop"));
+                            egui::ComboBox::from_id_salt("wiz-hoop").selected_text(HOOPS[w.hoop].name).show_ui(ui, |ui| {
+                                for (i, h) in HOOPS.iter().enumerate() {
+                                    ui.selectable_value(&mut w.hoop, i, format!("{}  {} × {} mm", h.name, h.w, h.h));
+                                }
+                            });
+                        });
+                        if w.make.text_based() && w.size_mm < 8.0 {
+                            ui.label(
+                                RichText::new(t!("Letters under 8 mm are sewn as narrow satin; use a thin (60 wt) thread if you have one."))
+                                    .size(12.0)
+                                    .color(WARN),
+                            );
+                        }
+                    }
+                    4 => {
+                        ui.heading(t!("Thread colors"));
+                        if w.make.text_based() {
+                            jef_picker_labeled(ui, "wiz-main", t!("Text"), &mut w.thread);
+                            if matches!(w.make, Make::Badge | Make::KeyFob | Make::Coaster | Make::Lace) {
+                                jef_picker_labeled(ui, "wiz-accent", t!("Border"), &mut w.accent);
+                            }
+                        } else {
+                            ui.label(RichText::new(t!("Artwork keeps its own colors; change them later in the Threads tab.")).color(muted));
+                        }
+                    }
+                    _ => {
+                        ui.heading(t!("Ready"));
+                        ui.label(t!("Your design is on the hoop. Check it, then:"));
+                        let steps: Vec<String> = match w.make {
+                            Make::KeyFob | Make::Coaster => vec![
+                                t!("Hoop tear-away or no-show mesh stabilizer.").into(),
+                                t!("At each stop, do what the thread name says: lay the front fabric, trim, tape backing under the hoop.").into(),
+                                t!("Cut round the border, close to the satin; for a fob, punch the eyelet.").into(),
+                            ],
+                            Make::Lace => vec![
+                                t!("Hoop two layers of water-soluble stabilizer.").into(),
+                                t!("Sew, cut away the extra stabilizer and rinse the rest out.").into(),
+                            ],
+                            _ => vec![crate::i18n::tr(FABRICS_SEW[w.fabric].5).to_string()],
+                        };
+                        for s in steps {
+                            ui.label(format!("•  {s}"));
+                        }
+                        ui.add_space(6.0);
+                        ui.horizontal(|ui| {
+                            if ui.add(primary(t!("Save as JEF…"), accent)).clicked() {
+                                finish = Some(0);
+                            }
+                            if ui.button(t!("Send to USB…")).clicked() {
+                                finish = Some(1);
+                            }
+                            if ui.button(t!("Save worksheet…")).clicked() {
+                                finish = Some(2);
+                            }
+                        });
+                    }
+                }
+                ui.add_space(10.0);
+                ui.separator();
+                ui.horizontal(|ui| {
+                    if w.step > 0 && w.step < STEPS - 1 && ui.button(t!("Back")).clicked() {
+                        back = true;
+                    }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let ready = match w.step {
+                            2 => {
+                                if w.make.text_based() {
+                                    !w.text.trim().is_empty()
+                                } else {
+                                    w.file.is_some()
+                                }
+                            }
+                            _ => true,
+                        };
+                        if w.step == STEPS - 2 {
+                            if ui.add_enabled(ready, primary(t!("Create"), accent)).clicked() {
+                                create = true;
+                            }
+                        } else if w.step < STEPS - 1 {
+                            if ui.add_enabled(ready, primary(t!("Next"), accent)).clicked() {
+                                next = true;
+                            }
+                        } else if ui.button(t!("Close")).clicked() {
+                            w.open = false;
+                        }
                     });
-                    if w.make.text_based() && w.size_mm < 8.0 {
-                        ui.label(RichText::new(t!("Letters under 8 mm are sewn as narrow satin; use a thin (60 wt) thread if you have one.")).size(12.0).color(WARN));
-                    }
-                }
-                4 => {
-                    ui.heading(t!("Thread colors"));
-                    if w.make.text_based() {
-                        jef_picker_labeled(ui, "wiz-main", t!("Text"), &mut w.thread);
-                        if matches!(w.make, Make::Badge | Make::KeyFob | Make::Coaster | Make::Lace) {
-                            jef_picker_labeled(ui, "wiz-accent", t!("Border"), &mut w.accent);
-                        }
-                    } else {
-                        ui.label(RichText::new(t!("Artwork keeps its own colors; change them later in the Threads tab.")).color(muted));
-                    }
-                }
-                _ => {
-                    ui.heading(t!("Ready"));
-                    ui.label(t!("Your design is on the hoop. Check it, then:"));
-                    let steps: Vec<String> = match w.make {
-                        Make::KeyFob | Make::Coaster => vec![
-                            t!("Hoop tear-away or no-show mesh stabilizer.").into(),
-                            t!("At each stop, do what the thread name says: lay the front fabric, trim, tape backing under the hoop.").into(),
-                            t!("Cut round the border, close to the satin; for a fob, punch the eyelet.").into(),
-                        ],
-                        Make::Lace => vec![t!("Hoop two layers of water-soluble stabilizer.").into(), t!("Sew, cut away the extra stabilizer and rinse the rest out.").into()],
-                        _ => vec![crate::i18n::tr(FABRICS_SEW[w.fabric].5).to_string()],
-                    };
-                    for s in steps {
-                        ui.label(format!("•  {s}"));
-                    }
-                    ui.add_space(6.0);
-                    ui.horizontal(|ui| {
-                        if ui.add(primary(t!("Save as JEF…"), accent)).clicked() {
-                            finish = Some(0);
-                        }
-                        if ui.button(t!("Send to USB…")).clicked() {
-                            finish = Some(1);
-                        }
-                        if ui.button(t!("Save worksheet…")).clicked() {
-                            finish = Some(2);
-                        }
-                    });
-                }
-            }
-            ui.add_space(10.0);
-            ui.separator();
-            ui.horizontal(|ui| {
-                if w.step > 0 && w.step < STEPS - 1 && ui.button(t!("Back")).clicked() {
-                    back = true;
-                }
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let ready = match w.step {
-                        2 => if w.make.text_based() { !w.text.trim().is_empty() } else { w.file.is_some() },
-                        _ => true,
-                    };
-                    if w.step == STEPS - 2 {
-                        if ui.add_enabled(ready, primary(t!("Create"), accent)).clicked() {
-                            create = true;
-                        }
-                    } else if w.step < STEPS - 1 {
-                        if ui.add_enabled(ready, primary(t!("Next"), accent)).clicked() {
-                            next = true;
-                        }
-                    } else if ui.button(t!("Close")).clicked() {
-                        w.open = false;
-                    }
                 });
-            });
-        });
+            },
+        );
         if !open {
             self.wizard.open = false;
         }
@@ -368,7 +402,12 @@ impl HoopApp {
             let ctx = ctx.clone();
             let dir = library::designs_dir();
             std::thread::spawn(move || {
-                let _ = tx.send(rfd::FileDialog::new().set_directory(dir).add_filter(t!("Artwork"), &["svg", "svgz", "png", "jpg", "jpeg", "webp", "bmp", "gif"]).pick_file());
+                let _ = tx.send(
+                    rfd::FileDialog::new()
+                        .set_directory(dir)
+                        .add_filter(t!("Artwork"), &["svg", "svgz", "png", "jpg", "jpeg", "webp", "bmp", "gif"])
+                        .pick_file(),
+                );
                 ctx.request_repaint();
             });
             self.wizard.pick = Some(rx);

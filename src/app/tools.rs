@@ -122,7 +122,11 @@ impl HoopApp {
         card(ui, t!("Stitching"), accent, |ui| {
             ui.horizontal(|ui| {
                 let on = self.tools.tool == Some(ShapeTool::Angle);
-                if ui.add(egui::Button::selectable(on, t!("Add stitch angle"))).on_hover_text(t!("Drag a line across the shape; its fill rows follow it. Several lines split the fill into parts.")).clicked() {
+                if ui
+                    .add(egui::Button::selectable(on, t!("Add stitch angle")))
+                    .on_hover_text(t!("Drag a line across the shape; its fill rows follow it. Several lines split the fill into parts."))
+                    .clicked()
+                {
                     self.tools.tool = if on { None } else { Some(ShapeTool::Angle) };
                 }
                 if ui.add_enabled(count > 0, egui::Button::new(t!("Clear"))).clicked() {
@@ -134,7 +138,11 @@ impl HoopApp {
             }
             ui.horizontal(|ui| {
                 let on = self.tools.tool == Some(ShapeTool::Entry);
-                if ui.add(egui::Button::selectable(on, t!("Set start point"))).on_hover_text(t!("Where the needle comes in, to save a jump or hide the tie-in")).clicked() {
+                if ui
+                    .add(egui::Button::selectable(on, t!("Set start point")))
+                    .on_hover_text(t!("Where the needle comes in, to save a jump or hide the tie-in"))
+                    .clicked()
+                {
                     self.tools.tool = if on { None } else { Some(ShapeTool::Entry) };
                 }
                 if ui.add_enabled(has_entry, egui::Button::new(t!("Clear"))).clicked() {

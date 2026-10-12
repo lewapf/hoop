@@ -71,9 +71,7 @@ pub enum ReadError {
 impl fmt::Display for ReadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ReadError::UnknownFormat => {
-                f.write_str(t!("This isn't a file Hoop can read. It opens JEF, DST, EXP, PES and PEC."))
-            }
+            ReadError::UnknownFormat => f.write_str(t!("This isn't a file Hoop can read. It opens JEF, DST, EXP, PES and PEC.")),
             ReadError::Truncated => f.write_str(t!("The file ends early, so it may be damaged.")),
             ReadError::Empty => f.write_str(t!("The file has no stitches in it.")),
         }
@@ -86,45 +84,109 @@ const fn rgb(hex: u32) -> [u8; 3] {
 
 /// Janome thread chart, indexed by the number stored in the JEF header.
 const JEF_THREADS: &[(u32, &str, &str)] = &[
-    (0x000000, "Black", "002"), (0xffffff, "White", "001"), (0xffff17, "Yellow", "204"),
-    (0xff6600, "Orange", "203"), (0x2f5933, "Olive Green", "219"), (0x237336, "Green", "226"),
-    (0x65c2c8, "Sky", "217"), (0xab5a96, "Purple", "208"), (0xf669a0, "Pink", "201"),
-    (0xff0000, "Red", "225"), (0xb1704e, "Brown", "214"), (0x0b2f84, "Blue", "207"),
-    (0xe4c35d, "Gold", "003"), (0x481a05, "Dark Brown", "205"), (0xac9cc7, "Pale Violet", "209"),
-    (0xfcf294, "Pale Yellow", "210"), (0xf999b7, "Pale Pink", "211"), (0xfab381, "Peach", "212"),
-    (0xc9a480, "Beige", "213"), (0x970533, "Wine Red", "215"), (0xa0b8cc, "Pale Sky", "216"),
-    (0x7fc21c, "Yellow Green", "218"), (0xe5e5e5, "Silver Gray", "220"), (0x889b9b, "Gray", "221"),
-    (0x98d6bd, "Pale Aqua", "227"), (0xb2e1e3, "Baby Blue", "228"), (0x368ba0, "Powder Blue", "229"),
-    (0x4f83ab, "Bright Blue", "230"), (0x386a91, "Slate Blue", "231"), (0x071650, "Navy Blue", "232"),
-    (0xf99990, "Salmon Pink", "233"), (0xf9676b, "Coral", "234"), (0xe3311f, "Burnt Orange", "235"),
-    (0xe2a188, "Cinnamon", "236"), (0xb59474, "Umber", "237"), (0xe4cf99, "Blond", "238"),
-    (0xffcb00, "Sunflower", "239"), (0xe1add4, "Orchid Pink", "240"), (0xc3007e, "Peony Purple", "241"),
-    (0x80004b, "Burgundy", "242"), (0x540571, "Royal Purple", "243"), (0xb10525, "Cardinal Red", "244"),
-    (0xcae0c0, "Opal Green", "245"), (0x899856, "Moss Green", "246"), (0x00aa00, "Meadow Green", "247"),
-    (0x21613f, "Dark Green", "248"), (0x5dae94, "Aquamarine", "249"), (0x4cbf8f, "Emerald Green", "250"),
-    (0x007372, "Peacock Green", "251"), (0x595b61, "Dark Gray", "252"), (0xfffff2, "Ivory White", "253"),
-    (0xb15818, "Hazel", "254"), (0xcb8a07, "Toast", "255"),
+    (0x000000, "Black", "002"),
+    (0xffffff, "White", "001"),
+    (0xffff17, "Yellow", "204"),
+    (0xff6600, "Orange", "203"),
+    (0x2f5933, "Olive Green", "219"),
+    (0x237336, "Green", "226"),
+    (0x65c2c8, "Sky", "217"),
+    (0xab5a96, "Purple", "208"),
+    (0xf669a0, "Pink", "201"),
+    (0xff0000, "Red", "225"),
+    (0xb1704e, "Brown", "214"),
+    (0x0b2f84, "Blue", "207"),
+    (0xe4c35d, "Gold", "003"),
+    (0x481a05, "Dark Brown", "205"),
+    (0xac9cc7, "Pale Violet", "209"),
+    (0xfcf294, "Pale Yellow", "210"),
+    (0xf999b7, "Pale Pink", "211"),
+    (0xfab381, "Peach", "212"),
+    (0xc9a480, "Beige", "213"),
+    (0x970533, "Wine Red", "215"),
+    (0xa0b8cc, "Pale Sky", "216"),
+    (0x7fc21c, "Yellow Green", "218"),
+    (0xe5e5e5, "Silver Gray", "220"),
+    (0x889b9b, "Gray", "221"),
+    (0x98d6bd, "Pale Aqua", "227"),
+    (0xb2e1e3, "Baby Blue", "228"),
+    (0x368ba0, "Powder Blue", "229"),
+    (0x4f83ab, "Bright Blue", "230"),
+    (0x386a91, "Slate Blue", "231"),
+    (0x071650, "Navy Blue", "232"),
+    (0xf99990, "Salmon Pink", "233"),
+    (0xf9676b, "Coral", "234"),
+    (0xe3311f, "Burnt Orange", "235"),
+    (0xe2a188, "Cinnamon", "236"),
+    (0xb59474, "Umber", "237"),
+    (0xe4cf99, "Blond", "238"),
+    (0xffcb00, "Sunflower", "239"),
+    (0xe1add4, "Orchid Pink", "240"),
+    (0xc3007e, "Peony Purple", "241"),
+    (0x80004b, "Burgundy", "242"),
+    (0x540571, "Royal Purple", "243"),
+    (0xb10525, "Cardinal Red", "244"),
+    (0xcae0c0, "Opal Green", "245"),
+    (0x899856, "Moss Green", "246"),
+    (0x00aa00, "Meadow Green", "247"),
+    (0x21613f, "Dark Green", "248"),
+    (0x5dae94, "Aquamarine", "249"),
+    (0x4cbf8f, "Emerald Green", "250"),
+    (0x007372, "Peacock Green", "251"),
+    (0x595b61, "Dark Gray", "252"),
+    (0xfffff2, "Ivory White", "253"),
+    (0xb15818, "Hazel", "254"),
+    (0xcb8a07, "Toast", "255"),
 ];
 
 /// Brother thread chart, indexed by the number stored in the PEC header.
 const PEC_THREADS: &[(u32, &str)] = &[
-    (0x1a0a94, "Prussian Blue"), (0x0f75ff, "Blue"), (0x00934c, "Teal Green"), (0xbabdfe, "Cornflower Blue"),
-    (0xec0000, "Red"), (0xe4995a, "Reddish Brown"), (0xcc48ab, "Magenta"), (0xfdc4fa, "Light Lilac"),
-    (0xdd84cd, "Lilac"), (0x6bd38a, "Mint Green"), (0xe4a945, "Deep Gold"), (0xffbd42, "Orange"),
-    (0xffe600, "Yellow"), (0x6cd900, "Lime Green"), (0xc1a941, "Brass"), (0xb5ad97, "Silver"),
-    (0xba9c5f, "Russet Brown"), (0xfaf59e, "Cream Brown"), (0x808080, "Pewter"), (0x000000, "Black"),
-    (0x001cdf, "Ultramarine"), (0xdf00b8, "Royal Purple"), (0x626262, "Dark Gray"), (0x69260d, "Dark Brown"),
-    (0xff0060, "Deep Rose"), (0xbf8200, "Light Brown"), (0xf39178, "Salmon Pink"), (0xff6805, "Vermilion"),
-    (0xf0f0f0, "White"), (0xc832cd, "Violet"), (0xb0bf9b, "Seacrest"), (0x65bfeb, "Sky Blue"),
-    (0xffba04, "Pumpkin"), (0xfff06c, "Cream Yellow"), (0xfeca15, "Khaki"), (0xf38101, "Clay Brown"),
-    (0x37a923, "Leaf Green"), (0x23465f, "Peacock Blue"), (0xa6a6a6, "Gray"), (0xcebfa6, "Warm Gray"),
-    (0x96aa02, "Dark Olive"), (0xffe3c6, "Linen"), (0xff99d7, "Pink"),
+    (0x1a0a94, "Prussian Blue"),
+    (0x0f75ff, "Blue"),
+    (0x00934c, "Teal Green"),
+    (0xbabdfe, "Cornflower Blue"),
+    (0xec0000, "Red"),
+    (0xe4995a, "Reddish Brown"),
+    (0xcc48ab, "Magenta"),
+    (0xfdc4fa, "Light Lilac"),
+    (0xdd84cd, "Lilac"),
+    (0x6bd38a, "Mint Green"),
+    (0xe4a945, "Deep Gold"),
+    (0xffbd42, "Orange"),
+    (0xffe600, "Yellow"),
+    (0x6cd900, "Lime Green"),
+    (0xc1a941, "Brass"),
+    (0xb5ad97, "Silver"),
+    (0xba9c5f, "Russet Brown"),
+    (0xfaf59e, "Cream Brown"),
+    (0x808080, "Pewter"),
+    (0x000000, "Black"),
+    (0x001cdf, "Ultramarine"),
+    (0xdf00b8, "Royal Purple"),
+    (0x626262, "Dark Gray"),
+    (0x69260d, "Dark Brown"),
+    (0xff0060, "Deep Rose"),
+    (0xbf8200, "Light Brown"),
+    (0xf39178, "Salmon Pink"),
+    (0xff6805, "Vermilion"),
+    (0xf0f0f0, "White"),
+    (0xc832cd, "Violet"),
+    (0xb0bf9b, "Seacrest"),
+    (0x65bfeb, "Sky Blue"),
+    (0xffba04, "Pumpkin"),
+    (0xfff06c, "Cream Yellow"),
+    (0xfeca15, "Khaki"),
+    (0xf38101, "Clay Brown"),
+    (0x37a923, "Leaf Green"),
+    (0x23465f, "Peacock Blue"),
+    (0xa6a6a6, "Gray"),
+    (0xcebfa6, "Warm Gray"),
+    (0x96aa02, "Dark Olive"),
+    (0xffe3c6, "Linen"),
+    (0xff99d7, "Pink"),
 ];
 
-const STOCK: [u32; 12] = [
-    0x1f4fbf, 0xd4202a, 0x1d8a3c, 0xf2b705, 0x7b2fa8, 0xf07c1a, 0x111111, 0x1aa6b7, 0xe05a9a, 0x6b4a2b,
-    0x8fbf2a, 0x5a5a5a,
-];
+const STOCK: [u32; 12] = [0x1f4fbf, 0xd4202a, 0x1d8a3c, 0xf2b705, 0x7b2fa8, 0xf07c1a, 0x111111, 0x1aa6b7, 0xe05a9a, 0x6b4a2b, 0x8fbf2a, 0x5a5a5a];
 
 pub fn stock_thread(i: usize) -> Thread {
     Thread { color: rgb(STOCK[i % STOCK.len()]), name: format!("Thread {}", i + 1), code: String::new() }
@@ -182,10 +244,8 @@ fn s8(b: u8) -> i32 {
 fn read_jef(d: &[u8]) -> Result<Pattern, ReadError> {
     let offset = i32_le(d, 0)? as usize;
     let colors = i32_le(d, 24)?.max(0) as usize;
-    let threads = (0..colors)
-        .take_while(|i| 116 + i * 4 + 4 <= offset)
-        .map(|i| i32_le(d, 116 + i * 4).map(|idx| jef_thread(idx, i)))
-        .collect::<Result<Vec<_>, _>>()?;
+    let threads =
+        (0..colors).take_while(|i| 116 + i * 4 + 4 <= offset).map(|i| i32_le(d, 116 + i * 4).map(|idx| jef_thread(idx, i))).collect::<Result<Vec<_>, _>>()?;
     let mut b = Builder::default();
     let mut p = offset;
     while p + 1 < d.len() {
@@ -213,10 +273,16 @@ fn read_dst(d: &[u8]) -> Result<Pattern, ReadError> {
         if b2 & 0xf3 == 0xf3 {
             break;
         }
-        let dx = 81 * (bit(b2, 2) - bit(b2, 3)) + 27 * (bit(b1, 2) - bit(b1, 3)) + 9 * (bit(b0, 2) - bit(b0, 3))
-            + 3 * (bit(b1, 0) - bit(b1, 1)) + (bit(b0, 0) - bit(b0, 1));
-        let dy = 81 * (bit(b2, 5) - bit(b2, 4)) + 27 * (bit(b1, 5) - bit(b1, 4)) + 9 * (bit(b0, 5) - bit(b0, 4))
-            + 3 * (bit(b1, 7) - bit(b1, 6)) + (bit(b0, 7) - bit(b0, 6));
+        let dx = 81 * (bit(b2, 2) - bit(b2, 3))
+            + 27 * (bit(b1, 2) - bit(b1, 3))
+            + 9 * (bit(b0, 2) - bit(b0, 3))
+            + 3 * (bit(b1, 0) - bit(b1, 1))
+            + (bit(b0, 0) - bit(b0, 1));
+        let dy = 81 * (bit(b2, 5) - bit(b2, 4))
+            + 27 * (bit(b1, 5) - bit(b1, 4))
+            + 9 * (bit(b0, 5) - bit(b0, 4))
+            + 3 * (bit(b1, 7) - bit(b1, 6))
+            + (bit(b0, 7) - bit(b0, 6));
         let cmd = if b2 & 0xc3 == 0xc3 {
             Cmd::ColorChange
         } else if b2 & 0x80 != 0 {
@@ -307,9 +373,7 @@ fn read_pec_stitches(d: &[u8], start: usize) -> (Builder, bool) {
 
 fn read_pec(d: &[u8], pec: usize, format: Format) -> Result<Pattern, ReadError> {
     let count = *d.get(pec + 48).ok_or(ReadError::Truncated)? as usize + 1;
-    let threads = (0..count)
-        .map(|i| d.get(pec + 49 + i).map(|&idx| pec_thread(idx, i)).ok_or(ReadError::Truncated))
-        .collect::<Result<Vec<_>, _>>()?;
+    let threads = (0..count).map(|i| d.get(pec + 49 + i).map(|&idx| pec_thread(idx, i)).ok_or(ReadError::Truncated)).collect::<Result<Vec<_>, _>>()?;
     // Most writers start the stitches 532 bytes into the PEC block; a few use 528.
     let (mut b, clean) = read_pec_stitches(d, pec + 532);
     if !clean {
@@ -521,7 +585,15 @@ pub fn write_jef(points: &[(f32, f32)], cmds: &[Cmd], threads: &[i32]) -> Vec<u8
 
     let (left, top, right, bottom) = (-minx, -miny, maxx, maxy);
     let fits = |w: i32, h: i32| left <= w && right <= w && top <= h && bottom <= h;
-    let hoop = if fits(550, 550) { 0 } else if fits(630, 550) { 3 } else if fits(700, 1000) { 2 } else { 4 };
+    let hoop = if fits(550, 550) {
+        0
+    } else if fits(630, 550) {
+        3
+    } else if fits(700, 1000) {
+        2
+    } else {
+        4
+    };
     let n = threads.len().max(1);
     let offset = 116 + 8 * n;
     let mut h: Vec<u8> = Vec::with_capacity(offset + data.len());

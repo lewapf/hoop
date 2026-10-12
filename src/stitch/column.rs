@@ -9,8 +9,8 @@
 //! tight curves are shortened so needle holes don't pile up, and parts a
 //! branch shares with one sewn before it are left out.
 
-use crate::stitch::{self, Contour, MaskShape, Pt, Stitcher, dist, mask_spans, row_spans, subtract};
 use crate::lettering::Settings;
+use crate::stitch::{self, Contour, MaskShape, Pt, Stitcher, dist, mask_spans, row_spans, subtract};
 
 /// Distance from each grid cell to the outside of a shape.
 pub struct Field {
@@ -503,11 +503,7 @@ fn rows(f: &Field, line: &[Pt], closed: bool, step: f32, walls: &[(Pt, Pt)], fre
     let look = ((10.0 / (step / 4.0)).round() as usize).max(1);
     let mut all = Vec::with_capacity(n);
     for i in 0..n {
-        let (a, b) = if closed {
-            (pts[(i + n - look % n) % n], pts[(i + look) % n])
-        } else {
-            (pts[i.saturating_sub(look)], pts[(i + look).min(n - 1)])
-        };
+        let (a, b) = if closed { (pts[(i + n - look % n) % n], pts[(i + look) % n]) } else { (pts[i.saturating_sub(look)], pts[(i + look).min(n - 1)]) };
         let d = dist(a, b).max(1e-3);
         let t = ((b.0 - a.0) / d, (b.1 - a.1) / d);
         let nrm = (-t.1, t.0);
@@ -771,10 +767,8 @@ pub fn column_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &
     // filled with tatami so nothing is left bare.
     let field: Vec<f32> = (0..f.w * f.h).map(|k| if f.d[k] > 0.0 && !covered[k] { 1.0 } else { 0.0 }).collect();
     let center = |i: usize, j: usize| f.center(j * f.w + i);
-    let rings: Vec<Contour> = stitch::iso_lines(&field, f.w, f.h, 0.5, &center)
-        .into_iter()
-        .filter(|r| stitch::shape_area(std::slice::from_ref(r), true) > 300.0)
-        .collect();
+    let rings: Vec<Contour> =
+        stitch::iso_lines(&field, f.w, f.h, 0.5, &center).into_iter().filter(|r| stitch::shape_area(std::slice::from_ref(r), true) > 300.0).collect();
     if !rings.is_empty() && stitch::thickness(&rings, true) > 6.0 {
         let t = Settings { pull_mm: 0.0, ..s.clone() };
         stitch::fill_shape(st, &rings, true, &[], stitch::FillKind::Tatami, s.fill_angle, &t);
@@ -812,10 +806,12 @@ mod tests {
 
     fn ring(r_out: f32, r_in: f32) -> Vec<Contour> {
         let circle = |r: f32, rev: bool| -> Contour {
-            let mut c: Contour = (0..96).map(|k| {
-                let a = k as f32 / 96.0 * std::f32::consts::TAU;
-                (r * a.cos(), r * a.sin())
-            }).collect();
+            let mut c: Contour = (0..96)
+                .map(|k| {
+                    let a = k as f32 / 96.0 * std::f32::consts::TAU;
+                    (r * a.cos(), r * a.sin())
+                })
+                .collect();
             if rev {
                 c.reverse();
             }
@@ -872,10 +868,13 @@ mod tests {
         assert!(radii.iter().all(|&r| r > 145.0 && r < 205.0), "{:?}", radii.iter().fold((f32::MAX, f32::MIN), |a, &r| (a.0.min(r), a.1.max(r))));
         for q in 0..8 {
             let a0 = q as f32 / 8.0 * std::f32::consts::TAU - std::f32::consts::PI;
-            let near = pts.iter().filter(|p| {
-                let d = (p.1.atan2(p.0) - a0).rem_euclid(std::f32::consts::TAU);
-                d < 0.2 || d > std::f32::consts::TAU - 0.2
-            }).count();
+            let near = pts
+                .iter()
+                .filter(|p| {
+                    let d = (p.1.atan2(p.0) - a0).rem_euclid(std::f32::consts::TAU);
+                    d < 0.2 || d > std::f32::consts::TAU - 0.2
+                })
+                .count();
             assert!(near > 12, "octant {q}: {near}");
         }
         // Each satin stitch runs roughly toward the center (square to the ring).
@@ -987,7 +986,10 @@ pub(crate) mod debug {
             Ok("satin") => crate::lettering::EdgeKind::Satin,
             _ => crate::lettering::EdgeKind::None,
         };
-        let shape = std::env::var("SHAPE").ok().and_then(|v| crate::lettering::TextShape::ALL.into_iter().find(|t| format!("{t:?}") == v)).unwrap_or(crate::lettering::TextShape::Straight);
+        let shape = std::env::var("SHAPE")
+            .ok()
+            .and_then(|v| crate::lettering::TextShape::ALL.into_iter().find(|t| format!("{t:?}") == v))
+            .unwrap_or(crate::lettering::TextShape::Straight);
         let s = Settings {
             text: std::env::var("T").unwrap_or("Be".into()).replace("\\n", "\n"),
             height_mm: std::env::var("H").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0),

@@ -95,12 +95,11 @@ pub(super) fn walk_group(g: &usvg::Group, out: &mut Collect) {
                 }
                 let t = p.abs_transform();
                 let scale = ((t.sx * t.sy - t.kx * t.ky).abs()).sqrt();
-                let fill = p.fill().filter(|f| f.opacity().get() > 0.05).map(|f| {
-                    (Kind::Fill { even_odd: f.rule() == usvg::FillRule::EvenOdd }, paint_color(f.paint()))
-                });
-                let stroke = p.stroke().filter(|s| s.opacity().get() > 0.05).map(|s| {
-                    (Kind::Stroke { width: s.width().get() * scale }, paint_color(s.paint()))
-                });
+                let fill = p
+                    .fill()
+                    .filter(|f| f.opacity().get() > 0.05)
+                    .map(|f| (Kind::Fill { even_odd: f.rule() == usvg::FillRule::EvenOdd }, paint_color(f.paint())));
+                let stroke = p.stroke().filter(|s| s.opacity().get() > 0.05).map(|s| (Kind::Stroke { width: s.width().get() * scale }, paint_color(s.paint())));
                 let both = match p.paint_order() {
                     usvg::PaintOrder::FillAndStroke => [fill, stroke],
                     usvg::PaintOrder::StrokeAndFill => [stroke, fill],
@@ -127,7 +126,11 @@ pub fn parse(name: &str, data: &[u8]) -> Result<Artwork, String> {
     let mut c = Collect { shapes: Vec::new(), images: 0 };
     walk_group(tree.root(), &mut c);
     if c.shapes.is_empty() {
-        return Err(t!("{name} has no shapes to stitch.{v0}", name = name, v0 = if c.images > 0 { " It only holds pictures; trace them into paths first (Inkscape: Path → Trace Bitmap)." } else { "" }));
+        return Err(t!(
+            "{name} has no shapes to stitch.{v0}",
+            name = name,
+            v0 = if c.images > 0 { " It only holds pictures; trace them into paths first (Inkscape: Path → Trace Bitmap)." } else { "" }
+        ));
     }
 
     let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
@@ -150,12 +153,8 @@ pub fn parse(name: &str, data: &[u8]) -> Result<Artwork, String> {
         }
         let filled: f32 = lines.iter().map(|l| area(&l.0)).sum();
         // A drawing that is one shape is that shape, not a background.
-        let background = i == 0
-            && count > 1
-            && matches!(kind, Kind::Fill { .. })
-            && sb.2 - sb.0 >= bw * 0.97
-            && sb.3 - sb.1 >= bh * 0.97
-            && filled >= 0.9 * bw * bh;
+        let background =
+            i == 0 && count > 1 && matches!(kind, Kind::Fill { .. }) && sb.2 - sb.0 >= bw * 0.97 && sb.3 - sb.1 >= bh * 0.97 && filled >= 0.9 * bw * bh;
         let layer = match layers.iter().position(|l| l.color == color && l.background == background) {
             Some(k) => k,
             None => {

@@ -159,10 +159,13 @@ impl Region {
         let cells = self.search(s, t, from, to)?;
         // Pull the cell chain straight wherever a direct line stays inside
         // and crosses no more sewn ground than the chain did.
-        let sewn_before: Vec<usize> = cells.iter().scan(0, |n, &c| {
-            *n += self.sewn[c] as usize;
-            Some(*n)
-        }).collect();
+        let sewn_before: Vec<usize> = cells
+            .iter()
+            .scan(0, |n, &c| {
+                *n += self.sewn[c] as usize;
+                Some(*n)
+            })
+            .collect();
         let mut corners = vec![cells[0]];
         let mut i = 0;
         while i < cells.len() - 1 {
@@ -220,7 +223,9 @@ impl Region {
                 }
                 let n = nj as usize * self.w + ni as usize;
                 // Diagonals must not squeeze between two outside cells.
-                if !self.inside[n] || (di != 0 && dj != 0 && !(self.inside[j as usize * self.w + ni as usize] && self.inside[nj as usize * self.w + i as usize])) {
+                if !self.inside[n]
+                    || (di != 0 && dj != 0 && !(self.inside[j as usize * self.w + ni as usize] && self.inside[nj as usize * self.w + i as usize]))
+                {
                     continue;
                 }
                 if self.strict && self.sewn[n] && dist(self.center(n), from) > SNAP && dist(self.center(n), to) > SNAP {

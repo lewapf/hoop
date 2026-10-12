@@ -20,9 +20,9 @@ impl FontSource {
     pub fn bytes(&self) -> Result<(std::borrow::Cow<'static, [u8]>, u32), String> {
         match &self.data {
             FontData::Bundled(b) => Ok((std::borrow::Cow::Borrowed(*b), 0)),
-            FontData::File(path, index) => std::fs::read(path)
-                .map(|b| (std::borrow::Cow::Owned(b), *index))
-                .map_err(|e| t!("Couldn't read {v0}: {e}.", v0 = path.display(), e = e)),
+            FontData::File(path, index) => {
+                std::fs::read(path).map(|b| (std::borrow::Cow::Owned(b), *index)).map_err(|e| t!("Couldn't read {v0}: {e}.", v0 = path.display(), e = e))
+            }
         }
     }
 }
@@ -75,9 +75,7 @@ pub fn system_fonts() -> Vec<FontSource> {
             if face.glyph_index('A').is_none() {
                 continue;
             }
-            let name_of = |id: u16| {
-                face.names().into_iter().filter(|n| n.name_id == id && n.is_unicode()).find_map(|n| n.to_string())
-            };
+            let name_of = |id: u16| face.names().into_iter().filter(|n| n.name_id == id && n.is_unicode()).find_map(|n| n.to_string());
             let family = name_of(ttf_parser::name_id::TYPOGRAPHIC_FAMILY).or_else(|| name_of(ttf_parser::name_id::FAMILY));
             let style = name_of(ttf_parser::name_id::TYPOGRAPHIC_SUBFAMILY).or_else(|| name_of(ttf_parser::name_id::SUBFAMILY));
             if let Some(family) = family {

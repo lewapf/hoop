@@ -2,8 +2,8 @@
 //! without crossing itself, as in quilting), cross-stitch, and the blanket
 //! and scallop edges.
 
-use crate::stitch::{self, Contour, MaskShape, Pt, Stitcher, dist, mask_spans, row_spans, subtract};
 use crate::lettering::Settings;
+use crate::stitch::{self, Contour, MaskShape, Pt, Stitcher, dist, mask_spans, row_spans, subtract};
 
 /// Cells of a grid whose centers lie inside the shape, at least `margin`
 /// from its edge. Returns (origin x, origin y, columns, rows, inside flags).
@@ -192,10 +192,12 @@ pub fn blanket_contour(st: &mut Stitcher, c: &Contour, width: f32) {
         return;
     }
     // Which side is inside: the outline's turning direction.
-    let area: f32 = (0..pts.len()).map(|i| {
-        let (a, b) = (pts[i], pts[(i + 1) % pts.len()]);
-        a.0 * b.1 - b.0 * a.1
-    }).sum();
+    let area: f32 = (0..pts.len())
+        .map(|i| {
+            let (a, b) = (pts[i], pts[(i + 1) % pts.len()]);
+            a.0 * b.1 - b.0 * a.1
+        })
+        .sum();
     let side = if area > 0.0 { 1.0 } else { -1.0 };
     let along = walk_closed(&pts, step);
     st.travel(along[0], along[1]);
@@ -217,10 +219,12 @@ pub fn scallop_contour(st: &mut Stitcher, c: &Contour, width: f32, triple: bool)
     if pts.len() < 3 {
         return;
     }
-    let area: f32 = (0..pts.len()).map(|i| {
-        let (a, b) = (pts[i], pts[(i + 1) % pts.len()]);
-        a.0 * b.1 - b.0 * a.1
-    }).sum();
+    let area: f32 = (0..pts.len())
+        .map(|i| {
+            let (a, b) = (pts[i], pts[(i + 1) % pts.len()]);
+            a.0 * b.1 - b.0 * a.1
+        })
+        .sum();
     let side = if area > 0.0 { -1.0 } else { 1.0 };
     let span = (width * 2.0).max(30.0);
     let along = walk_closed(&pts, span / 6.0);

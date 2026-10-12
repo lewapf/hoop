@@ -93,16 +93,8 @@ pub fn drives() -> Vec<Drive> {
 }
 
 fn udisks(args: &[&str]) -> Result<String, String> {
-    let out = Command::new("udisksctl")
-        .args(args)
-        .arg("--no-user-interaction")
-        .output()
-        .map_err(|e| t!("Couldn't run udisksctl: {e}.", e = e))?;
-    if out.status.success() {
-        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
-    } else {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
-    }
+    let out = Command::new("udisksctl").args(args).arg("--no-user-interaction").output().map_err(|e| t!("Couldn't run udisksctl: {e}.", e = e))?;
+    if out.status.success() { Ok(String::from_utf8_lossy(&out.stdout).into_owned()) } else { Err(String::from_utf8_lossy(&out.stderr).trim().to_string()) }
 }
 
 /// The 8.3 name the machine shows best: up to eight capitals and digits.

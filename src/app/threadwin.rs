@@ -33,7 +33,10 @@ impl HoopApp {
 
     /// Thread codes ticked in "My threads" for the chosen chart.
     pub(super) fn my_threads(&self) -> Vec<String> {
-        self.prefs.get(&format!("threads.own.{}", self.chart().name)).map(|s| s.split(',').filter(|c| !c.is_empty()).map(String::from).collect()).unwrap_or_default()
+        self.prefs
+            .get(&format!("threads.own.{}", self.chart().name))
+            .map(|s| s.split(',').filter(|c| !c.is_empty()).map(String::from).collect())
+            .unwrap_or_default()
     }
 
     /// The thread to buy or load for a design color, when it differs from

@@ -78,12 +78,7 @@ pub fn draw_fabric(f: &Frame, fabric: [u8; 3], weave: &TextureHandle) {
 
 fn rounded_rect_path(f: &Frame, half_w: f32, half_h: f32, radius: f32) -> Vec<Pos2> {
     let r = radius.min(half_w).min(half_h);
-    let corners = [
-        (half_w - r, -half_h + r, -90.0f32),
-        (half_w - r, half_h - r, 0.0),
-        (-half_w + r, half_h - r, 90.0),
-        (-half_w + r, -half_h + r, 180.0),
-    ];
+    let corners = [(half_w - r, -half_h + r, -90.0f32), (half_w - r, half_h - r, 0.0), (-half_w + r, half_h - r, 90.0), (-half_w + r, -half_h + r, 180.0)];
     let mut pts = Vec::with_capacity(4 * 9);
     for (cx, cy, start) in corners {
         for i in 0..=8 {
@@ -107,10 +102,7 @@ pub fn draw_hoop(f: &Frame, w: f32, h: f32, label: &str, fabric: [u8; 3], grid: 
     // Mounting bracket on the left, where the hoop clips onto the carriage.
     let bh = (ih * 2.0 + RING * 2.0) * 0.45;
     let bh = bh.clamp(300.0, 900.0);
-    let bracket = Rect::from_min_max(
-        f.to_screen(-iw - RING - 200.0, -bh / 2.0),
-        f.to_screen(-iw - RING + 40.0, bh / 2.0),
-    );
+    let bracket = Rect::from_min_max(f.to_screen(-iw - RING - 200.0, -bh / 2.0), f.to_screen(-iw - RING + 40.0, bh / 2.0));
     let corner = (50.0 * s).min(120.0) as u8;
     f.painter.rect_filled(bracket.translate(vec2(0.0, 4.0)), corner, Color32::from_black_alpha(60));
     f.painter.rect(bracket, corner, plastic, Stroke::new(1.0, edge), egui::StrokeKind::Inside);
@@ -160,9 +152,7 @@ pub fn draw_hoop(f: &Frame, w: f32, h: f32, label: &str, fabric: [u8; 3], grid: 
         f.painter.line_segment([f.to_screen(0.0, -hh), f.to_screen(0.0, hh)], Stroke::new(1.5, line(100)));
         f.painter.line_segment([f.to_screen(-hw, 0.0), f.to_screen(hw, 0.0)], Stroke::new(1.5, line(100)));
     }
-    let outline = [
-        f.to_screen(-hw, -hh), f.to_screen(hw, -hh), f.to_screen(hw, hh), f.to_screen(-hw, hh), f.to_screen(-hw, -hh),
-    ];
+    let outline = [f.to_screen(-hw, -hh), f.to_screen(hw, -hh), f.to_screen(hw, hh), f.to_screen(-hw, hh), f.to_screen(-hw, -hh)];
     f.painter.extend(Shape::dashed_line(&outline, Stroke::new(1.5, line(140)), 6.0, 5.0));
 }
 
@@ -248,10 +238,14 @@ pub struct DesignStyle {
 
 /// Draws the stitches up to (not including) record `upto`.
 pub fn draw_design(f: &Frame, pattern: &Pattern, blocks: &[Block], t: &Transform, upto: usize, style: &DesignStyle) {
-    let screen: Vec<Pos2> = pattern.points.iter().map(|&p| {
-        let (x, y) = t.apply(p);
-        f.to_screen(x, y)
-    }).collect();
+    let screen: Vec<Pos2> = pattern
+        .points
+        .iter()
+        .map(|&p| {
+            let (x, y) = t.apply(p);
+            f.to_screen(x, y)
+        })
+        .collect();
     // Thread is about 0.4 mm wide; keep it visible when zoomed far out.
     let width = (4.0 * f.view.scale).max(1.2);
 
@@ -304,8 +298,10 @@ pub fn draw_design(f: &Frame, pattern: &Pattern, blocks: &[Block], t: &Transform
 pub fn draw_bounds(f: &Frame, size: (f32, f32), at: &Placement, color: Color32) {
     let (hw, hh) = (size.0 / 2.0, size.1 / 2.0);
     let pts = [
-        f.to_screen(at.dx - hw, at.dy - hh), f.to_screen(at.dx + hw, at.dy - hh),
-        f.to_screen(at.dx + hw, at.dy + hh), f.to_screen(at.dx - hw, at.dy + hh),
+        f.to_screen(at.dx - hw, at.dy - hh),
+        f.to_screen(at.dx + hw, at.dy - hh),
+        f.to_screen(at.dx + hw, at.dy + hh),
+        f.to_screen(at.dx - hw, at.dy + hh),
         f.to_screen(at.dx - hw, at.dy - hh),
     ];
     f.painter.extend(Shape::dashed_line(&pts, Stroke::new(1.5, color), 5.0, 4.0));

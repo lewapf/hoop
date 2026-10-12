@@ -214,7 +214,10 @@ impl HoopApp {
         let frame = Frame { painter: &painter, rect, view: self.view };
 
         // Drawing the test area takes over the pointer until it is done.
-        let picking = self.test_area_input(ui, &response, &frame) || self.tool_input(ui, &response, &frame) || self.stitch_edit_input(ui, &response, &frame) || self.pen_input(ui, &response, &frame);
+        let picking = self.test_area_input(ui, &response, &frame)
+            || self.tool_input(ui, &response, &frame)
+            || self.stitch_edit_input(ui, &response, &frame)
+            || self.pen_input(ui, &response, &frame);
         // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
         let handled_double = !picking && self.shape_input(ui, &response, &frame);
         let hover_shape = if picking { None } else { self.shape_hover(ui, &response, &frame) };
@@ -277,10 +280,11 @@ impl HoopApp {
 
         let frame = Frame { painter: &painter, rect, view: self.view };
         let weave = self.weave.get_or_insert_with(|| {
-            ui.ctx().load_texture("weave", canvas::weave_image(), egui::TextureOptions {
-                wrap_mode: egui::TextureWrapMode::Repeat,
-                ..egui::TextureOptions::NEAREST
-            })
+            ui.ctx().load_texture(
+                "weave",
+                canvas::weave_image(),
+                egui::TextureOptions { wrap_mode: egui::TextureWrapMode::Repeat, ..egui::TextureOptions::NEAREST },
+            )
         });
         canvas::draw_fabric(&frame, self.fabric, weave);
         let hoop = HOOPS[self.setup.hoop];
@@ -348,6 +352,5 @@ impl HoopApp {
         self.pen_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
-
     }
 }

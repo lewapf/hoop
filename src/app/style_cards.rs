@@ -7,11 +7,21 @@ use super::*;
 pub(super) fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
     use egui::{Pos2, Shape, Stroke, pos2};
     const STYLES: [(FillKind, &str); 15] = [
-        (FillKind::Auto, n!("Auto")), (FillKind::Column, n!("Column")), (FillKind::Tatami, n!("Tatami")),
-        (FillKind::Satin, n!("Satin")), (FillKind::Contour, n!("Contour")), (FillKind::Wave, n!("Wave")),
-        (FillKind::Zigzag, n!("Zigzag")), (FillKind::Crosshatch, n!("Hatch")), (FillKind::Gradient, n!("Gradient")),
-        (FillKind::Open, n!("Open")), (FillKind::Stipple, n!("Stipple")), (FillKind::Cross, n!("Cross-stitch")),
-        (FillKind::None, n!("None")), (FillKind::None, ""), (FillKind::None, ""),
+        (FillKind::Auto, n!("Auto")),
+        (FillKind::Column, n!("Column")),
+        (FillKind::Tatami, n!("Tatami")),
+        (FillKind::Satin, n!("Satin")),
+        (FillKind::Contour, n!("Contour")),
+        (FillKind::Wave, n!("Wave")),
+        (FillKind::Zigzag, n!("Zigzag")),
+        (FillKind::Crosshatch, n!("Hatch")),
+        (FillKind::Gradient, n!("Gradient")),
+        (FillKind::Open, n!("Open")),
+        (FillKind::Stipple, n!("Stipple")),
+        (FillKind::Cross, n!("Cross-stitch")),
+        (FillKind::None, n!("None")),
+        (FillKind::None, ""),
+        (FillKind::None, ""),
     ];
     let w = (ui.available_width() - 12.0) / 3.0;
     for row in STYLES.chunks(3) {
@@ -24,7 +34,13 @@ pub(super) fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color3
                 let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), Sense::click());
                 let v = ui.visuals();
                 let on = *value == kind;
-                let fill = if on { accent.gamma_multiply(0.2) } else if resp.hovered() { v.widgets.hovered.weak_bg_fill } else { v.extreme_bg_color };
+                let fill = if on {
+                    accent.gamma_multiply(0.2)
+                } else if resp.hovered() {
+                    v.widgets.hovered.weak_bg_fill
+                } else {
+                    v.extreme_bg_color
+                };
                 let p = ui.painter();
                 p.rect(rect, 8, fill, if on { Stroke::new(1.5, accent) } else { Stroke::NONE }, egui::StrokeKind::Inside);
                 let icon = egui::Rect::from_min_size(rect.min + vec2(8.0, 7.0), vec2(w - 16.0, 30.0));
@@ -177,7 +193,14 @@ pub(super) const FABRICS_SEW: [(&str, f32, f32, f32, lettering::Underlay, &str);
     (n!("Woven"), 0.0, 0.2, 3.5, lettering::Underlay::Auto, n!("Woven cotton: tear-away stabilizer is enough.")),
     (n!("Knit"), 0.05, 0.35, 3.0, lettering::Underlay::Tatami, n!("T-shirts and knits: use cut-away stabilizer and hoop without stretching.")),
     (n!("Denim"), 0.0, 0.15, 4.0, lettering::Underlay::Auto, n!("Denim and canvas: tear-away stabilizer, a size 90 needle.")),
-    (n!("Towel"), -0.05, 0.3, 3.0, lettering::Underlay::Double, n!("Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile.")),
+    (
+        n!("Towel"),
+        -0.05,
+        0.3,
+        3.0,
+        lettering::Underlay::Double,
+        n!("Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile."),
+    ),
     (n!("Fleece"), -0.05, 0.35, 3.0, lettering::Underlay::Double, n!("Fleece: cut-away stabilizer below, water-soluble topping on top.")),
     (n!("Felt"), 0.05, 0.1, 4.0, lettering::Underlay::Edge, n!("Felt barely moves; light underlay keeps it flat. No stabilizer needed for patches.")),
     (n!("Leather"), 0.1, 0.1, 4.0, lettering::Underlay::Edge, n!("Leather and vinyl: every hole stays, so fewer, longer stitches and a leather needle.")),
@@ -194,7 +217,10 @@ pub(super) fn fabric_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32) -
         let base = s.fill.default_rows_mm();
         ui.horizontal_wrapped(|ui| {
             for (name, rows, pull, len, under, advice) in FABRICS_SEW {
-                let on = (s.density_mm - (base + rows)).abs() < 0.001 && (s.pull_mm - pull).abs() < 0.001 && (s.stitch_mm - len).abs() < 0.001 && s.underlay_kind == under;
+                let on = (s.density_mm - (base + rows)).abs() < 0.001
+                    && (s.pull_mm - pull).abs() < 0.001
+                    && (s.stitch_mm - len).abs() < 0.001
+                    && s.underlay_kind == under;
                 if ui.selectable_label(on, crate::i18n::tr(name)).on_hover_text(crate::i18n::tr(advice)).clicked() {
                     s.density_mm = base + rows;
                     s.pull_mm = pull;
@@ -272,11 +298,14 @@ pub(super) fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, acc
             ui.horizontal(|ui| {
                 ui.checkbox(&mut s.underlay, t!("Underlay")).on_hover_text(t!("Stitches under the fill that hold the fabric and lift the top stitches"));
                 ui.add_enabled_ui(s.underlay, |ui| {
-                    egui::ComboBox::from_id_salt(("underlay", with_thread)).selected_text(crate::i18n::tr(s.underlay_kind.name())).width(ui.available_width() - 8.0).show_ui(ui, |ui| {
-                        for u in lettering::Underlay::ALL {
-                            ui.selectable_value(&mut s.underlay_kind, u, crate::i18n::tr(u.name()));
-                        }
-                    });
+                    egui::ComboBox::from_id_salt(("underlay", with_thread))
+                        .selected_text(crate::i18n::tr(s.underlay_kind.name()))
+                        .width(ui.available_width() - 8.0)
+                        .show_ui(ui, |ui| {
+                            for u in lettering::Underlay::ALL {
+                                ui.selectable_value(&mut s.underlay_kind, u, crate::i18n::tr(u.name()));
+                            }
+                        });
                 });
             });
         });
@@ -285,7 +314,12 @@ pub(super) fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, acc
 
 pub(super) fn edge_card(ui: &mut egui::Ui, s: &mut Settings, accent: Color32, title: &str, with_thread: bool) {
     card(ui, title, accent, |ui| {
-        segmented(ui, &mut s.edge, &[(EdgeKind::Satin, t!("Satin")), (EdgeKind::Running, t!("Run")), (EdgeKind::Triple, t!("Triple")), (EdgeKind::None, t!("None"))], accent);
+        segmented(
+            ui,
+            &mut s.edge,
+            &[(EdgeKind::Satin, t!("Satin")), (EdgeKind::Running, t!("Run")), (EdgeKind::Triple, t!("Triple")), (EdgeKind::None, t!("None"))],
+            accent,
+        );
         segmented(ui, &mut s.edge, &[(EdgeKind::Blanket, t!("Blanket")), (EdgeKind::Scallop, t!("Scallop"))], accent);
         if matches!(s.edge, EdgeKind::Satin | EdgeKind::Blanket | EdgeKind::Scallop) {
             ui.add_space(4.0);

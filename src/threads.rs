@@ -105,7 +105,12 @@ pub fn download(file: &str) -> Result<PathBuf, String> {
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let target = dir.join(file);
     let url = format!("{SOURCE}{}", file.replace(' ', "%20"));
-    let out = std::process::Command::new("curl").args(["-fsSL", "--max-time", "30", "-o"]).arg(&target).arg(&url).output().map_err(|e| t!("Couldn't run curl: {e}", e = e))?;
+    let out = std::process::Command::new("curl")
+        .args(["-fsSL", "--max-time", "30", "-o"])
+        .arg(&target)
+        .arg(&url)
+        .output()
+        .map_err(|e| t!("Couldn't run curl: {e}", e = e))?;
     if !out.status.success() {
         let _ = std::fs::remove_file(&target);
         return Err(t!("Download failed: {v0}", v0 = String::from_utf8_lossy(&out.stderr).trim()));
@@ -184,10 +189,13 @@ mod tests {
         // A dark red is nearest the red, even when only black is owned.
         assert_eq!(nearest(&c, [190, 30, 40], &["1000".into()]).unwrap().name, "Red");
         // Off-white, close to both whites: the owned one wins.
-        let chart = Chart { name: "t".into(), threads: vec![
-            Thread { color: [255, 255, 255], name: "White".into(), code: "1".into() },
-            Thread { color: [245, 240, 230], name: "Ivory".into(), code: "2".into() },
-        ] };
+        let chart = Chart {
+            name: "t".into(),
+            threads: vec![
+                Thread { color: [255, 255, 255], name: "White".into(), code: "1".into() },
+                Thread { color: [245, 240, 230], name: "Ivory".into(), code: "2".into() },
+            ],
+        };
         assert_eq!(nearest(&chart, [250, 248, 240], &["1".into()]).unwrap().code, "1");
         assert_eq!(nearest(&chart, [245, 240, 230], &[]).unwrap().code, "2");
     }

@@ -160,10 +160,7 @@ impl HoopApp {
             return;
         }
         let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
-        let dir = [home.join("Documents/Embroidery Designs"), home.join("Documents"), home]
-            .into_iter()
-            .find(|p| p.is_dir())
-            .unwrap_or_default();
+        let dir = [home.join("Documents/Embroidery Designs"), home.join("Documents"), home].into_iter().find(|p| p.is_dir()).unwrap_or_default();
         let (tx, rx) = channel();
         let ctx = self.ctx.clone();
         std::thread::spawn(move || {

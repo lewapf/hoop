@@ -108,10 +108,18 @@ fn clusters(grid: &[f32], w: usize, h: usize, limit: f32, origin: (f32, f32)) ->
                     stack.push(j);
                 }
             };
-            if x > 0 { push(i - 1); }
-            if x + 1 < w { push(i + 1); }
-            if y > 0 { push(i - w); }
-            if y + 1 < h { push(i + w); }
+            if x > 0 {
+                push(i - 1);
+            }
+            if x + 1 < w {
+                push(i + 1);
+            }
+            if y > 0 {
+                push(i - w);
+            }
+            if y + 1 < h {
+                push(i + w);
+            }
         }
         let mid = (origin.0 + (sx / n as f32 + 0.5) * CELL, origin.1 + (sy / n as f32 + 0.5) * CELL);
         out.push((n, mid));
@@ -211,7 +219,12 @@ pub fn stitches(p: &Pattern) -> Report {
         issues.push(Issue {
             level: Level::Warning,
             title: t!("Needle hits pile up").into(),
-            detail: tn!(piles.len(), "In {n} spot the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.", "In {n} spots the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.", hits = HITS),
+            detail: tn!(
+                piles.len(),
+                "In {n} spot the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.",
+                "In {n} spots the needle goes in over {hits:.0} times per mm², usually tight curves or points in satin. It can cut the fabric.",
+                hits = HITS
+            ),
             at: Some(at),
             shape: None,
             fix: None,
@@ -256,7 +269,8 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
     // Limits from the test sheet when it was sewn, else general rules.
     let fill_min = tune.fill_min.unwrap_or(0.9);
     let satin_max = tune.satin_max.unwrap_or(7.0);
-    let sheet = |general: &str, mm: Option<f32>, what: &str| mm.map_or_else(|| general.to_string(), |v| t!(" Your test sheet: {what} {v} mm.", what = what, v = v));
+    let sheet =
+        |general: &str, mm: Option<f32>, what: &str| mm.map_or_else(|| general.to_string(), |v| t!(" Your test sheet: {what} {v} mm.", what = what, v = v));
     let (scale, mid) = artwork::frame(art, s);
     let to_mm = |p: (f32, f32)| ((p.0 - mid.0) * scale, (p.1 - mid.1) * scale);
     let mut thin = 0;
@@ -289,7 +303,11 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                         report.issues.push(Issue {
                             level: Level::Problem,
                             title: t!("{name} is too thin to fill", name = e.name),
-                            detail: t!("About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{v0}", t = t, v0 = sheet("", tune.fill_min, "narrowest clean fill")),
+                            detail: t!(
+                                "About {t:.1} mm wide. Fill rows that short won't show; stitch it as an outline or make it bigger.{v0}",
+                                t = t,
+                                v0 = sheet("", tune.fill_min, "narrowest clean fill")
+                            ),
                             at,
                             shape: Some(i),
                             fix: Some(Fix::ShapeLook(i, Look::Outline)),
@@ -308,7 +326,11 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                     report.issues.push(Issue {
                         level: Level::Warning,
                         title: t!("{name} is wide for satin", name = e.name),
-                        detail: t!("About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{v0}", t = t, v0 = sheet(" Satin over 7 mm is split.", tune.satin_max, "widest tight satin")),
+                        detail: t!(
+                            "About {t:.0} mm across. Wide satin is split into long, loose stitches; tatami holds better.{v0}",
+                            t = t,
+                            v0 = sheet(" Satin over 7 mm is split.", tune.satin_max, "widest tight satin")
+                        ),
                         at,
                         shape: Some(i),
                         fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Tatami))),
@@ -321,7 +343,11 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                     report.issues.push(Issue {
                         level: Level::Warning,
                         title: t!("{name} is a wide satin line", name = e.name),
-                        detail: t!("{w:.1} mm wide; wide satin snags.{v0}", w = w, v0 = sheet(" Satin lines are capped at 7 mm.", tune.satin_max, "widest tight satin")),
+                        detail: t!(
+                            "{w:.1} mm wide; wide satin snags.{v0}",
+                            w = w,
+                            v0 = sheet(" Satin lines are capped at 7 mm.", tune.satin_max, "widest tight satin")
+                        ),
                         at,
                         shape: Some(i),
                         fix: None,
