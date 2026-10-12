@@ -2453,16 +2453,20 @@ fn thread_menu(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug + C
 /// Fill style picker: tiles with a small drawing of each pattern.
 fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
     use egui::{Pos2, Shape, Stroke, pos2};
-    const STYLES: [(FillKind, &str); 9] = [
-        (FillKind::Tatami, "Tatami"), (FillKind::Satin, "Satin"), (FillKind::Contour, "Contour"),
-        (FillKind::Wave, "Wave"), (FillKind::Zigzag, "Zigzag"), (FillKind::Crosshatch, "Hatch"),
-        (FillKind::Gradient, "Gradient"), (FillKind::Open, "Open"), (FillKind::None, "None"),
+    const STYLES: [(FillKind, &str); 12] = [
+        (FillKind::Auto, "Auto"), (FillKind::Column, "Column"), (FillKind::Tatami, "Tatami"),
+        (FillKind::Satin, "Satin"), (FillKind::Contour, "Contour"), (FillKind::Wave, "Wave"),
+        (FillKind::Zigzag, "Zigzag"), (FillKind::Crosshatch, "Hatch"), (FillKind::Gradient, "Gradient"),
+        (FillKind::Open, "Open"), (FillKind::None, "None"), (FillKind::None, ""),
     ];
     let w = (ui.available_width() - 12.0) / 3.0;
     for row in STYLES.chunks(3) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 6.0;
             for &(kind, name) in row {
+                if name.is_empty() {
+                    continue;
+                }
                 let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), Sense::click());
                 let v = ui.visuals();
                 let on = *value == kind;
@@ -2531,6 +2535,33 @@ fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
                     }
                     FillKind::None => {
                         line(pos2(l + 6.0, bt - 4.0), pos2(r - 6.0, t + 4.0), 1.2);
+                    }
+                    FillKind::Column | FillKind::Auto => {
+                        // A curved band sewn with stitches square to it; Auto
+                        // adds a patch of tatami for the wide parts.
+                        let right = if kind == FillKind::Auto { l + (r - l) * 0.55 } else { r };
+                        let c = pos2((l + right) / 2.0, bt + 26.0);
+                        let (r0, r1) = (30.0, 44.0);
+                        let span = ((right - l) / 2.0 / r1).min(1.2);
+                        let n = 26;
+                        for k in 0..=n {
+                            let a = -std::f32::consts::FRAC_PI_2 - span + 2.0 * span * k as f32 / n as f32;
+                            let (cs, sn) = (a.cos(), a.sin());
+                            line(pos2(c.x + cs * r0, c.y + sn * r0), pos2(c.x + cs * r1, c.y + sn * r1), 1.1);
+                        }
+                        if kind == FillKind::Auto {
+                            let mut x = right + 4.0;
+                            let mut k = 0;
+                            while x < r {
+                                let mut y = t - 10.0 + (k % 3) as f32 * 3.0;
+                                while y < bt {
+                                    line(pos2(x, y), pos2(x + 4.0, y + 4.0), 1.1);
+                                    y += 7.0;
+                                }
+                                x += 4.0;
+                                k += 1;
+                            }
+                        }
                     }
                     FillKind::Contour => {
                         let c = icon.center();
@@ -2674,7 +2705,7 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
         if with_thread {
             jef_picker(ui, "fill", &mut s.fill_thread);
         }
-        if s.fill != FillKind::Contour {
+        if !matches!(s.fill, FillKind::Contour | FillKind::Column) {
             slider_row(ui, "Angle", &mut s.fill_angle, 0.0..=180.0, "°", 0).on_hover_text("Direction of the stitch rows");
         }
         if matches!(s.fill, FillKind::Crosshatch | FillKind::Open | FillKind::Gradient) {
@@ -2693,6 +2724,8 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
             FillKind::Crosshatch | FillKind::Open => "Open fills let the fabric show through. Nice on felt and canvas.",
             FillKind::Gradient => "Rows thin out across each shape. Turn the angle to set the direction.",
             FillKind::Contour => "Rings follow the outline inward. Lovely on round shapes and bold letters.",
+            FillKind::Column => "Satin that turns with the shape, like hand-digitized lettering and borders. For parts up to about 7 mm wide.",
+            FillKind::Auto => "Narrow parts become turning satin columns, wide parts tatami at this angle.",
             _ => "",
         };
         if !note.is_empty() {

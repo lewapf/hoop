@@ -311,12 +311,12 @@ pub fn artwork(report: &mut Report, art: &Artwork, s: &ArtSettings, tune: &Tunin
                     report.issues.push(Issue {
                         level: Level::Warning,
                         title: format!("{} is narrow for {fill:?}", e.name),
-                        detail: format!("About {t:.1} mm wide. Satin gives narrow parts a clean, shiny column."),
+                        detail: format!("About {t:.1} mm wide. A satin column gives narrow parts a clean, shiny finish that turns with the shape."),
                         at,
                         shape: Some(i),
-                        fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Satin))),
+                        fix: Some(Fix::ShapeLook(i, Look::Fill(FillKind::Column))),
                     });
-                } else if fill == FillKind::Satin && t > satin_max + 1.0 {
+                } else if matches!(fill, FillKind::Satin | FillKind::Column) && t > satin_max + 1.0 {
                     report.issues.push(Issue {
                         level: Level::Warning,
                         title: format!("{} is wide for satin", e.name),
@@ -487,6 +487,7 @@ mod tests {
         </svg>"##;
         let art = artwork::parse("t", svg.as_bytes()).unwrap();
         let mut s = ArtSettings::for_artwork(&art);
+        s.style.fill = FillKind::Tatami;
         s.width_mm = 100.0;
         s.min_detail_mm = 0.0;
         let p = artwork::generate(&art, &s).unwrap();
@@ -495,7 +496,7 @@ mod tests {
         let thin = r.issues.iter().find(|i| i.title.contains("too thin")).expect("thin sliver found");
         assert_eq!(thin.fix, Some(Fix::ShapeLook(1, Look::Outline)));
         let narrow = r.issues.iter().find(|i| i.title.contains("narrow")).expect("2 mm strip found");
-        assert_eq!(narrow.fix, Some(Fix::ShapeLook(2, Look::Fill(FillKind::Satin))));
+        assert_eq!(narrow.fix, Some(Fix::ShapeLook(2, Look::Fill(FillKind::Column))));
         assert!(!r.issues.iter().any(|i| i.shape == Some(0)), "the big square is fine");
         // Applying the fixes clears them.
         s.shapes[1].look = Some(Look::Outline);

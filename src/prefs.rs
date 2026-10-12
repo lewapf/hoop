@@ -202,6 +202,8 @@ pub fn fill_kind(v: &str) -> Option<FillKind> {
         "Gradient" => FillKind::Gradient,
         "Open" => FillKind::Open,
         "Contour" => FillKind::Contour,
+        "Column" => FillKind::Column,
+        "Auto" => FillKind::Auto,
         _ => return None,
     })
 }

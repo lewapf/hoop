@@ -23,6 +23,10 @@ pub enum FillKind {
     Gradient,
     Open,
     Contour,
+    /// Satin columns that turn with the shape.
+    Column,
+    /// Columns where the shape is narrow enough for satin, tatami elsewhere.
+    Auto,
 }
 
 impl FillKind {
@@ -31,7 +35,7 @@ impl FillKind {
         match self {
             FillKind::Crosshatch => 1.6,
             FillKind::Open => 1.2,
-            FillKind::Satin => 0.4,
+            FillKind::Satin | FillKind::Column => 0.4,
             _ => 0.45,
         }
     }
@@ -39,7 +43,7 @@ impl FillKind {
 
 /// Whether a fill sews closely enough to hide a travel run under it.
 pub fn covers(kind: FillKind, rows_mm: f32) -> bool {
-    matches!(kind, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Zigzag | FillKind::Contour) && rows_mm <= 0.8
+    matches!(kind, FillKind::Tatami | FillKind::Satin | FillKind::Wave | FillKind::Zigzag | FillKind::Contour | FillKind::Column | FillKind::Auto) && rows_mm <= 0.8
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -97,6 +101,8 @@ pub struct Settings {
     /// Fabric appliqué instead of a stitched background.
     pub patch_applique: bool,
     pub underlay: bool,
+    /// Widest part, in mm, that the Auto style still sews as a satin column.
+    pub column_max_mm: f32,
     pub edge: EdgeKind,
     pub edge_width_mm: f32,
     /// Janome thread numbers (1-based index into the JEF chart).
@@ -131,6 +137,7 @@ impl Default for Settings {
             patch_border_thread: 30,
             patch_applique: false,
             underlay: true,
+            column_max_mm: 7.0,
             edge: EdgeKind::Satin,
             edge_width_mm: 1.6,
             fill_thread: 42,
@@ -746,6 +753,11 @@ pub fn thickness(glyph: &[Contour], even_odd: bool) -> f32 {
 /// shape and, for wide fills, a sparse fill across the top rows, inset
 /// 0.5 mm so it never shows at the edges.
 pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
+    let kind = resolve(kind, glyph, even_odd, mask, s);
+    if kind == FillKind::Column {
+        // Columns lay their own underlay, branch by branch.
+        return;
+    }
     // The fill covers underlay, so its travel may cross anything inside.
     if let Some(r) = &mut st.region {
         r.strict = false;
@@ -769,9 +781,23 @@ pub fn fill_glyph(st: &mut Stitcher, glyph: &[Contour], kind: FillKind, angle: f
 
 /// Fills a shape with rows. `mask` holds shapes stacked on top, whose area is
 /// left unstitched so layers don't pile up.
+/// The style a shape really gets: Auto becomes a column when the shape's
+/// widest part fits a satin stitch, tatami otherwise.
+pub fn resolve(kind: FillKind, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], s: &Settings) -> FillKind {
+    if kind != FillKind::Auto {
+        return kind;
+    }
+    if crate::column::widest(glyph, even_odd, mask) <= s.column_max_mm * 10.0 { FillKind::Column } else { FillKind::Tatami }
+}
+
 pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
     if let Some(r) = &mut st.region {
         r.clear_sewn();
+    }
+    let kind = resolve(kind, glyph, even_odd, mask, s);
+    if kind == FillKind::Column {
+        crate::column::column_fill(st, glyph, even_odd, mask, s);
+        return;
     }
     if kind == FillKind::Contour {
         contour_fill(st, glyph, even_odd, mask, s);
@@ -948,6 +974,14 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
             }
         }
     }
+}
+
+/// The laid-out letter outlines, as `generate` stitches them.
+#[cfg(test)]
+pub(crate) fn outlines(font: &FontSource, s: &Settings) -> Vec<Vec<Contour>> {
+    let (bytes, index) = font.bytes().unwrap();
+    let face = ttf_parser::Face::parse(&bytes, index).unwrap();
+    layout(&face, s)
 }
 
 pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
@@ -1228,7 +1262,10 @@ mod samples {
         let fonts = bundled_fonts();
         let cases: Vec<(String, usize, Settings)> = vec![
             ("contour".into(), 0, Settings { text: "GO".into(), height_mm: 45.0, fill: FillKind::Contour, density_mm: 0.5, edge: EdgeKind::None, ..Default::default() }),
+            ("column".into(), std::env::var("F").ok().and_then(|v| v.parse().ok()).unwrap_or(0), Settings { text: std::env::var("HOOP_TEXT").unwrap_or("Bremen".into()), height_mm: std::env::var("HOOP_H").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0), fill: FillKind::Column, density_mm: 0.4, edge: EdgeKind::None, ..Default::default() }),
         ];
+        let only = std::env::var("HOOP_CASE").ok();
+        let cases: Vec<_> = cases.into_iter().filter(|c| only.as_ref().is_none_or(|o| *o == c.0)).collect();
         for (name, font, s) in cases {
             let p = generate(&fonts[font], &s).unwrap();
             let threads: Vec<i32> = p.threads.iter().map(|t| formats::nearest_jef(t.color)).collect();
@@ -1365,7 +1402,7 @@ fn contour_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Ma
 
 /// One dimension of the squared Euclidean distance transform: `out[q]` is the
 /// smallest `(q - p)² + f[p]`.
-fn edt_1d(f: &[f32], out: &mut [f32]) {
+pub(crate) fn edt_1d(f: &[f32], out: &mut [f32]) {
     let n = f.len();
     let mut v = vec![0usize; n];
     let mut z = vec![0.0f32; n + 1];

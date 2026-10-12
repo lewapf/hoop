@@ -821,7 +821,7 @@ impl HoopApp {
             let mut look = first;
             egui::ComboBox::from_id_salt("shape-look").selected_text(if same { name(first) } else { "Mixed".into() }).width(ui.available_width()).show_ui(ui, |ui| {
                 ui.selectable_value(&mut look, None, "Thread's look").on_hover_text("Whatever the Threads tab sets for this color");
-                for k in [FillKind::Tatami, FillKind::Satin, FillKind::Contour, FillKind::Wave, FillKind::Open] {
+                for k in [FillKind::Auto, FillKind::Column, FillKind::Tatami, FillKind::Satin, FillKind::Contour, FillKind::Wave, FillKind::Open] {
                     ui.selectable_value(&mut look, Some(Look::Fill(k)), format!("{k:?}"));
                 }
                 ui.selectable_value(&mut look, Some(Look::Outline), "Outline").on_hover_text("Only the outline: for thin shapes");

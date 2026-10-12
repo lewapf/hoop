@@ -160,6 +160,9 @@ impl Tuning {
         if let Some(p) = self.pull {
             s.pull_mm = p;
         }
+        if let Some(m) = self.satin_max {
+            s.column_max_mm = m;
+        }
     }
 }
 

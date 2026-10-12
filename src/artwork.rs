@@ -372,7 +372,7 @@ impl ArtSettings {
         let width_mm = if (20.0..=180.0).contains(&width) { width.round() } else { 80.0 };
         ArtSettings {
             width_mm,
-            style: Settings { edge: EdgeKind::None, underlay: true, fill_angle: 45.0, ..Default::default() },
+            style: Settings { fill: FillKind::Auto, edge: EdgeKind::None, underlay: true, fill_angle: 45.0, ..Default::default() },
             knockout: true,
             min_detail_mm: 1.0,
             stroke: EdgeKind::Satin,
@@ -1175,6 +1175,7 @@ mod tests {
     fn a_thread_can_be_outline_only() {
         let art = parse("logo.svg", LOGO.as_bytes()).unwrap();
         let mut s = ArtSettings::for_artwork(&art);
+        s.style.fill = FillKind::Tatami;
         s.stroke = EdgeKind::None;
         let filled = generate(&art, &s).unwrap().blocks()[0].stitches;
         s.layers[1].look = Look::Outline;
@@ -1262,7 +1263,10 @@ mod samples {
         let (Some(out), Some(list)) = (std::env::var_os("HOOP_OUT"), std::env::var("HOOP_SVGS").ok()) else { return };
         for path in list.split(':') {
             let art = load(Path::new(path)).unwrap();
-            let s = ArtSettings::for_artwork(&art);
+            let mut s = ArtSettings::for_artwork(&art);
+            if std::env::var("HOOP_FILL").is_ok_and(|f| f == "auto") {
+                s.style.fill = FillKind::Auto;
+            }
             let t = std::time::Instant::now();
             let p = generate(&art, &s).unwrap();
             eprintln!("{path}: {} layers, {} threads, {} stitches, {:?}", art.layers.len(), p.threads.len(), p.count(Cmd::Stitch), t.elapsed());
