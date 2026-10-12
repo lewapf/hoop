@@ -2483,11 +2483,12 @@ fn thread_menu(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug + C
 /// Fill style picker: tiles with a small drawing of each pattern.
 fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
     use egui::{Pos2, Shape, Stroke, pos2};
-    const STYLES: [(FillKind, &str); 12] = [
+    const STYLES: [(FillKind, &str); 15] = [
         (FillKind::Auto, n!("Auto")), (FillKind::Column, n!("Column")), (FillKind::Tatami, n!("Tatami")),
         (FillKind::Satin, n!("Satin")), (FillKind::Contour, n!("Contour")), (FillKind::Wave, n!("Wave")),
         (FillKind::Zigzag, n!("Zigzag")), (FillKind::Crosshatch, n!("Hatch")), (FillKind::Gradient, n!("Gradient")),
-        (FillKind::Open, n!("Open")), (FillKind::None, n!("None")), (FillKind::None, ""),
+        (FillKind::Open, n!("Open")), (FillKind::Stipple, n!("Stipple")), (FillKind::Cross, n!("Cross-stitch")),
+        (FillKind::None, n!("None")), (FillKind::None, ""), (FillKind::None, ""),
     ];
     let w = (ui.available_width() - 12.0) / 3.0;
     for row in STYLES.chunks(3) {
@@ -2565,6 +2566,31 @@ fn fill_tiles(ui: &mut egui::Ui, value: &mut FillKind, accent: Color32) {
                     }
                     FillKind::None => {
                         line(pos2(l + 6.0, bt - 4.0), pos2(r - 6.0, t + 4.0), 1.2);
+                    }
+                    FillKind::Stipple => {
+                        // A wandering line.
+                        let pts: Vec<Pos2> = (0..=120)
+                            .map(|i| {
+                                let u = i as f32 / 120.0;
+                                let x = l + (r - l) * u;
+                                let y = (t + bt) / 2.0 + (bt - t) * 0.42 * ((u * 23.0).sin() * 0.6 + (u * 9.0 + 1.0).cos() * 0.4);
+                                pos2(x + 4.0 * (u * 40.0).sin(), y)
+                            })
+                            .collect();
+                        p.add(Shape::line(pts, Stroke::new(1.1, ink)));
+                    }
+                    FillKind::Cross => {
+                        let step = 7.0;
+                        let mut y = t + 1.0;
+                        while y + step <= bt {
+                            let mut x = l + 2.0;
+                            while x + step <= r {
+                                line(pos2(x, y), pos2(x + step, y + step), 1.0);
+                                line(pos2(x + step, y), pos2(x, y + step), 1.0);
+                                x += step + 1.0;
+                            }
+                            y += step + 1.0;
+                        }
                     }
                     FillKind::Column | FillKind::Auto => {
                         // A curved band sewn with stitches square to it; Auto
@@ -2735,11 +2761,17 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
         if with_thread {
             jef_picker(ui, "fill", &mut s.fill_thread);
         }
-        if !matches!(s.fill, FillKind::Contour | FillKind::Column) {
+        if !matches!(s.fill, FillKind::Contour | FillKind::Column | FillKind::Stipple | FillKind::Cross) {
             slider_row(ui, t!("Angle"), &mut s.fill_angle, 0.0..=180.0, "°", 0).on_hover_text(t!("Direction of the stitch rows"));
         }
         if matches!(s.fill, FillKind::Crosshatch | FillKind::Open | FillKind::Gradient) {
             slider_row(ui, t!("Rows"), &mut s.density_mm, 0.25..=3.0, " mm", 2).on_hover_text(t!("Distance between fill rows"));
+        }
+        if s.fill == FillKind::Stipple {
+            slider_row(ui, t!("Spacing"), &mut s.density_mm, 1.0..=6.0, " mm", 1).on_hover_text(t!("Distance between the meandering lines"));
+        }
+        if s.fill == FillKind::Cross {
+            slider_row(ui, t!("Cell"), &mut s.density_mm, 1.5..=6.0, " mm", 1).on_hover_text(t!("Size of each cross"));
         }
         if s.fill == FillKind::Gradient {
             slider_row(ui, t!("Fade"), &mut s.fade_mm, 0.5..=6.0, " mm", 1).on_hover_text(t!("Row spacing at the light end"));
@@ -2755,6 +2787,8 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
             FillKind::Gradient => t!("Rows thin out across each shape. Turn the angle to set the direction."),
             FillKind::Contour => t!("Rings follow the outline inward. Lovely on round shapes and bold letters."),
             FillKind::Column => t!("Satin that turns with the shape, like hand-digitized lettering and borders. For parts up to about 7 mm wide."),
+            FillKind::Stipple => t!("A meandering line that never crosses itself. Quilting look; pair it with a triple outline."),
+            FillKind::Cross => t!("Hand-stitched look: an X in every cell. Use bigger cells on thick fabric."),
             FillKind::Auto => t!("Narrow parts become turning satin columns, wide parts tatami at this angle."),
             _ => "",
         };
@@ -2777,9 +2811,13 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
 fn edge_card(ui: &mut egui::Ui, s: &mut Settings, accent: Color32, title: &str, with_thread: bool) {
     card(ui, title, accent, |ui| {
         segmented(ui, &mut s.edge, &[(EdgeKind::Satin, t!("Satin")), (EdgeKind::Running, t!("Run")), (EdgeKind::Triple, t!("Triple")), (EdgeKind::None, t!("None"))], accent);
-        if s.edge == EdgeKind::Satin {
+        segmented(ui, &mut s.edge, &[(EdgeKind::Blanket, t!("Blanket")), (EdgeKind::Scallop, t!("Scallop"))], accent);
+        if matches!(s.edge, EdgeKind::Satin | EdgeKind::Blanket | EdgeKind::Scallop) {
             ui.add_space(4.0);
             slider_row(ui, t!("Width"), &mut s.edge_width_mm, 0.8..=5.0, " mm", 1);
+        }
+        if s.edge == EdgeKind::Blanket {
+            ui.label(RichText::new(t!("The classic appliqué edge: prongs reach into the shape.")).size(12.0).color(ui.visuals().weak_text_color()));
         }
         if with_thread && s.edge != EdgeKind::None {
             jef_picker(ui, "edge", &mut s.edge_thread);

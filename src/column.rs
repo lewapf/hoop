@@ -968,7 +968,18 @@ pub(crate) mod debug {
         let out = std::env::var("HOOP_OUT").unwrap_or_else(|_| "/tmp".into());
         let fonts = crate::lettering::bundled_fonts();
         let font = &fonts[std::env::var("F").ok().and_then(|v| v.parse().ok()).unwrap_or(0)];
-        let fill = match std::env::var("FILL").as_deref() { Ok("auto") => crate::lettering::FillKind::Auto, _ => crate::lettering::FillKind::Column };
+        let fill = match std::env::var("FILL").as_deref() {
+            Ok("auto") => crate::lettering::FillKind::Auto,
+            Ok("stipple") => crate::lettering::FillKind::Stipple,
+            Ok("cross") => crate::lettering::FillKind::Cross,
+            _ => crate::lettering::FillKind::Column,
+        };
+        let edge = match std::env::var("EDGE").as_deref() {
+            Ok("blanket") => crate::lettering::EdgeKind::Blanket,
+            Ok("scallop") => crate::lettering::EdgeKind::Scallop,
+            Ok("triple") => crate::lettering::EdgeKind::Triple,
+            _ => crate::lettering::EdgeKind::None,
+        };
         let shape = std::env::var("SHAPE").ok().and_then(|v| crate::lettering::TextShape::ALL.into_iter().find(|t| format!("{t:?}") == v)).unwrap_or(crate::lettering::TextShape::Straight);
         let s = Settings {
             text: std::env::var("T").unwrap_or("Be".into()).replace("\\n", "\n"),
@@ -977,7 +988,9 @@ pub(crate) mod debug {
             shape,
             envelope_mm: std::env::var("ENV").ok().and_then(|v| v.parse().ok()).unwrap_or(8.0),
             circle_mm: 70.0,
-            edge: crate::lettering::EdgeKind::None,
+            density_mm: std::env::var("ROWS").ok().and_then(|v| v.parse().ok()).unwrap_or(fill.default_rows_mm()),
+            edge_width_mm: 2.5,
+            edge,
             ..Settings::default()
         };
         let p = crate::lettering::generate(font, &s).unwrap();

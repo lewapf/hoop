@@ -23,6 +23,10 @@ pub enum FillKind {
     Gradient,
     Open,
     Contour,
+    /// A meandering line that never crosses itself, as in quilting.
+    Stipple,
+    /// An X in every cell of a grid.
+    Cross,
     /// Satin columns that turn with the shape.
     Column,
     /// Columns where the shape is narrow enough for satin, tatami elsewhere.
@@ -36,6 +40,8 @@ impl FillKind {
             FillKind::Crosshatch => 1.6,
             FillKind::Open => 1.2,
             FillKind::Satin | FillKind::Column => 0.4,
+            FillKind::Stipple => 2.0,
+            FillKind::Cross => 2.5,
             _ => 0.45,
         }
     }
@@ -53,6 +59,8 @@ pub fn fill_name(k: FillKind) -> &'static str {
         FillKind::Gradient => n!("Gradient"),
         FillKind::Open => n!("Open"),
         FillKind::Contour => n!("Contour"),
+        FillKind::Stipple => n!("Stipple"),
+        FillKind::Cross => n!("Cross-stitch"),
         FillKind::Column => n!("Column"),
         FillKind::Auto => n!("Auto"),
     }
@@ -139,6 +147,22 @@ pub enum EdgeKind {
     Running,
     Triple,
     Satin,
+    /// E-stitch: a run with short stitches into the shape, for appliqué.
+    Blanket,
+    /// Half circles along the edge.
+    Scallop,
+}
+
+/// Sews the edge style round one outline.
+pub fn edge_contour(st: &mut Stitcher, c: &Contour, s: &Settings) {
+    match s.edge {
+        EdgeKind::None => {}
+        EdgeKind::Running => run_contour(st, c, 25.0, false),
+        EdgeKind::Triple => run_contour(st, c, 25.0, true),
+        EdgeKind::Satin => satin_contour(st, c, s.edge_width_mm * 10.0),
+        EdgeKind::Blanket => crate::special::blanket_contour(st, c, s.edge_width_mm * 10.0),
+        EdgeKind::Scallop => crate::special::scallop_contour(st, c, s.edge_width_mm * 10.0, false),
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -920,8 +944,9 @@ pub fn thickness(glyph: &[Contour], even_odd: bool) -> f32 {
 /// 0.5 mm so it never shows at the edges.
 pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskShape], kind: FillKind, angle: f32, s: &Settings) {
     let kind = resolve(kind, glyph, even_odd, mask, s);
-    if kind == FillKind::Column {
-        // Columns lay their own underlay, branch by branch.
+    if matches!(kind, FillKind::Column | FillKind::Stipple | FillKind::Cross) {
+        // Columns lay their own underlay; stipple and cross-stitch are
+        // open, so an outline under them would show.
         return;
     }
     // The fill covers underlay, so its travel may cross anything inside.
@@ -961,9 +986,11 @@ pub fn fill_shape(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[
         r.clear_sewn();
     }
     let kind = resolve(kind, glyph, even_odd, mask, s);
-    if kind == FillKind::Column {
-        crate::column::column_fill(st, glyph, even_odd, mask, s);
-        return;
+    match kind {
+        FillKind::Column => return crate::column::column_fill(st, glyph, even_odd, mask, s),
+        FillKind::Stipple => return crate::special::stipple_fill(st, glyph, even_odd, mask, s),
+        FillKind::Cross => return crate::special::cross_fill(st, glyph, even_odd, mask, s),
+        _ => {}
     }
     if kind == FillKind::Contour {
         contour_fill(st, glyph, even_odd, mask, s);
@@ -1160,12 +1187,7 @@ pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
     let mut st = Stitcher::new();
     let edge = |st: &mut Stitcher, g: &[Contour]| {
         for c in g {
-            match s.edge {
-                EdgeKind::None => {}
-                EdgeKind::Running => run_contour(st, c, 25.0, false),
-                EdgeKind::Triple => run_contour(st, c, 25.0, true),
-                EdgeKind::Satin => satin_contour(st, c, s.edge_width_mm * 10.0),
-            }
+            edge_contour(st, c, s);
         }
     };
     let fill = |st: &mut Stitcher, g: &[Contour]| {

@@ -1012,12 +1012,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     }
                 }
                 for c in &contours {
-                    match st_ref.edge {
-                        EdgeKind::None => {}
-                        EdgeKind::Running => lettering::run_contour(&mut st, c, 25.0, false),
-                        EdgeKind::Triple => lettering::run_contour(&mut st, c, 25.0, true),
-                        EdgeKind::Satin => lettering::satin_contour(&mut st, c, st_ref.edge_width_mm * 10.0),
-                    }
+                    lettering::edge_contour(&mut st, c, st_ref);
                 }
                 st.region = None;
             }
@@ -1030,7 +1025,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     }
                     match s.stroke {
                         EdgeKind::None => {}
-                        EdgeKind::Running => lettering::run_path(&mut st, &line, 25.0, false),
+                        EdgeKind::Running | EdgeKind::Blanket | EdgeKind::Scallop => lettering::run_path(&mut st, &line, 25.0, false),
                         EdgeKind::Triple => lettering::run_path(&mut st, &line, 25.0, true),
                         EdgeKind::Satin => lettering::satin_path(&mut st, &line, w),
                     }

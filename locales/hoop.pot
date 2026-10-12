@@ -1568,6 +1568,12 @@ msgstr ""
 msgid "Gradient"
 msgstr ""
 
+msgid "Stipple"
+msgstr ""
+
+msgid "Cross-stitch"
+msgstr ""
+
 msgid "Thread"
 msgstr ""
 
@@ -1610,6 +1616,15 @@ msgstr ""
 msgid "Distance between fill rows"
 msgstr ""
 
+msgid "Distance between the meandering lines"
+msgstr ""
+
+msgid "Cell"
+msgstr ""
+
+msgid "Size of each cross"
+msgstr ""
+
 msgid "Fade"
 msgstr ""
 
@@ -1646,6 +1661,12 @@ msgstr ""
 msgid "Satin that turns with the shape, like hand-digitized lettering and borders. For parts up to about 7 mm wide."
 msgstr ""
 
+msgid "A meandering line that never crosses itself. Quilting look; pair it with a triple outline."
+msgstr ""
+
+msgid "Hand-stitched look: an X in every cell. Use bigger cells on thick fabric."
+msgstr ""
+
 msgid "Narrow parts become turning satin columns, wide parts tatami at this angle."
 msgstr ""
 
@@ -1668,6 +1689,15 @@ msgid "Underlay outline"
 msgstr ""
 
 msgid "A running stitch around each shape first, to hold the fabric"
+msgstr ""
+
+msgid "Blanket"
+msgstr ""
+
+msgid "Scallop"
+msgstr ""
+
+msgid "The classic appliqué edge: prongs reach into the shape."
 msgstr ""
 
 msgid "Line"

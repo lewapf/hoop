@@ -212,6 +212,8 @@ pub fn fill_kind(v: &str) -> Option<FillKind> {
         "Open" => FillKind::Open,
         "Contour" => FillKind::Contour,
         "Column" => FillKind::Column,
+        "Stipple" => FillKind::Stipple,
+        "Cross" => FillKind::Cross,
         "Auto" => FillKind::Auto,
         _ => return None,
     })
@@ -222,6 +224,8 @@ pub fn edge_kind(v: &str) -> Option<EdgeKind> {
         "None" => EdgeKind::None,
         "Running" => EdgeKind::Running,
         "Triple" => EdgeKind::Triple,
+        "Blanket" => EdgeKind::Blanket,
+        "Scallop" => EdgeKind::Scallop,
         "Satin" => EdgeKind::Satin,
         _ => return None,
     })

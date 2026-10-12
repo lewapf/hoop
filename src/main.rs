@@ -12,6 +12,7 @@ mod lettering;
 mod library;
 mod prefs;
 mod route;
+mod special;
 mod theme;
 mod trace;
 mod testsew;
