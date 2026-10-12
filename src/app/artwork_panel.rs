@@ -264,17 +264,19 @@ impl HoopApp {
                         // leave the fabric showing instead of sewing it.
                         let fabric_like = members.iter().all(|&i| crate::threads::distance(art.layers[i].color, fabric) < 8.0);
                         let is_hole = members.iter().all(|&i| s.layers[i].look == Look::Hole);
-                        if fabric_like && on && !is_hole && !members.iter().any(|&i| art.layers[i].background) {
-                            if ui
+                        if fabric_like
+                            && on
+                            && !is_hole
+                            && !members.iter().any(|&i| art.layers[i].background)
+                            && ui
                                 .small_button(t!("Leave fabric?"))
                                 .on_hover_text(t!(
                                     "This color matches the fabric. Leave the fabric showing here instead of sewing it, and don't sew shapes below through it."
                                 ))
                                 .clicked()
-                            {
-                                for &i in members {
-                                    s.layers[i].look = Look::Hole;
-                                }
+                        {
+                            for &i in members {
+                                s.layers[i].look = Look::Hole;
                             }
                         }
                         if members.iter().any(|&i| art.layers[i].background) {
