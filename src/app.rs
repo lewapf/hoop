@@ -10,6 +10,7 @@ use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
 
 mod checks;
+mod draw;
 mod hoopings;
 mod library;
 mod shapes;
@@ -264,6 +265,8 @@ pub struct HoopApp {
     tools: tools::Tools,
     hoopings: hoopings::Hoopings,
     stitch_edit: stitchedit::StitchEdit,
+    backdrop: Option<draw::Backdrop>,
+    pen: draw::Pen,
 }
 
 impl HoopApp {
@@ -347,6 +350,8 @@ impl HoopApp {
             tools: Default::default(),
             hoopings: Default::default(),
             stitch_edit: Default::default(),
+            backdrop: None,
+            pen: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -365,13 +370,17 @@ impl HoopApp {
         if let Some(path) = file {
             app.open(&cc.egui_ctx, &path);
         }
-        app.debug_start();
+        app.debug_start(&cc.egui_ctx);
         app
     }
 
     /// For screenshots in tests: HOOP_MODE=viewer|lettering|artwork and
     /// HOOP_TAB=<tab label> pick what the window opens on.
-    fn debug_start(&mut self) {
+    fn debug_start(&mut self, ctx: &egui::Context) {
+        if let Ok(p) = std::env::var("HOOP_BACKDROP") {
+            self.load_backdrop(ctx, std::path::Path::new(&p));
+            self.pen.on = true;
+        }
         if let Ok(m) = std::env::var("HOOP_MODE") {
             match m.as_str() {
                 "lettering" => self.set_mode(Mode::Lettering),
@@ -1191,7 +1200,7 @@ impl HoopApp {
         let frame = Frame { painter: &painter, rect, view: self.view };
 
         // Drawing the test area takes over the pointer until it is done.
-        let picking = self.test_area_input(ui, &response, &frame) || self.tool_input(ui, &response, &frame) || self.stitch_edit_input(ui, &response, &frame);
+        let picking = self.test_area_input(ui, &response, &frame) || self.tool_input(ui, &response, &frame) || self.stitch_edit_input(ui, &response, &frame) || self.pen_input(ui, &response, &frame);
         // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
         let handled_double = !picking && self.shape_input(ui, &response, &frame);
         let hover_shape = if picking { None } else { self.shape_hover(ui, &response, &frame) };
@@ -1262,6 +1271,7 @@ impl HoopApp {
         canvas::draw_fabric(&frame, self.fabric, weave);
         let hoop = HOOPS[self.setup.hoop];
         canvas::draw_hoop(&frame, hoop.w * 10.0, hoop.h * 10.0, &t!("{name}  {w} × {h} mm", name = hoop.name, w = hoop.w, h = hoop.h), self.fabric, self.grid);
+        self.draw_backdrop(&painter, &frame);
 
         let pinned_style = DesignStyle { textured: self.textured, show_jumps: false, focus: None, fabric: self.fabric };
         let identity = Transform::new((0.0, 0.0, 0.0, 0.0), &Placement::default());
@@ -1321,6 +1331,7 @@ impl HoopApp {
         self.tool_overlay(&painter, &frame);
         self.hoopings_overlay(&painter, &frame);
         self.stitch_edit_overlay(&painter, &frame);
+        self.pen_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 
@@ -1764,6 +1775,9 @@ impl HoopApp {
                 self.pending_retrace = false;
                 self.retrace(false);
             }
+        }
+        if tab == Tab::Source {
+            self.draw_card(ui);
         }
         let hoop = self.hoop_size();
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };

@@ -7,7 +7,7 @@ use crate::lettering::FillKind;
 
 /// Artwork user units to stitch units to hoop coordinates and back.
 #[derive(Clone, Copy)]
-pub(super) struct ShapeMap {
+pub struct ShapeMap {
     pub scale: f32,
     pub mid: (f32, f32),
     pub t: Transform,

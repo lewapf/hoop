@@ -68,6 +68,42 @@ msgstr ""
 msgid "too much"
 msgstr ""
 
+msgid "Couldn't open the picture: {e}."
+msgstr ""
+
+msgid "Drawn shape {n}"
+msgstr ""
+
+msgid "Drawn line {n}"
+msgstr ""
+
+msgid "Click for a corner, drag for a curve · click the first point to close · Enter ends a line · Esc stops"
+msgstr ""
+
+msgid "Draw"
+msgstr ""
+
+msgid "Trace a picture by hand: put it behind the hoop, then draw shapes over it with the pen."
+msgstr ""
+
+msgid "Backdrop picture…"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "How strongly the picture shows"
+msgstr ""
+
+msgid "Pen"
+msgstr ""
+
+msgid "Draw a shape or line point by point"
+msgstr ""
+
+msgid "Pictures"
+msgstr ""
+
 msgid "Split into hoopings"
 msgstr ""
 
@@ -1202,9 +1238,6 @@ msgid "Pin this design to the hoop, then make or open the next part, like a name
 msgstr ""
 
 msgid "{v0:.0} × {v1:.0} mm"
-msgstr ""
-
-msgid "Remove"
 msgstr ""
 
 msgid "P · keep this design where it is and start the next part"

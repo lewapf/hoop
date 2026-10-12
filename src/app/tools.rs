@@ -101,7 +101,7 @@ impl HoopApp {
                 ShapeTool::Angle => t!("Drag across the shape in the direction the stitches should run · Esc to stop"),
                 ShapeTool::Entry => t!("Click where the needle should start this shape · Esc to stop"),
             };
-            let galley = painter.layout_no_wrap(tip.into(), egui::FontId::proportional(14.0), Color32::WHITE);
+            let galley = painter.layout(tip.into(), egui::FontId::proportional(14.0), Color32::WHITE, frame.rect.width() - 80.0);
             let pos = frame.rect.center_top() + vec2(-galley.size().x / 2.0, 16.0);
             painter.rect_filled(egui::Rect::from_min_size(pos - vec2(14.0, 8.0), galley.size() + vec2(28.0, 16.0)), 8, Color32::from_black_alpha(190));
             painter.galley(pos, galley, Color32::WHITE);
