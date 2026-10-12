@@ -100,6 +100,9 @@ bin/test       # cargo test
 bin/install    # makepkg -fsi (needs a terminal for sudo)
 ```
 
+Before committing: `cargo fmt` (rustfmt.toml: 160 columns) and
+`cargo clippy --release --all-targets`, which is kept warning-free.
+
 Agents can't type the sudo password. What worked:
 
 ```sh
