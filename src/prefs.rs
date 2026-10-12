@@ -113,6 +113,7 @@ impl Prefs {
         self.set("letter.edge", format!("{:?}", s.edge));
         self.set("letter.align", format!("{:?}", s.align));
         self.set("letter.underlay", s.underlay);
+        self.set("letter.underlay_kind", format!("{:?}", s.underlay_kind));
         self.set("letter.fill_thread", s.fill_thread);
         self.set("letter.edge_thread", s.edge_thread);
         self.set("letter.patch", format!("{:?}", s.patch));
@@ -187,6 +188,9 @@ impl Prefs {
             Some("Right") => Align::Right,
             _ => Align::Center,
         };
+        if let Some(k) = self.get("letter.underlay_kind").and_then(|v| crate::lettering::Underlay::ALL.into_iter().find(|u| format!("{u:?}") == v)) {
+            s.underlay_kind = k;
+        }
         if let Some(v) = self.num("letter.underlay") {
             s.underlay = v;
         }

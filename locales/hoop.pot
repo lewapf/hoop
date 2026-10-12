@@ -1598,10 +1598,40 @@ msgstr ""
 msgid "Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile."
 msgstr ""
 
+msgid "Fleece"
+msgstr ""
+
+msgid "Fleece: cut-away stabilizer below, water-soluble topping on top."
+msgstr ""
+
+msgid "Felt"
+msgstr ""
+
+msgid "Felt barely moves; light underlay keeps it flat. No stabilizer needed for patches."
+msgstr ""
+
+msgid "Leather"
+msgstr ""
+
+msgid "Leather and vinyl: every hole stays, so fewer, longer stitches and a leather needle."
+msgstr ""
+
+msgid "Silk"
+msgstr ""
+
+msgid "Silk and thin fabric: a fine needle, light fills and a soft tear-away or wash-away."
+msgstr ""
+
+msgid "Cap"
+msgstr ""
+
+msgid "Caps and stiff canvas: sew from the center out; zigzag underlay helps on the curve."
+msgstr ""
+
 msgid "Fabric"
 msgstr ""
 
-msgid "Sets row spacing, pull and stitch length for the material."
+msgid "Sets row spacing, pull, stitch length and underlay for the material."
 msgstr ""
 
 msgid "Angle"
@@ -1685,10 +1715,10 @@ msgstr ""
 msgid "Stitches pull the fabric in, so rows are made this much longer at each end"
 msgstr ""
 
-msgid "Underlay outline"
+msgid "Underlay"
 msgstr ""
 
-msgid "A running stitch around each shape first, to hold the fabric"
+msgid "Stitches under the fill that hold the fabric and lift the top stitches"
 msgstr ""
 
 msgid "Blanket"
@@ -1914,6 +1944,12 @@ msgid "Optional"
 msgstr ""
 
 msgid "Free arm"
+msgstr ""
+
+msgid "Edge run"
+msgstr ""
+
+msgid "Double zigzag"
 msgstr ""
 
 msgid "Straight"

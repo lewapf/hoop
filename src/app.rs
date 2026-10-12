@@ -2714,11 +2714,19 @@ fn load_ui_font(ctx: &egui::Context) {
 
 /// Fabrics and how they change the stitching: (name, extra row spacing in
 /// mm, pull compensation, stitch length, advice shown when picked).
-const FABRICS_SEW: [(&str, f32, f32, f32, &str); 4] = [
-    (n!("Woven"), 0.0, 0.2, 3.5, n!("Woven cotton: tear-away stabilizer is enough.")),
-    (n!("Knit"), 0.05, 0.35, 3.0, n!("T-shirts and knits: use cut-away stabilizer and hoop without stretching.")),
-    (n!("Denim"), 0.0, 0.15, 4.0, n!("Denim and canvas: tear-away stabilizer, a size 90 needle.")),
-    (n!("Towel"), -0.05, 0.3, 3.0, n!("Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile.")),
+/// Fabric presets, like a digitizing program's fabric assistant: name,
+/// change to the style's row spacing, pull compensation, stitch length,
+/// underlay, and advice.
+const FABRICS_SEW: [(&str, f32, f32, f32, lettering::Underlay, &str); 9] = [
+    (n!("Woven"), 0.0, 0.2, 3.5, lettering::Underlay::Auto, n!("Woven cotton: tear-away stabilizer is enough.")),
+    (n!("Knit"), 0.05, 0.35, 3.0, lettering::Underlay::Tatami, n!("T-shirts and knits: use cut-away stabilizer and hoop without stretching.")),
+    (n!("Denim"), 0.0, 0.15, 4.0, lettering::Underlay::Auto, n!("Denim and canvas: tear-away stabilizer, a size 90 needle.")),
+    (n!("Towel"), -0.05, 0.3, 3.0, lettering::Underlay::Double, n!("Towels and fleece: lay water-soluble topping on top so stitches don't sink into the pile.")),
+    (n!("Fleece"), -0.05, 0.35, 3.0, lettering::Underlay::Double, n!("Fleece: cut-away stabilizer below, water-soluble topping on top.")),
+    (n!("Felt"), 0.05, 0.1, 4.0, lettering::Underlay::Edge, n!("Felt barely moves; light underlay keeps it flat. No stabilizer needed for patches.")),
+    (n!("Leather"), 0.1, 0.1, 4.0, lettering::Underlay::Edge, n!("Leather and vinyl: every hole stays, so fewer, longer stitches and a leather needle.")),
+    (n!("Silk"), 0.05, 0.25, 2.5, lettering::Underlay::Edge, n!("Silk and thin fabric: a fine needle, light fills and a soft tear-away or wash-away.")),
+    (n!("Cap"), 0.0, 0.3, 3.5, lettering::Underlay::Zigzag, n!("Caps and stiff canvas: sew from the center out; zigzag underlay helps on the curve.")),
 ];
 
 /// Quick fabric presets for the fill. Returns the advice for a picked one.
@@ -2726,16 +2734,17 @@ fn fabric_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32) -> Option<&'
     let mut tip = None;
     let accent = ui.visuals().selection.bg_fill;
     card(ui, t!("Fabric"), accent, |ui| {
-        ui.label(RichText::new(t!("Sets row spacing, pull and stitch length for the material.")).size(12.0).color(muted));
+        ui.label(RichText::new(t!("Sets row spacing, pull, stitch length and underlay for the material.")).size(12.0).color(muted));
         let base = s.fill.default_rows_mm();
-        ui.horizontal(|ui| {
-            for (name, rows, pull, len, advice) in FABRICS_SEW {
-                let on = (s.density_mm - (base + rows)).abs() < 0.001 && (s.pull_mm - pull).abs() < 0.001 && (s.stitch_mm - len).abs() < 0.001;
+        ui.horizontal_wrapped(|ui| {
+            for (name, rows, pull, len, under, advice) in FABRICS_SEW {
+                let on = (s.density_mm - (base + rows)).abs() < 0.001 && (s.pull_mm - pull).abs() < 0.001 && (s.stitch_mm - len).abs() < 0.001 && s.underlay_kind == under;
                 if ui.selectable_label(on, crate::i18n::tr(name)).on_hover_text(crate::i18n::tr(advice)).clicked() {
                     s.density_mm = base + rows;
                     s.pull_mm = pull;
                     s.stitch_mm = len;
                     s.underlay = true;
+                    s.underlay_kind = under;
                     tip = Some(crate::i18n::tr(advice));
                 }
             }
@@ -2804,7 +2813,16 @@ fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, accent: Color3
             }
             slider_row(ui, t!("Pull"), &mut s.pull_mm, 0.0..=1.0, " mm", 2)
                 .on_hover_text(t!("Stitches pull the fabric in, so rows are made this much longer at each end"));
-            ui.checkbox(&mut s.underlay, t!("Underlay outline")).on_hover_text(t!("A running stitch around each shape first, to hold the fabric"));
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut s.underlay, t!("Underlay")).on_hover_text(t!("Stitches under the fill that hold the fabric and lift the top stitches"));
+                ui.add_enabled_ui(s.underlay, |ui| {
+                    egui::ComboBox::from_id_salt(("underlay", with_thread)).selected_text(crate::i18n::tr(s.underlay_kind.name())).width(ui.available_width() - 8.0).show_ui(ui, |ui| {
+                        for u in lettering::Underlay::ALL {
+                            ui.selectable_value(&mut s.underlay_kind, u, crate::i18n::tr(u.name()));
+                        }
+                    });
+                });
+            });
         });
     });
 }

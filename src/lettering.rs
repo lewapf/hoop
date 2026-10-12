@@ -80,6 +80,35 @@ pub enum PatchShape {
     Circle,
 }
 
+/// What is sewn under a fill to hold the fabric and lift the top stitches.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Underlay {
+    /// Edge run, plus a sparse tatami across wide shapes.
+    Auto,
+    /// A running stitch just inside the outline.
+    Edge,
+    /// Edge run and a sparse tatami at right angles to the fill.
+    Tatami,
+    /// Edge run and a loose zigzag across the shape.
+    Zigzag,
+    /// Edge run and two loose zigzags crossing each other, for pile fabrics.
+    Double,
+}
+
+impl Underlay {
+    pub const ALL: [Underlay; 5] = [Underlay::Auto, Underlay::Edge, Underlay::Tatami, Underlay::Zigzag, Underlay::Double];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Underlay::Auto => n!("Auto"),
+            Underlay::Edge => n!("Edge run"),
+            Underlay::Tatami => n!("Tatami"),
+            Underlay::Zigzag => n!("Zigzag"),
+            Underlay::Double => n!("Double zigzag"),
+        }
+    }
+}
+
 /// The line the text sits on, or the envelope it is bent into.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TextShape {
@@ -201,6 +230,7 @@ pub struct Settings {
     /// Fabric appliqué instead of a stitched background.
     pub patch_applique: bool,
     pub underlay: bool,
+    pub underlay_kind: Underlay,
     /// Widest part, in mm, that the Auto style still sews as a satin column.
     pub column_max_mm: f32,
     pub edge: EdgeKind,
@@ -240,6 +270,7 @@ impl Default for Settings {
             patch_border_thread: 30,
             patch_applique: false,
             underlay: true,
+            underlay_kind: Underlay::Auto,
             column_max_mm: 7.0,
             edge: EdgeKind::Satin,
             edge_width_mm: 1.6,
@@ -956,10 +987,21 @@ pub fn underlay(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[Ma
     for c in glyph {
         run_contour(st, c, 25.0, false);
     }
-    let sparse = !matches!(kind, FillKind::Satin | FillKind::Open | FillKind::Crosshatch | FillKind::None);
-    if sparse && thickness(glyph, even_odd) > 30.0 {
-        let u = Settings { density_mm: 2.5, stitch_mm: 3.0, pull_mm: -0.5, ..s.clone() };
-        fill_shape(st, glyph, even_odd, mask, FillKind::Tatami, angle + 90.0, &u);
+    let thick = thickness(glyph, even_odd) > 30.0;
+    let open = matches!(kind, FillKind::Open | FillKind::Crosshatch | FillKind::None);
+    let pass = |st: &mut Stitcher, k: FillKind, a: f32, rows: f32| {
+        let u = Settings { density_mm: rows, stitch_mm: 3.0, pull_mm: -0.5, ..s.clone() };
+        fill_shape(st, glyph, even_odd, mask, k, a, &u);
+    };
+    match s.underlay_kind {
+        Underlay::Auto if !open && kind != FillKind::Satin && thick => pass(st, FillKind::Tatami, angle + 90.0, 2.5),
+        Underlay::Tatami if !open => pass(st, FillKind::Tatami, angle + 90.0, 2.5),
+        Underlay::Zigzag if !open => pass(st, FillKind::Satin, angle + 90.0, 2.0),
+        Underlay::Double if !open => {
+            pass(st, FillKind::Satin, angle + 45.0, 2.2);
+            pass(st, FillKind::Satin, angle - 45.0, 2.2);
+        }
+        _ => {}
     }
     if let Some(r) = &mut st.region {
         r.strict = true;

@@ -700,7 +700,11 @@ pub fn column_fill(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &
         if r.len() < 2 {
             continue;
         }
-        let wide = r.iter().map(|w| w.left + w.right).sum::<f32>() / r.len() as f32 > 45.0;
+        let wide = match s.underlay_kind {
+            lettering::Underlay::Edge => false,
+            lettering::Underlay::Zigzag | lettering::Underlay::Double | lettering::Underlay::Tatami => true,
+            lettering::Underlay::Auto => r.iter().map(|w| w.left + w.right).sum::<f32>() / r.len() as f32 > 45.0,
+        };
         let centers: Vec<Pt> = r.iter().map(|w| w.c).collect();
         if s.underlay {
             // Center run there, then (when wide) a loose zigzag back.
