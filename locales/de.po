@@ -2597,3 +2597,41 @@ msgstr "Speichern · USB · PDF"
 
 msgid "Hoop — free, for your Janome"
 msgstr "Hoop – kostenlos, für deine Janome"
+
+msgid "fill"
+msgstr "Füllung"
+
+msgid "line"
+msgstr "Linie"
+
+msgid "added"
+msgstr "hinzugefügt"
+
+msgid "edited"
+msgstr "bearbeitet"
+
+msgid "moved"
+msgstr "verschoben"
+
+msgid "own style"
+msgstr "eigener Stil"
+
+msgid "Changes below give the picked shapes their own style. The rest keep the drawing's style."
+msgstr "Änderungen unten geben den gewählten Formen einen eigenen Stil. Die übrigen behalten den Stil der Zeichnung."
+
+msgid "The picked shapes have their own style. Deselect (Esc) to change the drawing's style."
+msgstr "Die gewählten Formen haben einen eigenen Stil. Auswahl aufheben (Esc), um den Stil der Zeichnung zu ändern."
+
+msgid "Use the drawing's style"
+msgstr "Stil der Zeichnung verwenden"
+
+msgid "Drop the picked shapes' own style"
+msgstr "Den eigenen Stil der gewählten Formen entfernen"
+
+msgid "Clean-up and line settings apply to the whole drawing."
+msgstr "Aufräumen und Linieneinstellungen gelten für die ganze Zeichnung."
+
+msgid "{n} picked shape"
+msgid_plural "{n} picked shapes"
+msgstr[0] "{n} gewählte Form"
+msgstr[1] "{n} gewählte Formen"

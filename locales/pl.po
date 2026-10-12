@@ -2620,3 +2620,42 @@ msgstr "Zapis · USB · PDF"
 
 msgid "Hoop — free, for your Janome"
 msgstr "Hoop – za darmo, dla twojej Janome"
+
+msgid "fill"
+msgstr "wypełn."
+
+msgid "line"
+msgstr "linia"
+
+msgid "added"
+msgstr "dodany"
+
+msgid "edited"
+msgstr "zmieniony"
+
+msgid "moved"
+msgstr "przesunięty"
+
+msgid "own style"
+msgstr "własny styl"
+
+msgid "Changes below give the picked shapes their own style. The rest keep the drawing's style."
+msgstr "Zmiany poniżej dają zaznaczonym kształtom własny styl. Pozostałe zachowują styl rysunku."
+
+msgid "The picked shapes have their own style. Deselect (Esc) to change the drawing's style."
+msgstr "Zaznaczone kształty mają własny styl. Odznacz (Esc), aby zmienić styl całego rysunku."
+
+msgid "Use the drawing's style"
+msgstr "Użyj stylu rysunku"
+
+msgid "Drop the picked shapes' own style"
+msgstr "Usuń własny styl zaznaczonych kształtów"
+
+msgid "Clean-up and line settings apply to the whole drawing."
+msgstr "Porządki i ustawienia linii dotyczą całego rysunku."
+
+msgid "{n} picked shape"
+msgid_plural "{n} picked shapes"
+msgstr[0] "{n} zaznaczony kształt"
+msgstr[1] "{n} zaznaczone kształty"
+msgstr[2] "{n} zaznaczonych kształtów"

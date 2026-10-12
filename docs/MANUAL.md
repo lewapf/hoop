@@ -124,8 +124,11 @@ clip art work best; photos do not.
     - **Set start point:** click where the needle should enter.
   - Arrange, align, recolor, choose a look per shape, transform, and
     edit points.
-- **Style page:** fill and edge styles for the whole artwork, plus
-  clean-up (cut hidden parts, drop tiny details).
+- **Style page:** with nothing picked, fill and edge styles for the whole
+  artwork, plus clean-up (cut hidden parts, drop tiny details). With
+  shapes picked, the fill and edge settings apply to just those shapes,
+  which then keep their own style (tagged "own style" in Objects). **Use
+  the drawing's style** puts them back.
 - **Threads page:** one Janome thread per drawing color. Turn colors off,
   give a color a different look (outline, appliqué, a fill style), merge
   colors down to fewer threads.

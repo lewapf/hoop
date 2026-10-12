@@ -188,6 +188,7 @@ impl HoopApp {
             rotate: 0.0,
             angles: Vec::new(),
             entry: None,
+            style: None,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;

@@ -307,20 +307,60 @@ impl HoopApp {
         if tab != Tab::Style {
             return;
         }
-        card(ui, t!("Quick styles"), accent, |ui| {
-            if let Some(i) = preset_chips(ui, &artwork::PRESETS.map(|p| (p.0, p.1))) {
-                (artwork::PRESETS[i].2)(s);
+        // With shapes picked, the style cards edit just those shapes;
+        // otherwise the drawing's style, which every other shape follows.
+        let picked: Vec<usize> = self.sel.iter().copied().filter(|&i| i < s.shapes.len()).collect();
+        if picked.is_empty() {
+            card(ui, t!("Quick styles"), accent, |ui| {
+                if let Some(i) = preset_chips(ui, &artwork::PRESETS.map(|p| (p.0, p.1))) {
+                    (artwork::PRESETS[i].2)(s);
+                }
+            });
+            if let Some(tip) = fabric_card(ui, &mut s.style, muted) {
+                self.status = Some((tip.to_string(), std::time::Instant::now()));
             }
-        });
-        if let Some(tip) = fabric_card(ui, &mut s.style, muted) {
-            self.status = Some((tip.to_string(), std::time::Instant::now()));
+            fill_card(ui, &mut s.style, muted, accent, false);
+        } else {
+            let own = picked.iter().filter(|&&i| s.shapes[i].style.is_some()).count();
+            let mut shared = false;
+            card(ui, &tn!(picked.len(), "{n} picked shape", "{n} picked shapes"), accent, |ui| {
+                let note = if own == 0 {
+                    t!("Changes below give the picked shapes their own style. The rest keep the drawing's style.")
+                } else {
+                    t!("The picked shapes have their own style. Deselect (Esc) to change the drawing's style.")
+                };
+                ui.label(RichText::new(note).size(12.0).color(muted));
+                if own > 0 && ui.button(t!("Use the drawing's style")).on_hover_text(t!("Drop the picked shapes' own style")).clicked() {
+                    shared = true;
+                }
+            });
+            if shared {
+                for &i in &picked {
+                    s.shapes[i].style = None;
+                }
+            }
+            let first = picked[0];
+            let mut st = s.shapes[first].style.clone().unwrap_or_else(|| s.style.clone());
+            let before = st.clone();
+            if let Some(tip) = fabric_card(ui, &mut st, muted) {
+                self.status = Some((tip.to_string(), std::time::Instant::now()));
+            }
+            fill_card(ui, &mut st, muted, accent, false);
+            edge_card(ui, &mut st, accent, t!("Outline on fills"), false);
+            if st != before {
+                for &i in &picked {
+                    s.shapes[i].style = Some(st.clone());
+                }
+            }
+            ui.label(RichText::new(t!("Clean-up and line settings apply to the whole drawing.")).size(12.0).color(muted));
         }
-        fill_card(ui, &mut s.style, muted, accent, false);
         card_folded(ui, t!("Clean-up"), accent, |ui| {
             ui.checkbox(&mut s.knockout, t!("Cut hidden parts")).on_hover_text(t!("Leave areas covered by shapes on top unstitched, so layers don't pile up"));
             slider_row(ui, t!("Detail"), &mut s.min_detail_mm, 0.0..=5.0, " mm", 1).on_hover_text(t!("Shapes smaller than this many mm across are left out"));
         });
-        edge_card(ui, &mut s.style, accent, t!("Outline on fills"), false);
+        if picked.is_empty() {
+            edge_card(ui, &mut s.style, accent, t!("Outline on fills"), false);
+        }
         card(ui, t!("Lines"), accent, |ui| {
             ui.label(RichText::new(t!("How strokes in the SVG are stitched")).size(12.0).color(muted));
             segmented(

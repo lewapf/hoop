@@ -361,6 +361,8 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         /// Stitch angle lines and entry point, in stitch units.
         angles: Vec<(Pt, Pt)>,
         entry: Option<Pt>,
+        /// The shape's own style, when it has one.
+        own: Option<Settings>,
     }
     let mut items: Vec<Item> = Vec::new();
     for (doc, e) in s.shapes.iter().enumerate() {
@@ -377,7 +379,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
             let look = e.look.unwrap_or_else(|| s.layers.get(e.layer).map_or(Look::Default, |l| l.look));
             let angles = e.angles.iter().map(|&(a, b)| (to_mm(e.place(art, a)), to_mm(e.place(art, b)))).collect();
             let entry = e.entry.map(|p| to_mm(e.place(art, p)));
-            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None, angles, entry });
+            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None, angles, entry, own: e.style.clone() });
         }
     }
     if items.is_empty() {
@@ -392,13 +394,16 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
     // own order, where each color change costs a thread change.
     let thread_of = |layer: usize| s.layers.get(layer).map_or_else(|| formats::nearest_jef(art.layers[layer].color), |l| l.thread);
     // The fill and edge each shape gets after its thread's look is applied.
-    let styled = |look: Look| -> Settings {
-        let mut style = s.style.clone();
-        match look {
+    // A shape's style: its own or the drawing's, then the thread's or the
+    // shape's look on top.
+    let styled = |it: &Item| -> Settings {
+        let base = it.own.as_ref().unwrap_or(&s.style);
+        let mut style = base.clone();
+        match it.look {
             Look::Default => {}
             Look::Fill(k) => {
                 if k != style.fill {
-                    lettering::style(&mut style, k, s.style.fill_angle, s.style.edge);
+                    lettering::style(&mut style, k, base.fill_angle, base.edge);
                 }
             }
             Look::Outline | Look::Applique => {
@@ -411,7 +416,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         style
     };
     // Shapes stacked on top of a fill, cut out of it when knockout is on.
-    let masks = |it: &Item| matches!(it.kind, Kind::Fill { .. }) && (styled(it.look).fill != FillKind::None || it.look == Look::Applique);
+    let masks = |it: &Item| matches!(it.kind, Kind::Fill { .. }) && (styled(it).fill != FillKind::None || it.look == Look::Applique);
     // Lines hidden under fills drawn above them are cut away, a little past
     // the fill's edge, so they neither show through nor have to be sewn
     // before that fill (which would cost extra thread changes).
@@ -498,7 +503,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         }
         match it.kind {
             Kind::Fill { even_odd } => {
-                let own = styled(it.look);
+                let own = styled(it);
                 let st_ref = &own;
                 let contours: Vec<Contour> = it.lines.iter().map(|l| l.0.clone()).collect();
                 // Everything drawn above this shape and overlapping it, and of
@@ -510,7 +515,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                     let mut out: Vec<lettering::MaskShape> = items
                         .iter()
                         .filter(|o| o.doc > it.doc && masks(o))
-                        .filter(|o| !dense || o.look == Look::Applique || lettering::covers(styled(o.look).fill, styled(o.look).density_mm))
+                        .filter(|o| !dense || o.look == Look::Applique || lettering::covers(styled(o).fill, styled(o).density_mm))
                         .map(|o| (o.lines.iter().map(|l| l.0.clone()).collect(), matches!(o.kind, Kind::Fill { even_odd: true })))
                         .collect();
                     // Satin lines drawn on top cover what's under them, so the

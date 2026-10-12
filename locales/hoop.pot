@@ -147,6 +147,29 @@ msgstr ""
 msgid "Quick styles"
 msgstr ""
 
+msgid "{n} picked shape"
+msgid_plural "{n} picked shapes"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Changes below give the picked shapes their own style. The rest keep the drawing's style."
+msgstr ""
+
+msgid "The picked shapes have their own style. Deselect (Esc) to change the drawing's style."
+msgstr ""
+
+msgid "Use the drawing's style"
+msgstr ""
+
+msgid "Drop the picked shapes' own style"
+msgstr ""
+
+msgid "Outline on fills"
+msgstr ""
+
+msgid "Clean-up and line settings apply to the whole drawing."
+msgstr ""
+
 msgid "Clean-up"
 msgstr ""
 
@@ -160,9 +183,6 @@ msgid "Detail"
 msgstr ""
 
 msgid "Shapes smaller than this many mm across are left out"
-msgstr ""
-
-msgid "Outline on fills"
 msgstr ""
 
 msgid "Lines"
@@ -902,6 +922,24 @@ msgid "{v0} shapes · {v1} picked"
 msgstr ""
 
 msgid "Show or hide this shape"
+msgstr ""
+
+msgid "fill"
+msgstr ""
+
+msgid "line"
+msgstr ""
+
+msgid "own style"
+msgstr ""
+
+msgid "added"
+msgstr ""
+
+msgid "edited"
+msgstr ""
+
+msgid "moved"
 msgstr ""
 
 msgid "Add"

@@ -257,6 +257,7 @@ impl HoopApp {
             rotate: 0.0,
             angles: Vec::new(),
             entry: None,
+            style: None,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
@@ -680,15 +681,17 @@ impl HoopApp {
                 painter.rect_filled(sw, 3, rgb(art.layers[e.layer].color));
                 painter.rect_stroke(sw, 3, egui::Stroke::new(1.0, muted.gamma_multiply(0.6)), egui::StrokeKind::Inside);
                 let kind = match e.base(art).kind {
-                    artwork::Kind::Fill { .. } => "fill",
-                    artwork::Kind::Stroke { .. } => "line",
+                    artwork::Kind::Fill { .. } => t!("fill"),
+                    artwork::Kind::Stroke { .. } => t!("line"),
                 };
-                let tag = if e.source >= art.shapes.len() {
-                    "added"
+                let tag = if e.style.is_some() {
+                    t!("own style")
+                } else if e.source >= art.shapes.len() {
+                    t!("added")
                 } else if e.own.is_some() {
-                    "edited"
+                    t!("edited")
                 } else if e.moved() {
-                    "moved"
+                    t!("moved")
                 } else {
                     kind
                 };

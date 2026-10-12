@@ -113,6 +113,8 @@ pub struct ShapeEdit {
     pub angles: Vec<(Pt, Pt)>,
     /// Where the needle enters the shape, in the shape's own coordinates.
     pub entry: Option<Pt>,
+    /// The shape's own fill and edge style, instead of the drawing's.
+    pub style: Option<Settings>,
 }
 
 impl ShapeEdit {
@@ -135,6 +137,7 @@ impl ShapeEdit {
             rotate: 0.0,
             angles: Vec::new(),
             entry: None,
+            style: None,
         }
     }
 
@@ -492,6 +495,28 @@ mod tests {
         assert_eq!(p.threads[0].name, "Placement line");
         assert!(p.threads[1].name.starts_with("Tack-down"));
         assert_eq!(p.blocks().len(), 5);
+    }
+
+    #[test]
+    fn a_shape_with_its_own_style_changes_alone() {
+        let art = parse("logo", LOGO.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        let per_thread =
+            |s: &ArtSettings| -> Vec<(String, usize)> { generate(&art, s).unwrap().blocks().into_iter().map(|b| (b.thread.name, b.stitches)).collect() };
+        let before = per_thread(&s);
+        let red = s.shapes.iter().position(|e| art.layers[e.layer].color == [255, 0, 0]).unwrap();
+        let mut own = s.style.clone();
+        lettering::style(&mut own, FillKind::Cross, 45.0, EdgeKind::None);
+        s.shapes[red].style = Some(own);
+        let after = per_thread(&s);
+        let red_name = formats::jef_thread(s.layers[art.shapes[red].layer].thread, 0).name;
+        for ((name, b), (_, a)) in before.iter().zip(&after) {
+            if *name == red_name {
+                assert_ne!(a, b, "the red square changed");
+            } else {
+                assert_eq!(a, b, "{name} kept its stitches");
+            }
+        }
     }
 
     #[test]
