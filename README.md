@@ -270,3 +270,13 @@ After changing UI text, refresh the template with
 
 The worksheet PDF uses the PDF base fonts. These have no letters such as ł
 or ś, so the PDF prints them without their accents.
+
+## License and credits
+
+Hoop is released under the [MIT License](LICENSE). Copyright (c) 2026 Pawel
+Furman.
+
+Hoop was written by Pawel Furman with
+[Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent.
+Bundled fonts and shapes keep their own licenses, listed above and in
+`assets/`.
