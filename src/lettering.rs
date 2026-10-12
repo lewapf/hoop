@@ -815,6 +815,64 @@ pub fn run_path(st: &mut Stitcher, c: &[Pt], step: f32, triple: bool) {
     }
 }
 
+/// Stitch rows for satin of `width` along a line: (point on one side,
+/// point on the other). The stitch direction turns gradually over a
+/// width's length around corners, rows are kept every 0.4 mm on whichever
+/// side moves most, so the outside of a corner stays covered, and where
+/// the inside crowds every other stitch is shortened.
+fn satin_rows(line: &[Pt], closed: bool, width: f32) -> Vec<(Pt, Pt)> {
+    let mut path = line.to_vec();
+    if closed && !path.is_empty() {
+        path.push(path[0]);
+    }
+    let fine = walk_open(&path, 1.0);
+    let n = fine.len();
+    if n < 2 {
+        return Vec::new();
+    }
+    let half = width / 2.0;
+    let reach = (half.max(3.0)).round() as usize;
+    let mut out: Vec<(Pt, Pt)> = Vec::new();
+    let mut last: Option<(Pt, Pt, Pt)> = None;
+    let step = 4.0;
+    for i in 0..n {
+        let (a, b) = if closed {
+            let m = n - 1;
+            (fine[(i + m - reach % m) % m], fine[(i + reach) % m])
+        } else {
+            (fine[i.saturating_sub(reach)], fine[(i + reach).min(n - 1)])
+        };
+        let d = dist(a, b).max(1e-3);
+        let nrm = (-(b.1 - a.1) / d * half, (b.0 - a.0) / d * half);
+        let c = fine[i];
+        let (l, r) = ((c.0 + nrm.0, c.1 + nrm.1), (c.0 - nrm.0, c.1 - nrm.1));
+        let keep = match last {
+            None => true,
+            Some((lc, ll, lr)) => dist(c, lc).max(dist(l, ll)).max(dist(r, lr)) >= step || i == n - 1,
+        };
+        if keep {
+            out.push((l, r));
+            last = Some((c, l, r));
+        }
+    }
+    // Shorten every other stitch where one side crowds.
+    for k in 2..out.len() {
+        let (l, r) = out[k];
+        let (pl, pr) = out[k - 2];
+        let c = ((l.0 + r.0) / 2.0, (l.1 + r.1) / 2.0);
+        let pull = |p: Pt| (c.0 + (p.0 - c.0) * 0.6, c.1 + (p.1 - c.1) * 0.6);
+        if k % 4 >= 2 {
+            if dist(l, pl) < step * 0.5 {
+                out[k].0 = pull(l);
+            }
+            if dist(r, pr) < step * 0.5 {
+                out[k].1 = pull(r);
+            }
+        }
+    }
+    out
+}
+
 /// A satin column along an open line, for strokes.
 pub fn satin_path(st: &mut Stitcher, c: &[Pt], width: f32) {
     if c.len() < 2 {
@@ -826,52 +884,39 @@ pub fn satin_path(st: &mut Stitcher, c: &[Pt], width: f32) {
             c.reverse();
         }
     }
-    let pts = walk_open(&c, 4.0);
-    let n = pts.len();
-    if n < 2 {
+    let rows = satin_rows(&c, false, width);
+    if rows.len() < 2 {
         return;
     }
     // A running pass along the line first holds the satin in place.
-    st.travel(pts[0], pts[1]);
-    for p in walk_open(&c, 25.0).into_iter().skip(1) {
-        st.stitch(p);
+    let run = walk_open(&c, 25.0);
+    st.travel(run[0], run.get(1).copied().unwrap_or(run[0]));
+    for p in run.iter().skip(1) {
+        st.stitch(*p);
     }
-    for p in walk_open(&c, 25.0).into_iter().rev().skip(1) {
-        st.stitch(p);
+    for p in run.iter().rev().skip(1) {
+        st.stitch(*p);
     }
-    for i in 0..n {
-        let (a, b) = (pts[i.saturating_sub(1)], pts[(i + 1).min(n - 1)]);
-        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
-        let len = (dx * dx + dy * dy).sqrt().max(0.01);
-        let (nx, ny) = (-dy / len * width / 2.0, dx / len * width / 2.0);
-        let side = if i % 2 == 0 { 1.0 } else { -1.0 };
-        st.stitch((pts[i].0 + nx * side, pts[i].1 + ny * side));
+    for (i, (l, r)) in rows.iter().enumerate() {
+        st.stitch(if i % 2 == 0 { *l } else { *r });
     }
 }
 
 pub fn satin_contour(st: &mut Stitcher, c: &Contour, width: f32) {
     let start = nearest_index(c, st.last());
-    let pts = walk(c, start, 4.0);
-    let n = pts.len();
-    if n < 3 {
+    let mut ring: Contour = c[start..].to_vec();
+    ring.extend_from_slice(&c[..start]);
+    let rows = satin_rows(&ring, true, width);
+    if rows.len() < 3 {
         return;
     }
-    let mut zig = Vec::with_capacity(n);
-    for i in 0..n {
-        let (a, b) = (pts[if i == 0 { n - 2 } else { i - 1 }], pts[if i == n - 1 { 1 } else { i + 1 }]);
-        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
-        let len = (dx * dx + dy * dy).sqrt().max(0.01);
-        let (nx, ny) = (-dy / len * width / 2.0, dx / len * width / 2.0);
-        let side = if i % 2 == 0 { 1.0 } else { -1.0 };
-        zig.push((pts[i].0 + nx * side, pts[i].1 + ny * side));
-    }
-    st.travel(pts[0], zig[0]);
+    st.travel(ring[0], rows[0].0);
     // A quick running pass first holds the satin in place.
     for p in walk(c, start, 25.0).into_iter().skip(1) {
         st.stitch(p);
     }
-    for p in zig {
-        st.stitch(p);
+    for (i, (l, r)) in rows.iter().enumerate() {
+        st.stitch(if i % 2 == 0 { *l } else { *r });
     }
 }
 

@@ -976,12 +976,14 @@ pub(crate) mod debug {
             Ok("auto") => crate::lettering::FillKind::Auto,
             Ok("stipple") => crate::lettering::FillKind::Stipple,
             Ok("cross") => crate::lettering::FillKind::Cross,
+            Ok("none") => crate::lettering::FillKind::None,
             _ => crate::lettering::FillKind::Column,
         };
         let edge = match std::env::var("EDGE").as_deref() {
             Ok("blanket") => crate::lettering::EdgeKind::Blanket,
             Ok("scallop") => crate::lettering::EdgeKind::Scallop,
             Ok("triple") => crate::lettering::EdgeKind::Triple,
+            Ok("satin") => crate::lettering::EdgeKind::Satin,
             _ => crate::lettering::EdgeKind::None,
         };
         let shape = std::env::var("SHAPE").ok().and_then(|v| crate::lettering::TextShape::ALL.into_iter().find(|t| format!("{t:?}") == v)).unwrap_or(crate::lettering::TextShape::Straight);
