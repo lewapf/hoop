@@ -631,6 +631,58 @@ msgstr ""
 msgid "Drag the design to move it · scroll to zoom · ? for keys"
 msgstr ""
 
+msgid "Edit stitches"
+msgstr ""
+
+msgid "Right-click a thread in Colors to move or delete it."
+msgstr ""
+
+msgid "Merge repeated threads"
+msgstr ""
+
+msgid "Join neighbouring threads of the same color, saving thread changes"
+msgstr ""
+
+msgid "Remove tiny stitches"
+msgstr ""
+
+msgid "Drop stitches under 0.3 mm, which can break the thread"
+msgstr ""
+
+msgid "Pick stitches on the hoop"
+msgstr ""
+
+msgid "Click a needle point to pick it, drag to move it, Del to delete it, arrows to nudge; Esc to stop"
+msgstr ""
+
+msgid "Pick the stitch at the playback position"
+msgstr ""
+
+msgid "Stitch {n} picked"
+msgstr ""
+
+msgid "Saved {n} thread change"
+msgid_plural "Saved {n} thread changes"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Removed {n} tiny stitch"
+msgid_plural "Removed {n} tiny stitches"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Sew earlier"
+msgstr ""
+
+msgid "Sew later"
+msgstr ""
+
+msgid "Delete this thread's stitches"
+msgstr ""
+
+msgid "Click a needle point to pick it · drag to move · Del deletes · Esc stops"
+msgstr ""
+
 msgid "Team names"
 msgstr ""
 

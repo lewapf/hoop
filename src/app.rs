@@ -14,6 +14,7 @@ mod hoopings;
 mod library;
 mod shapes;
 mod shell;
+mod stitchedit;
 mod team;
 mod testpiece;
 mod threadwin;
@@ -133,6 +134,8 @@ struct Snapshot {
     setup: Setup,
     letter: Settings,
     art: Option<ArtSettings>,
+    /// An opened stitch file as edited.
+    stitches: Option<stitchedit::Shared>,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -260,6 +263,7 @@ pub struct HoopApp {
     team: team::Team,
     tools: tools::Tools,
     hoopings: hoopings::Hoopings,
+    stitch_edit: stitchedit::StitchEdit,
 }
 
 impl HoopApp {
@@ -271,7 +275,7 @@ impl HoopApp {
             setup: Setup { hoop: 0, at: Placement::default() },
             undo: Vec::new(),
             redo: Vec::new(),
-            committed: Snapshot { setup: Setup { hoop: 0, at: Placement::default() }, letter: Settings::default(), art: None },
+            committed: Snapshot { setup: Setup { hoop: 0, at: Placement::default() }, letter: Settings::default(), art: None, stitches: None },
             pending_since: None,
             view: View::default(),
             fit_pending: true,
@@ -342,6 +346,7 @@ impl HoopApp {
             team: Default::default(),
             tools: Default::default(),
             hoopings: Default::default(),
+            stitch_edit: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -517,10 +522,11 @@ impl HoopApp {
     }
 
     fn snapshot(&self) -> Snapshot {
-        Snapshot { setup: self.setup, letter: self.letter.clone(), art: self.art.clone() }
+        Snapshot { setup: self.setup, letter: self.letter.clone(), art: self.art.clone(), stitches: self.edit_snapshot() }
     }
 
     fn restore_snapshot(&mut self, s: Snapshot) {
+        self.restore_stitches(&s.stitches);
         self.setup = s.setup;
         self.letter = s.letter.clone();
         if s.art.as_ref().map(|a| a.layers.len()) == self.art.as_ref().map(|a| a.layers.len()) {
@@ -535,6 +541,7 @@ impl HoopApp {
 
     /// Starts a fresh history, for a newly opened design.
     fn reset_history(&mut self) {
+        self.stitch_edit = Default::default();
         self.undo.clear();
         self.redo.clear();
         self.committed = self.snapshot();
@@ -717,7 +724,7 @@ impl HoopApp {
         }
         for (key, dx, dy) in [(Key::ArrowLeft, -1.0, 0.0), (Key::ArrowRight, 1.0, 0.0), (Key::ArrowUp, 0.0, -1.0), (Key::ArrowDown, 0.0, 1.0)] {
             for (m, step) in [(Modifiers::NONE, 10.0), (Modifiers::SHIFT, 100.0)] {
-                if press(m, key) && self.design.is_some() {
+                if !self.stitch_edit.on && press(m, key) && self.design.is_some() {
                     self.change(|s| {
                         s.at.dx += dx * step;
                         s.at.dy += dy * step;
@@ -812,6 +819,9 @@ impl HoopApp {
                     }
                 });
             });
+        }
+        if tab == Tab::Design {
+            self.stitch_tools_card(ui);
         }
         if tab == Tab::Hoop && let Some(d) = &self.design {
             let fit = match (self.pinned.is_empty(), self.hoop_bounds()) {
@@ -1084,6 +1094,7 @@ impl HoopApp {
         {
             let focus = self.focus;
             let mut toggle = None;
+            let mut block_op = None;
             let matched: Vec<Option<formats::Thread>> = self.design.as_ref().unwrap().blocks.iter().map(|b| self.chart_thread(&b.thread)).collect();
             let chart_name = self.chart().name.clone();
             let d = self.design.as_mut().unwrap();
@@ -1120,8 +1131,16 @@ impl HoopApp {
                             });
                         });
                     });
-                    if ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text(t!("Click to show this thread on its own")).clicked() {
+                    let row = ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text(t!("Click to show this thread on its own"));
+                    if row.clicked() {
                         toggle = Some(k);
+                    }
+                    if viewer {
+                        row.context_menu(|ui| {
+                            if let Some(op) = HoopApp::block_menu(ui) {
+                                block_op = Some((k, op));
+                            }
+                        });
                     }
                 }
                 if !d.pattern.format.stores_colors() {
@@ -1147,6 +1166,9 @@ impl HoopApp {
             if ui.small_button(t!("Thread chart: {chart_name}…", chart_name = chart_name)).on_hover_text(t!("Pick a brand and mark the threads you have")).clicked() {
                 self.threads.open = true;
             }
+            if let Some((k, op)) = block_op {
+                self.block_op(k, op);
+            }
             if let Some(k) = toggle {
                 self.focus = if self.focus == Some(k) { None } else { Some(k) };
             }
@@ -1169,7 +1191,7 @@ impl HoopApp {
         let frame = Frame { painter: &painter, rect, view: self.view };
 
         // Drawing the test area takes over the pointer until it is done.
-        let picking = self.test_area_input(ui, &response, &frame) || self.tool_input(ui, &response, &frame);
+        let picking = self.test_area_input(ui, &response, &frame) || self.tool_input(ui, &response, &frame) || self.stitch_edit_input(ui, &response, &frame);
         // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
         let handled_double = !picking && self.shape_input(ui, &response, &frame);
         let hover_shape = if picking { None } else { self.shape_hover(ui, &response, &frame) };
@@ -1298,6 +1320,7 @@ impl HoopApp {
         self.shape_overlay(&painter, &frame, hover_shape);
         self.tool_overlay(&painter, &frame);
         self.hoopings_overlay(&painter, &frame);
+        self.stitch_edit_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 
