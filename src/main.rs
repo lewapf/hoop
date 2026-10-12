@@ -13,6 +13,7 @@ mod library;
 mod prefs;
 mod route;
 mod special;
+mod split;
 mod theme;
 mod trace;
 mod testsew;

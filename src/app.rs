@@ -10,6 +10,7 @@ use crate::hoops::{self, Fit, HOOPS, Placement};
 use crate::artwork::{self, ArtSettings, Look};
 
 mod checks;
+mod hoopings;
 mod library;
 mod shapes;
 mod shell;
@@ -122,6 +123,7 @@ enum FitFix {
     Hoop(usize),
     Scale,
     Center,
+    Split,
 }
 
 /// Everything undo covers: hoop and placement plus the lettering and
@@ -257,6 +259,7 @@ pub struct HoopApp {
     threads: threadwin::ThreadCharts,
     team: team::Team,
     tools: tools::Tools,
+    hoopings: hoopings::Hoopings,
 }
 
 impl HoopApp {
@@ -338,6 +341,7 @@ impl HoopApp {
             threads: Default::default(),
             team: Default::default(),
             tools: Default::default(),
+            hoopings: Default::default(),
         };
         let (tx, rx) = channel();
         let ctx = cc.egui_ctx.clone();
@@ -383,6 +387,12 @@ impl HoopApp {
             Ok("threads") => self.threads.open = true,
             Ok("test") => self.test.open = true,
             Ok("help") => self.help = true,
+            Ok("split") => {
+                self.open_hoopings();
+                if let Some(h) = std::env::var("HOOP_SPLIT_HOOP").ok().and_then(|v| v.parse().ok()) {
+                    self.hoopings.hoop = h;
+                }
+            }
             _ => {}
         }
         if let Ok(t) = std::env::var("HOOP_TAB") {
@@ -838,8 +848,9 @@ impl HoopApp {
                     if self.mode != Mode::Viewer {
                         actions.push((t!("Shrink to fit").into(), FitFix::Scale));
                     }
+                    actions.push((t!("Split into hoopings…").into(), FitFix::Split));
                 }
-                Fit::OffEdge { .. } => actions.push(("Center".into(), FitFix::Center)),
+                Fit::OffEdge { .. } => actions.push((t!("Center").into(), FitFix::Center)),
                 Fit::Inside(m) if self.mode != Mode::Viewer && m > 15.0 => actions.push((t!("Grow to fill hoop").into(), FitFix::Scale)),
                 Fit::Inside(_) => {}
             }
@@ -1286,6 +1297,7 @@ impl HoopApp {
         self.check_overlay(&painter, &frame);
         self.shape_overlay(&painter, &frame, hover_shape);
         self.tool_overlay(&painter, &frame);
+        self.hoopings_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
 
@@ -1308,6 +1320,7 @@ impl HoopApp {
                 self.change(|s| s.hoop = i);
                 self.fit_view(canvas_rect, false);
             }
+            FitFix::Split => self.open_hoopings(),
             FitFix::Center => self.change(|s| {
                 s.at.dx = 0.0;
                 s.at.dy = 0.0;
@@ -2344,6 +2357,7 @@ impl eframe::App for HoopApp {
         self.test_window(ctx);
         self.usb_window(ctx);
         self.threads_window(ctx);
+        self.hoopings_window(ctx);
     }
 }
 

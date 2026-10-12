@@ -220,6 +220,9 @@ impl HoopApp {
                 if item(ui, out, t!("Send to USB…"), "Ctrl+U") {
                     self.open_usb();
                 }
+                if item(ui, out, t!("Split into hoopings…"), "") {
+                    self.open_hoopings();
+                }
                 if item(ui, true, t!("Test stitch-out…"), "Ctrl+T") {
                     self.test.open = true;
                 }

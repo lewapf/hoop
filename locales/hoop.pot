@@ -68,6 +68,37 @@ msgstr ""
 msgid "too much"
 msgstr ""
 
+msgid "Split into hoopings"
+msgstr ""
+
+msgid "For designs bigger than the hoop: each part is sewn in its own hooping. Objects stay whole where they fit; the rest is cut at the part edges."
+msgstr ""
+
+msgid "Hoop"
+msgstr ""
+
+msgid "Part {k}: {stitches} stitches, {threads} threads"
+msgstr ""
+
+msgid "Sew the parts in order. Each starts with gray registration crosses on its shared edges: after re-hooping, line the needle up with the crosses of the part before. Pick the crosses out at the end."
+msgstr ""
+
+msgid "Save {n} part…"
+msgid_plural "Save {n} parts…"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Folder for the hoopings"
+msgstr ""
+
+msgid "Couldn't save {file}: {e}."
+msgstr ""
+
+msgid "Saved {n} hooping to {folder}"
+msgid_plural "Saved {n} hoopings to {folder}"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "The folder above"
 msgstr ""
 
@@ -295,9 +326,6 @@ msgstr ""
 msgid "Threads"
 msgstr ""
 
-msgid "Hoop"
-msgstr ""
-
 msgid "Stitch"
 msgstr ""
 
@@ -341,6 +369,9 @@ msgid "Export as"
 msgstr ""
 
 msgid "Send to USB…"
+msgstr ""
+
+msgid "Split into hoopings…"
 msgstr ""
 
 msgid "Test stitch-out…"
@@ -2036,6 +2067,9 @@ msgid "Hello"
 msgstr ""
 
 msgid "Couldn't read {v0}: {e}."
+msgstr ""
+
+msgid "Registration marks (remove after)"
 msgstr ""
 
 msgid "Satin columns"
