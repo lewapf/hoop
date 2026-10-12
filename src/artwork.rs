@@ -624,6 +624,7 @@ pub fn parse(name: &str, data: &[u8]) -> Result<Artwork, String> {
 
     let mut layers: Vec<Layer> = Vec::new();
     let mut shapes = Vec::new();
+    let count = c.shapes.len();
     for (i, (kind, lines, color)) in c.shapes.into_iter().enumerate() {
         // A filled rectangle under everything that spans the drawing is a
         // background, which usually shouldn't be stitched.
@@ -632,7 +633,9 @@ pub fn parse(name: &str, data: &[u8]) -> Result<Artwork, String> {
             sb = (sb.0.min(p.0), sb.1.min(p.1), sb.2.max(p.0), sb.3.max(p.1));
         }
         let filled: f32 = lines.iter().map(|l| area(&l.0)).sum();
+        // A drawing that is one shape is that shape, not a background.
         let background = i == 0
+            && count > 1
             && matches!(kind, Kind::Fill { .. })
             && sb.2 - sb.0 >= bw * 0.97
             && sb.3 - sb.1 >= bh * 0.97

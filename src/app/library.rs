@@ -19,6 +19,12 @@ pub(super) struct Library {
     filter: String,
 }
 
+/// The bundled shape library: installed in /usr/share/hoop/shapes, or
+/// the source tree's assets/shapes when running from a build.
+pub(super) fn shapes_dir() -> Option<PathBuf> {
+    [PathBuf::from("/usr/share/hoop/shapes"), PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/shapes"))].into_iter().find(|p| p.is_dir())
+}
+
 /// The folder designs live in: ~/Documents/Embroidery Designs, else
 /// ~/Documents, else home.
 pub(super) fn designs_dir() -> PathBuf {
@@ -67,6 +73,11 @@ impl HoopApp {
             }
             if ui.button(t!("Reload")).clicked() {
                 go = Some(dir.clone());
+            }
+            if let Some(shapes) = shapes_dir() {
+                if ui.add(egui::Button::selectable(dir == shapes, t!("Shapes"))).on_hover_text(t!("109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)")).clicked() {
+                    go = Some(if dir == shapes { designs_dir() } else { shapes });
+                }
             }
         });
         let name = dir.file_name().map_or_else(|| dir.display().to_string(), |n| n.to_string_lossy().into_owned());
