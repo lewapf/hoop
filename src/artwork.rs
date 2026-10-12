@@ -591,9 +591,12 @@ fn covered(p: Pt, shape: &[Contour], even_odd: bool, margin: f32) -> bool {
     if even_odd { winding % 2 != 0 } else { winding != 0 }
 }
 
-/// The parts of a line not covered by any of `shapes`, as open lines.
-/// Pieces shorter than 1 mm are dropped.
-fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f32) -> Vec<(Contour, bool)> {
+/// The parts of a line not covered by any of `shapes`, as open lines,
+/// short of each shape by `margin`, and the same parts for sewing: there
+/// each cut end runs on to the shape's edge (at most 1.5 × `margin` along
+/// the line), so the line meets the shape as in the drawing. Pieces
+/// shorter than 1 mm are dropped.
+fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f32) -> (Vec<(Contour, bool)>, Vec<(Contour, bool)>) {
     let (c, closed) = line;
     let b = extent(std::slice::from_ref(line));
     let near: Vec<&(Vec<Contour>, bool)> = shapes
@@ -604,27 +607,30 @@ fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f3
         })
         .collect();
     if near.is_empty() {
-        return vec![line.clone()];
+        return (vec![line.clone()], vec![line.clone()]);
     }
     let mut path = c.clone();
     if *closed {
         path.push(c[0]);
     }
-    // Test points every 0.2 mm.
-    let mut pts: Vec<(Pt, bool)> = Vec::new();
+    // Test points every 0.2 mm: hidden (within the margin) and inside a shape.
+    let test = |p: Pt| {
+        let inside = near.iter().any(|(cs, eo)| covered(p, cs, *eo, 0.0));
+        (p, inside || near.iter().any(|(cs, eo)| covered(p, cs, *eo, margin)), inside)
+    };
+    let mut pts: Vec<(Pt, bool, bool)> = Vec::new();
     for w in path.windows(2) {
         let n = (lettering::dist(w[0], w[1]) / 2.0).ceil().max(1.0) as usize;
         for k in 0..n {
             let t = k as f32 / n as f32;
-            let p = (w[0].0 + (w[1].0 - w[0].0) * t, w[0].1 + (w[1].1 - w[0].1) * t);
-            pts.push((p, near.iter().any(|(cs, eo)| covered(p, cs, *eo, margin))));
+            pts.push(test((w[0].0 + (w[1].0 - w[0].0) * t, w[0].1 + (w[1].1 - w[0].1) * t)));
         }
     }
     if let Some(&l) = path.last() {
-        pts.push((l, near.iter().any(|(cs, eo)| covered(l, cs, *eo, margin))));
+        pts.push(test(l));
     }
     if pts.iter().all(|p| !p.1) {
-        return vec![line.clone()];
+        return (vec![line.clone()], vec![line.clone()]);
     }
     // A closed line that is cut starts at a cut, so its pieces don't break
     // where the loop happened to begin.
@@ -633,19 +639,54 @@ fn clip_line(line: &(Contour, bool), shapes: &[(Vec<Contour>, bool)], margin: f3
         pts.pop();
         pts.rotate_left(first);
     }
-    let mut out = Vec::new();
-    let mut piece: Contour = Vec::new();
-    for (p, hidden) in pts.into_iter().chain(std::iter::once(((0.0, 0.0), true))) {
-        if hidden {
-            if length(&piece) >= 10.0 {
-                out.push((crate::trace::simplify(&piece, 0.5), false));
-            }
-            piece.clear();
-        } else {
-            piece.push(p);
+    let n = pts.len();
+    let step = |k: usize, back: bool| -> Option<usize> {
+        match (back, *closed) {
+            (true, _) if k > 0 => Some(k - 1),
+            (true, true) => Some(n - 1),
+            (false, _) if k + 1 < n => Some(k + 1),
+            (false, true) => Some(0),
+            _ => None,
         }
+    };
+    // Hidden points from a cut end on toward the shape, stopping inside it.
+    let reach = |from: usize, back: bool| -> Contour {
+        let (mut out, mut k, mut went) = (Vec::new(), from, 0.0);
+        while let Some(j) = step(k, back) {
+            if !pts[j].1 || pts[j].2 {
+                break;
+            }
+            went += lettering::dist(pts[k].0, pts[j].0);
+            if went > 1.5 * margin {
+                break;
+            }
+            out.push(pts[j].0);
+            k = j;
+        }
+        out
+    };
+    let (mut kept, mut sewn) = (Vec::new(), Vec::new());
+    let mut k = 0;
+    while k < n {
+        if pts[k].1 {
+            k += 1;
+            continue;
+        }
+        let start = k;
+        while k < n && !pts[k].1 {
+            k += 1;
+        }
+        let piece: Contour = pts[start..k].iter().map(|p| p.0).collect();
+        if length(&piece) < 10.0 {
+            continue;
+        }
+        let mut full: Contour = reach(start, true).into_iter().rev().collect();
+        full.extend_from_slice(&piece);
+        full.extend(reach(k - 1, false));
+        kept.push((crate::trace::simplify(&piece, 0.5), false));
+        sewn.push((crate::trace::simplify(&full, 0.5), false));
     }
-    out
+    (kept, sewn)
 }
 
 /// Stitch order that saves thread changes without breaking the drawing's
@@ -809,6 +850,8 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         look: Look,
         kind: Kind,
         lines: Vec<(Contour, bool)>,
+        /// Lines as sewn, when cutting made them differ from `lines`.
+        sew: Option<Vec<(Contour, bool)>>,
     }
     let mut items: Vec<Item> = Vec::new();
     for (doc, e) in s.shapes.iter().enumerate() {
@@ -823,7 +866,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         };
         if keep {
             let look = e.look.unwrap_or_else(|| s.layers.get(e.layer).map_or(Look::Default, |l| l.look));
-            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines });
+            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None });
         }
     }
     if items.is_empty() {
@@ -874,7 +917,14 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
                 // Past the half width, a gap of a cell and a half keeps the line
                 // clear of the fill on the overlap grid used for ordering.
                 let margin = stroke_w(width) / 2.0 + 1.5 * Coverage::CELL;
-                items[i].lines = items[i].lines.iter().flat_map(|l| clip_line(l, &above, margin)).collect();
+                let (mut kept, mut sewn) = (Vec::new(), Vec::new());
+                for l in &items[i].lines {
+                    let (k, s) = clip_line(l, &above, margin);
+                    kept.extend(k);
+                    sewn.extend(s);
+                }
+                items[i].lines = kept;
+                items[i].sew = Some(sewn);
             }
         }
         items.retain(|it| !it.lines.is_empty());
@@ -976,7 +1026,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
             }
             Kind::Stroke { width } => {
                 let w = (width * scale).max(s.stroke_min_mm * 10.0).min(70.0);
-                for (c, closed) in &it.lines {
+                for (c, closed) in it.sew.as_ref().unwrap_or(&it.lines) {
                     let mut line = c.clone();
                     if *closed {
                         line.push(c[0]);
@@ -1054,15 +1104,18 @@ mod tests {
         // A line across a square drawn on top of it: only the parts outside
         // the square, short of its edge by the margin, are left.
         let square = vec![(vec![vec![(100.0, -50.0), (200.0, -50.0), (200.0, 50.0), (100.0, 50.0)]], false)];
-        let pieces = clip_line(&(vec![(0.0, 0.0), (300.0, 0.0)], false), &square, 10.0);
+        let (pieces, sewn) = clip_line(&(vec![(0.0, 0.0), (300.0, 0.0)], false), &square, 10.0);
         assert_eq!(pieces.len(), 2);
         let ends: Vec<f32> = pieces.iter().flat_map(|(c, _)| [c[0].0, c[c.len() - 1].0]).collect();
         assert!((ends[0] - 0.0).abs() < 1.0 && (ends[1] - 90.0).abs() < 3.0, "{ends:?}");
         assert!((ends[2] - 210.0).abs() < 3.0 && (ends[3] - 300.0).abs() < 1.0, "{ends:?}");
+        // As sewn, the pieces run on to the square's edge.
+        let ends: Vec<f32> = sewn.iter().flat_map(|(c, _)| [c[0].0, c[c.len() - 1].0]).collect();
+        assert!((ends[1] - 100.0).abs() < 3.0 && (ends[2] - 200.0).abs() < 3.0, "{ends:?}");
         // A loop around the square is left whole; a loop inside it is gone.
         let around = (vec![(50.0, -100.0), (250.0, -100.0), (250.0, 100.0), (50.0, 100.0)], true);
-        assert_eq!(clip_line(&around, &square, 10.0), vec![around.clone()]);
-        assert!(clip_line(&(vec![(130.0, -20.0), (170.0, -20.0), (170.0, 20.0), (130.0, 20.0)], true), &square, 10.0).is_empty());
+        assert_eq!(clip_line(&around, &square, 10.0).0, vec![around.clone()]);
+        assert!(clip_line(&(vec![(130.0, -20.0), (170.0, -20.0), (170.0, 20.0), (130.0, 20.0)], true), &square, 10.0).1.is_empty());
     }
 
     #[test]
