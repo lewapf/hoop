@@ -26,6 +26,7 @@ pub enum Format {
     Exp,
     Pes,
     Pec,
+    Vp3,
     Lettering,
     Svg,
 }
@@ -38,6 +39,7 @@ impl fmt::Display for Format {
             Format::Exp => "EXP",
             Format::Pes => "PES",
             Format::Pec => "PEC",
+            Format::Vp3 => "VP3",
             Format::Lettering => "Lettering",
             Format::Svg => "SVG artwork",
         };
@@ -324,6 +326,119 @@ fn read_exp(d: &[u8]) -> Result<Pattern, ReadError> {
     Ok(b.finish(Format::Exp, Vec::new()))
 }
 
+/// Pfaff and Husqvarna Viking VP3: big-endian blocks, each tagged and
+/// sized, with one block per thread holding its color and its stitches.
+/// Positions are in 1/100 of the stitch unit, y up; stitches in 0.1 mm.
+fn read_vp3(d: &[u8]) -> Result<Pattern, ReadError> {
+    struct R<'a> {
+        d: &'a [u8],
+        p: usize,
+    }
+    impl R<'_> {
+        fn take(&mut self, n: usize) -> Result<&[u8], ReadError> {
+            let b = self.d.get(self.p..self.p + n).ok_or(ReadError::Truncated)?;
+            self.p += n;
+            Ok(b)
+        }
+        fn skip(&mut self, n: usize) -> Result<(), ReadError> {
+            self.take(n).map(|_| ())
+        }
+        fn u16(&mut self) -> Result<usize, ReadError> {
+            self.take(2).map(|b| u16::from_be_bytes([b[0], b[1]]) as usize)
+        }
+        fn i32(&mut self) -> Result<i32, ReadError> {
+            self.take(4).map(|b| i32::from_be_bytes([b[0], b[1], b[2], b[3]]))
+        }
+        fn string(&mut self) -> Result<String, ReadError> {
+            let n = self.u16()?;
+            Ok(String::from_utf8_lossy(self.take(n)?).into_owned())
+        }
+    }
+    let mut r = R { d, p: 6 };
+    // Maker, the file block's tag and size, a comment.
+    r.string()?;
+    r.skip(7)?;
+    r.string()?;
+    // Extents, stitch count, color count and flags, the design block's tag and size.
+    r.skip(32)?;
+    let cx = r.i32()? as f32 / 100.0;
+    let cy = -(r.i32()? as f32) / 100.0;
+    r.skip(27)?;
+    r.string()?;
+    r.skip(24)?;
+    r.string()?;
+    let colors = r.u16()?;
+    let mut points = Vec::new();
+    let mut cmds = Vec::new();
+    let mut threads = Vec::new();
+    for k in 0..colors {
+        r.skip(3)?;
+        let end = r.i32()?.max(0) as usize + r.p;
+        let sx = r.i32()? as f32 / 100.0 + cx;
+        let sy = -(r.i32()? as f32) / 100.0 + cy;
+        // The thread: one or more colors (the first is the one shown).
+        let shades = r.take(2)?[0].max(1) as usize;
+        let mut color = [0u8; 3];
+        for m in 0..shades {
+            let c = r.take(3)?;
+            if m == 0 {
+                color = [c[0], c[1], c[2]];
+            }
+            r.skip(3)?;
+        }
+        r.skip(2)?;
+        let code = r.string()?;
+        let name = r.string()?;
+        r.string()?;
+        threads.push(Thread { color, name, code });
+        // Its end offset from the start, then the stitch block's tag, size and a fixed 3 bytes.
+        r.skip(8 + 7 + 3)?;
+        if k > 0
+            && let Some(&last) = points.last()
+        {
+            points.push(last);
+            cmds.push(Cmd::ColorChange);
+        }
+        // Move to where this thread starts.
+        let (mut x, mut y) = (sx, sy);
+        if points.last() != Some(&(x, y)) {
+            points.push((x, y));
+            cmds.push(Cmd::Jump);
+        }
+        let stitches = d.get(r.p..end.min(d.len())).ok_or(ReadError::Truncated)?;
+        let mut i = 0;
+        let mut jump = false;
+        while i + 1 < stitches.len() {
+            let (a, b) = (stitches[i], stitches[i + 1]);
+            i += 2;
+            let (dx, dy) = if a != 0x80 {
+                (s8(a), s8(b))
+            } else {
+                match b {
+                    0x01 => {
+                        let Some(v) = stitches.get(i..i + 4) else { break };
+                        i += 4;
+                        (i16::from_be_bytes([v[0], v[1]]) as i32, i16::from_be_bytes([v[2], v[3]]) as i32)
+                    }
+                    0x03 => {
+                        // A cut: the next move is a jump.
+                        jump = true;
+                        continue;
+                    }
+                    _ => continue,
+                }
+            };
+            x += dx as f32;
+            y += dy as f32;
+            points.push((x, y));
+            cmds.push(if std::mem::take(&mut jump) { Cmd::Jump } else { Cmd::Stitch });
+        }
+        r.p = end;
+    }
+    let b = Builder { x: 0.0, y: 0.0, points, cmds };
+    Ok(b.finish(Format::Vp3, threads))
+}
+
 /// Returns the stitches and whether the end marker was reached, which tells a
 /// correct start offset from a wrong one.
 fn read_pec_stitches(d: &[u8], start: usize) -> (Builder, bool) {
@@ -396,6 +511,9 @@ pub fn detect(name: &str, d: &[u8]) -> Option<Format> {
     if d.starts_with(b"#PEC") {
         return Some(Format::Pec);
     }
+    if d.starts_with(b"%vsm%") {
+        return Some(Format::Vp3);
+    }
     let ext = name.rsplit_once('.').map(|(_, e)| e.to_ascii_lowercase()).unwrap_or_default();
     match ext.as_str() {
         "jef" => Some(Format::Jef),
@@ -403,6 +521,7 @@ pub fn detect(name: &str, d: &[u8]) -> Option<Format> {
         "exp" => Some(Format::Exp),
         "pes" => Some(Format::Pes),
         "pec" => Some(Format::Pec),
+        "vp3" => Some(Format::Vp3),
         _ if d.starts_with(b"LA:") => Some(Format::Dst),
         _ => None,
     }
@@ -415,6 +534,7 @@ pub fn read(name: &str, d: &[u8]) -> Result<Pattern, ReadError> {
         Format::Exp => read_exp(d)?,
         Format::Pes => read_pec(d, i32_le(d, 8)?.max(0) as usize, Format::Pes)?,
         Format::Pec => read_pec(d, 8, Format::Pec)?,
+        Format::Vp3 => read_vp3(d)?,
         Format::Lettering | Format::Svg => return Err(ReadError::UnknownFormat),
     };
     if !pattern.cmds.contains(&Cmd::Stitch) {

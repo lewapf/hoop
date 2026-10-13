@@ -25,7 +25,7 @@ impl HoopApp {
                         ui.label(RichText::new(t!("{format} · {v1:.1} × {v2:.1} mm", format = d.pattern.format, v1 = w / 10.0, v2 = h / 10.0)).color(muted));
                     }
                     None => {
-                        ui.label(RichText::new(t!("Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop.")).color(muted));
+                        ui.label(RichText::new(t!("Open a JEF, DST, EXP, PES, PEC or VP3 file, or drop one on the hoop.")).color(muted));
                     }
                 }
                 let recent: Vec<PathBuf> = self.prefs.recent().into_iter().filter(|p| p.exists()).take(5).collect();

@@ -2,7 +2,7 @@
 
 Make and preview machine embroidery for Janome, Brother and Baby Lock, Pfaff
 and Husqvarna Viking, Bernina, or any machine that reads DST.
-Hoop opens JEF, DST, EXP, PES and PEC files, shows the design on the fabric in
+Hoop opens JEF, DST, EXP, PES, PEC and VP3 files, shows the design on the fabric in
 the hoop, tells you whether it fits, and plays the stitch-out thread by thread.
 
 The Lettering tab turns text into stitches: pick a font, set the height,
@@ -98,7 +98,7 @@ Janome Artistic Digitizer.
 - **Templates.** The Key fob and Coaster quick styles make in-the-hoop
   pieces with a stop for the backing fabric. Lace makes free-standing
   lace on water-soluble stabilizer.
-- **Editing stitch files.** For an opened JEF, DST, EXP, PES or PEC file:
+- **Editing stitch files.** For an opened JEF, DST, EXP, PES, PEC or VP3 file:
   - Right-click a thread in Colors to sew it earlier or later, or to
     delete it.
   - Merge neighbouring threads of the same color, or remove stitches

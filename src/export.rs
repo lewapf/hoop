@@ -481,7 +481,7 @@ mod tests {
     fn every_format_reads_back_the_same_stitches() {
         for (pts, cmds, threads) in [heart(), two_colors()] {
             let want = stitched(&pts, &cmds);
-            for out in [Out::Jef, Out::Dst, Out::Exp, Out::Pes, Out::Pec] {
+            for out in [Out::Jef, Out::Dst, Out::Exp, Out::Pes, Out::Pec, Out::Vp3] {
                 let bytes = write(out, "Heart", &pts, &cmds, &threads);
                 let q = read(&format!("x.{}", out.ext()), &bytes).unwrap_or_else(|e| panic!("{out:?}: {e}"));
                 let got = stitched(&q.points, &q.cmds);
@@ -525,6 +525,18 @@ mod tests {
         let at = 6 + 2 + 2 * 28 + 3;
         let len = u32::from_be_bytes([d[at], d[at + 1], d[at + 2], d[at + 3]]) as usize;
         assert_eq!(at + 4 + len, d.len());
+    }
+
+    #[test]
+    fn vp3_reads_back_its_threads() {
+        let (pts, cmds, threads) = two_colors();
+        let q = read("x.vp3", &write(Out::Vp3, "T", &pts, &cmds, &threads)).unwrap();
+        assert_eq!(q.format, Format::Vp3);
+        assert_eq!(q.threads.len(), 2);
+        assert_eq!((q.threads[0].color, &q.threads[1].name), (threads[0].color, &threads[1].name));
+        // Positions come back where they were, not just their shape.
+        let b = q.bounds();
+        assert_eq!(b, (20.0, -80.0, 420.0, 30.0));
     }
 
     /// Writes the heart in every format into $HOOP_OUT for checking with

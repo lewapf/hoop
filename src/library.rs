@@ -47,7 +47,7 @@ pub fn kind_of(path: &Path) -> Option<Kind> {
     }
     let ext = path.extension()?.to_string_lossy().to_ascii_lowercase();
     match ext.as_str() {
-        "jef" | "dst" | "exp" | "pes" | "pec" => Some(Kind::Stitches),
+        "jef" | "dst" | "exp" | "pes" | "pec" | "vp3" => Some(Kind::Stitches),
         "svg" | "svgz" => Some(Kind::Svg),
         "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif" => Some(Kind::Picture),
         _ => None,

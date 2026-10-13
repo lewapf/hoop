@@ -634,7 +634,7 @@ msgstr ""
 msgid "Embroidery"
 msgstr ""
 
-msgid "Stitch files: JEF, PES, EXP, DST, PEC"
+msgid "Stitch files: JEF, PES, VP3, EXP, DST, PEC"
 msgstr ""
 
 msgid "Drawings to turn into stitches"
@@ -673,7 +673,7 @@ msgstr ""
 msgid "Only embroidery that fits the hoop as it is or turned a quarter"
 msgstr ""
 
-msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures."
+msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, VP3, SVG and pictures."
 msgstr ""
 
 msgid "{w} × {h} mm"
@@ -795,7 +795,7 @@ msgstr ""
 msgid "{format} · {v1:.1} × {v2:.1} mm"
 msgstr ""
 
-msgid "Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop."
+msgid "Open a JEF, DST, EXP, PES, PEC or VP3 file, or drop one on the hoop."
 msgstr ""
 
 msgid "Recent"

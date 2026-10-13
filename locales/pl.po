@@ -3995,3 +3995,12 @@ msgstr "0 to prosta; znak mówi, w którą stronę się wygina"
 
 msgid "Artwork tools: pen / shapes (again for the next) / line / fill bucket"
 msgstr "Narzędzia grafiki: pióro / kształty (ponownie: następny) / linia / wiadro"
+
+msgid "Open a JEF, DST, EXP, PES, PEC or VP3 file, or drop one on the hoop."
+msgstr "Otwórz plik JEF, DST, EXP, PES, PEC lub VP3 albo upuść go na tamborek."
+
+msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, VP3, SVG and pictures."
+msgstr "Brak projektów. Hoop pokazuje JEF, DST, EXP, PES, PEC, VP3, SVG i obrazy."
+
+msgid "Stitch files: JEF, PES, VP3, EXP, DST, PEC"
+msgstr "Pliki haftu: JEF, PES, VP3, EXP, DST, PEC"

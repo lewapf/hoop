@@ -368,7 +368,8 @@ smallest, fewest stitches, type), S/M/L tiles (`library.tiles`), a
 also returns `library::Facts` (size, stitches, colors), cached as a .txt
 beside the thumbnail PNG. Sorting by size or the fit filter asks the
 painter for every stitch file in the folder. VP3 files are written but
-can't be read yet, so they don't show in the Library.
+can now be read too (`formats::read_vp3`, same block layout as the
+writer; checked by round trip only, not against a file from Pfaff software).
 
 ## Tool palette (2026-10-13)
 

@@ -58,7 +58,7 @@ Hoop has three tabs, switched with `V`, `L` and `A`:
 
 ## Opening and viewing designs
 
-Open JEF, DST, EXP, PES or PEC files with `O`, by dropping them on the
+Open JEF, DST, EXP, PES, PEC or VP3 files with `O`, by dropping them on the
 window, or by clicking a thumbnail in the **Library**.
 
 - **Library:**
@@ -323,7 +323,7 @@ Pick your machine in the tool bar's machine and hoop picker, in
 
 ## Editing stitch files
 
-For an opened JEF, DST, EXP, PES or PEC file:
+For an opened JEF, DST, EXP, PES, PEC or VP3 file:
 
 - **Colors list:** click a swatch to set the real thread color.
   Right-click a thread to sew it earlier or later, or to delete its

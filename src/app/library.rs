@@ -159,7 +159,7 @@ impl HoopApp {
             ui.spacing_mut().button_padding = vec2(5.0, 1.0);
             for (show, text, tip) in [
                 (Show::All, t!("All"), t!("Every file Hoop can open")),
-                (Show::Stitches, t!("Embroidery"), t!("Stitch files: JEF, PES, EXP, DST, PEC")),
+                (Show::Stitches, t!("Embroidery"), t!("Stitch files: JEF, PES, VP3, EXP, DST, PEC")),
                 (Show::Svg, "SVG", t!("Drawings to turn into stitches")),
                 (Show::Pictures, t!("Pictures"), t!("PNG, JPEG and other pictures to trace")),
             ] {
@@ -245,7 +245,7 @@ impl HoopApp {
             })
         });
         if shown.is_empty() {
-            ui.label(RichText::new(t!("No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures.")).size(12.0).color(muted));
+            ui.label(RichText::new(t!("No designs here. Hoop shows JEF, DST, EXP, PES, PEC, VP3, SVG and pictures.")).size(12.0).color(muted));
         }
         let open_now = self.design.as_ref().map(|d| d.name.clone());
         let mut open: Option<PathBuf> = None;

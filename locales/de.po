@@ -3963,3 +3963,12 @@ msgstr "0 ist gerade; das Vorzeichen bestimmt die Richtung"
 
 msgid "Artwork tools: pen / shapes (again for the next) / line / fill bucket"
 msgstr "Grafikwerkzeuge: Stift / Formen (nochmals: nächste) / Linie / Farbeimer"
+
+msgid "Open a JEF, DST, EXP, PES, PEC or VP3 file, or drop one on the hoop."
+msgstr "Öffne eine JEF-, DST-, EXP-, PES-, PEC- oder VP3-Datei oder lege sie auf den Rahmen."
+
+msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, VP3, SVG and pictures."
+msgstr "Keine Designs hier. Hoop zeigt JEF, DST, EXP, PES, PEC, VP3, SVG und Bilder."
+
+msgid "Stitch files: JEF, PES, VP3, EXP, DST, PEC"
+msgstr "Stickdateien: JEF, PES, VP3, EXP, DST, PEC"
