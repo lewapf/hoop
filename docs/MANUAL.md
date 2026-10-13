@@ -76,9 +76,13 @@ window, or by clicking a thumbnail in the **Library**.
     the hoop and an orange one that it doesn't. The size is printed under
     the name. The tooltip adds stitches, colors, file size and when it
     changed.
-- **Symbols:** the left panel's **Symbols** page holds 291 ready-made
+- **Symbols:** the left panel's **Symbols** page holds 330 ready-made
   silhouettes, sorted into categories (animals, plants, celebrations,
-  sport, travel and more).
+  sport, travel and more). **Frames & badges** has rings and frames to
+  put a name or motif in, badges and patches, banners for a word, laurel
+  wreaths, corner flourishes and dividers. Added in Artwork, a frame is
+  sized to go round what is already drawn. The zodiac signs are under
+  Signs & symbols.
   - **Find** searches names and words like "Christmas", "wedding" or
     "sea", in English or the language in use.
   - Click a category to show only it. **Favorites** keeps the symbols you

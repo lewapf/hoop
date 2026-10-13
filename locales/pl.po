@@ -4130,3 +4130,123 @@ msgstr "Zielone końce podążają za kształtami, na których leżą."
 
 msgid "Detach"
 msgstr "Odłącz"
+
+msgid "Aquarius"
+msgstr "Wodnik"
+
+msgid "Arched banner"
+msgstr "Łukowa wstęga"
+
+msgid "Aries"
+msgstr "Baran"
+
+msgid "Banner with tails"
+msgstr "Wstęga z końcami"
+
+msgid "Cancer"
+msgstr "Rak"
+
+msgid "Capricorn"
+msgstr "Koziorożec"
+
+msgid "Circle frame"
+msgstr "Ramka okrągła"
+
+msgid "Corner flourish"
+msgstr "Ornament narożny"
+
+msgid "Diamond divider"
+msgstr "Separator z rombem"
+
+msgid "Diamond frame"
+msgstr "Ramka w romb"
+
+msgid "Dot divider"
+msgstr "Separator z kropek"
+
+msgid "Dotted frame"
+msgstr "Ramka z kropek"
+
+msgid "Double circle frame"
+msgstr "Podwójna ramka okrągła"
+
+msgid "Frames & badges"
+msgstr "Ramki i odznaki"
+
+msgid "Gemini"
+msgstr "Bliźnięta"
+
+msgid "Heart divider"
+msgstr "Separator z sercem"
+
+msgid "Heart frame"
+msgstr "Ramka w serce"
+
+msgid "Hexagon frame"
+msgstr "Ramka sześciokątna"
+
+msgid "Laurel branch"
+msgstr "Gałązka laurowa"
+
+msgid "Laurel wreath"
+msgstr "Wieniec laurowy"
+
+msgid "Leo"
+msgstr "Lew"
+
+msgid "Libra"
+msgstr "Waga"
+
+msgid "Name tag"
+msgstr "Etykieta"
+
+msgid "Oval frame"
+msgstr "Ramka owalna"
+
+msgid "Photo corners"
+msgstr "Narożniki"
+
+msgid "Pisces"
+msgstr "Ryby"
+
+msgid "Rosette"
+msgstr "Rozeta"
+
+msgid "Round patch"
+msgstr "Okrągła naszywka"
+
+msgid "Sagittarius"
+msgstr "Strzelec"
+
+msgid "Scalloped frame"
+msgstr "Ramka falbankowa"
+
+msgid "Scorpio"
+msgstr "Skorpion"
+
+msgid "Scroll"
+msgstr "Zwój"
+
+msgid "Seal badge"
+msgstr "Pieczęć ząbkowana"
+
+msgid "Shield badge"
+msgstr "Odznaka tarcza"
+
+msgid "Square frame"
+msgstr "Ramka kwadratowa"
+
+msgid "Starburst"
+msgstr "Gwiaździsty znaczek"
+
+msgid "Swirls"
+msgstr "Zawijasy"
+
+msgid "Taurus"
+msgstr "Byk"
+
+msgid "Virgo"
+msgstr "Panna"
+
+msgid "Waving banner"
+msgstr "Falująca wstęga"

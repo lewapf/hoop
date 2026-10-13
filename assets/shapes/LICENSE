@@ -19,3 +19,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+The other symbols in this folder are not from Phosphor:
+
+- frame-*, badge-*, banner-*, laurel-*, flourish-* and divider-* were
+  drawn for Hoop by tools/frames.py and are under Hoop's MIT License.
+- zodiac-* are outlines of glyphs from Noto Sans Symbols, Copyright 2022
+  The Noto Project Authors, under the SIL Open Font License 1.1 (the text
+  is in assets/fonts/OFL.txt).

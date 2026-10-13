@@ -3010,6 +3010,9 @@ msgstr ""
 msgid "Signs & symbols"
 msgstr ""
 
+msgid "Frames & badges"
+msgstr ""
+
 msgid "Bird"
 msgstr ""
 
@@ -3866,6 +3869,123 @@ msgid "Pentagram"
 msgstr ""
 
 msgid "Atom"
+msgstr ""
+
+msgid "Circle frame"
+msgstr ""
+
+msgid "Double circle frame"
+msgstr ""
+
+msgid "Square frame"
+msgstr ""
+
+msgid "Oval frame"
+msgstr ""
+
+msgid "Hexagon frame"
+msgstr ""
+
+msgid "Diamond frame"
+msgstr ""
+
+msgid "Heart frame"
+msgstr ""
+
+msgid "Scalloped frame"
+msgstr ""
+
+msgid "Dotted frame"
+msgstr ""
+
+msgid "Photo corners"
+msgstr ""
+
+msgid "Name tag"
+msgstr ""
+
+msgid "Shield badge"
+msgstr ""
+
+msgid "Seal badge"
+msgstr ""
+
+msgid "Rosette"
+msgstr ""
+
+msgid "Round patch"
+msgstr ""
+
+msgid "Starburst"
+msgstr ""
+
+msgid "Banner with tails"
+msgstr ""
+
+msgid "Arched banner"
+msgstr ""
+
+msgid "Scroll"
+msgstr ""
+
+msgid "Waving banner"
+msgstr ""
+
+msgid "Laurel wreath"
+msgstr ""
+
+msgid "Laurel branch"
+msgstr ""
+
+msgid "Corner flourish"
+msgstr ""
+
+msgid "Swirls"
+msgstr ""
+
+msgid "Diamond divider"
+msgstr ""
+
+msgid "Heart divider"
+msgstr ""
+
+msgid "Dot divider"
+msgstr ""
+
+msgid "Aries"
+msgstr ""
+
+msgid "Taurus"
+msgstr ""
+
+msgid "Gemini"
+msgstr ""
+
+msgid "Cancer"
+msgstr ""
+
+msgid "Leo"
+msgstr ""
+
+msgid "Virgo"
+msgstr ""
+
+msgid "Libra"
+msgstr ""
+
+msgid "Scorpio"
+msgstr ""
+
+msgid "Sagittarius"
+msgstr ""
+
+msgid "Capricorn"
+msgstr ""
+
+msgid "Aquarius"
+msgstr ""
+
+msgid "Pisces"
 msgstr ""
 
 msgid "Satin columns"

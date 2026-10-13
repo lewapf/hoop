@@ -380,7 +380,17 @@ impl HoopApp {
         let b = drawn.bounds;
         let (mx, my) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
         let across = (b.2 - b.0).max(b.3 - b.1).max(1e-3);
+        // A frame goes round what is drawn already, with room to spare.
+        let around = (sym.category == crate::symbols::Category::Frames)
+            .then(|| {
+                let (art, s) = (self.artwork.as_ref()?, self.art.as_ref()?);
+                let on = |e: &&ShapeEdit| !e.hidden && s.layers.get(e.layer).is_none_or(|l| l.enabled);
+                let box_ = s.shapes.iter().filter(on).fold(EMPTY, |a, e| union(a, artwork::extent(&e.lines(art))));
+                (box_.0 < box_.2).then(|| (((box_.0 + box_.2) / 2.0, (box_.1 + box_.3) / 2.0), (box_.2 - box_.0).max(box_.3 - box_.1) * 1.35))
+            })
+            .flatten();
         self.add_shapes(crate::i18n::tr(sym.name), |at, size, layer| {
+            let (at, size) = around.unwrap_or((at, size));
             let k = size / across;
             drawn
                 .shapes

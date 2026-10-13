@@ -4096,3 +4096,123 @@ msgstr "Die grünen Enden folgen den Formen, an denen sie hängen."
 
 msgid "Detach"
 msgstr "Lösen"
+
+msgid "Aquarius"
+msgstr "Wassermann"
+
+msgid "Arched banner"
+msgstr "Bogenbanner"
+
+msgid "Aries"
+msgstr "Widder"
+
+msgid "Banner with tails"
+msgstr "Banner mit Enden"
+
+msgid "Cancer"
+msgstr "Krebs"
+
+msgid "Capricorn"
+msgstr "Steinbock"
+
+msgid "Circle frame"
+msgstr "Kreisrahmen"
+
+msgid "Corner flourish"
+msgstr "Eckornament"
+
+msgid "Diamond divider"
+msgstr "Trenner mit Raute"
+
+msgid "Diamond frame"
+msgstr "Rautenrahmen"
+
+msgid "Dot divider"
+msgstr "Punkttrenner"
+
+msgid "Dotted frame"
+msgstr "Punktrahmen"
+
+msgid "Double circle frame"
+msgstr "Doppelter Kreisrahmen"
+
+msgid "Frames & badges"
+msgstr "Rahmen und Abzeichen"
+
+msgid "Gemini"
+msgstr "Zwillinge"
+
+msgid "Heart divider"
+msgstr "Trenner mit Herz"
+
+msgid "Heart frame"
+msgstr "Herzrahmen"
+
+msgid "Hexagon frame"
+msgstr "Sechseckrahmen"
+
+msgid "Laurel branch"
+msgstr "Lorbeerzweig"
+
+msgid "Laurel wreath"
+msgstr "Lorbeerkranz"
+
+msgid "Leo"
+msgstr "Löwe"
+
+msgid "Libra"
+msgstr "Waage"
+
+msgid "Name tag"
+msgstr "Namensschild"
+
+msgid "Oval frame"
+msgstr "Ovaler Rahmen"
+
+msgid "Photo corners"
+msgstr "Fotoecken"
+
+msgid "Pisces"
+msgstr "Fische"
+
+msgid "Rosette"
+msgstr "Rosette"
+
+msgid "Round patch"
+msgstr "Runder Aufnäher"
+
+msgid "Sagittarius"
+msgstr "Schütze"
+
+msgid "Scalloped frame"
+msgstr "Bogenrahmen"
+
+msgid "Scorpio"
+msgstr "Skorpion"
+
+msgid "Scroll"
+msgstr "Schriftrolle"
+
+msgid "Seal badge"
+msgstr "Siegelabzeichen"
+
+msgid "Shield badge"
+msgstr "Wappenabzeichen"
+
+msgid "Square frame"
+msgstr "Quadratischer Rahmen"
+
+msgid "Starburst"
+msgstr "Zackenplakette"
+
+msgid "Swirls"
+msgstr "Schnörkel"
+
+msgid "Taurus"
+msgstr "Stier"
+
+msgid "Virgo"
+msgstr "Jungfrau"
+
+msgid "Waving banner"
+msgstr "Wehendes Banner"

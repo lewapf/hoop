@@ -15,12 +15,13 @@ pub enum Category {
     Music,
     People,
     Symbols,
+    Frames,
 }
 
 use Category::*;
 
 impl Category {
-    pub const ALL: [Category; 11] = [Animals, Plants, Sky, Food, Celebrations, Sport, Travel, Home, Music, People, Symbols];
+    pub const ALL: [Category; 12] = [Animals, Plants, Sky, Food, Celebrations, Sport, Travel, Home, Music, People, Symbols, Frames];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -35,6 +36,7 @@ impl Category {
             Music => t!("Music"),
             People => t!("People & faces"),
             Symbols => t!("Signs & symbols"),
+            Frames => t!("Frames & badges"),
         }
     }
 }
@@ -140,7 +142,7 @@ fn distance(set: &[bool], n: usize) -> Vec<f32> {
     d
 }
 
-pub const SYMBOLS: [Symbol; 291] = [
+pub static SYMBOLS: [Symbol; 330] = [
     Symbol { file: "bird", name: n!("Bird"), category: Animals, tags: "animals pets" },
     Symbol { file: "butterfly", name: n!("Butterfly"), category: Animals, tags: "animals insects moth spring" },
     Symbol { file: "bug", name: n!("Bug"), category: Animals, tags: "debug errors insect ladybug halloween" },
@@ -557,6 +559,45 @@ pub const SYMBOLS: [Symbol; 291] = [
     Symbol { file: "heartbeat", name: n!("Heartbeat"), category: Symbols, tags: "wellness healthy ecg ekg vitals monitor" },
     Symbol { file: "pentagram", name: n!("Pentagram"), category: Symbols, tags: "star wicca satan satanism religion spirituality evil magic" },
     Symbol { file: "atom", name: n!("Atom"), category: Symbols, tags: "atomic nucleus nuclear reactor science physics electron automation react" },
+    Symbol { file: "frame-circle", name: n!("Circle frame"), category: Frames, tags: "frame border ring monogram name" },
+    Symbol { file: "frame-circle-double", name: n!("Double circle frame"), category: Frames, tags: "frame border ring monogram" },
+    Symbol { file: "frame-square", name: n!("Square frame"), category: Frames, tags: "frame border patch name" },
+    Symbol { file: "frame-oval", name: n!("Oval frame"), category: Frames, tags: "frame border ellipse name" },
+    Symbol { file: "frame-hexagon", name: n!("Hexagon frame"), category: Frames, tags: "frame border patch" },
+    Symbol { file: "frame-diamond", name: n!("Diamond frame"), category: Frames, tags: "frame border monogram" },
+    Symbol { file: "frame-heart", name: n!("Heart frame"), category: Frames, tags: "frame border love wedding valentine" },
+    Symbol { file: "frame-scallop", name: n!("Scalloped frame"), category: Frames, tags: "frame border lace baby" },
+    Symbol { file: "frame-dots", name: n!("Dotted frame"), category: Frames, tags: "frame border dots" },
+    Symbol { file: "frame-corners", name: n!("Photo corners"), category: Frames, tags: "frame border corners" },
+    Symbol { file: "frame-tag", name: n!("Name tag"), category: Frames, tags: "frame label tag name luggage" },
+    Symbol { file: "badge-shield", name: n!("Shield badge"), category: Frames, tags: "badge patch crest club team" },
+    Symbol { file: "badge-seal", name: n!("Seal badge"), category: Frames, tags: "badge seal patch award" },
+    Symbol { file: "badge-rosette", name: n!("Rosette"), category: Frames, tags: "badge award prize ribbon winner" },
+    Symbol { file: "badge-circle", name: n!("Round patch"), category: Frames, tags: "badge patch round" },
+    Symbol { file: "badge-stamp", name: n!("Starburst"), category: Frames, tags: "badge burst sale sticker" },
+    Symbol { file: "banner-ribbon", name: n!("Banner with tails"), category: Frames, tags: "banner ribbon name text" },
+    Symbol { file: "banner-arch", name: n!("Arched banner"), category: Frames, tags: "banner ribbon arch text" },
+    Symbol { file: "banner-scroll", name: n!("Scroll"), category: Frames, tags: "banner scroll text" },
+    Symbol { file: "banner-wave", name: n!("Waving banner"), category: Frames, tags: "banner flag text" },
+    Symbol { file: "laurel-wreath", name: n!("Laurel wreath"), category: Frames, tags: "laurel wreath award winner crest" },
+    Symbol { file: "laurel-branch", name: n!("Laurel branch"), category: Frames, tags: "laurel branch leaves olive" },
+    Symbol { file: "flourish-corner", name: n!("Corner flourish"), category: Frames, tags: "flourish ornament corner swirl" },
+    Symbol { file: "flourish-swirl", name: n!("Swirls"), category: Frames, tags: "flourish ornament swirl scroll" },
+    Symbol { file: "divider-diamond", name: n!("Diamond divider"), category: Frames, tags: "divider line ornament" },
+    Symbol { file: "divider-heart", name: n!("Heart divider"), category: Frames, tags: "divider line love wedding" },
+    Symbol { file: "divider-dots", name: n!("Dot divider"), category: Frames, tags: "divider line dots" },
+    Symbol { file: "zodiac-aries", name: n!("Aries"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-taurus", name: n!("Taurus"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-gemini", name: n!("Gemini"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-cancer", name: n!("Cancer"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-leo", name: n!("Leo"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-virgo", name: n!("Virgo"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-libra", name: n!("Libra"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-scorpio", name: n!("Scorpio"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-sagittarius", name: n!("Sagittarius"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-capricorn", name: n!("Capricorn"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-aquarius", name: n!("Aquarius"), category: Symbols, tags: "zodiac horoscope star sign" },
+    Symbol { file: "zodiac-pisces", name: n!("Pisces"), category: Symbols, tags: "zodiac horoscope star sign" },
 ];
 
 #[cfg(test)]
@@ -583,6 +624,18 @@ mod tests {
         names.sort();
         names.dedup();
         assert_eq!(names.len(), SYMBOLS.len(), "two symbols share a name");
+    }
+
+    #[test]
+    fn drawn_symbols_open_as_artwork() {
+        // Ours, not Phosphor's: frames, badges, banners, ornaments, zodiac.
+        for s in SYMBOLS.iter().filter(|s| s.category == Category::Frames || s.file.starts_with("zodiac-")) {
+            let data = std::fs::read(dir().join(format!("{}.svg", s.file))).unwrap();
+            let art = crate::artwork::parse(s.file, &data).unwrap_or_else(|e| panic!("{}: {e}", s.file));
+            assert!(!art.shapes.is_empty(), "{}", s.file);
+            let mm = smallest_mm(&String::from_utf8(data).unwrap()).unwrap();
+            assert!(mm <= 60.0, "{} needs {mm} mm", s.file);
+        }
     }
 
     #[test]

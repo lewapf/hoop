@@ -283,6 +283,8 @@ Furman.
 Hoop was written by Pawel Furman with
 [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent.
 Bundled fonts, shapes and tool bar icons keep their own licenses, listed
-above and in `assets/`. The symbols and tool bar icons are from
+above and in `assets/`. Most symbols and the tool bar icons are from
 [Phosphor Icons](https://phosphoricons.com) (MIT, `assets/shapes/LICENSE`
-and `assets/icons/LICENSE`).
+and `assets/icons/LICENSE`). The frames, badges, banners and ornaments
+were drawn for Hoop (`tools/frames.py`); the zodiac signs are outlines from
+Noto Sans Symbols (SIL Open Font License).
