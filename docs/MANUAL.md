@@ -115,6 +115,14 @@ clip art work best; photos do not.
     empty fabric to pick several.
   - Drag shapes on the hoop to move them, use the corner handle to
     resize, and the round knob to turn.
+  - Drag a row up or down to restack it, like a layer: higher sews
+    later and lies on top. With **Group by thread** on, Hoop otherwise
+    sews shapes in thread runs, moving a shape past others it doesn't
+    overlap. A shape you drag or arrange (Front, Back, `[`, `]`) gets a
+    pin and is sewn exactly where it sits: after everything below it,
+    before everything above. Click the pin to let Hoop group it again;
+    **Unpin all** releases every shape. The swatch shows the thread the
+    shape sews in.
 - **Optimize…** (top of Objects) tidies the list, with a preview of the
   result before you apply it. By default it names shapes by thread
   ("Black line 3"), merges shapes of one thread and look into one object

@@ -123,6 +123,10 @@ pub struct ShapeEdit {
     pub entry: Option<Pt>,
     /// The shape's own fill and edge style, instead of the drawing's.
     pub style: Option<Settings>,
+    /// Placed by hand in the Objects list: sewn exactly where it sits, after
+    /// everything below it and before everything above, even when grouping
+    /// by thread would move it.
+    pub pinned: bool,
 }
 
 impl ShapeEdit {
@@ -146,6 +150,7 @@ impl ShapeEdit {
             angles: Vec::new(),
             entry: None,
             style: None,
+            pinned: false,
         }
     }
 
@@ -563,6 +568,28 @@ mod tests {
                 assert_eq!(a, b, "{name} kept its stitches");
             }
         }
+    }
+
+    #[test]
+    fn pinned_shapes_sew_where_they_sit_in_the_list() {
+        // Red, blue, red, apart from each other: grouping sews both reds first.
+        let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20">
+            <rect x="0" y="0" width="20" height="20" fill="#ff0000"/>
+            <rect x="40" y="0" width="20" height="20" fill="#0000ff"/>
+            <rect x="80" y="0" width="20" height="20" fill="#ff0000"/>
+        </svg>"##;
+        let art = parse("three.svg", svg.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        let names = |s: &ArtSettings| generate(&art, s).unwrap().threads.iter().map(|t| t.name.clone()).collect::<Vec<_>>();
+        let (red, blue) = (formats::jef_thread(s.layers[0].thread, 0).name, formats::jef_thread(s.layers[1].thread, 0).name);
+        assert_eq!(names(&s), [red.clone(), blue.clone()]);
+        // Blue placed by hand between the reds: sewn there, as listed.
+        s.shapes[1].pinned = true;
+        assert_eq!(names(&s), [red.clone(), blue.clone(), red.clone()]);
+        // Placed at the bottom, it is sewn first.
+        let blue_shape = s.shapes.remove(1);
+        s.shapes.insert(0, blue_shape);
+        assert_eq!(names(&s), [blue, red]);
     }
 
     #[test]

@@ -2776,3 +2776,18 @@ msgid_plural "{n} shapes merged"
 msgstr[0] "{n} kształt scalony"
 msgstr[1] "{n} kształty scalone"
 msgstr[2] "{n} kształtów scalonych"
+
+msgid "Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again."
+msgstr "Ułożony ręcznie: haftowany dokładnie w tym miejscu listy. Kliknij, aby Hoop znów grupował go według nici."
+
+msgid "Pin: sew exactly here in the list instead of grouping it by thread"
+msgstr "Przypnij: haftuj dokładnie w tym miejscu listy, bez grupowania według nici"
+
+msgid "Unpin all"
+msgstr "Odepnij wszystkie"
+
+msgid "{n} shape is sewn where you placed it. Let Hoop group it by thread again."
+msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
+msgstr[0] "{n} kształt jest haftowany tam, gdzie go ułożono. Niech Hoop znów grupuje go według nici."
+msgstr[1] "{n} kształty są haftowane tam, gdzie je ułożono. Niech Hoop znów grupuje je według nici."
+msgstr[2] "{n} kształtów jest haftowanych tam, gdzie je ułożono. Niech Hoop znów grupuje je według nici."

@@ -305,6 +305,20 @@ override it explicitly).
   paths, system font scan, Omarchy theme and font, curl, xdg-open,
   /usr/share paths. Plan agreed in principle, not started.
 
+## Objects list as layers (2026-10-13)
+
+The owner reported that restacking in Objects didn't act like layers:
+with Group by thread on, `layered_order` regrouped shapes past others they
+don't overlap, so the list, the sewing order and the Colors list disagreed.
+Making the list the exact sewing order was measured and rejected: black
+outlines hidden under fills could no longer sew after them (Bremen Mittel
+went from 6 to 11 threads). Instead `ShapeEdit::pinned`: shapes dragged or
+arranged in Objects are pinned and count as touching everything in
+`layered_order`, so they sew exactly at their list place; others still
+group. Pin icon per row (click toggles), Unpin all in the list header.
+The row swatch now shows the chosen thread, not the drawing's color.
+Next step agreed: Photoshop-style groups (folders) in Objects.
+
 ## Ideas queued with the owner
 
 Drag to reorder in the Shapes list, Bezier handles in point editing,

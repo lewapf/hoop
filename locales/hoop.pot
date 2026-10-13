@@ -1016,6 +1016,14 @@ msgstr ""
 msgid "Name shapes by thread, break apart compound fills, join touching lines, drop specks"
 msgstr ""
 
+msgid "Unpin all"
+msgstr ""
+
+msgid "{n} shape is sewn where you placed it. Let Hoop group it by thread again."
+msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "{v0} shapes · {v1} picked"
 msgstr ""
 
@@ -1038,6 +1046,12 @@ msgid "edited"
 msgstr ""
 
 msgid "moved"
+msgstr ""
+
+msgid "Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again."
+msgstr ""
+
+msgid "Pin: sew exactly here in the list instead of grouping it by thread"
 msgstr ""
 
 msgid "Add"

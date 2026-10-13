@@ -133,12 +133,16 @@ impl HoopApp {
     }
 
     /// Applies a new stacking order (old indices, bottom first) and keeps the
-    /// same shapes selected.
+    /// same shapes selected. The selected shapes were placed by hand, so they
+    /// are pinned: sewn where they now sit, like layers.
     fn restack(&mut self, order: Vec<usize>) {
         let Some(s) = &mut self.art else { return };
         let old = std::mem::take(&mut s.shapes);
         s.shapes = order.iter().map(|&i| old[i].clone()).collect();
         self.sel = self.sel.iter().filter_map(|i| order.iter().position(|o| o == i)).collect();
+        for &i in &self.sel {
+            s.shapes[i].pinned = true;
+        }
     }
 
     pub(super) fn arrange(&mut self, op: Arrange) {
@@ -258,6 +262,7 @@ impl HoopApp {
             angles: Vec::new(),
             entry: None,
             style: None,
+            pinned: false,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
@@ -653,6 +658,22 @@ impl HoopApp {
             if ui.button(t!("Optimize…")).on_hover_text(t!("Name shapes by thread, break apart compound fills, join touching lines, drop specks")).clicked() {
                 self.optimize.open = true;
             }
+            let pinned = s.shapes.iter().filter(|e| e.pinned).count();
+            if s.group_colors
+                && pinned > 0
+                && ui
+                    .button(t!("Unpin all"))
+                    .on_hover_text(tn!(
+                        pinned,
+                        "{n} shape is sewn where you placed it. Let Hoop group it by thread again.",
+                        "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
+                    ))
+                    .clicked()
+            {
+                for e in &mut s.shapes {
+                    e.pinned = false;
+                }
+            }
             ui.label(RichText::new(t!("{v0} shapes · {v1} picked", v0 = s.shapes.len(), v1 = self.sel.len())).size(12.0).color(muted));
         });
         ui.separator();
@@ -681,7 +702,9 @@ impl HoopApp {
                 let ink = if e.hidden { muted.gamma_multiply(0.6) } else { ui.visuals().text_color() };
                 painter.circle(eye.center(), 4.5, if e.hidden { Color32::TRANSPARENT } else { ink }, egui::Stroke::new(1.2, ink));
                 let sw = egui::Rect::from_min_size(rect.min + vec2(26.0, 5.0), vec2(14.0, 14.0));
-                painter.rect_filled(sw, 3, rgb(art.layers[e.layer].color));
+                // The thread it sews in, which may differ from the drawing's color.
+                let color = s.layers.get(e.layer).map_or(art.layers[e.layer].color, |l| crate::formats::jef_thread(l.thread, 0).color);
+                painter.rect_filled(sw, 3, rgb(color));
                 painter.rect_stroke(sw, 3, egui::Stroke::new(1.0, muted.gamma_multiply(0.6)), egui::StrokeKind::Inside);
                 let kind = match e.base(art).kind {
                     artwork::Kind::Fill { .. } => t!("fill"),
@@ -699,7 +722,33 @@ impl HoopApp {
                     kind
                 };
                 painter.text(rect.left_center() + vec2(48.0, 0.0), egui::Align2::LEFT_CENTER, &e.name, egui::FontId::proportional(13.5), ink);
-                painter.text(rect.right_center() - vec2(6.0, 0.0), egui::Align2::RIGHT_CENTER, tag, egui::FontId::proportional(11.0), muted);
+                // Pin: shown on pinned rows, and faintly on the hovered one to pin it.
+                // Without grouping every shape sews in list order anyway.
+                let mut right = rect.right() - 6.0;
+                if s.group_colors {
+                    let pin = egui::Rect::from_center_size(egui::pos2(rect.right() - 14.0, rect.center().y), vec2(16.0, 16.0));
+                    let tip = if e.pinned {
+                        t!("Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again.")
+                    } else {
+                        t!("Pin: sew exactly here in the list instead of grouping it by thread")
+                    };
+                    let pin_resp = ui.interact(pin, ui.id().with(("pin", i)), Sense::click()).on_hover_text(tip);
+                    if pin_resp.clicked() {
+                        e.pinned = !e.pinned;
+                    }
+                    if e.pinned || resp.hovered() || pin_resp.hovered() {
+                        let c = if e.pinned { accent } else { muted.gamma_multiply(0.7) };
+                        let head = pin.center() - vec2(0.0, 2.5);
+                        painter.line_segment([head, pin.center() + vec2(0.0, 6.0)], egui::Stroke::new(1.4, c));
+                        if e.pinned {
+                            painter.circle_filled(head, 3.5, c);
+                        } else {
+                            painter.circle_stroke(head, 3.5, egui::Stroke::new(1.2, c));
+                        }
+                    }
+                    right -= 18.0;
+                }
+                painter.text(egui::pos2(right, rect.center().y), egui::Align2::RIGHT_CENTER, tag, egui::FontId::proportional(11.0), muted);
                 if resp.clicked() {
                     clicked = Some(i);
                 }

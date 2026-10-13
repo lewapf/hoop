@@ -2748,3 +2748,17 @@ msgid "{n} shape merged"
 msgid_plural "{n} shapes merged"
 msgstr[0] "{n} Form zusammengefasst"
 msgstr[1] "{n} Formen zusammengefasst"
+
+msgid "Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again."
+msgstr "Von Hand platziert: wird genau an dieser Stelle der Liste gestickt. Klicken, damit Hoop es wieder nach Garn gruppiert."
+
+msgid "Pin: sew exactly here in the list instead of grouping it by thread"
+msgstr "Anheften: genau an dieser Stelle der Liste sticken, statt nach Garn zu gruppieren"
+
+msgid "Unpin all"
+msgstr "Alle lösen"
+
+msgid "{n} shape is sewn where you placed it. Let Hoop group it by thread again."
+msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
+msgstr[0] "{n} Form wird dort gestickt, wo Sie sie platziert haben. Hoop soll sie wieder nach Garn gruppieren."
+msgstr[1] "{n} Formen werden dort gestickt, wo Sie sie platziert haben. Hoop soll sie wieder nach Garn gruppieren."
