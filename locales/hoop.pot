@@ -49,7 +49,7 @@ msgstr ""
 msgid "Paste SVG code, or press Ctrl+V anywhere with SVG code copied"
 msgstr ""
 
-msgid "Save JEF…"
+msgid "Save…"
 msgstr ""
 
 msgid "Use this SVG"
@@ -312,7 +312,7 @@ msgstr ""
 msgid "Hoop"
 msgstr ""
 
-msgid "Embroidery designs for the Janome MC9900"
+msgid "Embroidery designs for your machine"
 msgstr ""
 
 msgid "Type it, and it's stitched"
@@ -348,7 +348,7 @@ msgstr ""
 msgid "Save · USB · PDF"
 msgstr ""
 
-msgid "Hoop — free, for your Janome"
+msgid "Hoop — free, for your machine"
 msgstr ""
 
 msgid "Couldn't open the picture: {e}."
@@ -681,7 +681,7 @@ msgstr ""
 msgid "Pinned to the hoop. Make or open the next part."
 msgstr ""
 
-msgid "Save as JEF"
+msgid "Save design"
 msgstr ""
 
 msgid "Export"
@@ -718,9 +718,6 @@ msgid "Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop."
 msgstr ""
 
 msgid "Recent"
-msgstr ""
-
-msgid "Save as JEF…"
 msgstr ""
 
 msgid "Fits the {v0}"
@@ -768,7 +765,7 @@ msgstr ""
 msgid "Combine"
 msgstr ""
 
-msgid "Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file."
+msgid "Pin this design to the hoop, then make or open the next part, like a name under a logo. Saving saves all of them as one file."
 msgstr ""
 
 msgid "{v0:.0} × {v1:.0} mm"
@@ -781,6 +778,9 @@ msgid "P · keep this design where it is and start the next part"
 msgstr ""
 
 msgid "Clear pinned"
+msgstr ""
+
+msgid "Machine"
 msgstr ""
 
 msgid "Position"
@@ -1254,19 +1254,13 @@ msgstr ""
 msgid "Paste SVG code…"
 msgstr ""
 
+msgid "Save as {format}…"
+msgstr ""
+
 msgid "Export as"
 msgstr ""
 
-msgid "Send to USB…"
-msgstr ""
-
-msgid "Test stitch-out…"
-msgstr ""
-
 msgid "Save worksheet (PDF)…"
-msgstr ""
-
-msgid "Play demo"
 msgstr ""
 
 msgid "Quit"
@@ -1279,9 +1273,6 @@ msgid "Undo"
 msgstr ""
 
 msgid "Redo"
-msgstr ""
-
-msgid "Settings…"
 msgstr ""
 
 msgid "Select all shapes"
@@ -1299,6 +1290,15 @@ msgstr ""
 msgid "Show all shapes"
 msgstr ""
 
+msgid "Settings…"
+msgstr ""
+
+msgid "Viewer"
+msgstr ""
+
+msgid "Lettering"
+msgstr ""
+
 msgid "Whole hoop"
 msgstr ""
 
@@ -1314,22 +1314,10 @@ msgstr ""
 msgid "Thread density"
 msgstr ""
 
-msgid "Translations are .po files in ~/.local/share/hoop/locale"
-msgstr ""
-
-msgid "Thread charts and my threads…"
-msgstr ""
-
 msgid "Objects and colors panel"
 msgstr ""
 
 msgid "Properties panel"
-msgstr ""
-
-msgid "Viewer"
-msgstr ""
-
-msgid "Lettering"
 msgstr ""
 
 msgid "Rotate right"
@@ -1380,58 +1368,61 @@ msgstr ""
 msgid "Bottom edges"
 msgstr ""
 
+msgid "Send to USB…"
+msgstr ""
+
+msgid "Test stitch-out…"
+msgstr ""
+
+msgid "Thread charts and my threads…"
+msgstr ""
+
 msgid "Help"
 msgstr ""
 
 msgid "Keyboard shortcuts"
 msgstr ""
 
+msgid "Play demo"
+msgstr ""
+
 msgid "About Hoop"
 msgstr ""
 
-msgid "Hoop {v0} · embroidery for the Janome MC9900"
+msgid "Hoop {v0} · machine embroidery designs"
 msgstr ""
 
-msgid "Open"
+msgid "New project · N"
 msgstr ""
 
 msgid "Open a design, SVG or picture · O"
 msgstr ""
 
-msgid "Save"
+msgid "Save as {format} · Ctrl+S"
 msgstr ""
 
-msgid "Save as JEF · Ctrl+S"
+msgid "Save worksheet (PDF) · Ctrl+P"
 msgstr ""
 
-msgid "To USB"
+msgid "Undo · Ctrl+Z"
 msgstr ""
 
-msgid "Write the JEF straight to the machine's USB stick · Ctrl+U"
-msgstr ""
-
-msgid "Test"
-msgstr ""
-
-msgid "Sew a small part first, or the calibration sheet · Ctrl+T"
-msgstr ""
-
-msgid "Turn left"
+msgid "Redo · Ctrl+Shift+Z"
 msgstr ""
 
 msgid "Rotate 90° left · Shift+R"
 msgstr ""
 
-msgid "Turn right"
-msgstr ""
-
 msgid "Rotate 90° right · R"
 msgstr ""
 
-msgid "Pin"
+msgid "Mirror · M"
 msgstr ""
 
-msgid "Keep this design on the hoop and start the next part · P"
+msgid "Center in hoop · C"
+msgstr ""
+
+msgid "Pin to hoop: keep this design and start the next part · P"
 msgstr ""
 
 msgid "Show the whole hoop · F"
@@ -1440,7 +1431,22 @@ msgstr ""
 msgid "Zoom to the design · D"
 msgstr ""
 
+msgid "Pause the stitch-out · Space"
+msgstr ""
+
 msgid "Play the stitch-out · Space"
+msgstr ""
+
+msgid "Send to machine"
+msgstr ""
+
+msgid "Write the {format} straight to the machine's USB stick · Ctrl+U"
+msgstr ""
+
+msgid "Test stitch-out and calibration sheet · Ctrl+T"
+msgstr ""
+
+msgid "Machine and hoop: sets the hoop shown, the file format and where Send puts it"
 msgstr ""
 
 msgid "X {v0:>6.1}  Y {v1:>6.1} mm"
@@ -1553,6 +1559,9 @@ msgid "Hatch"
 msgstr ""
 
 msgid "Gradient"
+msgstr ""
+
+msgid "Open"
 msgstr ""
 
 msgid "Stipple"
@@ -1717,7 +1726,7 @@ msgstr ""
 msgid "Team names"
 msgstr ""
 
-msgid "One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts."
+msgid "One name per line. Each is sewn with the lettering settings above and saved as its own machine file, ready for a stack of shirts."
 msgstr ""
 
 msgid "ANNA\nBEN\nCHARLOTTE"
@@ -1728,7 +1737,7 @@ msgid_plural "Save {n} designs…"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Pick a folder; each name becomes NAME.jef"
+msgid "Pick a folder; each name becomes its own file"
 msgstr ""
 
 msgid "Folder for the team names"
@@ -1885,10 +1894,7 @@ msgstr ""
 msgid "Save test…"
 msgstr ""
 
-msgid "Save test as JEF"
-msgstr ""
-
-msgid "Janome JEF"
+msgid "Save test piece"
 msgstr ""
 
 msgid "{n} is ready."
@@ -1900,7 +1906,7 @@ msgstr ""
 msgid "Thread lists use"
 msgstr ""
 
-msgid "The machine file keeps Janome thread numbers. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."
+msgid "Machine files keep the thread colors. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."
 msgstr ""
 
 msgid "Get more charts"
@@ -1971,7 +1977,10 @@ msgstr ""
 msgid "will be opened"
 msgstr ""
 
-msgid "Saved into EMB/Embf, where the MC9900 looks for designs. Up to 8 letters shows best on the machine."
+msgid "Saved at the top of the stick. Up to 8 letters shows best on the machine."
+msgstr ""
+
+msgid "Saved into {folder}, where the machine looks for designs. Up to 8 letters shows best on the machine."
 msgstr ""
 
 msgid "Working…"
@@ -2185,6 +2194,9 @@ msgid "Viewer / lettering / artwork"
 msgstr ""
 
 msgid "Ctrl+S"
+msgstr ""
+
+msgid "Save in the machine's format"
 msgstr ""
 
 msgid "Ctrl+U"
@@ -2556,6 +2568,9 @@ msgstr ""
 msgid "VP3 · Pfaff, Husqvarna Viking"
 msgstr ""
 
+msgid "Janome JEF"
+msgstr ""
+
 msgid "Tajima DST"
 msgstr ""
 
@@ -2587,6 +2602,15 @@ msgid "Optional"
 msgstr ""
 
 msgid "Free arm"
+msgstr ""
+
+msgid "Large machines"
+msgstr ""
+
+msgid "Other machine (DST)"
+msgstr ""
+
+msgid "Common"
 msgstr ""
 
 msgid "Couldn't read {v0}: {e}."
@@ -2697,7 +2721,7 @@ msgstr ""
 msgid "The USB drive didn't say where it was opened."
 msgstr ""
 
-msgid "Couldn't make the EMB/Embf folder: {e}."
+msgid "Couldn't make the {folder} folder: {e}."
 msgstr ""
 
 msgid "Couldn't write to the USB drive: {e}."

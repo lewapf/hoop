@@ -49,7 +49,7 @@ pub(super) struct Demo {
 fn script() -> Vec<(f32, Step)> {
     let mut s = vec![
         (0.0, Step::Lettering),
-        (0.0, Step::Card(n!("Hoop"), n!("Embroidery designs for the Janome MC9900"))),
+        (0.0, Step::Card(n!("Hoop"), n!("Embroidery designs for your machine"))),
         (2.5, Step::Caption(n!("Type it, and it's stitched"))),
     ];
     // Typed in letter by letter.
@@ -84,7 +84,7 @@ fn script() -> Vec<(f32, Step)> {
         (27.5, Step::Caption(n!("A manual built in"))),
         (27.5, Step::Window(Win::Manual)),
         (29.0, Step::Window(Win::None)),
-        (29.0, Step::Card(n!("Save · USB · PDF"), n!("Hoop — free, for your Janome"))),
+        (29.0, Step::Card(n!("Save · USB · PDF"), n!("Hoop — free, for your machine"))),
         (31.5, Step::End),
     ]);
     s

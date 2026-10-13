@@ -10,8 +10,8 @@ Hoop is a native Rust desktop app for Omarchy (Arch + Hyprland) that previews
 and creates machine embroidery for a **Janome MC9900**. It replaces paid
 digitizing software for the owner's needs. Three tabs:
 
-- **Viewer (V):** opens JEF, DST, EXP, PES, PEC; shows the design on the MC9900
-  hoops (SQ14b 140×140, RE20b 170×200, SQ20b 200×200, FA10a 100×40) with a fit
+- **Viewer (V):** opens JEF, DST, EXP, PES, PEC; shows the design on the
+  chosen machine's hoops (see "Machines and the new bars") with a fit
   check, rotate/mirror/move, thread colors, stitch-out playback, details.
 - **Lettering (L):** text from bundled or system fonts into stitches. Fill
   styles, edges, arc, slant, alignment, quick styles, patches (incl. appliqué).
@@ -318,6 +318,29 @@ arranged in Objects are pinned and count as touching everything in
 group. Pin icon per row (click toggles), Unpin all in the list header.
 The row swatch now shows the chosen thread, not the drawing's color.
 Next step agreed: Photoshop-style groups (folders) in Objects.
+
+## Machines and the new bars (2026-10-13)
+
+The owner asked for Hoop to stop being Janome-first and for a cleaner menu
+bar. `hoops::MACHINES` lists brand families (Janome; Brother · Baby Lock;
+Pfaff · Husqvarna Viking; Bernina; Other machine (DST)), each with a file
+format (`export::Out`), a USB folder and its hoops. The chosen family is
+a global like the language (`hoops::set_machine`, prefs key `machine`,
+default Janome) and `setup.hoop` indexes its hoop list (`hoops::get`,
+`hoops::list`). `Hoop::auto` marks hoops `smallest_fitting` may pick;
+free-arm and "Large machines" hoops are picked by hand only. Save
+(Ctrl+S), Send to USB, team names, hoopings and test pieces all write the
+machine's format. No machine-specific behaviour beyond that was added.
+Hoop sizes for brands other than Janome are the nominal sewing areas
+from memory, not checked against manuals.
+
+Menu bar: File, Edit, View, Design, Shape (Artwork), Machine, Help, with
+the Viewer/Lettering/Artwork switch centered (`segmented`). The tool bar
+is icon-only (`app/icons.rs`: Phosphor SVGs in `assets/icons`, rendered
+white with resvg once and tinted), with the machine and hoop picker, the
+test stitch-out and an accent "Send to machine" button on the right.
+Language moved out of View (it is in Settings); thread charts moved to
+Machine; Play demo to Help.
 
 ## Ideas queued with the owner
 

@@ -147,8 +147,8 @@ impl HoopApp {
                     {
                         self.paste_open = !self.paste_open;
                     }
-                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save JEF…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
-                        self.save_jef();
+                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
+                        self.save_design();
                     }
                 });
                 if self.paste_open {

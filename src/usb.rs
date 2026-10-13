@@ -114,9 +114,10 @@ fn child_dir(parent: &Path, name: &str) -> PathBuf {
         .unwrap_or_else(|| parent.join(name))
 }
 
-/// Mounts the drive if needed and writes the design into EMB/Embf, where
-/// Janome machines look for embroidery. Returns the written file.
-pub fn send(drive: &Drive, file_name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
+/// Mounts the drive if needed and writes the design into `folder` (path
+/// parts, matched without regard to case; empty for the top of the stick),
+/// where the machine looks for embroidery. Returns the written file.
+pub fn send(drive: &Drive, folder: &[&str], file_name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
     let root = match &drive.mount {
         Some(m) => m.clone(),
         None => {
@@ -125,8 +126,8 @@ pub fn send(drive: &Drive, file_name: &str, bytes: &[u8]) -> Result<PathBuf, Str
             out.trim().rsplit_once(" at ").map(|(_, p)| PathBuf::from(p.trim_end_matches('.'))).ok_or(t!("The USB drive didn't say where it was opened."))?
         }
     };
-    let folder = child_dir(&child_dir(&root, "EMB"), "Embf");
-    std::fs::create_dir_all(&folder).map_err(|e| t!("Couldn't make the EMB/Embf folder: {e}.", e = e))?;
+    let folder = folder.iter().fold(root, |dir, name| child_dir(&dir, name));
+    std::fs::create_dir_all(&folder).map_err(|e| t!("Couldn't make the {folder} folder: {e}.", folder = folder.display(), e = e))?;
     let target = folder.join(file_name);
     let tmp = folder.join(format!("{file_name}.tmp"));
     let write = || -> std::io::Result<()> {
@@ -185,7 +186,7 @@ NAME="sdb1" PKNAME="sdb" PATH="/dev/sdb1" MOUNTPOINT="/run/media/cody/JANOME\x20
         let root = std::env::temp_dir().join(format!("hoop-usb-{}", std::process::id()));
         std::fs::create_dir_all(root.join("emb/EMBF")).unwrap();
         let drive = Drive { device: "/dev/x".into(), disk: "/dev/x".into(), label: "X".into(), size: "1G".into(), mount: Some(root.clone()) };
-        let written = send(&drive, "HELLO.jef", b"data").unwrap();
+        let written = send(&drive, &["EMB", "Embf"], "HELLO.jef", b"data").unwrap();
         assert_eq!(written, root.join("emb/EMBF/HELLO.jef"));
         assert_eq!(std::fs::read(&written).unwrap(), b"data");
         std::fs::remove_dir_all(root).unwrap();

@@ -112,9 +112,46 @@ pub(super) fn tab_row<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, opt
     }
 }
 
-/// A flat tool button that shows its frame on hover, like a Qt tool bar.
-fn tool(ui: &mut egui::Ui, enabled: bool, text: &str, hover: &str) -> bool {
-    ui.add_enabled(enabled, egui::Button::new(text).frame_when_inactive(false).min_size(vec2(0.0, 26.0))).on_hover_text(hover).clicked()
+/// A little space between groups of tool buttons.
+fn tool_gap(ui: &mut egui::Ui) {
+    ui.add_space(6.0);
+    let (r, _) = ui.allocate_exact_size(vec2(1.0, 18.0), Sense::hover());
+    ui.painter().rect_filled(r, 0, ui.visuals().widgets.noninteractive.bg_stroke.color);
+    ui.add_space(6.0);
+}
+
+const SEGMENT_PAD: f32 = 28.0;
+
+fn segmented_width<T>(ui: &egui::Ui, options: &[(T, &str)]) -> f32 {
+    let font = egui::FontId::proportional(13.0);
+    options.iter().map(|o| ui.painter().layout_no_wrap(o.1.to_string(), font.clone(), Color32::WHITE).size().x + SEGMENT_PAD).sum::<f32>() + 4.0
+}
+
+/// A compact segmented switch: a rounded track with the picked option filled.
+fn segmented<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], accent: Color32) {
+    let font = egui::FontId::proportional(13.0);
+    let v = ui.visuals().clone();
+    let (track, _) = ui.allocate_exact_size(vec2(segmented_width(ui, options), 24.0), Sense::hover());
+    ui.painter().rect_filled(track, 7, v.extreme_bg_color);
+    ui.painter().rect_stroke(track, 7, egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color), egui::StrokeKind::Inside);
+    let mut x = track.left() + 2.0;
+    for (k, &(val, text)) in options.iter().enumerate() {
+        let g = ui.painter().layout_no_wrap(text.to_string(), font.clone(), v.text_color());
+        let rect = egui::Rect::from_min_size(egui::pos2(x, track.top() + 2.0), vec2(g.size().x + SEGMENT_PAD, track.height() - 4.0));
+        x += rect.width();
+        let resp = ui.interact(rect, ui.id().with(("segment", k)), Sense::click());
+        let on = *value == val;
+        if on {
+            ui.painter().rect_filled(rect, 5, accent);
+        } else if resp.hovered() {
+            ui.painter().rect_filled(rect, 5, v.widgets.hovered.weak_bg_fill);
+        }
+        let color = if on { contrast(accent) } else { v.text_color() };
+        ui.painter().galley_with_override_text_color(rect.center() - g.size() / 2.0, g, color);
+        if resp.clicked() {
+            *value = val;
+        }
+    }
 }
 
 fn item(ui: &mut egui::Ui, enabled: bool, text: &str, keys: &str) -> bool {
@@ -247,6 +284,7 @@ impl HoopApp {
         let out = has || !self.pinned.is_empty();
         let art = self.mode == Mode::Artwork && self.art.is_some();
         let picked = art && !self.sel.is_empty();
+        let format = hoops::machine().out;
         egui::MenuBar::new().ui(ui, |ui| {
             ui.menu_button(t!("File"), |ui| {
                 if item(ui, true, t!("New project…"), "N") {
@@ -277,12 +315,12 @@ impl HoopApp {
                     self.paste_open = true;
                 }
                 ui.separator();
-                if item(ui, has, t!("Save as JEF…"), "Ctrl+S") {
-                    self.save_jef();
+                if item(ui, has, &t!("Save as {format}…", format = format.ext().to_uppercase()), "Ctrl+S") {
+                    self.save_design();
                 }
                 ui.add_enabled_ui(has, |ui| {
                     ui.menu_button(t!("Export as"), |ui| {
-                        for o in crate::export::Out::ALL.into_iter().skip(1) {
+                        for o in crate::export::Out::ALL.into_iter().filter(|&o| o != format) {
                             if ui.button(o.label()).clicked() {
                                 self.export(o);
                                 ui.close();
@@ -290,24 +328,12 @@ impl HoopApp {
                         }
                     });
                 });
-                if item(ui, out, t!("Send to USB…"), "Ctrl+U") {
-                    self.open_usb();
-                }
-                if item(ui, out, t!("Split into hoopings…"), "") {
-                    self.open_hoopings();
-                }
-                if item(ui, true, t!("Test stitch-out…"), "Ctrl+T") {
-                    self.test.open = true;
-                }
+                ui.separator();
                 if item(ui, has, t!("Save picture…"), "Ctrl+Shift+S") {
                     self.save_picture();
                 }
                 if item(ui, has, t!("Save worksheet (PDF)…"), "Ctrl+P") {
                     self.save_worksheet();
-                }
-                ui.separator();
-                if item(ui, true, t!("Play demo"), "") {
-                    self.start_demo();
                 }
                 ui.separator();
                 if item(ui, true, t!("Quit"), "Q") {
@@ -322,10 +348,6 @@ impl HoopApp {
                     self.redo_step();
                 }
                 ui.separator();
-                if item(ui, true, t!("Settings…"), "Ctrl+,") {
-                    self.settings.open = true;
-                }
-                ui.separator();
                 for (text, keys, op, on) in [
                     (t!("Select all shapes"), "Ctrl+A", Arrange::SelectAll, art),
                     (t!("Deselect"), "Esc", Arrange::Deselect, picked),
@@ -338,8 +360,19 @@ impl HoopApp {
                         self.arrange(op);
                     }
                 }
+                ui.separator();
+                if item(ui, true, t!("Settings…"), "Ctrl+,") {
+                    self.settings.open = true;
+                }
             });
             ui.menu_button(t!("View"), |ui| {
+                for (m, text, key) in [(Mode::Viewer, t!("Viewer"), "V"), (Mode::Lettering, t!("Lettering"), "L"), (Mode::Artwork, t!("Artwork"), "A")] {
+                    if ui.add(egui::Button::selectable(self.mode == m, text).shortcut_text(key)).clicked() {
+                        self.set_mode(m);
+                        ui.close();
+                    }
+                }
+                ui.separator();
                 if item(ui, true, t!("Whole hoop"), "F") {
                     self.fit_view(canvas_rect, false);
                 }
@@ -353,39 +386,10 @@ impl HoopApp {
                 check(ui, &mut self.sizes, t!("Size label"), "");
                 check(ui, &mut self.density, t!("Thread density"), "H");
                 ui.separator();
-                ui.menu_button(t!("Language"), |ui| {
-                    let chosen = self.prefs.get("language").unwrap_or("system").to_string();
-                    let system = crate::i18n::system_language();
-                    let mut options: Vec<(String, String)> = vec![
-                        ("system".into(), t!("System ({lang})", lang = if system.is_empty() { "en".to_string() } else { system })),
-                        ("en".into(), "English".into()),
-                    ];
-                    options.extend(crate::i18n::available());
-                    for (code, name) in options {
-                        if ui.add(egui::Button::selectable(chosen == code, name)).clicked() {
-                            crate::i18n::set_language(&code);
-                            self.prefs.set("language", &code);
-                            ui.close();
-                        }
-                    }
-                    ui.separator();
-                    ui.label(RichText::new(t!("Translations are .po files in ~/.local/share/hoop/locale")).size(11.5).color(self.muted()));
-                });
-                if item(ui, true, t!("Thread charts and my threads…"), "") {
-                    self.threads.open = true;
-                }
-                ui.separator();
                 check(ui, &mut self.show_left, t!("Objects and colors panel"), "F9");
                 check(ui, &mut self.show_right, t!("Properties panel"), "F10");
             });
             ui.menu_button(t!("Design"), |ui| {
-                for (m, text, key) in [(Mode::Viewer, t!("Viewer"), "V"), (Mode::Lettering, t!("Lettering"), "L"), (Mode::Artwork, t!("Artwork"), "A")] {
-                    if ui.add(egui::Button::selectable(self.mode == m, text).shortcut_text(key)).clicked() {
-                        self.set_mode(m);
-                        ui.close();
-                    }
-                }
-                ui.separator();
                 if item(ui, has, t!("Rotate right"), "R") {
                     self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
                 }
@@ -402,19 +406,6 @@ impl HoopApp {
                     });
                 }
                 ui.separator();
-                ui.menu_button(t!("Hoop"), |ui| {
-                    for (i, h) in HOOPS.iter().enumerate() {
-                        let text = t!("{name}  {w} × {h} mm", name = h.name, w = h.w, h = h.h);
-                        if ui
-                            .add(egui::Button::selectable(self.setup.hoop == i, text).shortcut_text(if i < 4 { ["1", "2", "3", "4"][i] } else { "" }))
-                            .clicked()
-                        {
-                            self.change(|s| s.hoop = i);
-                            self.fit_view(canvas_rect, false);
-                            ui.close();
-                        }
-                    }
-                });
                 if item(ui, has, t!("Pin to hoop"), "P") {
                     self.pin();
                 }
@@ -473,6 +464,32 @@ impl HoopApp {
                     }
                 });
             }
+            ui.menu_button(t!("Machine"), |ui| {
+                ui.menu_button(t!("Machine"), |ui| {
+                    for (i, m) in hoops::MACHINES.iter().enumerate() {
+                        let text = format!("{} · {}", crate::i18n::tr(m.name), m.out.ext().to_uppercase());
+                        if ui.add(egui::Button::selectable(hoops::machine_index() == i, text)).clicked() {
+                            self.choose_machine(i, canvas_rect);
+                            ui.close();
+                        }
+                    }
+                });
+                ui.menu_button(t!("Hoop"), |ui| self.hoop_choices(ui, canvas_rect));
+                ui.separator();
+                if item(ui, out, t!("Send to USB…"), "Ctrl+U") {
+                    self.open_usb();
+                }
+                if item(ui, true, t!("Test stitch-out…"), "Ctrl+T") {
+                    self.test.open = true;
+                }
+                if item(ui, out, t!("Split into hoopings…"), "") {
+                    self.open_hoopings();
+                }
+                ui.separator();
+                if item(ui, true, t!("Thread charts and my threads…"), "") {
+                    self.threads.open = true;
+                }
+            });
             ui.menu_button(t!("Help"), |ui| {
                 if item(ui, true, t!("User manual"), "F1") {
                     self.manual.open = true;
@@ -481,91 +498,149 @@ impl HoopApp {
                 if item(ui, true, t!("Keyboard shortcuts"), "?") {
                     self.help = true;
                 }
+                if item(ui, true, t!("Play demo"), "") {
+                    self.start_demo();
+                }
+                ui.separator();
                 if item(ui, true, t!("About Hoop"), "") {
-                    self.toast(t!("Hoop {v0} · embroidery for the Janome MC9900", v0 = env!("CARGO_PKG_VERSION")));
+                    self.toast(t!("Hoop {v0} · machine embroidery designs", v0 = env!("CARGO_PKG_VERSION")));
                 }
             });
+            // The three workspaces, centered in the bar.
+            let modes = [(Mode::Viewer, t!("Viewer")), (Mode::Lettering, t!("Lettering")), (Mode::Artwork, t!("Artwork"))];
+            let width = segmented_width(ui, &modes);
+            let left = ui.cursor().left();
+            let mid = ui.ctx().content_rect().center().x;
+            ui.add_space((mid - width / 2.0 - left).max(12.0));
+            let mut mode = self.mode;
+            segmented(ui, &mut mode, &modes, self.accent());
+            if mode != self.mode {
+                self.set_mode(mode);
+            }
         });
         if let Some(name) = self.list_add.take() {
             self.add_built_in(name);
         }
     }
 
+    /// The current machine's hoops as a pick list, with the number keys.
+    fn hoop_choices(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect) {
+        for (i, h) in hoops::list().iter().enumerate() {
+            let text = t!("{name}  {w} × {h} mm", name = h.name, w = h.w, h = h.h);
+            let key = ["1", "2", "3", "4"].get(i).copied().unwrap_or("");
+            if ui.add(egui::Button::selectable(self.setup.hoop == i, text).shortcut_text(key)).clicked() {
+                self.change(|s| s.hoop = i);
+                self.fit_view(canvas_rect, false);
+                ui.close();
+            }
+        }
+    }
+
+    /// Switches to another machine family: its hoops, file format and USB
+    /// folder. Picks the smallest of its hoops the design fits.
+    pub(super) fn choose_machine(&mut self, i: usize, canvas_rect: egui::Rect) {
+        hoops::set_machine(i);
+        self.prefs.set("machine", hoops::machine().key);
+        let size = self.design.as_ref().map_or((0.0, 0.0), |d| d.size());
+        self.change(|s| s.hoop = hoops::smallest_fitting(size));
+        self.fit_view(canvas_rect, false);
+    }
+
     fn tool_bar(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect) {
         let ctx = ui.ctx().clone();
         let accent = self.accent();
         let has = self.design.is_some();
+        let out = has || !self.pinned.is_empty();
+        let format = hoops::machine().out.ext().to_uppercase();
         ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 2.0;
-            if tool(ui, true, t!("Open"), t!("Open a design, SVG or picture · O")) {
+            ui.spacing_mut().item_spacing.x = 1.0;
+            if icons::button(ui, true, false, "new", t!("New project · N")) {
+                self.open_wizard();
+            }
+            if icons::button(ui, true, false, "open", t!("Open a design, SVG or picture · O")) {
                 self.pick_file();
             }
-            if tool(ui, has, t!("Save"), t!("Save as JEF · Ctrl+S")) {
-                self.save_jef();
+            if icons::button(ui, has, false, "save", &t!("Save as {format} · Ctrl+S", format = format)) {
+                self.save_design();
             }
-            if tool(ui, has || !self.pinned.is_empty(), t!("To USB"), t!("Write the JEF straight to the machine's USB stick · Ctrl+U")) {
-                self.open_usb();
+            if icons::button(ui, has, false, "print", t!("Save worksheet (PDF) · Ctrl+P")) {
+                self.save_worksheet();
             }
-            if tool(ui, true, t!("Test"), t!("Sew a small part first, or the calibration sheet · Ctrl+T")) {
-                self.test.open = !self.test.open;
-            }
-            ui.separator();
-            if tool(ui, !self.undo.is_empty() || self.pending_since.is_some(), t!("Undo"), "Ctrl+Z") {
+            tool_gap(ui);
+            if icons::button(ui, !self.undo.is_empty() || self.pending_since.is_some(), false, "undo", t!("Undo · Ctrl+Z")) {
                 self.undo_step(&ctx);
             }
-            if tool(ui, !self.redo.is_empty(), t!("Redo"), "Ctrl+Shift+Z") {
+            if icons::button(ui, !self.redo.is_empty(), false, "redo", t!("Redo · Ctrl+Shift+Z")) {
                 self.redo_step();
             }
-            ui.separator();
-            for (m, text, key) in [(Mode::Viewer, t!("Viewer"), "V"), (Mode::Lettering, t!("Lettering"), "L"), (Mode::Artwork, t!("Artwork"), "A")] {
-                let on = self.mode == m;
-                let label = if on { RichText::new(text).color(contrast(accent)) } else { RichText::new(text) };
-                let b = egui::Button::new(label).fill(if on { accent } else { Color32::TRANSPARENT }).frame_when_inactive(on).min_size(vec2(0.0, 26.0));
-                if ui.add(b).on_hover_text(key).clicked() {
-                    self.set_mode(m);
-                }
-            }
-            ui.separator();
-            if tool(ui, has, t!("Turn left"), t!("Rotate 90° left · Shift+R")) {
+            tool_gap(ui);
+            if icons::button(ui, has, false, "turn-left", t!("Rotate 90° left · Shift+R")) {
                 self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 3) % 4);
             }
-            if tool(ui, has, t!("Turn right"), t!("Rotate 90° right · R")) {
+            if icons::button(ui, has, false, "turn-right", t!("Rotate 90° right · R")) {
                 self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
             }
-            if tool(ui, has, t!("Mirror"), "M") {
+            if icons::button(ui, has, self.setup.at.mirror, "mirror", t!("Mirror · M")) {
                 self.change(|s| s.at.mirror = !s.at.mirror);
             }
-            if tool(ui, has, t!("Center"), "C") {
+            if icons::button(ui, has, false, "center", t!("Center in hoop · C")) {
                 self.change(|s| {
                     s.at.dx = 0.0;
                     s.at.dy = 0.0;
                 });
             }
-            if tool(ui, has, t!("Pin"), t!("Keep this design on the hoop and start the next part · P")) {
+            if icons::button(ui, has, !self.pinned.is_empty(), "pin", t!("Pin to hoop: keep this design and start the next part · P")) {
                 self.pin();
             }
-            ui.separator();
-            let h = HOOPS[self.setup.hoop];
-            egui::ComboBox::from_id_salt("hoop-tool").selected_text(format!("{}  {}×{}", h.name, h.w, h.h)).width(150.0).show_ui(ui, |ui| {
-                for (i, h) in HOOPS.iter().enumerate() {
-                    if ui.selectable_label(self.setup.hoop == i, t!("{name}  {w} × {h} mm", name = h.name, w = h.w, h = h.h)).clicked() {
-                        self.change(|s| s.hoop = i);
-                        self.fit_view(canvas_rect, false);
-                    }
-                }
-            });
-            ui.separator();
-            if tool(ui, true, t!("Hoop"), t!("Show the whole hoop · F")) {
+            tool_gap(ui);
+            if icons::button(ui, true, false, "fit", t!("Show the whole hoop · F")) {
                 self.fit_view(canvas_rect, false);
             }
-            if tool(ui, has, t!("Design"), t!("Zoom to the design · D")) {
+            if icons::button(ui, has, false, "zoom", t!("Zoom to the design · D")) {
                 self.fit_view(canvas_rect, true);
             }
-            ui.separator();
-            let label = if self.playing { t!("Pause") } else { t!("Play") };
-            if tool(ui, has, label, t!("Play the stitch-out · Space")) {
+            let (icon, tip) = if self.playing { ("pause", t!("Pause the stitch-out · Space")) } else { ("play", t!("Play the stitch-out · Space")) };
+            if icons::button(ui, has, self.playing, icon, tip) {
                 self.toggle_play();
             }
+            // Machine side on the right: the hoop, a test piece, and sending.
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                let send = egui::Button::new(RichText::new(t!("Send to machine")).color(contrast(accent))).fill(accent).min_size(vec2(0.0, 26.0));
+                if ui.add_enabled(out, send).on_hover_text(t!("Write the {format} straight to the machine's USB stick · Ctrl+U", format = format)).clicked() {
+                    self.open_usb();
+                }
+                if icons::button(ui, true, self.test.open, "test", t!("Test stitch-out and calibration sheet · Ctrl+T")) {
+                    self.test.open = !self.test.open;
+                }
+                let m = hoops::machine();
+                let h = hoops::get(self.setup.hoop);
+                let label = format!("{}  ·  {}  {}×{}", crate::i18n::tr(m.name), h.name, h.w, h.h);
+                egui::ComboBox::from_id_salt("hoop-tool")
+                    .selected_text(label)
+                    .width(230.0)
+                    .height(420.0)
+                    .show_ui(ui, |ui| {
+                        ui.label(RichText::new(t!("Machine")).size(11.5).color(self.muted()));
+                        for (i, m) in hoops::MACHINES.iter().enumerate() {
+                            let text = format!("{} · {}", crate::i18n::tr(m.name), m.out.ext().to_uppercase());
+                            if ui.selectable_label(hoops::machine_index() == i, text).clicked() {
+                                self.choose_machine(i, canvas_rect);
+                            }
+                        }
+                        ui.separator();
+                        ui.label(RichText::new(t!("Hoop")).size(11.5).color(self.muted()));
+                        for (i, h) in hoops::list().iter().enumerate() {
+                            let text = t!("{name}  {w} × {h} mm", name = h.name, w = h.w, h = h.h);
+                            if ui.selectable_label(self.setup.hoop == i, text).on_hover_text(crate::i18n::tr(h.note)).clicked() {
+                                self.change(|s| s.hoop = i);
+                                self.fit_view(canvas_rect, false);
+                            }
+                        }
+                    })
+                    .response
+                    .on_hover_text(t!("Machine and hoop: sets the hoop shown, the file format and where Send puts it"));
+            });
         });
     }
 
@@ -589,7 +664,7 @@ impl HoopApp {
                     ui.spacing_mut().item_spacing.x = 5.0;
                     let (r, _) = ui.allocate_exact_size(vec2(8.0, 8.0), Sense::hover());
                     ui.painter().circle_filled(r.center(), 4.0, dot);
-                    ui.label(text(format!("{} {word}", HOOPS[self.setup.hoop].name)));
+                    ui.label(text(format!("{} {word}", hoops::get(self.setup.hoop).name)));
                 });
             }
             if !self.pinned.is_empty() {

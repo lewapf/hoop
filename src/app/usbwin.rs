@@ -62,13 +62,13 @@ impl HoopApp {
                     if r.changed() {
                         self.usb.name = usb::short_name(&self.usb.name);
                     }
-                    ui.label(RichText::new(".jef").monospace().color(muted));
+                    ui.label(RichText::new(format!(".{}", hoops::machine().out.ext())).monospace().color(muted));
                 });
-                ui.label(
-                    RichText::new(t!("Saved into EMB/Embf, where the MC9900 looks for designs. Up to 8 letters shows best on the machine."))
-                        .size(12.0)
-                        .color(muted),
-                );
+                let note = match hoops::machine().usb_folder {
+                    [] => t!("Saved at the top of the stick. Up to 8 letters shows best on the machine.").to_string(),
+                    f => t!("Saved into {folder}, where the machine looks for designs. Up to 8 letters shows best on the machine.", folder = f.join("/")),
+                };
+                ui.label(RichText::new(note).size(12.0).color(muted));
                 if let Some(msg) = &self.usb.message {
                     match msg {
                         Ok(m) => ui.label(RichText::new(m).color(OK)),
@@ -96,13 +96,15 @@ impl HoopApp {
         if !open {
             self.usb.open = false;
         }
-        if send && let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.usb.bytes.clone().or_else(|| self.jef_bytes())) {
-            let file = format!("{}.jef", usb::short_name(&self.usb.name));
+        if send && let (Some(drive), Some(bytes)) = (self.usb.drives.get(self.usb.chosen).cloned(), self.usb.bytes.clone().or_else(|| self.machine_bytes())) {
+            let machine = hoops::machine();
+            let file = format!("{}.{}", usb::short_name(&self.usb.name), machine.out.ext());
+            let folder = machine.usb_folder;
             let (tx, rx) = channel();
             let ctx = ctx.clone();
             self.usb.sent_to = Some(drive.clone());
             std::thread::spawn(move || {
-                let r = usb::send(&drive, &file, &bytes)
+                let r = usb::send(&drive, folder, &file, &bytes)
                     .map(|p| t!("Sent {file} to {v1}", file = file, v1 = p.parent().map(|d| d.display().to_string()).unwrap_or_default()));
                 let _ = tx.send(r);
                 ctx.request_repaint();

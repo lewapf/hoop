@@ -2762,3 +2762,105 @@ msgid "{n} shape is sewn where you placed it. Let Hoop group it by thread again.
 msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
 msgstr[0] "{n} Form wird dort gestickt, wo Sie sie platziert haben. Hoop soll sie wieder nach Garn gruppieren."
 msgstr[1] "{n} Formen werden dort gestickt, wo Sie sie platziert haben. Hoop soll sie wieder nach Garn gruppieren."
+
+msgid "Center in hoop · C"
+msgstr "Im Rahmen zentrieren · C"
+
+msgid "Common"
+msgstr "Üblich"
+
+msgid "Couldn't make the {folder} folder: {e}."
+msgstr "Der Ordner {folder} konnte nicht angelegt werden: {e}."
+
+msgid "Embroidery designs for your machine"
+msgstr "Stickmuster für Ihre Maschine"
+
+msgid "F1"
+msgstr "F1"
+
+msgid "F9 / F10"
+msgstr "F9 / F10"
+
+msgid "Hoop {v0} · machine embroidery designs"
+msgstr "Hoop {v0} · Maschinenstickmuster"
+
+msgid "Hoop — free, for your machine"
+msgstr "Hoop — kostenlos, für Ihre Maschine"
+
+msgid "Large machines"
+msgstr "Große Maschinen"
+
+msgid "Machine"
+msgstr "Maschine"
+
+msgid "Machine and hoop: sets the hoop shown, the file format and where Send puts it"
+msgstr "Maschine und Rahmen: bestimmt den gezeigten Rahmen, das Dateiformat und wohin Senden speichert"
+
+msgid "Machine files keep the thread colors. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."
+msgstr "Maschinendateien behalten die Garnfarben. Die Farbliste, kopierte Listen und Arbeitsblätter nennen das nächste Garn dieser Karte, bevorzugt aus Meine Garne."
+
+msgid "Mirror · M"
+msgstr "Spiegeln · M"
+
+msgid "New project · N"
+msgstr "Neues Projekt · N"
+
+msgid "One name per line. Each is sewn with the lettering settings above and saved as its own machine file, ready for a stack of shirts."
+msgstr "Ein Name pro Zeile. Jeder wird mit den Schrifteinstellungen oben gestickt und als eigene Maschinendatei gespeichert, bereit für einen Stapel Shirts."
+
+msgid "Other machine (DST)"
+msgstr "Andere Maschine (DST)"
+
+msgid "Pause the stitch-out · Space"
+msgstr "Stickablauf anhalten · Leertaste"
+
+msgid "Pick a folder; each name becomes its own file"
+msgstr "Ordner wählen; jeder Name wird eine eigene Datei"
+
+msgid "Pin this design to the hoop, then make or open the next part, like a name under a logo. Saving saves all of them as one file."
+msgstr "Dieses Muster im Rahmen anheften, dann den nächsten Teil erstellen oder öffnen, etwa einen Namen unter einem Logo. Beim Speichern werden alle in einer Datei gespeichert."
+
+msgid "Pin to hoop: keep this design and start the next part · P"
+msgstr "Im Rahmen anheften: dieses Muster behalten und den nächsten Teil beginnen · P"
+
+msgid "Redo · Ctrl+Shift+Z"
+msgstr "Wiederholen · Strg+Umschalt+Z"
+
+msgid "Save as {format} · Ctrl+S"
+msgstr "Als {format} speichern · Strg+S"
+
+msgid "Save as {format}…"
+msgstr "Als {format} speichern…"
+
+msgid "Save design"
+msgstr "Muster speichern"
+
+msgid "Save in the machine's format"
+msgstr "Im Format der Maschine speichern"
+
+msgid "Save test piece"
+msgstr "Teststück speichern"
+
+msgid "Save worksheet (PDF) · Ctrl+P"
+msgstr "Arbeitsblatt speichern (PDF) · Strg+P"
+
+msgid "Saved at the top of the stick. Up to 8 letters shows best on the machine."
+msgstr "Wird oben auf dem Stick gespeichert. Bis zu 8 Buchstaben werden an der Maschine am besten angezeigt."
+
+msgid "Saved into {folder}, where the machine looks for designs. Up to 8 letters shows best on the machine."
+msgstr "Wird in {folder} gespeichert, wo die Maschine nach Mustern sucht. Bis zu 8 Buchstaben werden an der Maschine am besten angezeigt."
+
+msgid "Save…"
+msgstr "Speichern…"
+
+msgid "Send to machine"
+msgstr "An Maschine senden"
+
+msgid "Test stitch-out and calibration sheet · Ctrl+T"
+msgstr "Probesticken und Kalibrierblatt · Strg+T"
+
+msgid "Undo · Ctrl+Z"
+msgstr "Rückgängig · Strg+Z"
+
+msgid "Write the {format} straight to the machine's USB stick · Ctrl+U"
+msgstr "{format} direkt auf den USB-Stick der Maschine schreiben · Strg+U"

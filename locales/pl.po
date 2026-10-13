@@ -2791,3 +2791,105 @@ msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by 
 msgstr[0] "{n} kształt jest haftowany tam, gdzie go ułożono. Niech Hoop znów grupuje go według nici."
 msgstr[1] "{n} kształty są haftowane tam, gdzie je ułożono. Niech Hoop znów grupuje je według nici."
 msgstr[2] "{n} kształtów jest haftowanych tam, gdzie je ułożono. Niech Hoop znów grupuje je według nici."
+
+msgid "Center in hoop · C"
+msgstr "Wyśrodkuj w tamborku · C"
+
+msgid "Common"
+msgstr "Popularny"
+
+msgid "Couldn't make the {folder} folder: {e}."
+msgstr "Nie udało się utworzyć folderu {folder}: {e}."
+
+msgid "Embroidery designs for your machine"
+msgstr "Wzory haftu dla Twojej maszyny"
+
+msgid "F1"
+msgstr "F1"
+
+msgid "F9 / F10"
+msgstr "F9 / F10"
+
+msgid "Hoop {v0} · machine embroidery designs"
+msgstr "Hoop {v0} · wzory do haftu maszynowego"
+
+msgid "Hoop — free, for your machine"
+msgstr "Hoop — za darmo, dla Twojej maszyny"
+
+msgid "Large machines"
+msgstr "Duże maszyny"
+
+msgid "Machine"
+msgstr "Maszyna"
+
+msgid "Machine and hoop: sets the hoop shown, the file format and where Send puts it"
+msgstr "Maszyna i tamborek: ustala pokazany tamborek, format pliku i miejsce zapisu przy wysyłaniu"
+
+msgid "Machine files keep the thread colors. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."
+msgstr "Pliki maszyny zachowują kolory nici. Lista Kolory, skopiowane listy i karty pracy podają najbliższą nić z tej palety, najchętniej z Moich nici."
+
+msgid "Mirror · M"
+msgstr "Odbicie lustrzane · M"
+
+msgid "New project · N"
+msgstr "Nowy projekt · N"
+
+msgid "One name per line. Each is sewn with the lettering settings above and saved as its own machine file, ready for a stack of shirts."
+msgstr "Jedno imię w wierszu. Każde jest haftowane z powyższymi ustawieniami napisu i zapisane jako osobny plik maszyny, gotowe na stos koszulek."
+
+msgid "Other machine (DST)"
+msgstr "Inna maszyna (DST)"
+
+msgid "Pause the stitch-out · Space"
+msgstr "Wstrzymaj haftowanie · Spacja"
+
+msgid "Pick a folder; each name becomes its own file"
+msgstr "Wybierz folder; każde imię będzie osobnym plikiem"
+
+msgid "Pin this design to the hoop, then make or open the next part, like a name under a logo. Saving saves all of them as one file."
+msgstr "Przypnij ten wzór do tamborka, a potem utwórz lub otwórz następną część, np. imię pod logo. Zapis zapisze je wszystkie jako jeden plik."
+
+msgid "Pin to hoop: keep this design and start the next part · P"
+msgstr "Przypnij do tamborka: zachowaj ten wzór i zacznij następną część · P"
+
+msgid "Redo · Ctrl+Shift+Z"
+msgstr "Ponów · Ctrl+Shift+Z"
+
+msgid "Save as {format} · Ctrl+S"
+msgstr "Zapisz jako {format} · Ctrl+S"
+
+msgid "Save as {format}…"
+msgstr "Zapisz jako {format}…"
+
+msgid "Save design"
+msgstr "Zapisz wzór"
+
+msgid "Save in the machine's format"
+msgstr "Zapisz w formacie maszyny"
+
+msgid "Save test piece"
+msgstr "Zapisz próbkę"
+
+msgid "Save worksheet (PDF) · Ctrl+P"
+msgstr "Zapisz kartę pracy (PDF) · Ctrl+P"
+
+msgid "Saved at the top of the stick. Up to 8 letters shows best on the machine."
+msgstr "Zapisywane w głównym katalogu pendrive'a. Do 8 liter wyświetla się najlepiej na maszynie."
+
+msgid "Saved into {folder}, where the machine looks for designs. Up to 8 letters shows best on the machine."
+msgstr "Zapisywane w {folder}, gdzie maszyna szuka wzorów. Do 8 liter wyświetla się najlepiej na maszynie."
+
+msgid "Save…"
+msgstr "Zapisz…"
+
+msgid "Send to machine"
+msgstr "Wyślij do maszyny"
+
+msgid "Test stitch-out and calibration sheet · Ctrl+T"
+msgstr "Próbne haftowanie i arkusz kalibracji · Ctrl+T"
+
+msgid "Undo · Ctrl+Z"
+msgstr "Cofnij · Ctrl+Z"
+
+msgid "Write the {format} straight to the machine's USB stick · Ctrl+U"
+msgstr "Zapisz {format} prosto na pendrive maszyny · Ctrl+U"

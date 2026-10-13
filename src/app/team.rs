@@ -37,14 +37,16 @@ impl HoopApp {
         let mut save = false;
         card_folded(ui, t!("Team names"), accent, |ui| {
             ui.label(
-                RichText::new(t!("One name per line. Each is sewn with the lettering settings above and saved as its own JEF, ready for a stack of shirts."))
-                    .size(12.0)
-                    .color(muted),
+                RichText::new(t!(
+                    "One name per line. Each is sewn with the lettering settings above and saved as its own machine file, ready for a stack of shirts."
+                ))
+                .size(12.0)
+                .color(muted),
             );
             ui.add(egui::TextEdit::multiline(&mut self.team.names).desired_rows(4).desired_width(f32::INFINITY).hint_text(t!("ANNA\nBEN\nCHARLOTTE")));
             let busy = self.team.job.is_some();
             let label = tn!(count, "Save {n} design…", "Save {n} designs…");
-            if ui.add_enabled(count > 0 && !busy, primary(&label, accent)).on_hover_text(t!("Pick a folder; each name becomes NAME.jef")).clicked() {
+            if ui.add_enabled(count > 0 && !busy, primary(&label, accent)).on_hover_text(t!("Pick a folder; each name becomes its own file")).clicked() {
                 save = true;
             }
         });
@@ -76,10 +78,10 @@ impl HoopApp {
                 let t = Transform::new(p.bounds(), &at);
                 let points: Vec<(f32, f32)> = p.points.iter().map(|&q| t.apply(q)).collect();
                 let threads: Vec<_> = p.blocks().into_iter().map(|b| b.thread).collect();
-                crate::formats::write_jef(&points, &p.cmds, &crate::export::jef_numbers(&threads))
+                crate::export::write(crate::hoops::machine().out, &name, &points, &p.cmds, &threads)
             });
-            match bytes.map_err(|e| e.to_string()).and_then(|b| std::fs::write(folder.join(format!("{}.jef", file_stem(&name))), b).map_err(|e| e.to_string()))
-            {
+            let file = folder.join(format!("{}.{}", file_stem(&name), crate::hoops::machine().out.ext()));
+            match bytes.map_err(|e| e.to_string()).and_then(|b| std::fs::write(&file, b).map_err(|e| e.to_string())) {
                 Ok(()) => saved += 1,
                 Err(e) => failed.push(format!("{name}: {e}")),
             }

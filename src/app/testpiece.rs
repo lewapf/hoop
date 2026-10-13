@@ -53,18 +53,13 @@ fn segment_threads(p: &Pattern, blocks: &[Block]) -> Vec<formats::Thread> {
         .collect()
 }
 
-/// Janome thread numbers for writing a JEF.
-fn jef_numbers(threads: &[formats::Thread]) -> Vec<i32> {
-    let palette: Vec<(i32, formats::Thread)> = formats::jef_palette().collect();
-    threads.iter().map(|t| palette.iter().find(|(_, p)| p == t).map_or_else(|| formats::nearest_jef(t.color), |(i, _)| *i)).collect()
-}
-
-/// The piece as a JEF, centered, because the machine places a design by its center.
-fn piece_jef(p: &Pattern) -> Vec<u8> {
+/// The piece as a machine file, centered, because the machine places a
+/// design by its center.
+fn piece_file(p: &Pattern, out: crate::export::Out, name: &str) -> Vec<u8> {
     let b = p.bounds();
     let (cx, cy) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
     let points: Vec<(f32, f32)> = p.points.iter().map(|&(x, y)| (x - cx, y - cy)).collect();
-    formats::write_jef(&points, &p.cmds, &jef_numbers(&p.threads))
+    crate::export::write(out, name, &points, &p.cmds, &p.threads)
 }
 
 fn mm(v: f32) -> String {
@@ -525,10 +520,11 @@ impl HoopApp {
         }
         if save || send {
             let Some((_, Ok((p, _)))) = &self.test.cache else { return };
-            let bytes = piece_jef(p);
             let stem = format!("{}-test", self.design_stem());
+            let out = hoops::machine().out;
+            let bytes = piece_file(p, out, &stem);
             if save {
-                self.ask_save(t!("Save test as JEF"), format!("{stem}.jef"), t!("Janome JEF"), "jef", bytes);
+                self.ask_save(t!("Save test piece"), format!("{stem}.{}", out.ext()), out.filter(), out.ext(), bytes);
             } else {
                 self.show_usb(&stem, Some(bytes));
             }

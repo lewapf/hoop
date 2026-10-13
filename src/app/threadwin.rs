@@ -99,7 +99,7 @@ impl HoopApp {
                 }
             });
             ui.label(
-                RichText::new(t!("The machine file keeps Janome thread numbers. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."))
+                RichText::new(t!("Machine files keep the thread colors. The Colors list, copied lists and worksheets name the closest thread of this chart, preferring ones in My threads."))
                     .size(12.0)
                     .color(muted),
             );

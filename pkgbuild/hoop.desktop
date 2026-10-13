@@ -2,11 +2,11 @@
 Type=Application
 Name=Hoop
 GenericName=Embroidery Viewer
-Comment=Preview embroidery files on Janome hoops
+Comment=Make and preview machine embroidery designs
 Exec=hoop %f
 Icon=hoop
 Terminal=false
 StartupWMClass=hoop
 Categories=Graphics;Viewer;
 MimeType=application/embroidery;
-Keywords=embroidery;janome;jef;dst;pes;hoop;
+Keywords=embroidery;janome;brother;pfaff;bernina;jef;dst;pes;vp3;exp;hoop;

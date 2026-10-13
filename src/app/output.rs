@@ -42,8 +42,9 @@ impl HoopApp {
         b
     }
 
-    pub(super) fn save_jef(&mut self) {
-        self.export(Out::Jef);
+    /// Saves in the format the chosen machine reads.
+    pub(super) fn save_design(&mut self) {
+        self.export(hoops::machine().out);
     }
 
     /// Saves what's on the hoop in `out`'s format.
@@ -54,14 +55,14 @@ impl HoopApp {
         let Some((points, cmds, threads)) = self.hoop_stitches() else { return };
         let stem = if self.pinned.is_empty() { self.design_stem() } else { format!("{}-combined", self.design_stem()) };
         let bytes = export::write(out, &stem, &points, &cmds, &threads);
-        let title = if out == Out::Jef { t!("Save as JEF") } else { t!("Export") };
+        let title = if out == hoops::machine().out { t!("Save design") } else { t!("Export") };
         self.ask_save(title, format!("{stem}.{}", out.ext()), out.filter(), out.ext(), bytes);
     }
 
     /// Saves a PDF worksheet: facts, thread sequence and an actual-size template.
     pub(super) fn save_worksheet(&mut self) {
         let Some((points, cmds, threads)) = self.hoop_stitches() else { return };
-        let hoop = HOOPS[self.setup.hoop];
+        let hoop = hoops::get(self.setup.hoop);
         let stem = self.design_stem();
         let name = self.design.as_ref().map_or(stem.clone(), |d| d.name.clone());
         let threads: Vec<formats::Thread> = threads.iter().map(|t| self.chart_thread(t).unwrap_or_else(|| t.clone())).collect();
@@ -79,10 +80,11 @@ impl HoopApp {
         self.ask_save(t!("Save worksheet"), format!("{stem}-worksheet.pdf"), "PDF", "pdf", bytes);
     }
 
-    /// The JEF for what's on the hoop: the design, or every pinned part with it.
-    pub(super) fn jef_bytes(&self) -> Option<Vec<u8>> {
+    /// The machine file for what's on the hoop: the design, or every pinned
+    /// part with it.
+    pub(super) fn machine_bytes(&self) -> Option<Vec<u8>> {
         let (points, cmds, threads) = self.hoop_stitches()?;
-        Some(formats::write_jef(&points, &cmds, &export::jef_numbers(&threads)))
+        Some(export::write(hoops::machine().out, &self.design_stem(), &points, &cmds, &threads))
     }
 
     /// What's on the hoop as points centered on the hoop, commands and one

@@ -2,7 +2,7 @@
 name = "hoop"
 version = "0.2.0"
 edition = "2024"
-description = "Preview embroidery files on Janome hoops"
+description = "Make and preview machine embroidery designs"
 license = "MIT"
 
 [dependencies]

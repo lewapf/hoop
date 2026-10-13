@@ -45,9 +45,8 @@ impl HoopApp {
                     if ui.add(primary(t!("Open…"), accent).min_size(vec2(w, 30.0))).on_hover_text("O").clicked() {
                         self.pick_file();
                     }
-                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save as JEF…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked()
-                    {
-                        self.save_jef();
+                    if ui.add_enabled(self.design.is_some(), egui::Button::new(t!("Save…")).min_size(vec2(w, 30.0))).on_hover_text("Ctrl+S").clicked() {
+                        self.save_design();
                     }
                 });
             });
@@ -66,7 +65,7 @@ impl HoopApp {
                 _ => hoops::fit(self.hoop_size(), d.size(), &self.setup.at),
             };
             let (ok, title, detail) = match fit {
-                Fit::Inside(m) => (true, t!("Fits the {v0}", v0 = HOOPS[self.setup.hoop].name), t!("Closest edge is {m:.1} mm away.", m = m)),
+                Fit::Inside(m) => (true, t!("Fits the {v0}", v0 = hoops::get(self.setup.hoop).name), t!("Closest edge is {m:.1} mm away.", m = m)),
                 Fit::TooBig { over_w, over_h, fits_turned } => {
                     let mut parts = Vec::new();
                     if over_w > 0.0 {
@@ -92,8 +91,9 @@ impl HoopApp {
                         actions.push((t!("Rotate 90°").into(), FitFix::Rotate));
                     }
                     let unturned = Placement::default();
-                    if let Some(i) = (0..3).find(|&i| matches!(hoops::fit((HOOPS[i].w, HOOPS[i].h), size, &unturned), Fit::Inside(_))) {
-                        actions.push((t!("Use {hoop}", hoop = HOOPS[i].name), FitFix::Hoop(i)));
+                    let i = hoops::smallest_fitting(size);
+                    if i != self.setup.hoop && matches!(hoops::fit((hoops::get(i).w, hoops::get(i).h), size, &unturned), Fit::Inside(_)) {
+                        actions.push((t!("Use {hoop}", hoop = hoops::get(i).name), FitFix::Hoop(i)));
                     }
                     if self.mode != Mode::Viewer {
                         actions.push((t!("Shrink to fit").into(), FitFix::Scale));
@@ -142,7 +142,7 @@ impl HoopApp {
                 if self.pinned.is_empty() {
                     ui.label(
                         RichText::new(t!(
-                            "Pin this design to the hoop, then make or open the next part, like a name under a logo. Save as JEF saves all of them as one file."
+                            "Pin this design to the hoop, then make or open the next part, like a name under a logo. Saving saves all of them as one file."
                         ))
                         .size(12.0)
                         .color(muted),
@@ -190,9 +190,26 @@ impl HoopApp {
 
         if tab == Tab::Hoop {
             card(ui, t!("Hoop"), accent, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(t!("Machine"));
+                    let current = hoops::machine_index();
+                    let mut pick = current;
+                    egui::ComboBox::from_id_salt("page-machine")
+                        .selected_text(crate::i18n::tr(hoops::machine().name))
+                        .width(ui.available_width() - 8.0)
+                        .show_ui(ui, |ui| {
+                            for (i, m) in hoops::MACHINES.iter().enumerate() {
+                                ui.selectable_value(&mut pick, i, format!("{} · {}", crate::i18n::tr(m.name), m.out.ext().to_uppercase()));
+                            }
+                        });
+                    if pick != current {
+                        self.choose_machine(pick, canvas_rect);
+                    }
+                });
+                ui.add_space(4.0);
                 let design_size = self.design.as_ref().map(|d| d.size());
                 let w = (ui.available_width() - 8.0) / 2.0;
-                for row in HOOPS.chunks(2).enumerate() {
+                for row in hoops::list().chunks(2).enumerate() {
                     ui.horizontal(|ui| {
                         for (j, h) in row.1.iter().enumerate() {
                             let i = row.0 * 2 + j;

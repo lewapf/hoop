@@ -132,11 +132,14 @@ pub(super) fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fi
     let text = v.text_color();
     let x = rect.left() + 10.0;
     p.text(egui::pos2(x, rect.top() + 9.0), egui::Align2::LEFT_TOP, h.name, egui::FontId::proportional(15.0), text);
-    p.text(egui::pos2(rect.right() - 10.0, rect.top() + 10.0), egui::Align2::RIGHT_TOP, (i + 1).to_string(), egui::FontId::monospace(11.0), muted);
+    // Number keys pick the first four hoops.
+    if i < 4 {
+        p.text(egui::pos2(rect.right() - 10.0, rect.top() + 10.0), egui::Align2::RIGHT_TOP, (i + 1).to_string(), egui::FontId::monospace(11.0), muted);
+    }
     p.text(egui::pos2(x, rect.top() + 28.0), egui::Align2::LEFT_TOP, t!("{w} × {h} mm", w = h.w, h = h.h), egui::FontId::monospace(12.0), muted);
     let (note, c) = if fits { (crate::i18n::tr(h.note), muted) } else { (t!("Too small"), BAD) };
     p.text(egui::pos2(x, rect.top() + 43.0), egui::Align2::LEFT_TOP, note, egui::FontId::proportional(11.0), c);
-    resp.on_hover_text(t!("Hoop {name} · key {v1}", name = h.name, v1 = i + 1))
+    if i < 4 { resp.on_hover_text(t!("Hoop {name} · key {v1}", name = h.name, v1 = i + 1)) } else { resp }
 }
 
 /// A wrapping row of named style buttons; returns the one clicked.

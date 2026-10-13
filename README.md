@@ -1,6 +1,7 @@
 # Hoop
 
-Preview machine embroidery files on Janome MC9900 hoops before you stitch them.
+Make and preview machine embroidery for Janome, Brother and Baby Lock, Pfaff
+and Husqvarna Viking, Bernina, or any machine that reads DST.
 Hoop opens JEF, DST, EXP, PES and PEC files, shows the design on the fabric in
 the hoop, tells you whether it fits, and plays the stitch-out thread by thread.
 
@@ -281,5 +282,6 @@ Furman.
 
 Hoop was written by Pawel Furman with
 [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent.
-Bundled fonts and shapes keep their own licenses, listed above and in
-`assets/`.
+Bundled fonts, shapes and tool bar icons keep their own licenses, listed
+above and in `assets/`. The tool bar icons are from
+[Phosphor Icons](https://phosphoricons.com) (MIT, `assets/icons/LICENSE`).

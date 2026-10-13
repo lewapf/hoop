@@ -27,7 +27,7 @@ impl HoopApp {
         let (points, cmds, threads) = self.hoop_stitches()?;
         let key = (points.len(), self.hoopings.hoop);
         if self.hoopings.parts.as_ref().is_none_or(|(_, k)| *k != key) {
-            let h = HOOPS[self.hoopings.hoop];
+            let h = hoops::get(self.hoopings.hoop);
             let parts = split::split(&points, &cmds, &threads, (h.w * 10.0, h.h * 10.0));
             self.hoopings.parts = Some((parts, key));
         }
@@ -46,7 +46,7 @@ impl HoopApp {
         let Some((parts, _)) = &self.hoopings.parts else { return };
         let accent = self.accent();
         let (ox, oy) = self.hooping_offset();
-        let h = HOOPS[self.hoopings.hoop];
+        let h = hoops::get(self.hoopings.hoop);
         for (k, p) in parts.iter().enumerate() {
             let cell = egui::Rect::from_two_pos(frame.to_screen(p.cell.0 + ox, p.cell.1 + oy), frame.to_screen(p.cell.2 + ox, p.cell.3 + oy));
             painter.rect_stroke(cell, 0, egui::Stroke::new(2.0, accent), egui::StrokeKind::Middle);
@@ -82,8 +82,8 @@ impl HoopApp {
             ui.label(RichText::new(t!("For designs bigger than the hoop: each part is sewn in its own hooping. Objects stay whole where they fit; the rest is cut at the part edges.")).size(12.0).color(muted));
             ui.horizontal(|ui| {
                 ui.label(t!("Hoop"));
-                egui::ComboBox::from_id_salt("split-hoop").selected_text(HOOPS[self.hoopings.hoop].name).show_ui(ui, |ui| {
-                    for (i, h) in HOOPS.iter().enumerate() {
+                egui::ComboBox::from_id_salt("split-hoop").selected_text(hoops::get(self.hoopings.hoop).name).show_ui(ui, |ui| {
+                    for (i, h) in hoops::list().iter().enumerate() {
                         ui.selectable_value(&mut self.hoopings.hoop, i, format!("{}  {} × {} mm", h.name, h.w, h.h));
                     }
                 });
@@ -127,8 +127,9 @@ impl HoopApp {
         for (k, p) in parts.iter().enumerate() {
             // Each part is centered on its own hoop.
             let pts: Vec<(f32, f32)> = p.pattern.points.iter().map(|q| (q.0 - p.center.0, q.1 - p.center.1)).collect();
-            let bytes = formats::write_jef(&pts, &p.pattern.cmds, &export::jef_numbers(&p.pattern.threads));
-            let file = folder.join(format!("{stem}-{}of{n}.jef", k + 1));
+            let out = hoops::machine().out;
+            let bytes = export::write(out, &stem, &pts, &p.pattern.cmds, &p.pattern.threads);
+            let file = folder.join(format!("{stem}-{}of{n}.{}", k + 1, out.ext()));
             if let Err(e) = std::fs::write(&file, bytes) {
                 err = Some(t!("Couldn't save {file}: {e}.", file = file.display(), e = e));
                 break;

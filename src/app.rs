@@ -7,7 +7,7 @@ use crate::artwork::{self, ArtSettings, Look};
 use crate::canvas::{self, DesignStyle, Frame, Transform, View};
 use crate::export::{self, Out};
 use crate::formats::{self, Block, Cmd, Pattern};
-use crate::hoops::{self, Fit, HOOPS, Placement};
+use crate::hoops::{self, Fit, Placement};
 
 mod artwork_panel;
 mod canvas_view;
@@ -16,6 +16,7 @@ mod demo;
 mod draw;
 mod history;
 mod hoopings;
+mod icons;
 mod lettering_panel;
 mod library;
 mod manual;
@@ -60,7 +61,7 @@ const PLAYBACK: [(f32, &str); 4] = [(1.0, n!("Real time")), (10.0, "10×"), (30.
 const SHORTCUTS: &[(&str, &str)] = &[
     (n!("O"), n!("Open a file")),
     ("V / L / A", n!("Viewer / lettering / artwork")),
-    (n!("Ctrl+S"), n!("Save as JEF")),
+    (n!("Ctrl+S"), n!("Save in the machine's format")),
     (n!("Ctrl+U"), n!("Send to the USB stick for the machine")),
     (n!("Ctrl+T"), n!("Test stitch-out: sew a small part, or the calibration sheet")),
     (n!("Ctrl+Shift+S"), n!("Save a picture of the preview")),
@@ -627,7 +628,7 @@ impl HoopApp {
     }
 
     fn hoop_size(&self) -> (f32, f32) {
-        let h = HOOPS[self.setup.hoop];
+        let h = hoops::get(self.setup.hoop);
         (h.w, h.h)
     }
 
@@ -639,6 +640,9 @@ impl HoopApp {
     /// Settings from the last session.
     fn restore(&mut self) {
         crate::i18n::set_language(self.prefs.get("language").unwrap_or("system"));
+        if let Some(i) = self.prefs.get("machine").and_then(|k| hoops::MACHINES.iter().position(|m| m.key == k)) {
+            hoops::set_machine(i);
+        }
         let p = &self.prefs;
         if let Some(c) = p.get("fabric").and_then(|v| u32::from_str_radix(v, 16).ok()) {
             self.fabric = [(c >> 16) as u8, (c >> 8) as u8, c as u8];

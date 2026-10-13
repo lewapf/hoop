@@ -1,6 +1,8 @@
 # Hoop user manual
 
-Hoop prepares machine embroidery for the Janome MC9900. It opens embroidery
+Hoop prepares machine embroidery for home embroidery machines: Janome,
+Brother and Baby Lock, Pfaff and Husqvarna Viking, Bernina, or any machine
+that reads DST. It opens embroidery
 files, turns text, SVG drawings and pictures into stitches, checks how a
 design will sew, and writes the file the machine reads. Nothing here needs
 the internet except downloading extra thread charts.
@@ -19,14 +21,20 @@ The quickest way in is the **new project wizard**: press `N` or pick
 4. **The size and the hoop.**
 5. **Thread colors.**
 6. **Create:** the design appears on the hoop. The last page offers
-   **Save as JEF**, **Send to USB** and **Save worksheet**, with
+   **Save**, **Send to USB** and **Save worksheet**, with
    step-by-step sewing advice.
 
 You can change everything afterwards in the panels on the right.
 
 ## The window
 
-- **Menu bar and tool bar** at the top.
+- **Menu bar** at the top: File, Edit, View, Design, Shape (in Artwork),
+  Machine and Help, with the three workspaces (Viewer, Lettering,
+  Artwork) in the middle.
+- **Tool bar** under it: new, open, save, worksheet; undo and redo;
+  rotate, mirror, center, pin to hoop; whole hoop, zoom to design, play.
+  On the right: the **machine and hoop** picker, the test stitch-out, and
+  **Send to machine**.
 - **Left dock:**
   - **Library:** your designs folder, with thumbnails.
   - **Objects:** artwork shapes; this page shows only in the Artwork tab.
@@ -91,7 +99,8 @@ installed system fonts follow.
   - **In the hoop: finish the back** adds a stop for backing fabric
     before the border.
 - **Team names** (Text page): one name per line. **Save designs…**
-  writes one JEF per name with the current settings.
+  writes one file per name, in your machine's format, with the current
+  settings.
 
 Letters smaller than about 10 mm sew best as **Column** (satin) fill; the
 Check list suggests it.
@@ -228,13 +237,26 @@ before saving a design that still has problems.
   what looked best. Hoop then uses your results for new designs and
   for the Check list.
 
+## Your machine
+
+Pick your machine in the tool bar's machine and hoop picker, in
+**Machine → Machine**, on the Hoop page, or in Settings. It sets:
+
+- **The hoops** you can pick, and which one a new design starts in.
+  Hoops marked "Large machines" fit only the bigger models of a brand;
+  check your machine's manual.
+- **The file format:** Janome JEF, Brother and Baby Lock PES, Pfaff and
+  Husqvarna Viking VP3, Bernina EXP, or DST for anything else.
+- **Where Send to USB writes:** `EMB/Embf` for Janome, the top of the
+  stick for the rest.
+
 ## Saving and sending
 
-- **Save as JEF** (`Ctrl+S`): the file for the MC9900.
-- **Send to USB** (`Ctrl+U`): writes the JEF straight into `EMB/Embf` on
-  the machine's USB stick. Names of up to 8 letters show best. **Eject**
+- **Save** (`Ctrl+S`): the file in your machine's format.
+- **Send to machine** (`Ctrl+U`): writes the file straight onto the
+  machine's USB stick. Names of up to 8 letters show best. **Eject**
   closes the stick safely.
-- **File → Export as:** DST, EXP, PES, PEC or VP3 for other machines.
+- **File → Export as:** the other formats, for another machine.
 - **Save worksheet** (`Ctrl+P`): a PDF with the facts, the thread
   sequence, the sewing time, and an actual-size template for placing
   the design on fabric. Print it at 100 %.
@@ -269,8 +291,8 @@ Every edit can be undone with `Ctrl+Z`.
 
 ## Threads
 
-Hoop works in Janome threads; the JEF file stores their numbers.
-**View → Thread charts** (or Settings) shows another brand's names next
+Hoop works in Janome threads inside; a JEF stores their numbers, other
+formats store the colors. **Machine → Thread charts** (or Settings) shows another brand's names next
 to them: Madeira, Isacord, Robison-Anton, Sulky, Brother and more.
 
 - **Get** downloads a chart from the Ink/Stitch project.
@@ -321,7 +343,7 @@ Lines left empty stay in English.
 | `N` | New project wizard |
 | `O` | Open a file |
 | `V` / `L` / `A` | Viewer / Lettering / Artwork |
-| `Ctrl+S` | Save as JEF |
+| `Ctrl+S` | Save in the machine's format |
 | `Ctrl+U` | Send to USB |
 | `Ctrl+P` | Save worksheet |
 | `Ctrl+T` | Test stitch-out |

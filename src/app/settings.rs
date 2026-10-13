@@ -41,6 +41,7 @@ impl HoopApp {
         let mut open = true;
         let mut pick_folder = false;
         let mut reset = false;
+        let mut pick_machine = None;
         egui::Window::new(t!("Settings"))
             .open(&mut open)
             .collapsible(false)
@@ -82,6 +83,18 @@ impl HoopApp {
                     ui.end_row();
 
                     // Machine
+                    ui.label(t!("Machine"));
+                    let mut machine = hoops::machine_index();
+                    egui::ComboBox::from_id_salt("set-machine").selected_text(crate::i18n::tr(hoops::machine().name)).width(220.0).show_ui(ui, |ui| {
+                        for (i, m) in hoops::MACHINES.iter().enumerate() {
+                            ui.selectable_value(&mut machine, i, format!("{} · {}", crate::i18n::tr(m.name), m.out.ext().to_uppercase()));
+                        }
+                    });
+                    if machine != hoops::machine_index() {
+                        pick_machine = Some(machine);
+                    }
+                    ui.end_row();
+
                     ui.label(t!("Machine speed"));
                     egui::ComboBox::from_id_salt("set-spm").selected_text(t!("{spm} spm", spm = SPEEDS[self.speed])).width(120.0).show_ui(ui, |ui| {
                         for (i, s) in SPEEDS.iter().enumerate() {
@@ -203,6 +216,10 @@ impl HoopApp {
         }
         // Saved when the window closes, not every frame.
         let closing = !self.settings.open;
+        if let Some(i) = pick_machine {
+            let rect = self.canvas_rect;
+            self.choose_machine(i, rect);
+        }
         if pick_folder && self.settings.folder_pick.is_none() {
             let (tx, rx) = channel();
             let ctx = ctx.clone();

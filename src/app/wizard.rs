@@ -292,8 +292,8 @@ impl HoopApp {
                         });
                         ui.horizontal(|ui| {
                             ui.label(t!("Hoop"));
-                            egui::ComboBox::from_id_salt("wiz-hoop").selected_text(HOOPS[w.hoop].name).show_ui(ui, |ui| {
-                                for (i, h) in HOOPS.iter().enumerate() {
+                            egui::ComboBox::from_id_salt("wiz-hoop").selected_text(hoops::get(w.hoop).name).show_ui(ui, |ui| {
+                                for (i, h) in hoops::list().iter().enumerate() {
                                     ui.selectable_value(&mut w.hoop, i, format!("{}  {} × {} mm", h.name, h.w, h.h));
                                 }
                             });
@@ -337,7 +337,7 @@ impl HoopApp {
                         }
                         ui.add_space(6.0);
                         ui.horizontal(|ui| {
-                            if ui.add(primary(t!("Save as JEF…"), accent)).clicked() {
+                            if ui.add(primary(t!("Save…"), accent)).clicked() {
                                 finish = Some(0);
                             }
                             if ui.button(t!("Send to USB…")).clicked() {
@@ -413,7 +413,7 @@ impl HoopApp {
             self.wizard.pick = Some(rx);
         }
         match finish {
-            Some(0) => self.save_jef(),
+            Some(0) => self.save_design(),
             Some(1) => self.open_usb(),
             Some(2) => self.save_worksheet(),
             _ => {}

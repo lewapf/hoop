@@ -106,7 +106,7 @@ impl HoopApp {
             self.test.open = !self.test.open;
         }
         if press(Modifiers::COMMAND, Key::S) {
-            self.save_jef();
+            self.save_design();
         }
         if press(Modifiers::NONE, Key::P) {
             self.pin();
@@ -177,7 +177,7 @@ impl HoopApp {
             });
         }
         for (i, key) in [Key::Num1, Key::Num2, Key::Num3, Key::Num4].into_iter().enumerate() {
-            if press(Modifiers::NONE, key) {
+            if press(Modifiers::NONE, key) && i < hoops::list().len() {
                 self.change(|s| s.hoop = i);
                 self.fit_view(canvas_rect, false);
             }
@@ -298,7 +298,7 @@ impl HoopApp {
             )
         });
         canvas::draw_fabric(&frame, self.fabric, weave);
-        let hoop = HOOPS[self.setup.hoop];
+        let hoop = hoops::get(self.setup.hoop);
         canvas::draw_hoop(&frame, hoop.w * 10.0, hoop.h * 10.0, &t!("{name}  {w} × {h} mm", name = hoop.name, w = hoop.w, h = hoop.h), self.fabric, self.grid);
         self.draw_backdrop(&painter, &frame);
 
