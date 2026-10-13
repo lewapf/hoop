@@ -866,6 +866,11 @@ mod tests {
         let at = |u: Pt| ((u.0 - mid.0) * scale, (u.1 - mid.1) * scale);
         assert_eq!(shape_at(&art, &s, at((5.0, 25.0)), 1.0), Some(red));
         assert_ne!(shape_at(&art, &s, at((40.0, 15.0)), 1.0), Some(red));
+        // Locked shapes still sew but can't be picked on the hoop.
+        s.shapes[red].locked = true;
+        assert_eq!(shape_at(&art, &s, at((5.0, 25.0)), 1.0), None);
+        assert_eq!(generate(&art, &s).unwrap().bounds(), moved);
+        s.shapes[red].locked = false;
         // Hidden shapes are skipped, both for stitching and picking.
         s.shapes[red].hidden = true;
         assert_eq!(shape_at(&art, &s, at((5.0, 25.0)), 1.0), None);
