@@ -353,6 +353,9 @@ plus the hoop, the machine and any parts pinned to the hoop.
   unsaved changes.
 - Closing Hoop with unsaved work asks first: save the project, close
   without saving, or cancel.
+- Every half minute, unsaved work is also copied aside. If Hoop or the
+  computer stops without closing properly, Hoop offers to bring that
+  work back the next time it starts.
 - A project is for carrying on; the machine still needs its stitch file
   (**Save**, `Ctrl+S`, or Send to USB).
 

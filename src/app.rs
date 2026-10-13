@@ -275,6 +275,13 @@ pub struct HoopApp {
     /// The state when last opened or saved, to tell unsaved changes.
     clean: Snapshot,
     closing: project::Closing,
+    /// The state last autosaved and when, and whether a crashed
+    /// session's autosave waits to be brought back.
+    autosaved: Option<Snapshot>,
+    autosave_at: Option<std::time::Instant>,
+    recovery: bool,
+    /// Work brought back from an autosave, which stays unsaved until saved.
+    recovered: bool,
     /// Put the cursor in the Text card on its next showing (new text).
     focus_text: bool,
     /// The window title last set, and the one the open design asks for.
@@ -398,6 +405,10 @@ impl HoopApp {
             clean: Snapshot { setup: Setup { hoop: 0, at: Placement::default() }, letter: Settings::default(), art: None, stitches: None },
             closing: Default::default(),
             focus_text: false,
+            autosaved: None,
+            autosave_at: None,
+            recovery: false,
+            recovered: false,
             title: String::new(),
             title_base: "Hoop".into(),
             shape_clip: Vec::new(),
@@ -469,6 +480,7 @@ impl HoopApp {
         load_ui_font(&cc.egui_ctx, app.prefs.get("ui_font") == Some("theme"));
         app.apply_theme(&cc.egui_ctx);
         let demo = file.as_deref() == Some(std::path::Path::new("--demo"));
+        app.check_recovery();
         if let Some(path) = file.filter(|_| !demo) {
             app.open(&path);
         }
@@ -919,6 +931,8 @@ impl eframe::App for HoopApp {
         self.keys(ctx, canvas_rect);
         self.project_title(ctx);
         self.guard_close(ctx);
+        self.autosave();
+        self.recovery_dialog(ctx);
 
         self.refresh_check();
         self.refresh_test_piece();

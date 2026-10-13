@@ -34,6 +34,7 @@ impl HoopApp {
         self.committed = self.snapshot();
         // Fresh work counts as saved until it is changed.
         self.clean = self.committed.clone();
+        self.recovered = false;
         self.pending_since = None;
     }
 

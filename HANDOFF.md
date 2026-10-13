@@ -450,6 +450,12 @@ cancels a close with unsaved work and asks. `project_mode` keeps an
 artwork project from being overwritten by lettering work. The Library
 shows .hoop files, with stitch thumbnails for artwork projects.
 
+Autosave: `autosave()` writes the project to `<state>/hoop/autosave.hoop`
+every 30 s while there is unsaved work (`Project::origin` remembers the
+project file), and deletes it when the work is clean, saved, or closed
+with Don't save. `check_recovery` at start and `recovery_dialog` bring
+it back (`recovered` keeps it marked unsaved until saved).
+
 ## Text in Artwork (2026-10-13)
 
 The Text tool (`app/arttext.rs`) puts `lettering::outlines` (now public,

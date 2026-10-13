@@ -35,6 +35,9 @@ pub struct Project {
     pub font: String,
     #[serde(default)]
     pub pinned: Vec<PinnedPart>,
+    /// In an autosave: the project file the work came from, if any.
+    #[serde(default)]
+    pub origin: Option<String>,
 }
 
 /// A finished part pinned to the hoop, in hoop coordinates.
@@ -87,6 +90,7 @@ mod tests {
             letter: None,
             font: String::new(),
             pinned: Vec::new(),
+            origin: None,
         };
         let back = Project::from_bytes(&p.to_bytes()).unwrap();
         assert_eq!(back.art.as_ref(), Some(&s));

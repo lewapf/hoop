@@ -4273,3 +4273,18 @@ msgstr "Text: dorthin klicken, wo er hin soll"
 
 msgid "Back (tape backing fabric under the hoop)"
 msgstr "Rückseite (Stützstoff unter den Rahmen kleben)"
+
+msgid "Bring back unsaved work?"
+msgstr "Ungespeicherte Arbeit zurückholen?"
+
+msgid "Hoop didn't close properly last time, and kept a copy of the work that wasn't saved."
+msgstr "Hoop wurde letztes Mal nicht richtig beendet und hat eine Kopie der ungespeicherten Arbeit behalten."
+
+msgid "Bring it back"
+msgstr "Zurückholen"
+
+msgid "Throw it away"
+msgstr "Verwerfen"
+
+msgid "Your work is back. Save it as a project to keep it."
+msgstr "Die Arbeit ist zurück. Speichere sie als Projekt, um sie zu behalten."

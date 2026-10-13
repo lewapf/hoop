@@ -36,6 +36,11 @@ impl Prefs {
         Prefs { file, values }
     }
 
+    /// The folder Hoop keeps its state in.
+    pub fn dir(&self) -> PathBuf {
+        self.file.parent().map(PathBuf::from).unwrap_or_default()
+    }
+
     pub fn get(&self, key: &str) -> Option<&str> {
         self.values.get(key).map(|s| s.as_str())
     }
