@@ -387,9 +387,24 @@ sizes or a line's ends and bend); the Shape tab's Form card edits it and
 clears it. Line ends snap within 10 px to any visible outline. All new
 shapes go through `push_shape`.
 
+## Groups in Objects (2026-10-13)
+
+`ShapeEdit::group` holds a group id; `ArtSettings::groups` the names
+(undo covers both). Members are kept next to each other in `shapes`:
+`ArtSettings::gathered()` gives the order that pulls each group to its
+lowest member, and `keep_groups_together()` applies it every frame the
+mouse is up (and after restack/drop), also pruning empty groups. In
+`sew.rs` a grouped shape counts as touching every shape outside its
+group, so a group sews as one block while its members still share thread
+runs. Objects draws a folder row per group (fold state `folded`,
+rename `renaming` are app state, not undoable); `drop_rows` handles row
+and group drags (a shape joins the group it lands in). A click on the
+hoop picks the whole group; Alt picks one shape. Optimize only merges
+within one group.
+
 ## Ideas queued with the owner
 
-Drag to reorder in the Shapes list, Bezier handles in point editing,
+Bezier handles in point editing,
 editable pinned parts, motif fills, photo stitch, a real exit point (fill
 order that ends where asked), turning fills that follow angle lines
 smoothly instead of splitting into parts.

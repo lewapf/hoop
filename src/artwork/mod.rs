@@ -97,6 +97,56 @@ pub struct ArtSettings {
     /// The shapes as the user arranged them, in stitch order (first is sewn
     /// first and lies at the bottom).
     pub shapes: Vec<ShapeEdit>,
+    /// Named groups of shapes, like folders of layers. A group's shapes sit
+    /// next to each other in `shapes` and are sewn as one block.
+    pub groups: Vec<Group>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Group {
+    pub id: u32,
+    pub name: String,
+}
+
+impl ArtSettings {
+    /// The stacking order that brings each group's shapes together where
+    /// its lowest one sits, keeping every other order the same; None when
+    /// they already are.
+    pub fn gathered(&self) -> Option<Vec<usize>> {
+        let mut order = Vec::with_capacity(self.shapes.len());
+        let mut done = vec![false; self.shapes.len()];
+        for (i, e) in self.shapes.iter().enumerate() {
+            if done[i] {
+                continue;
+            }
+            match e.group {
+                Some(g) => {
+                    for (k, f) in self.shapes.iter().enumerate().skip(i) {
+                        if f.group == Some(g) {
+                            order.push(k);
+                            done[k] = true;
+                        }
+                    }
+                }
+                None => {
+                    order.push(i);
+                    done[i] = true;
+                }
+            }
+        }
+        order.iter().enumerate().any(|(a, &b)| a != b).then_some(order)
+    }
+
+    /// Drops the names of groups with no shapes left.
+    pub fn prune_groups(&mut self) {
+        let shapes = &self.shapes;
+        self.groups.retain(|g| shapes.iter().any(|e| e.group == Some(g.id)));
+    }
+
+    /// The shapes of a group, bottom first.
+    pub fn members(&self, id: u32) -> Vec<usize> {
+        (0..self.shapes.len()).filter(|&i| self.shapes[i].group == Some(id)).collect()
+    }
 }
 
 /// One shape on the design: a shape of the drawing, or its own geometry once
@@ -130,6 +180,8 @@ pub struct ShapeEdit {
     /// Drawn with a shape tool: the numbers it was made from, so it can be
     /// changed later. Cleared once its points are edited by hand.
     pub made: Option<Made>,
+    /// The group it belongs to, by `Group::id`.
+    pub group: Option<u32>,
 }
 
 impl ShapeEdit {
@@ -155,6 +207,7 @@ impl ShapeEdit {
             style: None,
             pinned: false,
             made: None,
+            group: None,
         }
     }
 
@@ -328,6 +381,7 @@ impl ArtSettings {
             group_colors: true,
             layers: art.layers.iter().map(|l| LayerChoice { thread: formats::nearest_jef(l.color), enabled: !l.background, look: Look::Default }).collect(),
             shapes: (0..art.shapes.len()).map(|i| ShapeEdit::of(art, i)).collect(),
+            groups: Vec::new(),
         }
     }
 }
@@ -613,6 +667,41 @@ mod tests {
         let blue_shape = s.shapes.remove(1);
         s.shapes.insert(0, blue_shape);
         assert_eq!(names(&s), [blue, red]);
+    }
+
+    #[test]
+    fn groups_sew_as_one_block_and_gather_together() {
+        // Red, blue, red, apart: alone the reds sew together.
+        let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20">
+            <rect x="0" y="0" width="20" height="20" fill="#ff0000"/>
+            <rect x="40" y="0" width="20" height="20" fill="#0000ff"/>
+            <rect x="80" y="0" width="20" height="20" fill="#ff0000"/>
+        </svg>"##;
+        let art = parse("three.svg", svg.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        let names = |s: &ArtSettings| generate(&art, s).unwrap().threads.iter().map(|t| t.name.clone()).collect::<Vec<_>>();
+        let (red, blue) = (formats::jef_thread(s.layers[0].thread, 0).name, formats::jef_thread(s.layers[1].thread, 0).name);
+        assert_eq!(names(&s), [red.clone(), blue.clone()]);
+        // The blue between grouped reds can't be passed: the group is a block.
+        s.groups.push(Group { id: 1, name: "G".into() });
+        s.shapes[0].group = Some(1);
+        s.shapes[2].group = Some(1);
+        assert_eq!(names(&s), [red.clone(), blue.clone(), red.clone()]);
+        // Inside a group, shapes still share runs of thread.
+        s.shapes[1].group = Some(1);
+        assert_eq!(names(&s), [red.clone(), blue.clone()]);
+        // Members that drifted apart are brought back to the lowest one.
+        let mut t = ArtSettings::for_artwork(&art);
+        t.shapes[0].group = Some(7);
+        t.shapes[2].group = Some(7);
+        assert_eq!(t.gathered(), Some(vec![0, 2, 1]));
+        t.shapes.swap(1, 2);
+        assert_eq!(t.gathered(), None);
+        t.groups.push(Group { id: 9, name: "empty".into() });
+        t.groups.push(Group { id: 7, name: "kept".into() });
+        t.prune_groups();
+        assert_eq!(t.groups.len(), 1);
+        assert_eq!(t.members(7), vec![0, 1]);
     }
 
     #[test]

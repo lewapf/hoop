@@ -89,6 +89,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("B / U / W / K", n!("Artwork tools: pen / shapes (again for the next) / line / fill bucket")),
     (n!("Arrows · [ / ]"), n!("Selected shape: move it / send it down or up")),
     (n!("Ctrl+D · Del · Esc"), n!("Selected shape: duplicate / delete / deselect")),
+    (n!("Ctrl+G / Ctrl+Shift+G"), n!("Group / ungroup the selected shapes")),
     (n!("Ctrl+Z / Ctrl+Shift+Z"), n!("Undo / redo any change")),
     ("?", n!("Show these shortcuts")),
     (n!("Q"), n!("Quit")),
@@ -263,6 +264,12 @@ pub struct HoopApp {
     guides: Vec<(bool, f32)>,
     /// A row of the Objects list being dragged to restack it.
     list_drag: Option<usize>,
+    /// Dragging a whole group in Objects, by its id.
+    group_drag: Option<u32>,
+    /// Groups folded shut in Objects.
+    folded: std::collections::HashSet<u32>,
+    /// The group being renamed in Objects.
+    renaming: Option<u32>,
     /// A built-in shape asked for from a panel, added once it is drawn.
     list_add: Option<&'static str>,
     /// Pointer position on the hoop, in 0.1 mm, for the status bar.
@@ -367,6 +374,9 @@ impl HoopApp {
             sel: Vec::new(),
             guides: Vec::new(),
             list_drag: None,
+            group_drag: None,
+            folded: Default::default(),
+            renaming: None,
             list_add: None,
             hover_at: None,
             hoop_scale: 1.0,
@@ -849,6 +859,9 @@ impl eframe::App for HoopApp {
         // Big artwork can take a moment to stitch, so while a slider is being
         // dragged it waits for the release.
         let dragging = ctx.input(|i| i.pointer.any_down());
+        if !dragging {
+            self.keep_groups_together();
+        }
         if self.mode == Mode::Artwork && self.art.is_some() && self.art_built != self.art && !(self.art_slow && dragging) {
             self.regenerate_art(ctx);
         }

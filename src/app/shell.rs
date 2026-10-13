@@ -356,6 +356,8 @@ impl HoopApp {
                     (t!("Duplicate"), "Ctrl+D", Arrange::Duplicate, picked),
                     (t!("Delete"), "Del", Arrange::Delete, picked),
                     (t!("Hide"), "Ctrl+H", Arrange::Hide, picked),
+                    (t!("Group"), "Ctrl+G", Arrange::Group, picked),
+                    (t!("Ungroup"), "Ctrl+Shift+G", Arrange::Ungroup, picked),
                     (t!("Show all shapes"), "", Arrange::ShowAll, art),
                 ] {
                     if item(ui, on, text, keys) {

@@ -364,6 +364,7 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         /// The shape's own style, when it has one.
         own: Option<Settings>,
         pinned: bool,
+        group: Option<u32>,
     }
     let mut items: Vec<Item> = Vec::new();
     // Shapes that leave the fabric showing: (drawing order, outline).
@@ -392,7 +393,19 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         if keep {
             let angles = e.angles.iter().map(|&(a, b)| (to_mm(e.place(art, a)), to_mm(e.place(art, b)))).collect();
             let entry = e.entry.map(|p| to_mm(e.place(art, p)));
-            items.push(Item { doc, layer: e.layer, look, kind: sh.kind.clone(), lines, sew: None, angles, entry, own: e.style.clone(), pinned: e.pinned });
+            items.push(Item {
+                doc,
+                layer: e.layer,
+                look,
+                kind: sh.kind.clone(),
+                lines,
+                sew: None,
+                angles,
+                entry,
+                own: e.style.clone(),
+                pinned: e.pinned,
+                group: e.group,
+            });
         }
     }
     if items.is_empty() {
@@ -472,7 +485,11 @@ pub fn generate(art: &Artwork, s: &ArtSettings) -> Result<Pattern, String> {
         // Anything a shape overlaps that lies below it is sewn first, so
         // the top shape's edges lie over it, as in the drawing. A pinned
         // shape counts as touching everything: it keeps its list place.
-        layered_order(&threads, |a, b| items[a].pinned || items[b].pinned || cover[a].overlaps(&cover[b]))
+        layered_order(&threads, |a, b| {
+            let (x, y) = (&items[a], &items[b]);
+            // A group sews as one block: nothing passes into or out of it.
+            x.pinned || y.pinned || (x.group != y.group && (x.group.is_some() || y.group.is_some())) || cover[a].overlaps(&cover[b])
+        })
     } else {
         (0..items.len()).collect()
     };

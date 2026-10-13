@@ -3972,3 +3972,33 @@ msgstr "Keine Designs hier. Hoop zeigt JEF, DST, EXP, PES, PEC, VP3, SVG und Bil
 
 msgid "Stitch files: JEF, PES, VP3, EXP, DST, PEC"
 msgstr "Stickdateien: JEF, PES, VP3, EXP, DST, PEC"
+
+msgid "Group {n}"
+msgstr "Gruppe {n}"
+
+msgid "Ungroup"
+msgstr "Gruppierung aufheben"
+
+msgid "Turn the group back into loose shapes · Ctrl+Shift+G"
+msgstr "Die Gruppe wieder in einzelne Formen auflösen · Ctrl+Shift+G"
+
+msgid "Group"
+msgstr "Gruppieren"
+
+msgid "Put the picked shapes in a group, like a folder of layers · Ctrl+G"
+msgstr "Die gewählten Formen in eine Gruppe legen, wie einen Ebenenordner · Ctrl+G"
+
+msgid "Show or hide the whole group"
+msgstr "Ganze Gruppe zeigen oder ausblenden"
+
+msgid "Fold or unfold the group"
+msgstr "Gruppe ein- oder ausklappen"
+
+msgid "A group: click picks all of it, double-click renames it, drag moves it as one block"
+msgstr "Eine Gruppe: Klick wählt alles, Doppelklick benennt um, Ziehen verschiebt sie als Block"
+
+msgid "Ctrl+G / Ctrl+Shift+G"
+msgstr "Strg+G / Strg+Umschalt+G"
+
+msgid "Group / ungroup the selected shapes"
+msgstr "Gewählte Formen gruppieren / Gruppierung aufheben"

@@ -28,6 +28,20 @@ impl ShapeMap {
     }
 }
 
+/// A row of the Objects list.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Row {
+    Head(u32),
+    Shape(usize),
+}
+
+/// What is being dragged in the Objects list.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ListDrag {
+    One(usize),
+    Group(u32),
+}
+
 #[derive(Clone, Copy)]
 pub(super) enum Handle {
     Corner,
@@ -96,6 +110,8 @@ pub(super) enum Arrange {
     Top,
     Middle,
     Bottom,
+    Group,
+    Ungroup,
 }
 
 impl HoopApp {
@@ -136,12 +152,99 @@ impl HoopApp {
     /// same shapes selected. The selected shapes were placed by hand, so they
     /// are pinned: sewn where they now sit, like layers.
     fn restack(&mut self, order: Vec<usize>) {
+        self.reorder(&order);
+        self.keep_groups_together();
+        let Some(s) = &mut self.art else { return };
+        for &i in &self.sel {
+            s.shapes[i].pinned = true;
+        }
+    }
+
+    /// Applies a new stacking order (old indices, bottom first), keeping
+    /// the same shapes selected.
+    fn reorder(&mut self, order: &[usize]) {
         let Some(s) = &mut self.art else { return };
         let old = std::mem::take(&mut s.shapes);
         s.shapes = order.iter().map(|&i| old[i].clone()).collect();
         self.sel = self.sel.iter().filter_map(|i| order.iter().position(|o| o == i)).collect();
-        for &i in &self.sel {
-            s.shapes[i].pinned = true;
+    }
+
+    /// Brings each group's shapes back next to each other (after a move,
+    /// duplicate or optimize split them) and forgets empty groups.
+    pub(super) fn keep_groups_together(&mut self) {
+        let Some(s) = &mut self.art else { return };
+        if s.groups.is_empty() && s.shapes.iter().all(|e| e.group.is_none()) {
+            return;
+        }
+        s.prune_groups();
+        if let Some(order) = s.gathered() {
+            self.reorder(&order);
+        }
+    }
+
+    /// Drops a dragged row or group in the Objects list next to `row`,
+    /// above or below it on screen. A shape joins the group it lands in, or
+    /// leaves its group when it lands outside; a group moves as one block
+    /// and never lands inside another.
+    fn drop_rows(&mut self, what: ListDrag, row: Row, above: bool) {
+        let Some(s) = &mut self.art else { return };
+        let n = s.shapes.len();
+        let moving: Vec<usize> = match what {
+            ListDrag::One(i) => vec![i],
+            ListDrag::Group(g) => s.members(g),
+        };
+        let span = |g: u32| {
+            let m = s.members(g);
+            (m.first().copied().unwrap_or(0), m.last().copied().unwrap_or(0))
+        };
+        // The shape to land next to, whether after it in stitch order, and the group to join.
+        let (anchor, after, join) = match (what, row) {
+            (ListDrag::One(_), Row::Shape(t)) => (t, above, s.shapes[t].group),
+            (ListDrag::One(_), Row::Head(h)) => (span(h).1, true, (!above).then_some(h)),
+            (ListDrag::Group(g), Row::Head(h)) if g == h => return,
+            (ListDrag::Group(g), Row::Shape(t)) => match s.shapes[t].group {
+                Some(h) if h == g => return,
+                Some(h) => {
+                    let (lo, hi) = span(h);
+                    if above { (hi, true, None) } else { (lo, false, None) }
+                }
+                None => (t, above, None),
+            },
+            (ListDrag::Group(_), Row::Head(h)) => {
+                let (lo, hi) = span(h);
+                if above { (hi, true, None) } else { (lo, false, None) }
+            }
+        };
+        if moving.contains(&anchor) && moving.len() == 1 {
+            // Dropped on itself: only its group may change.
+            if let ListDrag::One(i) = what
+                && s.shapes[i].group != join
+            {
+                s.shapes[i].group = join;
+            }
+            return;
+        }
+        if let ListDrag::One(i) = what {
+            s.shapes[i].group = join;
+        }
+        let mut order: Vec<usize> = (0..n).filter(|k| !moving.contains(k)).collect();
+        let at = order.iter().position(|&k| k == anchor).map_or(order.len(), |k| if after { k + 1 } else { k });
+        order.splice(at..at, moving.iter().copied());
+        self.sel = moving;
+        match what {
+            ListDrag::One(_) => self.restack(order),
+            ListDrag::Group(_) => {
+                self.reorder(&order);
+                self.keep_groups_together();
+            }
+        }
+    }
+
+    /// A shape with the rest of its group, as a click on the hoop picks it.
+    fn with_group(&self, i: usize) -> Vec<usize> {
+        match self.art.as_ref().and_then(|s| Some((s, s.shapes.get(i)?.group?))) {
+            Some((s, g)) => s.members(g),
+            None => vec![i],
         }
     }
 
@@ -193,6 +296,31 @@ impl HoopApp {
                     s.shapes[i].hidden = true;
                 }
                 self.sel.clear();
+            }
+            Arrange::Group => {
+                // The picked shapes, stacked together where the topmost one is.
+                let id = s.groups.iter().map(|g| g.id).max().unwrap_or(0) + 1;
+                let n_groups = s.groups.len() + 1;
+                s.groups.push(artwork::Group { id, name: t!("Group {n}", n = n_groups) });
+                let top = self.sel.iter().copied().max().unwrap_or(0);
+                for &i in &self.sel {
+                    s.shapes[i].group = Some(id);
+                }
+                let (mine, rest): (Vec<usize>, Vec<usize>) = (0..n).partition(|&i| picked(i, &self.sel));
+                let at = rest.iter().filter(|&&i| i < top).count();
+                let mut order = rest;
+                order.splice(at..at, mine);
+                self.reorder(&order);
+                self.keep_groups_together();
+            }
+            Arrange::Ungroup => {
+                let ids: Vec<u32> = self.sel.iter().filter_map(|&i| s.shapes[i].group).collect();
+                for e in &mut s.shapes {
+                    if e.group.is_some_and(|g| ids.contains(&g)) {
+                        e.group = None;
+                    }
+                }
+                s.prune_groups();
             }
             Arrange::Front | Arrange::Back => {
                 let (mut mine, rest): (Vec<usize>, Vec<usize>) = (0..n).partition(|&i| picked(i, &self.sel));
@@ -317,6 +445,7 @@ impl HoopApp {
             style: None,
             pinned: false,
             made,
+            group: None,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
@@ -359,9 +488,19 @@ impl HoopApp {
             && !(self.edit_points && node_under(s, p).is_some())
         {
             let hit = artwork::shape_at(art, s, m.to_stitch(u), slop);
+            // A shape in a group picks the whole group; Alt picks just the shape.
+            let one = mods.alt;
             match hit {
-                Some(i) if mods.command => self.toggle_selected(i),
+                Some(i) if mods.command => {
+                    for k in if one { vec![i] } else { self.with_group(i) } {
+                        self.toggle_selected(k);
+                    }
+                }
                 None if mods.command => {}
+                Some(i) if !one => {
+                    self.select_only(Some(i));
+                    self.sel = self.with_group(i);
+                }
                 _ => self.select_only(hit),
             }
             return false;
@@ -432,10 +571,14 @@ impl HoopApp {
                 // Press on any shape and drag: it is picked and moved in one
                 // go. Pressing on one of several selected moves them all.
                 if !self.sel.contains(&i) {
+                    let picked = match s.shapes[i].group {
+                        Some(g) if !mods.alt => s.members(g),
+                        _ => vec![i],
+                    };
                     if mods.command {
-                        self.sel.push(i);
+                        self.sel.extend(picked);
                     } else {
-                        self.sel = vec![i];
+                        self.sel = picked;
                     }
                     self.edit_points = false;
                 }
@@ -667,6 +810,8 @@ impl HoopApp {
             (Modifiers::SHIFT, Key::CloseBracket, Arrange::Front),
             (Modifiers::SHIFT, Key::OpenBracket, Arrange::Back),
             (Modifiers::COMMAND, Key::H, Arrange::Hide),
+            (Modifiers::COMMAND | Modifiers::SHIFT, Key::G, Arrange::Ungroup),
+            (Modifiers::COMMAND, Key::G, Arrange::Group),
         ];
         for (mods, key, op) in keys {
             if press(mods, key) {
@@ -700,6 +845,7 @@ impl HoopApp {
             ui.label(RichText::new(t!("Open an SVG or a picture, or start from shapes, to see its parts here.")).size(12.0).color(muted));
             return;
         };
+        let mut group_op = None;
         ui.horizontal_wrapped(|ui| {
             ui.menu_button(t!("Add shape"), |ui| {
                 for name in artwork::BUILT_IN {
@@ -711,6 +857,19 @@ impl HoopApp {
             });
             if ui.button(t!("Optimize…")).on_hover_text(t!("Name shapes by thread, break apart compound fills, join touching lines, drop specks")).clicked() {
                 self.optimize.open = true;
+            }
+            let in_group = self.sel.iter().any(|&i| s.shapes.get(i).is_some_and(|e| e.group.is_some()));
+            let whole = in_group && self.sel.iter().all(|&i| s.shapes.get(i).is_some_and(|e| e.group.is_some() && e.group == s.shapes[self.sel[0]].group));
+            if whole {
+                if ui.button(t!("Ungroup")).on_hover_text(t!("Turn the group back into loose shapes · Ctrl+Shift+G")).clicked() {
+                    group_op = Some(Arrange::Ungroup);
+                }
+            } else if ui
+                .add_enabled(!self.sel.is_empty(), egui::Button::new(t!("Group")))
+                .on_hover_text(t!("Put the picked shapes in a group, like a folder of layers · Ctrl+G"))
+                .clicked()
+            {
+                group_op = Some(Arrange::Group);
             }
             let pinned = s.shapes.iter().filter(|e| e.pinned).count();
             if s.group_colors
@@ -731,21 +890,113 @@ impl HoopApp {
             ui.label(RichText::new(t!("{v0} shapes · {v1} picked", v0 = s.shapes.len(), v1 = self.sel.len())).size(12.0).color(muted));
         });
         ui.separator();
+        if let Some(op) = group_op {
+            self.arrange(op);
+            return;
+        }
         let mods = ui.input(|i| i.modifiers);
-        let mut rows: Vec<(usize, egui::Rect)> = Vec::new();
+        // Rows topmost first: a group's header, then its shapes (unless folded).
+        let mut list: Vec<Row> = Vec::new();
+        for i in (0..s.shapes.len()).rev() {
+            match s.shapes[i].group {
+                Some(g) => {
+                    if !list.iter().any(|r| matches!(r, Row::Head(h) if *h == g)) {
+                        list.push(Row::Head(g));
+                    }
+                    if !self.folded.contains(&g) {
+                        list.push(Row::Shape(i));
+                    }
+                }
+                None => list.push(Row::Shape(i)),
+            }
+        }
+        let mut rows: Vec<(Row, egui::Rect)> = Vec::new();
         let mut clicked = None;
         let mut drag_from = None;
+        let mut group_clicked: Option<u32> = None;
+        let mut group_drag: Option<u32> = None;
+        let mut fold: Option<u32> = None;
         egui::ScrollArea::vertical().id_salt("objects").auto_shrink([false, false]).show(ui, |ui| {
             let width = ui.available_width();
-            for i in (0..s.shapes.len()).rev() {
-                let e = &mut s.shapes[i];
-                let selected = self.sel.contains(&i);
+            for row in list {
                 let (rect, resp) = ui.allocate_exact_size(vec2(width, 24.0), Sense::click_and_drag());
+                rows.push((row, rect));
                 let painter = ui.painter();
+                if let Row::Head(g) = row {
+                    let members = s.members(g);
+                    let selected = !members.is_empty() && members.iter().all(|i| self.sel.contains(i));
+                    if selected {
+                        painter.rect_filled(rect, 3, accent.gamma_multiply(0.25));
+                    } else if resp.hovered() {
+                        painter.rect_filled(rect, 3, ui.visuals().widgets.hovered.weak_bg_fill);
+                    }
+                    let all_hidden = members.iter().all(|&i| s.shapes[i].hidden);
+                    let eye = egui::Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(16.0, 16.0));
+                    if ui.interact(eye, ui.id().with(("geye", g)), Sense::click()).on_hover_text(t!("Show or hide the whole group")).clicked() {
+                        for &i in &members {
+                            s.shapes[i].hidden = !all_hidden;
+                        }
+                    }
+                    let ink = if all_hidden { muted.gamma_multiply(0.6) } else { ui.visuals().text_color() };
+                    painter.circle(eye.center(), 4.5, if all_hidden { Color32::TRANSPARENT } else { ink }, egui::Stroke::new(1.2, ink));
+                    // Fold arrow and a folder.
+                    let open = !self.folded.contains(&g);
+                    let arrow = egui::Rect::from_min_size(rect.min + vec2(24.0, 4.0), vec2(16.0, 16.0));
+                    if ui.interact(arrow, ui.id().with(("fold", g)), Sense::click()).on_hover_text(t!("Fold or unfold the group")).clicked() {
+                        fold = Some(g);
+                    }
+                    let c = arrow.center();
+                    let tri = if open {
+                        vec![c + vec2(-4.0, -2.0), c + vec2(4.0, -2.0), c + vec2(0.0, 3.0)]
+                    } else {
+                        vec![c + vec2(-2.0, -4.0), c + vec2(3.0, 0.0), c + vec2(-2.0, 4.0)]
+                    };
+                    painter.add(egui::Shape::convex_polygon(tri, ink, egui::Stroke::NONE));
+                    let folder = egui::Rect::from_min_size(rect.min + vec2(44.0, 7.0), vec2(14.0, 10.0));
+                    painter.rect_filled(egui::Rect::from_min_size(folder.min - vec2(0.0, 2.0), vec2(6.0, 3.0)), 1, ink.gamma_multiply(0.8));
+                    painter.rect_filled(folder, 2, ink.gamma_multiply(0.8));
+                    let name = s.groups.iter().find(|x| x.id == g).map_or(String::new(), |x| x.name.clone());
+                    if self.renaming == Some(g) {
+                        let field = egui::Rect::from_min_max(rect.min + vec2(64.0, 2.0), rect.max - vec2(6.0, 2.0));
+                        let mut text = name.clone();
+                        let edit = ui.put(field, egui::TextEdit::singleline(&mut text));
+                        edit.request_focus();
+                        if text != name
+                            && let Some(x) = s.groups.iter_mut().find(|x| x.id == g)
+                        {
+                            x.name = text;
+                        }
+                        if edit.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            self.renaming = None;
+                        }
+                    } else {
+                        painter.text(rect.left_center() + vec2(64.0, 0.0), egui::Align2::LEFT_CENTER, &name, egui::FontId::proportional(13.5), ink);
+                        let count = tn!(members.len(), "{n} shape", "{n} shapes");
+                        painter.text(rect.right_center() - vec2(6.0, 0.0), egui::Align2::RIGHT_CENTER, count, egui::FontId::proportional(11.0), muted);
+                    }
+                    let resp = resp.on_hover_text(t!("A group: click picks all of it, double-click renames it, drag moves it as one block"));
+                    if resp.double_clicked() {
+                        self.renaming = Some(g);
+                    } else if resp.clicked() {
+                        group_clicked = Some(g);
+                    }
+                    if resp.drag_started() {
+                        group_drag = Some(g);
+                    }
+                    continue;
+                }
+                let Row::Shape(i) = row else { continue };
+                let e = &mut s.shapes[i];
+                // Shapes in a group sit indented under its header.
+                let x0 = if e.group.is_some() { 18.0 } else { 0.0 };
+                let selected = self.sel.contains(&i);
                 if selected {
                     painter.rect_filled(rect, 3, accent.gamma_multiply(0.25));
                 } else if resp.hovered() {
                     painter.rect_filled(rect, 3, ui.visuals().widgets.hovered.weak_bg_fill);
+                }
+                if x0 > 0.0 {
+                    painter.vline(rect.left() + 32.0, rect.y_range(), egui::Stroke::new(1.0, muted.gamma_multiply(0.4)));
                 }
                 // Eye toggle, swatch, name, tag.
                 let eye = egui::Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(16.0, 16.0));
@@ -755,7 +1006,7 @@ impl HoopApp {
                 }
                 let ink = if e.hidden { muted.gamma_multiply(0.6) } else { ui.visuals().text_color() };
                 painter.circle(eye.center(), 4.5, if e.hidden { Color32::TRANSPARENT } else { ink }, egui::Stroke::new(1.2, ink));
-                let sw = egui::Rect::from_min_size(rect.min + vec2(26.0, 5.0), vec2(14.0, 14.0));
+                let sw = egui::Rect::from_min_size(rect.min + vec2(26.0 + x0, 5.0), vec2(14.0, 14.0));
                 // The thread it sews in, which may differ from the drawing's color.
                 let color = s.layers.get(e.layer).map_or(art.layers[e.layer].color, |l| crate::formats::jef_thread(l.thread, 0).color);
                 painter.rect_filled(sw, 3, rgb(color));
@@ -775,7 +1026,7 @@ impl HoopApp {
                 } else {
                     kind
                 };
-                painter.text(rect.left_center() + vec2(48.0, 0.0), egui::Align2::LEFT_CENTER, &e.name, egui::FontId::proportional(13.5), ink);
+                painter.text(rect.left_center() + vec2(48.0 + x0, 0.0), egui::Align2::LEFT_CENTER, &e.name, egui::FontId::proportional(13.5), ink);
                 // Pin: shown on pinned rows, and faintly on the hovered one to pin it.
                 // Without grouping every shape sews in list order anyway.
                 let mut right = rect.right() - 6.0;
@@ -809,35 +1060,53 @@ impl HoopApp {
                 if resp.drag_started() {
                     drag_from = Some(i);
                 }
-                rows.push((i, rect));
             }
         });
+        if let Some(g) = fold
+            && !self.folded.remove(&g)
+        {
+            self.folded.insert(g);
+        }
         if let Some(i) = drag_from {
             self.list_drag = Some(i);
         }
-        // While a row is dragged, show where it lands; drop on release.
-        if let Some(from) = self.list_drag
+        if let Some(g) = group_drag {
+            self.group_drag = Some(g);
+        }
+        if let Some(g) = group_clicked {
+            let members = s.members(g);
+            if mods.command {
+                let fresh: Vec<usize> = members.into_iter().filter(|i| !self.sel.contains(i)).collect();
+                self.sel.extend(fresh);
+            } else {
+                self.select_only(None);
+                self.sel = members;
+            }
+        }
+        // While a row or a group is dragged, show where it lands; drop on release.
+        let dragging = self.list_drag.map(ListDrag::One).or(self.group_drag.map(ListDrag::Group));
+        if let Some(what) = dragging
             && let Some(p) = ui.ctx().pointer_latest_pos()
         {
             let target = rows.iter().min_by(|a, b| (a.1.center().y - p.y).abs().total_cmp(&(b.1.center().y - p.y).abs())).copied();
-            if let Some((to, r)) = target {
+            let released = !ui.input(|i| i.pointer.any_down());
+            if let Some((row, r)) = target {
+                // A shape dropped just under a group's header goes into the group.
+                let into = matches!((what, row), (ListDrag::One(_), Row::Head(_))) && p.y >= r.center().y;
                 let y = if p.y < r.center().y { r.top() } else { r.bottom() };
-                ui.painter().hline(r.x_range(), y, egui::Stroke::new(2.0, accent));
-                if !ui.input(|i| i.pointer.any_down()) {
+                let x = if into { r.left() + 18.0 } else { r.left() };
+                ui.painter().hline(x..=r.right(), y, egui::Stroke::new(2.0, accent));
+                if released {
                     self.list_drag = None;
+                    self.group_drag = None;
                     // Rows are topmost first, so above a row means later in stitch order.
                     let above = p.y < r.center().y;
-                    let mut order: Vec<usize> = (0..s.shapes.len()).filter(|&k| k != from).collect();
-                    let at = order.iter().position(|&k| k == to).map_or(order.len(), |k| if above { k + 1 } else { k });
-                    if to != from {
-                        order.insert(at.min(order.len()), from);
-                        self.sel = vec![from];
-                        self.restack(order);
-                    }
+                    self.drop_rows(what, row, above);
                     return;
                 }
-            } else if !ui.input(|i| i.pointer.any_down()) {
+            } else if released {
                 self.list_drag = None;
+                self.group_drag = None;
             }
         }
         if let Some(i) = clicked {

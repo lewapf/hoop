@@ -1079,6 +1079,9 @@ msgstr ""
 msgid "{name} copy"
 msgstr ""
 
+msgid "Group {n}"
+msgstr ""
+
 msgid "Too many points to show. Press Simplify first."
 msgstr ""
 
@@ -1094,6 +1097,18 @@ msgstr ""
 msgid "Name shapes by thread, break apart compound fills, join touching lines, drop specks"
 msgstr ""
 
+msgid "Ungroup"
+msgstr ""
+
+msgid "Turn the group back into loose shapes · Ctrl+Shift+G"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Put the picked shapes in a group, like a folder of layers · Ctrl+G"
+msgstr ""
+
 msgid "Unpin all"
 msgstr ""
 
@@ -1103,6 +1118,15 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "{v0} shapes · {v1} picked"
+msgstr ""
+
+msgid "Show or hide the whole group"
+msgstr ""
+
+msgid "Fold or unfold the group"
+msgstr ""
+
+msgid "A group: click picks all of it, double-click renames it, drag moves it as one block"
 msgstr ""
 
 msgid "Show or hide this shape"
@@ -2530,6 +2554,12 @@ msgid "Ctrl+D · Del · Esc"
 msgstr ""
 
 msgid "Selected shape: duplicate / delete / deselect"
+msgstr ""
+
+msgid "Ctrl+G / Ctrl+Shift+G"
+msgstr ""
+
+msgid "Group / ungroup the selected shapes"
 msgstr ""
 
 msgid "Ctrl+Z / Ctrl+Shift+Z"

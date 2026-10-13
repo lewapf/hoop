@@ -179,6 +179,18 @@ clip art work best; photos do not.
     before everything above. Click the pin to let Hoop group it again;
     **Unpin all** releases every shape. The swatch shows the thread the
     shape sews in.
+- **Groups:** like folders of layers. Pick shapes and press **Group**
+  (`Ctrl+G`, also in Edit); **Ungroup** (`Ctrl+Shift+G`) undoes it.
+  - A group shows as a folder row: the arrow folds it, the eye shows or
+    hides all of it, a double-click renames it.
+  - Click the folder row, or any of its shapes on the hoop, to pick the
+    whole group and move or arrange it together. `Alt+click` on the hoop
+    picks a single shape inside it.
+  - Drag the folder row to move the group as one block. Drag a shape
+    into a group (onto its shapes, or just under its folder row) or out
+    of it.
+  - A group is sewn as one block: nothing from outside is sewn in the
+    middle of it. Inside, its shapes still share thread runs as usual.
 - **Optimize…** (top of Objects) tidies the list, with a preview of the
   result before you apply it. By default it names shapes by thread
   ("Black line 3"), merges shapes of one thread and look into one object
@@ -404,6 +416,7 @@ Lines left empty stay in English.
 | `M` | Mirror |
 | `C` | Center in the hoop |
 | `P` | Pin to the hoop |
+| `Ctrl+G` / `Ctrl+Shift+G` | Group / ungroup the picked shapes |
 | `B` / `U` / `W` / `K` | Artwork: pen / shapes (again for the next) / line / fill bucket |
 | `1`–`4` | Pick a hoop |
 | `F` / `D` | Whole hoop / zoom to the design |

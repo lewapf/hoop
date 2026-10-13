@@ -4004,3 +4004,33 @@ msgstr "Brak projektów. Hoop pokazuje JEF, DST, EXP, PES, PEC, VP3, SVG i obraz
 
 msgid "Stitch files: JEF, PES, VP3, EXP, DST, PEC"
 msgstr "Pliki haftu: JEF, PES, VP3, EXP, DST, PEC"
+
+msgid "Group {n}"
+msgstr "Grupa {n}"
+
+msgid "Ungroup"
+msgstr "Rozgrupuj"
+
+msgid "Turn the group back into loose shapes · Ctrl+Shift+G"
+msgstr "Zamień grupę z powrotem na osobne kształty · Ctrl+Shift+G"
+
+msgid "Group"
+msgstr "Grupuj"
+
+msgid "Put the picked shapes in a group, like a folder of layers · Ctrl+G"
+msgstr "Umieść wybrane kształty w grupie, jak w folderze warstw · Ctrl+G"
+
+msgid "Show or hide the whole group"
+msgstr "Pokaż lub ukryj całą grupę"
+
+msgid "Fold or unfold the group"
+msgstr "Zwiń lub rozwiń grupę"
+
+msgid "A group: click picks all of it, double-click renames it, drag moves it as one block"
+msgstr "Grupa: klik zaznacza całą, dwuklik zmienia nazwę, przeciągnięcie przesuwa ją w całości"
+
+msgid "Ctrl+G / Ctrl+Shift+G"
+msgstr "Ctrl+G / Ctrl+Shift+G"
+
+msgid "Group / ungroup the selected shapes"
+msgstr "Grupuj / rozgrupuj zaznaczone kształty"

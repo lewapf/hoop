@@ -175,6 +175,7 @@ fn mergeable(art: &Artwork, a: &ShapeEdit, b: &ShapeEdit) -> bool {
     };
     same_kind
         && a.layer == b.layer
+        && a.group == b.group
         && a.look == b.look
         && a.style == b.style
         && !a.hidden
