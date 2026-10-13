@@ -145,6 +145,27 @@ clip art work best; photos do not.
     - Click the first point to close a filled shape.
     - Press `Enter` or double-click to end an open line.
     - Press `Esc` to stop.
+- **Tool palette** (left edge of the hoop): the drawing tools, like in a
+  drawing program. `Esc` goes back to selecting.
+  - **Select** picks and moves shapes; **Edit points** changes the picked
+    shape point by point.
+  - **Pen** (`B`): as in Draw above.
+  - **Rectangle, Ellipse, Polygon, Star** (`U`, press again for the
+    next): drag to draw, hold `Shift` for even sides, or click for one
+    30 mm across. The strip beside the palette sets round corners, sides,
+    star points and inner size for the next one.
+  - **Line** (`W`): drag a line. Its ends snap to shape outlines, so it
+    can join two shapes; **Bend** in the strip bows it into a curve.
+  - **Fill bucket** (`K`): click a shape to give it the current thread.
+    `Alt+click` takes a shape's thread as the current one.
+  - **Stitch angle** and **Start point** of the picked shape, as on the
+    Shape page.
+  - The **swatch** at the bottom is the current thread: new shapes and
+    the bucket use it. Picking a thread there also gives it to the picked
+    shapes.
+  - Shapes drawn with these tools keep their numbers: pick one and the
+    Shape page's **Form** card changes its size, corners, sides, points
+    or bend. Editing its points by hand turns it into an ordinary shape.
 - **Objects:** every shape, topmost first.
   - Click a shape to pick it, `Ctrl+click` to add another, or drag over
     empty fabric to pick several.
@@ -383,6 +404,7 @@ Lines left empty stay in English.
 | `M` | Mirror |
 | `C` | Center in the hoop |
 | `P` | Pin to the hoop |
+| `B` / `U` / `W` / `K` | Artwork: pen / shapes (again for the next) / line / fill bucket |
 | `1`–`4` | Pick a hoop |
 | `F` / `D` | Whole hoop / zoom to the design |
 | `G` / `J` / `T` / `H` | Grid / jumps / thread texture / density |

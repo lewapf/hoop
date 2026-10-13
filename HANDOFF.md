@@ -370,6 +370,22 @@ beside the thumbnail PNG. Sorting by size or the fit filter asks the
 painter for every stitch file in the folder. VP3 files are written but
 can't be read yet, so they don't show in the Library.
 
+## Tool palette (2026-10-13)
+
+`app/tools.rs` now holds the Artwork drawing tools and the palette that
+floats on the canvas's top-left (egui Areas, so they take the pointer
+before the canvas): Select, Edit points, Pen, Rectangle, Ellipse,
+Polygon, Star, Line, Fill bucket, Stitch angle, Start point, and a
+current-thread swatch (`Tools::paint`, used by `paint_layer()` for every
+new shape and the bucket). `pick()`/`set_pick()` map the palette onto the
+older flags (`pen.on`, `edit_points`, `tools.tool`). Keys B, U, W, K in
+Artwork (`tool_keys`, run before `keys`). Shapes from the shape tools and
+Line carry `ShapeEdit::made` (`artwork::Made`: rect/ellipse/polygon/star
+sizes or a line's ends and bend); the Shape tab's Form card edits it and
+`remake()` redraws around the old middle. `bake()` (any hand point edit)
+clears it. Line ends snap within 10 px to any visible outline. All new
+shapes go through `push_shape`.
+
 ## Ideas queued with the owner
 
 Drag to reorder in the Shapes list, Bezier handles in point editing,

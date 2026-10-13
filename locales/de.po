@@ -3891,3 +3891,75 @@ msgid "{n} year ago"
 msgid_plural "{n} years ago"
 msgstr[0] "vor {n} Jahr"
 msgstr[1] "vor {n} Jahren"
+
+msgid "Form"
+msgstr "Form"
+
+msgid "Round corners"
+msgstr "Runde Ecken"
+
+msgid "Sides"
+msgstr "Seiten"
+
+msgid "Inner size"
+msgstr "Innengröße"
+
+msgid "Bend"
+msgstr "Biegung"
+
+msgid "Rectangle"
+msgstr "Rechteck"
+
+msgid "Ellipse"
+msgstr "Ellipse"
+
+msgid "Polygon"
+msgstr "Vieleck"
+
+msgid "Star points"
+msgstr "Zacken"
+
+msgid "Drag to draw, Shift for even sides, or click for one 30 mm across · Esc to stop"
+msgstr "Ziehen zum Zeichnen, Shift für gleiche Seiten, oder klicken für 30 mm · Esc beendet"
+
+msgid "Drag a line; its ends snap to shape outlines · Esc to stop"
+msgstr "Linie ziehen; ihre Enden rasten an Umrissen ein · Esc beendet"
+
+msgid "Click a shape to give it the current thread · Alt+click takes a shape's thread · Esc to stop"
+msgstr "Form anklicken, um ihr das aktuelle Garn zu geben · Alt+Klick übernimmt das Garn einer Form · Esc beendet"
+
+msgid "Select and move · Esc"
+msgstr "Auswählen und verschieben · Esc"
+
+msgid "Edit points of the picked shape"
+msgstr "Punkte der gewählten Form bearbeiten"
+
+msgid "Pen: click for corners, drag for curves · B"
+msgstr "Stift: Klick für Ecken, Ziehen für Kurven · B"
+
+msgid "Rectangle · U"
+msgstr "Rechteck · U"
+
+msgid "Ellipse · U again"
+msgstr "Ellipse · nochmals U"
+
+msgid "Line that snaps to shapes · W"
+msgstr "Linie, die an Formen einrastet · W"
+
+msgid "Fill bucket: give a shape the current thread · K"
+msgstr "Farbeimer: einer Form das aktuelle Garn geben · K"
+
+msgid "Stitch angle of the picked shape"
+msgstr "Stichwinkel der gewählten Form"
+
+msgid "Start point of the picked shape"
+msgstr "Startpunkt der gewählten Form"
+
+msgid "Current thread for new shapes and the bucket; picking one also gives it to the picked shapes"
+msgstr "Aktuelles Garn für neue Formen und den Eimer; die Wahl gibt es auch den gewählten Formen"
+
+msgid "0 is straight; the sign says which way it bows"
+msgstr "0 ist gerade; das Vorzeichen bestimmt die Richtung"
+
+msgid "Artwork tools: pen / shapes (again for the next) / line / fill bucket"
+msgstr "Grafikwerkzeuge: Stift / Formen (nochmals: nächste) / Linie / Farbeimer"

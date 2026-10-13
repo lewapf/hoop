@@ -127,6 +127,9 @@ pub struct ShapeEdit {
     /// everything below it and before everything above, even when grouping
     /// by thread would move it.
     pub pinned: bool,
+    /// Drawn with a shape tool: the numbers it was made from, so it can be
+    /// changed later. Cleared once its points are edited by hand.
+    pub made: Option<Made>,
 }
 
 impl ShapeEdit {
@@ -151,7 +154,25 @@ impl ShapeEdit {
             entry: None,
             style: None,
             pinned: false,
+            made: None,
         }
+    }
+
+    /// Redraws a shape made with a shape tool from its numbers, keeping its
+    /// middle where it was.
+    pub fn remake(&mut self) {
+        let (Some(m), Some(own)) = (&self.made, &mut self.own) else { return };
+        let at = middle(&own.lines);
+        let mut lines = made_lines(m);
+        let c = middle(&lines);
+        // A line keeps its own ends; the closed shapes keep their middle.
+        let shift = if matches!(m, Made::Line { .. }) { (0.0, 0.0) } else { (at.0 - c.0, at.1 - c.1) };
+        for (l, _) in &mut lines {
+            for p in l.iter_mut() {
+                *p = (p.0 + shift.0, p.1 + shift.1);
+            }
+        }
+        own.lines = lines;
     }
 
     /// A point in the shape's own coordinates, moved like the shape.
@@ -207,6 +228,8 @@ impl ShapeEdit {
 
     /// Bakes the move into the points so they can be edited one by one.
     pub fn bake(&mut self, art: &Artwork) {
+        // Its points are about to be edited by hand.
+        self.made = None;
         if self.own.is_some() && !self.moved() {
             return;
         }

@@ -3923,3 +3923,75 @@ msgid_plural "{n} years ago"
 msgstr[0] "{n} rok temu"
 msgstr[1] "{n} lata temu"
 msgstr[2] "{n} lat temu"
+
+msgid "Form"
+msgstr "Kształt"
+
+msgid "Round corners"
+msgstr "Zaokrąglone rogi"
+
+msgid "Sides"
+msgstr "Boki"
+
+msgid "Inner size"
+msgstr "Środek"
+
+msgid "Bend"
+msgstr "Wygięcie"
+
+msgid "Rectangle"
+msgstr "Prostokąt"
+
+msgid "Ellipse"
+msgstr "Elipsa"
+
+msgid "Polygon"
+msgstr "Wielokąt"
+
+msgid "Star points"
+msgstr "Ramiona"
+
+msgid "Drag to draw, Shift for even sides, or click for one 30 mm across · Esc to stop"
+msgstr "Przeciągnij, by narysować, Shift dla równych boków, albo kliknij, by dostać 30 mm · Esc kończy"
+
+msgid "Drag a line; its ends snap to shape outlines · Esc to stop"
+msgstr "Przeciągnij linię; jej końce przyciągają się do konturów · Esc kończy"
+
+msgid "Click a shape to give it the current thread · Alt+click takes a shape's thread · Esc to stop"
+msgstr "Kliknij kształt, by nadać mu bieżącą nić · Alt+klik pobiera nić kształtu · Esc kończy"
+
+msgid "Select and move · Esc"
+msgstr "Zaznacz i przesuń · Esc"
+
+msgid "Edit points of the picked shape"
+msgstr "Edytuj punkty wybranego kształtu"
+
+msgid "Pen: click for corners, drag for curves · B"
+msgstr "Pióro: klik daje róg, przeciągnięcie krzywą · B"
+
+msgid "Rectangle · U"
+msgstr "Prostokąt · U"
+
+msgid "Ellipse · U again"
+msgstr "Elipsa · ponownie U"
+
+msgid "Line that snaps to shapes · W"
+msgstr "Linia przyciągana do kształtów · W"
+
+msgid "Fill bucket: give a shape the current thread · K"
+msgstr "Wiadro: nadaj kształtowi bieżącą nić · K"
+
+msgid "Stitch angle of the picked shape"
+msgstr "Kąt ściegu wybranego kształtu"
+
+msgid "Start point of the picked shape"
+msgstr "Punkt startu wybranego kształtu"
+
+msgid "Current thread for new shapes and the bucket; picking one also gives it to the picked shapes"
+msgstr "Bieżąca nić dla nowych kształtów i wiadra; wybór nadaje ją też zaznaczonym kształtom"
+
+msgid "0 is straight; the sign says which way it bows"
+msgstr "0 to prosta; znak mówi, w którą stronę się wygina"
+
+msgid "Artwork tools: pen / shapes (again for the next) / line / fill bucket"
+msgstr "Narzędzia grafiki: pióro / kształty (ponownie: następny) / linia / wiadro"

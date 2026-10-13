@@ -26,6 +26,16 @@ const ICONS: &[(&str, &str)] = &[
     ("needle", include_str!("../../assets/icons/needle.svg")),
     ("star", include_str!("../../assets/icons/star.svg")),
     ("star-fill", include_str!("../../assets/icons/star-fill.svg")),
+    ("cursor", include_str!("../../assets/icons/cursor.svg")),
+    ("bezier", include_str!("../../assets/icons/bezier-curve.svg")),
+    ("pen", include_str!("../../assets/icons/pen-nib.svg")),
+    ("rect", include_str!("../../assets/icons/rectangle.svg")),
+    ("ellipse", include_str!("../../assets/icons/circle.svg")),
+    ("polygon", include_str!("../../assets/icons/hexagon.svg")),
+    ("line", include_str!("../../assets/icons/line-segment.svg")),
+    ("bucket", include_str!("../../assets/icons/paint-bucket.svg")),
+    ("angle", include_str!("../../assets/icons/angle.svg")),
+    ("start", include_str!("../../assets/icons/flag-pennant.svg")),
 ];
 
 /// Pixels the icons are drawn at; painted smaller, so they stay sharp on

@@ -5,7 +5,7 @@
 //! ends an open line.
 
 use super::*;
-use crate::artwork::{Kind, Shape, ShapeEdit};
+use crate::artwork::{Kind, Shape};
 
 /// A placed pen point and the handle pulling a curve out of it.
 type PenPoint = ((f32, f32), Option<(f32, f32)>);
@@ -23,7 +23,7 @@ pub(super) struct Pen {
     pub on: bool,
     /// Placed points in artwork user units, each with the handle that
     /// pulls the curve out of it (an offset; none for a corner).
-    points: Vec<PenPoint>,
+    pub points: Vec<PenPoint>,
     dragging: bool,
     /// Where the pointer is, for the line to the next point.
     hover: Option<(f32, f32)>,
@@ -72,7 +72,7 @@ pub(super) fn flatten(points: &[(Pt, Option<Pt>)], closed: bool) -> Vec<Pt> {
 impl HoopApp {
     /// The artwork frame in hoop coordinates, even before anything is
     /// stitched (a blank drawing has no design yet).
-    fn draw_map(&self) -> Option<shapes::ShapeMap> {
+    pub(super) fn draw_map(&self) -> Option<shapes::ShapeMap> {
         if self.mode != Mode::Artwork || self.playing {
             return None;
         }
@@ -170,31 +170,13 @@ impl HoopApp {
             return;
         }
         let line = flatten(&points, closed);
-        let layer = self.primary().and_then(|i| self.art.as_ref()?.shapes.get(i)).map_or(0, |e| e.layer);
+        let layer = self.paint_layer();
         let Some(scale) = self.draw_map().map(|m| m.scale) else { return };
-        let (Some(_), Some(s)) = (&self.artwork, &mut self.art) else { return };
+        let Some(s) = &self.art else { return };
         let kind = if closed { Kind::Fill { even_odd: false } } else { Kind::Stroke { width: 12.0 / scale } };
         let n = s.shapes.iter().filter(|e| e.source == usize::MAX).count() + 1;
-        s.shapes.push(ShapeEdit {
-            source: usize::MAX,
-            own: Some(Shape { kind, lines: vec![(line, closed)], layer }),
-            name: if closed { t!("Drawn shape {n}", n = n) } else { t!("Drawn line {n}", n = n) },
-            layer,
-            look: None,
-            hidden: false,
-            dx: 0.0,
-            dy: 0.0,
-            scale: 1.0,
-            rotate: 0.0,
-            angles: Vec::new(),
-            entry: None,
-            style: None,
-            pinned: false,
-        });
-        if let Some(l) = s.layers.get_mut(layer) {
-            l.enabled = true;
-        }
-        self.sel = vec![s.shapes.len() - 1];
+        let name = if closed { t!("Drawn shape {n}", n = n) } else { t!("Drawn line {n}", n = n) };
+        self.push_shape(&name, Shape { kind, lines: vec![(line, closed)], layer }, None);
     }
 
     pub(super) fn pen_overlay(&self, painter: &egui::Painter, frame: &Frame) {

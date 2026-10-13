@@ -1132,6 +1132,24 @@ msgstr ""
 msgid "Pin: sew exactly here in the list instead of grouping it by thread"
 msgstr ""
 
+msgid "Form"
+msgstr ""
+
+msgid "Round corners"
+msgstr ""
+
+msgid "Sides"
+msgstr ""
+
+msgid "Star points"
+msgstr ""
+
+msgid "Inner size"
+msgstr ""
+
+msgid "Bend"
+msgstr ""
+
 msgid "Add"
 msgstr ""
 
@@ -2068,6 +2086,21 @@ msgstr ""
 msgid "{code} {name} · click to mark as mine"
 msgstr ""
 
+msgid "Rectangle"
+msgstr ""
+
+msgid "Ellipse"
+msgstr ""
+
+msgid "Polygon"
+msgstr ""
+
+msgid "Star"
+msgstr ""
+
+msgid "Line"
+msgstr ""
+
 msgid "Start"
 msgstr ""
 
@@ -2075,6 +2108,48 @@ msgid "Drag across the shape in the direction the stitches should run · Esc to 
 msgstr ""
 
 msgid "Click where the needle should start this shape · Esc to stop"
+msgstr ""
+
+msgid "Drag to draw, Shift for even sides, or click for one 30 mm across · Esc to stop"
+msgstr ""
+
+msgid "Drag a line; its ends snap to shape outlines · Esc to stop"
+msgstr ""
+
+msgid "Click a shape to give it the current thread · Alt+click takes a shape's thread · Esc to stop"
+msgstr ""
+
+msgid "Select and move · Esc"
+msgstr ""
+
+msgid "Edit points of the picked shape"
+msgstr ""
+
+msgid "Pen: click for corners, drag for curves · B"
+msgstr ""
+
+msgid "Rectangle · U"
+msgstr ""
+
+msgid "Ellipse · U again"
+msgstr ""
+
+msgid "Line that snaps to shapes · W"
+msgstr ""
+
+msgid "Fill bucket: give a shape the current thread · K"
+msgstr ""
+
+msgid "Stitch angle of the picked shape"
+msgstr ""
+
+msgid "Start point of the picked shape"
+msgstr ""
+
+msgid "Current thread for new shapes and the bucket; picking one also gives it to the picked shapes"
+msgstr ""
+
+msgid "0 is straight; the sign says which way it bows"
 msgstr ""
 
 msgid "Stitching"
@@ -2442,6 +2517,9 @@ msgstr ""
 msgid "Artwork: select a shape to move, resize or recolor it"
 msgstr ""
 
+msgid "Artwork tools: pen / shapes (again for the next) / line / fill bucket"
+msgstr ""
+
 msgid "Arrows · [ / ]"
 msgstr ""
 
@@ -2517,16 +2595,10 @@ msgstr ""
 msgid "Heart"
 msgstr ""
 
-msgid "Star"
-msgstr ""
-
 msgid "Shield"
 msgstr ""
 
 msgid "Banner"
-msgstr ""
-
-msgid "Line"
 msgstr ""
 
 msgid "Shapes"

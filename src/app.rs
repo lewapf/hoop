@@ -86,6 +86,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     ("G / J / T", n!("Grid / jump stitches / thread texture")),
     (n!("H"), n!("Thread density view (from the Check list)")),
     (n!("Click shape"), n!("Artwork: select a shape to move, resize or recolor it")),
+    ("B / U / W / K", n!("Artwork tools: pen / shapes (again for the next) / line / fill bucket")),
     (n!("Arrows · [ / ]"), n!("Selected shape: move it / send it down or up")),
     (n!("Ctrl+D · Del · Esc"), n!("Selected shape: duplicate / delete / deselect")),
     (n!("Ctrl+Z / Ctrl+Shift+Z"), n!("Undo / redo any change")),
@@ -853,6 +854,7 @@ impl eframe::App for HoopApp {
             self.open(ctx, &p);
         }
         let canvas_rect = self.canvas_rect;
+        self.tool_keys(ctx);
         self.keys(ctx, canvas_rect);
 
         self.refresh_check();

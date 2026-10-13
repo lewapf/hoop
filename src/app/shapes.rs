@@ -273,37 +273,55 @@ impl HoopApp {
         Ok(())
     }
 
-    /// Adds new shapes on the picked shape's thread, made by `make` from the
+    /// The thread new shapes get: the one picked in the tool palette, else
+    /// the picked shape's.
+    pub(super) fn paint_layer(&self) -> usize {
+        let n = self.art.as_ref().map_or(0, |s| s.layers.len());
+        self.tools.paint.filter(|&l| l < n).or_else(|| self.primary().and_then(|i| self.art.as_ref()?.shapes.get(i)).map(|e| e.layer)).unwrap_or(0)
+    }
+
+    /// Adds new shapes on the current thread, made by `make` from the
     /// middle of the drawing, a size and the thread, and picks them.
     fn add_shapes(&mut self, name: &str, make: impl FnOnce(crate::lettering::Pt, f32, usize) -> Vec<artwork::Shape>) {
-        let layer = self.primary().and_then(|i| self.art.as_ref()?.shapes.get(i)).map_or(0, |e| e.layer);
-        let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
+        let layer = self.paint_layer();
+        let Some(art) = &self.artwork else { return };
         let size = (art.bounds.2 - art.bounds.0).min(art.bounds.3 - art.bounds.1) * 0.5;
         let mid = ((art.bounds.0 + art.bounds.2) / 2.0, (art.bounds.1 + art.bounds.3) / 2.0);
-        let first = s.shapes.len();
+        let first = self.art.as_ref().map_or(0, |s| s.shapes.len());
         for own in make(mid, size, layer) {
-            let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
-            s.shapes.push(ShapeEdit {
-                source: usize::MAX,
-                own: Some(own),
-                name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
-                layer,
-                look: None,
-                hidden: false,
-                dx: 0.0,
-                dy: 0.0,
-                scale: 1.0,
-                rotate: 0.0,
-                angles: Vec::new(),
-                entry: None,
-                style: None,
-                pinned: false,
-            });
+            self.push_shape(name, own, None);
         }
+        let n = self.art.as_ref().map_or(0, |s| s.shapes.len());
+        self.sel = (first..n).collect();
+    }
+
+    /// Adds one shape of its own on top, numbered after others of the same
+    /// name, and picks it.
+    pub(super) fn push_shape(&mut self, name: &str, own: artwork::Shape, made: Option<artwork::Made>) {
+        let Some(s) = &mut self.art else { return };
+        let layer = own.layer;
+        let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
+        s.shapes.push(ShapeEdit {
+            source: usize::MAX,
+            own: Some(own),
+            name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
+            layer,
+            look: None,
+            hidden: false,
+            dx: 0.0,
+            dy: 0.0,
+            scale: 1.0,
+            rotate: 0.0,
+            angles: Vec::new(),
+            entry: None,
+            style: None,
+            pinned: false,
+            made,
+        });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
         }
-        self.sel = (first..s.shapes.len()).collect();
+        self.sel = vec![s.shapes.len() - 1];
         self.edit_points = false;
     }
 
@@ -839,6 +857,72 @@ impl HoopApp {
         }
     }
 
+    /// The numbers of a shape drawn with a shape tool, to change it later.
+    fn form_card(&mut self, ui: &mut egui::Ui) {
+        let accent = self.accent();
+        let Some(i) = (self.sel.len() == 1).then(|| self.sel[0]) else { return };
+        let Some(map) = self.shape_map().or_else(|| self.draw_map()) else { return };
+        let Some(e) = self.art.as_ref().and_then(|s| s.shapes.get(i)) else { return };
+        let Some(made) = e.made else { return };
+        // Sizes show in mm, as the shape is scaled on the hoop.
+        let mm = map.scale / 10.0 * e.scale;
+        let mut m = made;
+        card(ui, t!("Form"), accent, |ui| {
+            let size = |ui: &mut egui::Ui, w: &mut f32, h: &mut f32| {
+                ui.horizontal(|ui| {
+                    let (mut a, mut b) = (*w * mm, *h * mm);
+                    ui.label(t!("Width"));
+                    let c1 = ui.add(egui::DragValue::new(&mut a).range(1.0..=500.0).speed(0.5).suffix(" mm").max_decimals(1)).changed();
+                    ui.label(t!("Height"));
+                    let c2 = ui.add(egui::DragValue::new(&mut b).range(1.0..=500.0).speed(0.5).suffix(" mm").max_decimals(1)).changed();
+                    if c1 || c2 {
+                        (*w, *h) = (a / mm, b / mm);
+                    }
+                });
+            };
+            match &mut m {
+                artwork::Made::Rect { w, h, round } => {
+                    size(ui, w, h);
+                    let mut pct = *round * 200.0;
+                    if slider_row(ui, t!("Round corners"), &mut pct, 0.0..=100.0, " %", 0).changed() {
+                        *round = pct / 200.0;
+                    }
+                }
+                artwork::Made::Ellipse { w, h } => size(ui, w, h),
+                artwork::Made::Polygon { w, h, sides } => {
+                    size(ui, w, h);
+                    ui.horizontal(|ui| {
+                        ui.label(t!("Sides"));
+                        ui.add(egui::DragValue::new(sides).range(3..=24));
+                    });
+                }
+                artwork::Made::Star { w, h, points, inner } => {
+                    size(ui, w, h);
+                    ui.horizontal(|ui| {
+                        ui.label(t!("Star points"));
+                        ui.add(egui::DragValue::new(points).range(3..=24));
+                    });
+                    let mut pct = *inner * 100.0;
+                    if slider_row(ui, t!("Inner size"), &mut pct, 10.0..=90.0, " %", 0).changed() {
+                        *inner = pct / 100.0;
+                    }
+                }
+                artwork::Made::Line { bend, .. } => {
+                    let mut pct = *bend * 100.0;
+                    if slider_row(ui, t!("Bend"), &mut pct, -50.0..=50.0, " %", 0).changed() {
+                        *bend = pct / 100.0;
+                    }
+                }
+            }
+        });
+        if m != made
+            && let Some(e) = self.art.as_mut().and_then(|s| s.shapes.get_mut(i))
+        {
+            e.made = Some(m);
+            e.remake();
+        }
+    }
+
     /// The Shape tab: what can be done to the picked shapes.
     pub(super) fn shape_tab(&mut self, ui: &mut egui::Ui) {
         let muted = self.muted();
@@ -867,6 +951,7 @@ impl HoopApp {
             );
             return;
         }
+        self.form_card(ui);
         self.tool_card(ui);
         let mut op = None;
         card_folded(ui, t!("Arrange"), accent, |ui| {

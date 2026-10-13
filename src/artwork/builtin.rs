@@ -79,6 +79,97 @@ pub fn built_in(name: &str, at: Pt, size: f32, layer: usize) -> Shape {
     Shape { kind, lines: vec![(pts.into_iter().map(|p| (p.0 + at.0, p.1 + at.1)).collect(), closed)], layer }
 }
 
+/// A shape drawn with a shape tool, kept as the numbers it is made of.
+/// Sizes are user units across; the closed shapes are centered on 0, 0.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Made {
+    Rect {
+        w: f32,
+        h: f32,
+        round: f32,
+    },
+    Ellipse {
+        w: f32,
+        h: f32,
+    },
+    Polygon {
+        w: f32,
+        h: f32,
+        sides: u32,
+    },
+    Star {
+        w: f32,
+        h: f32,
+        points: u32,
+        inner: f32,
+    },
+    /// A line between two points, bowed sideways by `bend` times its
+    /// length (negative bends the other way).
+    Line {
+        a: Pt,
+        b: Pt,
+        bend: f32,
+    },
+}
+
+impl Made {
+    pub fn closed(&self) -> bool {
+        !matches!(self, Made::Line { .. })
+    }
+}
+
+/// The outline of a made shape.
+pub fn made_lines(m: &Made) -> Vec<(Contour, bool)> {
+    use std::f32::consts::{FRAC_PI_2, PI, TAU};
+    let pts: Vec<Pt> = match *m {
+        Made::Rect { w, h, round } => {
+            let (hw, hh) = (w / 2.0, h / 2.0);
+            let r = round.clamp(0.0, 0.5) * w.min(h);
+            if r < 0.01 {
+                vec![(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)]
+            } else {
+                let mut v = Vec::new();
+                for (cx, cy, a0) in [(hw - r, hh - r, 0.0), (-hw + r, hh - r, FRAC_PI_2), (-hw + r, -hh + r, PI), (hw - r, -hh + r, 1.5 * PI)] {
+                    for k in 0..=8 {
+                        let a = a0 + k as f32 * FRAC_PI_2 / 8.0;
+                        v.push((cx + r * a.cos(), cy + r * a.sin()));
+                    }
+                }
+                v
+            }
+        }
+        Made::Ellipse { w, h } => (0..96).map(|k| (k as f32 * TAU / 96.0).sin_cos()).map(|(s, c)| (c * w / 2.0, s * h / 2.0)).collect(),
+        Made::Polygon { w, h, sides } => {
+            let n = sides.max(3);
+            (0..n).map(|k| (-FRAC_PI_2 + k as f32 * TAU / n as f32).sin_cos()).map(|(s, c)| (c * w / 2.0, s * h / 2.0)).collect()
+        }
+        Made::Star { w, h, points, inner } => {
+            let n = points.max(3) * 2;
+            (0..n)
+                .map(|k| {
+                    let r = if k % 2 == 0 { 1.0 } else { inner.clamp(0.05, 0.95) };
+                    let (s, c) = (-FRAC_PI_2 + k as f32 * TAU / n as f32).sin_cos();
+                    (c * r * w / 2.0, s * r * h / 2.0)
+                })
+                .collect()
+        }
+        Made::Line { a, b, bend } => {
+            let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+            // A quadratic curve through the bowed middle.
+            let ctrl = ((a.0 + b.0) / 2.0 - dy * bend * 2.0, (a.1 + b.1) / 2.0 + dx * bend * 2.0);
+            let steps = if bend == 0.0 { 1 } else { 24 };
+            (0..=steps)
+                .map(|k| {
+                    let t = k as f32 / steps as f32;
+                    let u = 1.0 - t;
+                    (u * u * a.0 + 2.0 * u * t * ctrl.0 + t * t * b.0, u * u * a.1 + 2.0 * u * t * ctrl.1 + t * t * b.1)
+                })
+                .collect()
+        }
+    };
+    vec![(pts, m.closed())]
+}
+
 /// An empty artwork to build from the built-in shapes: a 100 mm frame and a
 /// few starting colors.
 pub fn blank() -> Artwork {
@@ -89,5 +180,55 @@ pub fn blank() -> Artwork {
         layers: colors.iter().map(|&color| Layer { color, background: false, shapes: 0 }).collect(),
         bounds: (0.0, 0.0, 377.95, 377.95),
         skipped_images: 0,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn size(m: &Made) -> (f32, f32) {
+        let b = extent(&made_lines(m));
+        (b.2 - b.0, b.3 - b.1)
+    }
+
+    #[test]
+    fn made_shapes_fill_their_size() {
+        for m in [Made::Rect { w: 40.0, h: 20.0, round: 0.0 }, Made::Rect { w: 40.0, h: 20.0, round: 0.25 }, Made::Ellipse { w: 40.0, h: 20.0 }] {
+            let (w, h) = size(&m);
+            assert!((w - 40.0).abs() < 0.1 && (h - 20.0).abs() < 0.1, "{m:?}: {w} × {h}");
+        }
+        assert_eq!(made_lines(&Made::Polygon { w: 10.0, h: 10.0, sides: 6 })[0].0.len(), 6);
+        assert_eq!(made_lines(&Made::Star { w: 10.0, h: 10.0, points: 5, inner: 0.4 })[0].0.len(), 10);
+    }
+
+    #[test]
+    fn lines_bend_sideways_and_keep_their_ends() {
+        let straight = made_lines(&Made::Line { a: (0.0, 0.0), b: (100.0, 0.0), bend: 0.0 });
+        assert_eq!(straight[0].0, vec![(0.0, 0.0), (100.0, 0.0)]);
+        assert!(!straight[0].1);
+        let bent = &made_lines(&Made::Line { a: (0.0, 0.0), b: (100.0, 0.0), bend: 0.25 })[0].0;
+        assert_eq!((bent[0], *bent.last().unwrap()), ((0.0, 0.0), (100.0, 0.0)));
+        // Bowed a quarter of its length at the middle.
+        assert!((bent[12].1 - 25.0).abs() < 0.5, "{:?}", bent[12]);
+    }
+
+    #[test]
+    fn remake_keeps_the_middle_and_hand_edits_drop_the_numbers() {
+        let art = blank();
+        let m = Made::Rect { w: 40.0, h: 20.0, round: 0.0 };
+        let mut lines = made_lines(&m);
+        for p in lines[0].0.iter_mut() {
+            *p = (p.0 + 100.0, p.1 + 50.0);
+        }
+        let mut e = ShapeEdit::of(&Artwork { shapes: vec![Shape { kind: Kind::Fill { even_odd: false }, lines: lines.clone(), layer: 0 }], ..art.clone() }, 0);
+        e.own = Some(Shape { kind: Kind::Fill { even_odd: false }, lines, layer: 0 });
+        e.made = Some(Made::Ellipse { w: 60.0, h: 30.0 });
+        e.remake();
+        let b = extent(&e.own.as_ref().unwrap().lines);
+        assert!(((b.0 + b.2) / 2.0 - 100.0).abs() < 0.1 && ((b.1 + b.3) / 2.0 - 50.0).abs() < 0.1);
+        assert!((b.2 - b.0 - 60.0).abs() < 0.1);
+        e.bake(&art);
+        assert_eq!(e.made, None);
     }
 }

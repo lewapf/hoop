@@ -46,6 +46,7 @@ fn with_lines(e: &ShapeEdit, kind: Kind, lines: Vec<Line>) -> ShapeEdit {
         // Angle lines and the entry point belong to the old outline.
         angles: Vec::new(),
         entry: None,
+        made: None,
         ..e.clone()
     }
 }

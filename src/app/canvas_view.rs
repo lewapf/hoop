@@ -361,6 +361,7 @@ impl HoopApp {
         self.hoopings_overlay(&painter, &frame);
         self.stitch_edit_overlay(&painter, &frame);
         self.pen_overlay(&painter, &frame);
+        self.tool_palette(ui.ctx(), rect);
         self.demo_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
