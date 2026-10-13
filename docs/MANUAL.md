@@ -332,6 +332,24 @@ Pick your machine in the tool bar's machine and hoop picker, in
 - **Where Send to USB writes:** `EMB/Embf` for Janome, the top of the
   stick for the rest.
 
+## Projects
+
+A **project** (`.hoop`) keeps Artwork or Lettering work so you can carry
+on later: the drawing with every edit (shapes drawn, moved or restyled,
+groups, attached lines, thread choices), or the text and its settings,
+plus the hoop, the machine and any parts pinned to the hoop.
+
+- **File → Save project** (`Ctrl+Alt+S`) saves it; **Save project as…**
+  saves a copy under a new name. Open a project like any file, from
+  Open, Open recent, the Library (artwork projects show their stitches)
+  or by dropping it on the window.
+- The title bar shows the project's name, with a dot while there are
+  unsaved changes.
+- Closing Hoop with unsaved work asks first: save the project, close
+  without saving, or cancel.
+- A project is for carrying on; the machine still needs its stitch file
+  (**Save**, `Ctrl+S`, or Send to USB).
+
 ## Saving and sending
 
 - **Save** (`Ctrl+S`): the file in your machine's format.

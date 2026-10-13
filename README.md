@@ -107,6 +107,8 @@ Janome Artistic Digitizer.
 - **Several hoopings.** File → Split into hoopings cuts a design that is
   too big for the hoop into numbered parts. Each part starts with
   registration crosses for lining up the fabric.
+- **Projects.** Save Artwork and Lettering work as a `.hoop` project and
+  carry on later with every edit kept; Hoop asks before closing unsaved work.
 - **Other machines.** File → Export as writes DST, EXP, PES, PEC and VP3.
 - **Worksheet.** Ctrl+P saves a PDF with the thread sequence, the sewing
   time and an actual-size template for placing the design.

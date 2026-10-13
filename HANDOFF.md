@@ -434,6 +434,22 @@ outlines came from Noto Sans Symbols Bold (one-off ttf-parser export,
 not kept). Credits are appended to assets/shapes/LICENSE. A test opens
 each of them as artwork.
 
+## Projects (2026-10-13)
+
+`src/project.rs` is the .hoop format: JSON via serde (derives added to
+the artwork, lettering, hoop and pattern types), `VERSION` 1, optional
+parts `#[serde(default)]`. It stores the parsed `Artwork` itself (not the
+SVG), the `ArtSettings`, or the lettering `Settings` with the font by
+name, plus machine key, hoop, placement and pinned parts.
+`app/project.rs`: save (in place, or a dialog for new/"as"), open
+(switches machine if needed), `clean` snapshot for unsaved changes (set
+by `reset_history` and on save; the font scan updates it if nothing was
+touched), the title (all title setting now goes through
+`project_title`; other code sets `title_base`), and `guard_close`, which
+cancels a close with unsaved work and asks. `project_mode` keeps an
+artwork project from being overwritten by lettering work. The Library
+shows .hoop files, with stitch thumbnails for artwork projects.
+
 ## Ideas queued with the owner
 
 Bezier handles in point editing,

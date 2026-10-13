@@ -14,7 +14,7 @@ pub use fonts::*;
 use layout::*;
 use patch::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PatchShape {
     None,
     Rect,
@@ -26,7 +26,7 @@ pub enum PatchShape {
 }
 
 /// The line the text sits on, or the envelope it is bent into.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TextShape {
     Straight,
     /// Along an arc of `arc_deg`.
@@ -88,14 +88,14 @@ impl TextShape {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Align {
     Left,
     Center,
     Right,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EdgeKind {
     None,
     Running,
@@ -144,7 +144,7 @@ pub fn edge_contour(st: &mut Stitcher, c: &Contour, s: &Settings) {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct Settings {
     pub text: String,
     pub font: usize,

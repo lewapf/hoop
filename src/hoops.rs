@@ -126,7 +126,7 @@ pub fn get(i: usize) -> Hoop {
 
 /// Where the design sits: rotation in quarter turns, mirroring, and the offset
 /// of its center from the hoop center in 0.1 mm.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, Default, PartialEq)]
 pub struct Placement {
     pub quarter_turns: u8,
     pub mirror: bool,

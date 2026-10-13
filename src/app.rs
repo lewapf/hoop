@@ -24,6 +24,7 @@ mod manual;
 mod optimizewin;
 mod output;
 mod pages;
+mod project;
 mod settings;
 mod shapes;
 mod shell;
@@ -64,6 +65,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("O"), n!("Open a file")),
     ("V / L / A", n!("Viewer / lettering / artwork")),
     (n!("Ctrl+S"), n!("Save in the machine's format")),
+    (n!("Ctrl+Alt+S"), n!("Save the project, to carry on later")),
     (n!("Ctrl+U"), n!("Send to the USB stick for the machine")),
     (n!("Ctrl+T"), n!("Test stitch-out: sew a small part, or the calibration sheet")),
     (n!("Ctrl+Shift+S"), n!("Save a picture of the preview")),
@@ -265,6 +267,16 @@ pub struct HoopApp {
     guides: Vec<(bool, f32)>,
     /// A row of the Objects list being dragged to restack it.
     list_drag: Option<usize>,
+    /// The project file this work was opened from or saved to, and the
+    /// workspace it belongs to.
+    project_path: Option<PathBuf>,
+    project_mode: Mode,
+    /// The state when last opened or saved, to tell unsaved changes.
+    clean: Snapshot,
+    closing: project::Closing,
+    /// The window title last set, and the one the open design asks for.
+    title: String,
+    title_base: String,
     /// Shapes copied with Ctrl+C or the right-click menu, and their groups.
     shape_clip: Vec<artwork::ShapeEdit>,
     shape_clip_groups: Vec<artwork::Group>,
@@ -378,6 +390,12 @@ impl HoopApp {
             sel: Vec::new(),
             guides: Vec::new(),
             list_drag: None,
+            project_path: None,
+            project_mode: Mode::Viewer,
+            clean: Snapshot { setup: Setup { hoop: 0, at: Placement::default() }, letter: Settings::default(), art: None, stitches: None },
+            closing: Default::default(),
+            title: String::new(),
+            title_base: "Hoop".into(),
             shape_clip: Vec::new(),
             shape_clip_groups: Vec::new(),
             group_drag: None,
@@ -448,7 +466,7 @@ impl HoopApp {
         app.apply_theme(&cc.egui_ctx);
         let demo = file.as_deref() == Some(std::path::Path::new("--demo"));
         if let Some(path) = file.filter(|_| !demo) {
-            app.open(&cc.egui_ctx, &path);
+            app.open(&path);
         }
         if demo {
             app.start_demo();
@@ -494,7 +512,7 @@ impl HoopApp {
             Ok("wizard") => {
                 self.open_wizard();
                 if let Ok(m) = std::env::var("HOOP_WIZARD_MAKE") {
-                    self.wizard_debug(ctx, &m);
+                    self.wizard_debug(&m);
                 }
             }
             Ok("split") => {
@@ -551,9 +569,14 @@ impl HoopApp {
         rgb(p.foreground).lerp_to_gamma(rgb(p.background), 0.4)
     }
 
-    fn open(&mut self, ctx: &egui::Context, path: &Path) {
+    fn open(&mut self, path: &Path) {
         let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
         let ext = path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+        if ext == "hoop" {
+            self.open_project(path);
+            return;
+        }
+        self.project_path = None;
         if matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif") {
             self.set_mode(Mode::Artwork);
             match trace::load(path) {
@@ -598,7 +621,7 @@ impl HoopApp {
                 self.error = None;
                 self.fit_pending = true;
                 self.prefs.add_recent(path);
-                ctx.send_viewport_cmd(egui::ViewportCommand::Title(t!("{name} — Hoop", name = name)));
+                self.title_base = t!("{name} — Hoop", name = name);
             }
             Err(e) => self.error = Some(e),
         }
@@ -623,6 +646,7 @@ impl HoopApp {
                         "pes",
                         "pec",
                         "vp3",
+                        "hoop",
                         "svg",
                         "svgz",
                         "png",
@@ -779,7 +803,7 @@ impl eframe::App for HoopApp {
                 Ok(file) => {
                     self.picker = None;
                     if let Some(path) = file {
-                        self.open(ctx, &path);
+                        self.open(&path);
                     }
                 }
                 Err(std::sync::mpsc::TryRecvError::Empty) => {}
@@ -803,7 +827,7 @@ impl eframe::App for HoopApp {
         self.clipboard_events(ctx);
         let dropped = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf()));
         if let Some(path) = dropped {
-            self.open(ctx, &path);
+            self.open(&path);
         }
 
         if self.playing {
@@ -824,7 +848,13 @@ impl eframe::App for HoopApp {
         {
             self.fonts.extend(found);
             self.font_scan = None;
+            let untouched = self.snapshot() == self.clean;
             self.resolve_font();
+            // Finding the remembered font isn't a change of the user's.
+            if untouched {
+                self.clean = self.snapshot();
+                self.committed = self.clean.clone();
+            }
         }
         if let Capture::Waiting(_, since) = self.capture {
             if since.elapsed().as_secs() >= 3 {
@@ -861,7 +891,7 @@ impl eframe::App for HoopApp {
             }
         }
         if self.mode == Mode::Lettering && self.letter_built.as_ref() != Some(&self.letter) {
-            self.regenerate(ctx);
+            self.regenerate();
         }
         // Big artwork can take a moment to stitch, so while a slider is being
         // dragged it waits for the release.
@@ -875,14 +905,16 @@ impl eframe::App for HoopApp {
             s.follow_lines(art);
         }
         if self.mode == Mode::Artwork && self.art.is_some() && self.art_built != self.art && !(self.art_slow && dragging) {
-            self.regenerate_art(ctx);
+            self.regenerate_art();
         }
         if let Some(p) = self.open_later.take() {
-            self.open(ctx, &p);
+            self.open(&p);
         }
         let canvas_rect = self.canvas_rect;
         self.tool_keys(ctx);
         self.keys(ctx, canvas_rect);
+        self.project_title(ctx);
+        self.guard_close(ctx);
 
         self.refresh_check();
         self.refresh_test_piece();

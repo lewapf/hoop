@@ -1180,6 +1180,36 @@ msgstr ""
 msgid "Pick a brand and mark the threads you have"
 msgstr ""
 
+msgid "Projects keep Artwork and Lettering work. A stitch file is saved with Save."
+msgstr ""
+
+msgid "Save project"
+msgstr ""
+
+msgid "Hoop project"
+msgstr ""
+
+msgid "Couldn't open {name}: {e}."
+msgstr ""
+
+msgid "The project is for {v0}; Hoop switched to it."
+msgstr ""
+
+msgid "● {name} — Hoop"
+msgstr ""
+
+msgid "Save your work first?"
+msgstr ""
+
+msgid "{v0} has changes that aren't saved."
+msgstr ""
+
+msgid "This work isn't saved as a project yet. Without one, the shapes and settings are lost when Hoop closes."
+msgstr ""
+
+msgid "Don't save"
+msgstr ""
+
 msgid "Settings"
 msgstr ""
 
@@ -1532,6 +1562,9 @@ msgid "New from shapes"
 msgstr ""
 
 msgid "Paste SVG code…"
+msgstr ""
+
+msgid "Save project as…"
 msgstr ""
 
 msgid "Save as {format}…"
@@ -2518,6 +2551,12 @@ msgstr ""
 msgid "Save in the machine's format"
 msgstr ""
 
+msgid "Ctrl+Alt+S"
+msgstr ""
+
+msgid "Save the project, to carry on later"
+msgstr ""
+
 msgid "Ctrl+U"
 msgstr ""
 
@@ -2663,9 +2702,6 @@ msgid "Show these shortcuts"
 msgstr ""
 
 msgid "Q"
-msgstr ""
-
-msgid "Couldn't open {name}: {e}."
 msgstr ""
 
 msgid "Open an embroidery design"
@@ -2966,6 +3002,12 @@ msgid "Grow"
 msgstr ""
 
 msgid "Hello"
+msgstr ""
+
+msgid "This isn't a Hoop project Hoop can read: {e}."
+msgstr ""
+
+msgid "This project comes from a newer Hoop. Update Hoop to open it."
 msgstr ""
 
 msgid "Registration marks (remove after)"

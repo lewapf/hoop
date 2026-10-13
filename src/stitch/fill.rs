@@ -5,7 +5,7 @@
 use super::*;
 use crate::lettering::Settings;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FillKind {
     None,
     Tatami,
@@ -66,7 +66,7 @@ pub fn covers(kind: FillKind, rows_mm: f32) -> bool {
 }
 
 /// What is sewn under a fill to hold the fabric and lift the top stitches.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Underlay {
     /// Edge run, plus a sparse tatami across wide shapes.
     Auto,

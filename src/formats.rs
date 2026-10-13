@@ -4,7 +4,7 @@
 
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Cmd {
     Stitch,
     Jump,
@@ -12,14 +12,14 @@ pub enum Cmd {
     ColorChange,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct Thread {
     pub color: [u8; 3],
     pub name: String,
     pub code: String,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Format {
     Jef,
     Dst,
@@ -59,7 +59,7 @@ impl Format {
 /// color block.
 pub type Stitches = (Vec<(f32, f32)>, Vec<Cmd>, Vec<Thread>);
 
-#[derive(Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct Pattern {
     pub format: Format,
     pub points: Vec<(f32, f32)>,

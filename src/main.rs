@@ -10,6 +10,7 @@ mod hoops;
 mod lettering;
 mod library;
 mod prefs;
+mod project;
 mod split;
 mod stitch;
 mod symbols;

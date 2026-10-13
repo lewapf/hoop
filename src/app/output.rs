@@ -222,6 +222,9 @@ impl HoopApp {
             Ok(()) => {
                 self.toast(t!("Saved {path}", path = path.display()));
                 self.error = None;
+                if ext == "hoop" {
+                    self.project_saved(&path);
+                }
             }
             Err(e) => {
                 let _ = std::fs::remove_file(&tmp);

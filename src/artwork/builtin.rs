@@ -81,7 +81,7 @@ pub fn built_in(name: &str, at: Pt, size: f32, layer: usize) -> Shape {
 
 /// A shape drawn with a shape tool, kept as the numbers it is made of.
 /// Sizes are user units across; the closed shapes are centered on 0, 0.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq)]
 pub enum Made {
     Rect {
         w: f32,
@@ -117,7 +117,7 @@ pub enum Made {
 
 /// Where a line end is attached: a shape (by `ShapeEdit::id`) and the point
 /// in that shape's own coordinates, before its move.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq)]
 pub struct Anchor {
     pub shape: u32,
     pub at: Pt,

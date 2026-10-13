@@ -15,12 +15,13 @@ use crate::formats::{self, Cmd};
 /// Thumbnail edge in pixels.
 pub const SIZE: u32 = 160;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Folder,
     Stitches,
     Svg,
     Picture,
+    Project,
 }
 
 #[derive(Clone, Debug)]
@@ -50,6 +51,7 @@ pub fn kind_of(path: &Path) -> Option<Kind> {
         "jef" | "dst" | "exp" | "pes" | "pec" | "vp3" => Some(Kind::Stitches),
         "svg" | "svgz" => Some(Kind::Svg),
         "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif" => Some(Kind::Picture),
+        "hoop" => Some(Kind::Project),
         _ => None,
     }
 }
@@ -165,6 +167,7 @@ pub fn thumbnail(path: &Path) -> Option<Thumb> {
         Kind::Stitches => stitch_thumb(path)?,
         Kind::Svg => svg_thumb(path)?,
         Kind::Picture => picture_thumb(path)?,
+        Kind::Project => project_thumb(path)?,
         Kind::Folder => return None,
     };
     if let Some(c) = &cached {
@@ -250,6 +253,14 @@ fn svg_thumb(path: &Path) -> Option<Thumb> {
     let t = tiny_skia::Transform::from_row(s, 0.0, 0.0, s, (SIZE as f32 - size.width() * s) / 2.0, (SIZE as f32 - size.height() * s) / 2.0);
     resvg::render(&tree, t, &mut pm.as_mut());
     Some(pixmap_rgba(&pm))
+}
+
+/// An artwork project's stitches; lettering projects need the fonts, so
+/// they go without a picture.
+fn project_thumb(path: &Path) -> Option<Thumb> {
+    let p = crate::project::Project::from_bytes(&std::fs::read(path).ok()?).ok()?;
+    let pattern = crate::artwork::generate(p.artwork.as_ref()?, p.art.as_ref()?).ok()?;
+    Some(draw_stitches(&pattern.points, &pattern.cmds, &pattern.blocks().iter().map(|b| b.thread.color).collect::<Vec<_>>()))
 }
 
 fn picture_thumb(path: &Path) -> Option<Thumb> {

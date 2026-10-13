@@ -7,6 +7,8 @@ impl HoopApp {
     /// Shows freshly read artwork in the Artwork tab, or the reason it failed.
     pub(super) fn use_artwork(&mut self, result: Result<artwork::Artwork, String>) -> bool {
         self.set_mode(Mode::Artwork);
+        // New artwork isn't the project that was open; opening a project sets it again.
+        self.project_path = None;
         match result {
             Ok(art) => {
                 let mut s = ArtSettings::for_artwork(&art);
@@ -55,7 +57,7 @@ impl HoopApp {
         self.use_artwork(artwork::parse(t!("Pasted SVG"), text.trim().as_bytes()))
     }
 
-    pub(super) fn regenerate_art(&mut self, ctx: &egui::Context) {
+    pub(super) fn regenerate_art(&mut self) {
         let (Some(art), Some(s)) = (&self.artwork, &self.art) else { return };
         self.art_built = Some(s.clone());
         let started = std::time::Instant::now();
@@ -83,7 +85,7 @@ impl HoopApp {
                 self.shown = self.total();
                 self.playing = false;
                 self.error = None;
-                ctx.send_viewport_cmd(egui::ViewportCommand::Title(t!("{name} — Hoop", name = art.name)));
+                self.title_base = t!("{name} — Hoop", name = art.name);
             }
             Err(e) => {
                 self.design = None;

@@ -98,7 +98,7 @@ impl HoopApp {
     }
 
     /// Builds the project from the answers.
-    fn wizard_create(&mut self, ctx: &egui::Context) {
+    fn wizard_create(&mut self) {
         let w = &self.wizard;
         let (make, fabric, size, hoop, thread, accent) = (w.make, w.fabric, w.size_mm, w.hoop, w.thread, w.accent);
         let text = w.text.clone();
@@ -147,9 +147,9 @@ impl HoopApp {
             self.letter = s;
             self.setup.hoop = hoop;
             self.setup.at = Placement::default();
-            self.regenerate(ctx);
+            self.regenerate();
         } else if let Some(path) = file {
-            self.open(ctx, &path);
+            self.open(&path);
             if let Some(s) = &mut self.art {
                 apply_fabric(&mut s.style);
                 s.width_mm = size;
@@ -161,14 +161,14 @@ impl HoopApp {
     }
 
     /// For screenshots: picks a kind by name and creates it straight away.
-    pub(super) fn wizard_debug(&mut self, ctx: &egui::Context, make: &str) {
+    pub(super) fn wizard_debug(&mut self, make: &str) {
         if let Some(m) = Make::ALL.into_iter().find(|m| format!("{m:?}") == make) {
             self.wizard.make = m;
             self.wizard_defaults();
             if m == Make::Shape {
                 self.wizard.file = library::shapes_dir().map(|d| d.join("butterfly.svg"));
             }
-            self.wizard_create(ctx);
+            self.wizard_create();
             self.wizard.step = STEPS - 1;
         }
     }
@@ -394,7 +394,7 @@ impl HoopApp {
             self.wizard.step += 1;
         }
         if create {
-            self.wizard_create(ctx);
+            self.wizard_create();
             self.wizard.step = STEPS - 1;
         }
         if pick.is_some() && self.wizard.pick.is_none() {

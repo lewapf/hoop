@@ -185,6 +185,9 @@ impl HoopApp {
         if press(Modifiers::NONE, Key::F) {
             self.fit_view(canvas_rect, false);
         }
+        if press(Modifiers::COMMAND | Modifiers::ALT, Key::S) {
+            self.save_project(false);
+        }
         if press(Modifiers::NONE, Key::D) {
             self.fit_view(canvas_rect, true);
         }

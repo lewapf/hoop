@@ -20,14 +20,14 @@ pub use sew::*;
 pub use svg::*;
 pub use threads::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub enum Kind {
     Fill { even_odd: bool },
     Stroke { width: f32 },
 }
 
 /// One painted path. Coordinates are SVG user units, y down.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct Shape {
     pub kind: Kind,
     /// Polylines with whether each one is closed.
@@ -35,14 +35,14 @@ pub struct Shape {
     pub layer: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct Layer {
     pub color: [u8; 3],
     pub background: bool,
     pub shapes: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct Artwork {
     pub name: String,
     pub shapes: Vec<Shape>,
@@ -59,7 +59,7 @@ impl Artwork {
 }
 
 /// Per-color choices in the order of `Artwork::layers`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct LayerChoice {
     pub thread: i32,
     pub enabled: bool,
@@ -67,7 +67,7 @@ pub struct LayerChoice {
 }
 
 /// How one thread's shapes are stitched, overriding the main fill style.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Look {
     Default,
     Fill(FillKind),
@@ -79,7 +79,7 @@ pub enum Look {
     Hole,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct ArtSettings {
     pub width_mm: f32,
     /// Fill style, edge and stitch settings shared with lettering. Its text,
@@ -102,7 +102,7 @@ pub struct ArtSettings {
     pub groups: Vec<Group>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct Group {
     pub id: u32,
     pub name: String,
@@ -226,7 +226,7 @@ impl ArtSettings {
 /// One shape on the design: a shape of the drawing, or its own geometry once
 /// its points were edited or it was added from the built-in shapes, plus
 /// how it is moved, scaled and turned. Offsets are SVG user units.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct ShapeEdit {
     pub source: usize,
     pub own: Option<Shape>,

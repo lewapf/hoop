@@ -159,7 +159,7 @@ impl HoopApp {
                 }
                 Step::Shape(name) => {
                     if let Some(path) = library::shapes_dir().map(|d| d.join(format!("{name}.svg"))) {
-                        self.open(ctx, &path);
+                        self.open(&path);
                         if let Some(a) = &mut self.art {
                             a.width_mm = 110.0;
                             if let Some(l) = a.layers.first_mut() {
@@ -170,7 +170,7 @@ impl HoopApp {
                     }
                 }
                 Step::Play => {
-                    self.regenerate_art(ctx);
+                    self.regenerate_art();
                     self.play_rate = PLAYBACK.len() - 1;
                     self.shown = 0;
                     self.playing = true;

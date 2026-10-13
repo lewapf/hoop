@@ -4216,3 +4216,45 @@ msgstr "Jungfrau"
 
 msgid "Waving banner"
 msgstr "Wehendes Banner"
+
+msgid "Projects keep Artwork and Lettering work. A stitch file is saved with Save."
+msgstr "Projekte bewahren Grafik- und Schriftarbeit. Eine Stickdatei speichert Speichern."
+
+msgid "Save project"
+msgstr "Projekt speichern"
+
+msgid "Hoop project"
+msgstr "Hoop-Projekt"
+
+msgid "The project is for {v0}; Hoop switched to it."
+msgstr "Das Projekt ist für {v0}; Hoop hat darauf gewechselt."
+
+msgid "● {name} — Hoop"
+msgstr "● {name} — Hoop"
+
+msgid "Save your work first?"
+msgstr "Erst die Arbeit speichern?"
+
+msgid "{v0} has changes that aren't saved."
+msgstr "{v0} hat ungespeicherte Änderungen."
+
+msgid "This work isn't saved as a project yet. Without one, the shapes and settings are lost when Hoop closes."
+msgstr "Diese Arbeit ist noch nicht als Projekt gespeichert. Ohne Projekt gehen Formen und Einstellungen beim Schließen verloren."
+
+msgid "Don't save"
+msgstr "Nicht speichern"
+
+msgid "Save project as…"
+msgstr "Projekt speichern unter…"
+
+msgid "Ctrl+Alt+S"
+msgstr "Strg+Alt+S"
+
+msgid "Save the project, to carry on later"
+msgstr "Projekt speichern, um später weiterzumachen"
+
+msgid "This isn't a Hoop project Hoop can read: {e}."
+msgstr "Das ist kein Hoop-Projekt, das Hoop lesen kann: {e}."
+
+msgid "This project comes from a newer Hoop. Update Hoop to open it."
+msgstr "Dieses Projekt stammt aus einem neueren Hoop. Aktualisiere Hoop, um es zu öffnen."

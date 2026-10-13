@@ -4,7 +4,7 @@
 use super::*;
 
 impl HoopApp {
-    pub(super) fn regenerate(&mut self, ctx: &egui::Context) {
+    pub(super) fn regenerate(&mut self) {
         self.letter_built = Some(self.letter.clone());
         let font = &self.fonts[self.letter.font.min(self.fonts.len() - 1)];
         match lettering::generate(font, &self.letter) {
@@ -21,7 +21,7 @@ impl HoopApp {
                 self.shown = self.total();
                 self.playing = false;
                 self.error = None;
-                ctx.send_viewport_cmd(egui::ViewportCommand::Title(t!("Lettering — Hoop").into()));
+                self.title_base = t!("Lettering — Hoop").into();
             }
             Err(e) => {
                 self.design = None;

@@ -317,6 +317,13 @@ impl HoopApp {
                     self.paste_open = true;
                 }
                 ui.separator();
+                let work = self.has_project_work();
+                if item(ui, work, t!("Save project"), "Ctrl+Alt+S") {
+                    self.save_project(false);
+                }
+                if item(ui, work, t!("Save project as…"), "") {
+                    self.save_project(true);
+                }
                 if item(ui, has, &t!("Save as {format}…", format = format.ext().to_uppercase()), "Ctrl+S") {
                     self.save_design();
                 }
