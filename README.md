@@ -283,5 +283,6 @@ Furman.
 Hoop was written by Pawel Furman with
 [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent.
 Bundled fonts, shapes and tool bar icons keep their own licenses, listed
-above and in `assets/`. The tool bar icons are from
-[Phosphor Icons](https://phosphoricons.com) (MIT, `assets/icons/LICENSE`).
+above and in `assets/`. The symbols and tool bar icons are from
+[Phosphor Icons](https://phosphoricons.com) (MIT, `assets/shapes/LICENSE`
+and `assets/icons/LICENSE`).

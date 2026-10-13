@@ -12,6 +12,7 @@ mod library;
 mod prefs;
 mod split;
 mod stitch;
+mod symbols;
 mod testsew;
 mod theme;
 mod threads;

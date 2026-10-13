@@ -152,8 +152,6 @@ msgstr "Odśwież"
 msgid "Shapes"
 msgstr "Kształty"
 
-msgid "109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)"
-msgstr "109 gotowych kształtów do haftu lub dalszej pracy (Phosphor Icons, licencja MIT)"
 
 msgid "Find by name"
 msgstr "Szukaj po nazwie"
@@ -2893,3 +2891,963 @@ msgstr "Cofnij · Ctrl+Z"
 
 msgid "Write the {format} straight to the machine's USB stick · Ctrl+U"
 msgstr "Zapisz {format} prosto na pendrive maszyny · Ctrl+U"
+
+msgid "A to Z"
+msgstr "Od A do Z"
+
+msgid "Acorn"
+msgstr "Żołądź"
+
+msgid "Add to favorites"
+msgstr "Dodaj do ulubionych"
+
+msgid "Add to the drawing"
+msgstr "Dodaj do rysunku"
+
+msgid "Airplane"
+msgstr "Samolot"
+
+msgid "Alien"
+msgstr "Kosmita"
+
+msgid "All"
+msgstr "Wszystkie"
+
+msgid "Ambulance"
+msgstr "Karetka"
+
+msgid "American football"
+msgstr "Futbol amerykański"
+
+msgid "Anchor"
+msgstr "Kotwica"
+
+msgid "Animals"
+msgstr "Zwierzęta"
+
+msgid "Armchair"
+msgstr "Fotel"
+
+msgid "Asterisk"
+msgstr "Gwiazdka"
+
+msgid "Atom"
+msgstr "Atom"
+
+msgid "Avocado"
+msgstr "Awokado"
+
+msgid "Axe"
+msgstr "Siekiera"
+
+msgid "Baby"
+msgstr "Niemowlę"
+
+msgid "Backpack"
+msgstr "Plecak"
+
+msgid "Balloon"
+msgstr "Balon"
+
+msgid "Banner flag"
+msgstr "Proporzec"
+
+msgid "Barbell"
+msgstr "Sztanga"
+
+msgid "Barn"
+msgstr "Stodoła"
+
+msgid "Baseball"
+msgstr "Baseball"
+
+msgid "Baseball cap"
+msgstr "Czapka z daszkiem"
+
+msgid "Basket"
+msgstr "Koszyk"
+
+msgid "Basketball"
+msgstr "Koszykówka"
+
+msgid "Bathtub"
+msgstr "Wanna"
+
+msgid "Beach ball"
+msgstr "Piłka plażowa"
+
+msgid "Beanie"
+msgstr "Czapka zimowa"
+
+msgid "Beer mug"
+msgstr "Kufel piwa"
+
+msgid "Beetle"
+msgstr "Żuk"
+
+msgid "Bell"
+msgstr "Dzwonek"
+
+msgid "Bicycle"
+msgstr "Rower"
+
+msgid "Binoculars"
+msgstr "Lornetka"
+
+msgid "Bird"
+msgstr "Ptak"
+
+msgid "Boat"
+msgstr "Łódź"
+
+msgid "Bone"
+msgstr "Kość"
+
+msgid "Books"
+msgstr "Książki"
+
+msgid "Bowling ball"
+msgstr "Kula do kręgli"
+
+msgid "Boxing glove"
+msgstr "Rękawica bokserska"
+
+msgid "Bread"
+msgstr "Chleb"
+
+msgid "Broken heart"
+msgstr "Złamane serce"
+
+msgid "Bug"
+msgstr "Robak"
+
+msgid "Burger"
+msgstr "Burger"
+
+msgid "Bus"
+msgstr "Autobus"
+
+msgid "Butterfly"
+msgstr "Motyl"
+
+msgid "By category"
+msgstr "Według kategorii"
+
+msgid "Cactus"
+msgstr "Kaktus"
+
+msgid "Cake"
+msgstr "Tort"
+
+msgid "Camera"
+msgstr "Aparat"
+
+msgid "Campfire"
+msgstr "Ognisko"
+
+msgid "Car"
+msgstr "Samochód"
+
+msgid "Car side"
+msgstr "Samochód z boku"
+
+msgid "Carrot"
+msgstr "Marchewka"
+
+msgid "Castle"
+msgstr "Zamek"
+
+msgid "Cat"
+msgstr "Kot"
+
+msgid "Celebrations"
+msgstr "Okazje"
+
+msgid "Certificate"
+msgstr "Certyfikat"
+
+msgid "Champagne"
+msgstr "Szampan"
+
+msgid "Checkerboard"
+msgstr "Szachownica"
+
+msgid "Checkered flag"
+msgstr "Flaga w szachownicę"
+
+msgid "Cheers"
+msgstr "Toast"
+
+msgid "Cheese"
+msgstr "Ser"
+
+msgid "Chef's hat"
+msgstr "Czapka kucharska"
+
+msgid "Cherries"
+msgstr "Wiśnie"
+
+msgid "Church"
+msgstr "Kościół"
+
+msgid "Clapperboard"
+msgstr "Klaps"
+
+msgid "Clapping hands"
+msgstr "Oklaski"
+
+msgid "Click to add it to the drawing."
+msgstr "Kliknij, by dodać do rysunku."
+
+msgid "Click to open it as a new design."
+msgstr "Kliknij, by otworzyć jako nowy projekt."
+
+msgid "Clock"
+msgstr "Zegar"
+
+msgid "Cloud"
+msgstr "Chmura"
+
+msgid "Cloudy night"
+msgstr "Pochmurna noc"
+
+msgid "Clover"
+msgstr "Koniczyna"
+
+msgid "Clubs"
+msgstr "Trefl"
+
+msgid "Coat hanger"
+msgstr "Wieszak"
+
+msgid "Cocktail"
+msgstr "Koktajl"
+
+msgid "Coffee"
+msgstr "Kawa"
+
+msgid "Coffee bean"
+msgstr "Ziarno kawy"
+
+msgid "Compass"
+msgstr "Kompas"
+
+msgid "Compass rose"
+msgstr "Róża wiatrów"
+
+msgid "Confetti"
+msgstr "Konfetti"
+
+msgid "Cookie"
+msgstr "Ciastko"
+
+msgid "Cow"
+msgstr "Krowa"
+
+msgid "Cowboy hat"
+msgstr "Kapelusz kowbojski"
+
+msgid "Cracked egg"
+msgstr "Pęknięte jajko"
+
+msgid "Cross"
+msgstr "Krzyż"
+
+msgid "Crown"
+msgstr "Korona"
+
+msgid "Cyclist"
+msgstr "Rowerzysta"
+
+msgid "Diamonds"
+msgstr "Karo"
+
+msgid "Dice five"
+msgstr "Kostka pięć"
+
+msgid "Dice six"
+msgstr "Kostka sześć"
+
+msgid "Disco ball"
+msgstr "Kula disco"
+
+msgid "Dizzy smiley"
+msgstr "Oszołomiona buźka"
+
+msgid "Dog"
+msgstr "Pies"
+
+msgid "Dress"
+msgstr "Sukienka"
+
+msgid "Drop"
+msgstr "Kropla"
+
+msgid "Earth"
+msgstr "Ziemia"
+
+msgid "Egg"
+msgstr "Jajko"
+
+msgid "Eyes"
+msgstr "Oczy"
+
+msgid "Favorites ({v0})"
+msgstr "Ulubione ({v0})"
+
+msgid "Feather"
+msgstr "Pióro"
+
+msgid "Find: cat, Christmas, sport…"
+msgstr "Szukaj: kot, święta, sport…"
+
+msgid "Fir tree"
+msgstr "Choinka"
+
+msgid "Fire"
+msgstr "Ogień"
+
+msgid "Fire engine"
+msgstr "Wóz strażacki"
+
+msgid "Fish"
+msgstr "Ryba"
+
+msgid "Fist"
+msgstr "Pięść"
+
+msgid "Flag"
+msgstr "Flaga"
+
+msgid "Flame"
+msgstr "Płomień"
+
+msgid "Flower"
+msgstr "Kwiat"
+
+msgid "Flying saucer"
+msgstr "Latający spodek"
+
+msgid "Food & drink"
+msgstr "Jedzenie i napoje"
+
+msgid "Football"
+msgstr "Piłka nożna"
+
+msgid "Football helmet"
+msgstr "Kask futbolowy"
+
+msgid "Footprints"
+msgstr "Ślady stóp"
+
+msgid "Fork and knife"
+msgstr "Widelec i nóż"
+
+msgid "Four diamonds"
+msgstr "Cztery romby"
+
+msgid "Four-point star"
+msgstr "Gwiazdka czteroramienna"
+
+msgid "Game controller"
+msgstr "Pad"
+
+msgid "Ghost"
+msgstr "Duch"
+
+msgid "Gift"
+msgstr "Prezent"
+
+msgid "Glass"
+msgstr "Szklanka"
+
+msgid "Glasses"
+msgstr "Okulary"
+
+msgid "Globe"
+msgstr "Kula ziemska"
+
+msgid "Golf"
+msgstr "Golf"
+
+msgid "Graduation cap"
+msgstr "Biret"
+
+msgid "Guitar"
+msgstr "Gitara"
+
+msgid "Half heart"
+msgstr "Pół serca"
+
+msgid "Half star"
+msgstr "Pół gwiazdy"
+
+msgid "Hammer"
+msgstr "Młotek"
+
+msgid "Hand with heart"
+msgstr "Dłoń z sercem"
+
+msgid "Handbag"
+msgstr "Torebka"
+
+msgid "Handshake"
+msgstr "Uścisk dłoni"
+
+msgid "Happy mask"
+msgstr "Wesoła maska"
+
+msgid "Headphones"
+msgstr "Słuchawki"
+
+msgid "Heartbeat"
+msgstr "Puls"
+
+msgid "Hexagon"
+msgstr "Sześciokąt"
+
+msgid "High heel"
+msgstr "Szpilka"
+
+msgid "Hiker"
+msgstr "Turysta"
+
+msgid "Hockey"
+msgstr "Hokej"
+
+msgid "Home & hobbies"
+msgstr "Dom i hobby"
+
+msgid "Horse"
+msgstr "Koń"
+
+msgid "Hot bowl"
+msgstr "Gorąca miska"
+
+msgid "Hourglass"
+msgstr "Klepsydra"
+
+msgid "House"
+msgstr "Dom"
+
+msgid "Ice cream"
+msgstr "Lody"
+
+msgid "Ice lolly"
+msgstr "Lody na patyku"
+
+msgid "Infinity"
+msgstr "Nieskończoność"
+
+msgid "Island"
+msgstr "Wyspa"
+
+msgid "Jeep"
+msgstr "Terenówka"
+
+msgid "Joystick"
+msgstr "Joystick"
+
+msgid "Key"
+msgstr "Klucz"
+
+msgid "Lamp"
+msgstr "Lampa"
+
+msgid "Large tiles"
+msgstr "Duże kafelki"
+
+msgid "Leaf"
+msgstr "Liść"
+
+msgid "Lifebuoy"
+msgstr "Koło ratunkowe"
+
+msgid "Light bulb"
+msgstr "Żarówka"
+
+msgid "Lighthouse"
+msgstr "Latarnia morska"
+
+msgid "Lightning"
+msgstr "Błyskawica"
+
+msgid "Log"
+msgstr "Kłoda"
+
+msgid "Lotus"
+msgstr "Lotos"
+
+msgid "Magic wand"
+msgstr "Różdżka"
+
+msgid "Map pin"
+msgstr "Pinezka na mapie"
+
+msgid "Medal"
+msgstr "Medal"
+
+msgid "Medium tiles"
+msgstr "Średnie kafelki"
+
+msgid "Meh smiley"
+msgstr "Obojętna buźka"
+
+msgid "Melting smiley"
+msgstr "Topniejąca buźka"
+
+msgid "Meteor"
+msgstr "Meteor"
+
+msgid "Metronome"
+msgstr "Metronom"
+
+msgid "Microphone"
+msgstr "Mikrofon"
+
+msgid "Moon"
+msgstr "Księżyc"
+
+msgid "Moon and stars"
+msgstr "Księżyc i gwiazdy"
+
+msgid "Mosque"
+msgstr "Meczet"
+
+msgid "Motorbike"
+msgstr "Motocykl"
+
+msgid "Mountains"
+msgstr "Góry"
+
+msgid "Music"
+msgstr "Muzyka"
+
+msgid "Music note"
+msgstr "Nuta"
+
+msgid "Music notes"
+msgstr "Nuty"
+
+msgid "Needle"
+msgstr "Igła"
+
+msgid "No favorites yet. Click the star on a symbol to keep it here."
+msgstr "Brak ulubionych. Kliknij gwiazdkę na symbolu, by go tu zachować."
+
+msgid "No symbols match."
+msgstr "Brak pasujących symboli."
+
+msgid "Octagon"
+msgstr "Ośmiokąt"
+
+msgid "Only ones that stitch small"
+msgstr "Tylko te do małych haftów"
+
+msgid "Only symbols that stitch cleanly at {v0} mm across"
+msgstr "Tylko symbole, które czysto wyhaftujesz przy {v0} mm szerokości"
+
+msgid "Open as a new design"
+msgstr "Otwórz jako nowy projekt"
+
+msgid "Open book"
+msgstr "Otwarta książka"
+
+msgid "Orange"
+msgstr "Pomarańcza"
+
+msgid "Orange slice"
+msgstr "Plaster pomarańczy"
+
+msgid "Padlock"
+msgstr "Kłódka"
+
+msgid "Paintbrush"
+msgstr "Pędzel"
+
+msgid "Palette"
+msgstr "Paleta"
+
+msgid "Palm tree"
+msgstr "Palma"
+
+msgid "Paper plane"
+msgstr "Papierowy samolot"
+
+msgid "Park"
+msgstr "Park"
+
+msgid "Paw print"
+msgstr "Łapka"
+
+msgid "Peace"
+msgstr "Pokój"
+
+msgid "Peace hand"
+msgstr "Znak pokoju dłonią"
+
+msgid "Pencil"
+msgstr "Ołówek"
+
+msgid "Pennant"
+msgstr "Chorągiewka"
+
+msgid "Pentagon"
+msgstr "Pięciokąt"
+
+msgid "Pentagram"
+msgstr "Pentagram"
+
+msgid "People & faces"
+msgstr "Ludzie i buźki"
+
+msgid "Pepper"
+msgstr "Papryka"
+
+msgid "Person"
+msgstr "Osoba"
+
+msgid "Person with open arms"
+msgstr "Osoba z rozłożonymi rękami"
+
+msgid "Piano keys"
+msgstr "Klawisze"
+
+msgid "Pinwheel"
+msgstr "Wiatraczek"
+
+msgid "Pizza"
+msgstr "Pizza"
+
+msgid "Plane in flight"
+msgstr "Lecący samolot"
+
+msgid "Planet"
+msgstr "Planeta"
+
+msgid "Plants"
+msgstr "Rośliny"
+
+msgid "Police car"
+msgstr "Radiowóz"
+
+msgid "Popcorn"
+msgstr "Popcorn"
+
+msgid "Pot"
+msgstr "Garnek"
+
+msgid "Potted plant"
+msgstr "Roślina w doniczce"
+
+msgid "Pram"
+msgstr "Wózek dziecięcy"
+
+msgid "Praying hands"
+msgstr "Złożone dłonie"
+
+msgid "Puzzle piece"
+msgstr "Puzzel"
+
+msgid "Quartered shield"
+msgstr "Tarcza dzielona"
+
+msgid "Rabbit"
+msgstr "Królik"
+
+msgid "Racquet"
+msgstr "Rakieta"
+
+msgid "Radio"
+msgstr "Radio"
+
+msgid "Rain"
+msgstr "Deszcz"
+
+msgid "Rainbow"
+msgstr "Tęcza"
+
+msgid "Rainbow cloud"
+msgstr "Tęcza z chmurą"
+
+msgid "Record"
+msgstr "Płyta winylowa"
+
+msgid "Recycle"
+msgstr "Recykling"
+
+msgid "Remove from favorites"
+msgstr "Usuń z ulubionych"
+
+msgid "Ribbon banner"
+msgstr "Wstęga"
+
+msgid "Rice ball"
+msgstr "Onigiri"
+
+msgid "River bridge"
+msgstr "Most"
+
+msgid "Robot"
+msgstr "Robot"
+
+msgid "Rocket"
+msgstr "Rakieta kosmiczna"
+
+msgid "Rocket launch"
+msgstr "Start rakiety"
+
+msgid "Royal crown"
+msgstr "Korona królewska"
+
+msgid "Runner"
+msgstr "Biegacz"
+
+msgid "Sad mask"
+msgstr "Smutna maska"
+
+msgid "Sad smiley"
+msgstr "Smutna buźka"
+
+msgid "Sailboat"
+msgstr "Żaglówka"
+
+msgid "Scissors"
+msgstr "Nożyczki"
+
+msgid "Scooter"
+msgstr "Hulajnoga"
+
+msgid "Seal"
+msgstr "Pieczęć"
+
+msgid "Seal with tick"
+msgstr "Pieczęć z ptaszkiem"
+
+msgid "Shield with star"
+msgstr "Tarcza z gwiazdą"
+
+msgid "Shield with tick"
+msgstr "Tarcza z ptaszkiem"
+
+msgid "Shooting star"
+msgstr "Spadająca gwiazda"
+
+msgid "Shovel"
+msgstr "Łopata"
+
+msgid "Shrimp"
+msgstr "Krewetka"
+
+msgid "Signpost"
+msgstr "Drogowskaz"
+
+msgid "Signs & symbols"
+msgstr "Znaki i symbole"
+
+msgid "Simple crown"
+msgstr "Prosta korona"
+
+msgid "Simple fish"
+msgstr "Prosta ryba"
+
+msgid "Skier"
+msgstr "Narciarz"
+
+msgid "Skull"
+msgstr "Czaszka"
+
+msgid "Sky & weather"
+msgstr "Niebo i pogoda"
+
+msgid "Small tiles"
+msgstr "Małe kafelki"
+
+msgid "Smallest first"
+msgstr "Najmniejsze najpierw"
+
+msgid "Smallest first: the bold symbols that still stitch cleanly when small"
+msgstr "Najmniejsze najpierw: grube symbole, które czysto wyhaftujesz nawet w małym rozmiarze"
+
+msgid "Smiley"
+msgstr "Uśmiech"
+
+msgid "Sneaker"
+msgstr "But sportowy"
+
+msgid "Snow"
+msgstr "Śnieg"
+
+msgid "Snowboarder"
+msgstr "Snowboardzista"
+
+msgid "Snowflake"
+msgstr "Płatek śniegu"
+
+msgid "Sock"
+msgstr "Skarpetka"
+
+msgid "Spades"
+msgstr "Pik"
+
+msgid "Sparkle"
+msgstr "Błysk"
+
+msgid "Spiral"
+msgstr "Spirala"
+
+msgid "Sport & games"
+msgstr "Sport i gry"
+
+msgid "Sprout"
+msgstr "Kiełek"
+
+msgid "Star and crescent"
+msgstr "Gwiazda i półksiężyc"
+
+msgid "Star of David"
+msgstr "Gwiazda Dawida"
+
+msgid "Stitches cleanly from about {v0} mm across."
+msgstr "Haftuje się czysto od około {v0} mm szerokości."
+
+msgid "Storm"
+msgstr "Burza"
+
+msgid "Straight heart"
+msgstr "Proste serce"
+
+msgid "Suitcase"
+msgstr "Walizka"
+
+msgid "Sun"
+msgstr "Słońce"
+
+msgid "Sun and cloud"
+msgstr "Słońce i chmura"
+
+msgid "Sunglasses"
+msgstr "Okulary przeciwsłoneczne"
+
+msgid "Sunrise"
+msgstr "Wschód słońca"
+
+msgid "Swatches"
+msgstr "Próbki kolorów"
+
+msgid "Swimmer"
+msgstr "Pływak"
+
+msgid "Sword"
+msgstr "Miecz"
+
+msgid "Symbols"
+msgstr "Symbole"
+
+msgid "Synagogue"
+msgstr "Synagoga"
+
+msgid "T-shirt"
+msgstr "Koszulka"
+
+msgid "Table tennis"
+msgstr "Tenis stołowy"
+
+msgid "Target"
+msgstr "Tarcza strzelnicza"
+
+msgid "Taxi"
+msgstr "Taksówka"
+
+msgid "Tea bag"
+msgstr "Torebka herbaty"
+
+msgid "Tennis ball"
+msgstr "Piłka tenisowa"
+
+msgid "Tent"
+msgstr "Namiot"
+
+msgid "The symbols aren't installed."
+msgstr "Symbole nie są zainstalowane."
+
+msgid "Thumbs up"
+msgstr "Kciuk w górę"
+
+msgid "Ticket"
+msgstr "Bilet"
+
+msgid "Tipi"
+msgstr "Tipi"
+
+msgid "Tooth"
+msgstr "Ząb"
+
+msgid "Tornado"
+msgstr "Tornado"
+
+msgid "Toy figure"
+msgstr "Ludzik"
+
+msgid "Tractor"
+msgstr "Traktor"
+
+msgid "Train"
+msgstr "Pociąg"
+
+msgid "Travel"
+msgstr "Podróże"
+
+msgid "Treasure chest"
+msgstr "Skrzynia skarbów"
+
+msgid "Tree"
+msgstr "Drzewo"
+
+msgid "Triangle"
+msgstr "Trójkąt"
+
+msgid "Trophy"
+msgstr "Puchar"
+
+msgid "Truck"
+msgstr "Ciężarówka"
+
+msgid "Tulip"
+msgstr "Tulipan"
+
+msgid "Umbrella"
+msgstr "Parasol"
+
+msgid "Van"
+msgstr "Furgonetka"
+
+msgid "Volleyball"
+msgstr "Siatkówka"
+
+msgid "Waves"
+msgstr "Fale"
+
+msgid "Waving hand"
+msgstr "Machająca dłoń"
+
+msgid "Wheat"
+msgstr "Kłosy"
+
+msgid "Wind"
+msgstr "Wiatr"
+
+msgid "Wine"
+msgstr "Wino"
+
+msgid "Winking smiley"
+msgstr "Mrugnięcie"
+
+msgid "Wrench"
+msgstr "Klucz płaski"
+
+msgid "Yarn"
+msgstr "Włóczka"
+
+msgid "Yin yang"
+msgstr "Yin i yang"

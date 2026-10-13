@@ -53,6 +53,7 @@ pub(super) fn tab_named(mode: Mode, name: &str) -> Option<Tab> {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Dock {
     Library,
+    Symbols,
     Objects,
     Colors,
     Check,
@@ -226,9 +227,9 @@ impl HoopApp {
             Some(r) if r.count(crate::check::Level::Problem) > 0 => t!("Check ({v0})", v0 = r.count(crate::check::Level::Problem)),
             _ => t!("Check").to_string(),
         };
-        let mut options = vec![(Dock::Library, t!("Library")), (Dock::Colors, t!("Colors")), (Dock::Check, check.as_str())];
+        let mut options = vec![(Dock::Library, t!("Library")), (Dock::Symbols, t!("Symbols")), (Dock::Colors, t!("Colors")), (Dock::Check, check.as_str())];
         if self.mode == Mode::Artwork {
-            options.insert(1, (Dock::Objects, t!("Objects")));
+            options.insert(2, (Dock::Objects, t!("Objects")));
         } else if self.dock == Dock::Objects {
             self.dock = Dock::Colors;
         }
@@ -246,6 +247,7 @@ impl HoopApp {
         ui.add_space(6.0);
         match self.dock {
             Dock::Library => self.library_page(ui),
+            Dock::Symbols => self.symbols_page(ui),
             Dock::Objects => self.objects_list(ui),
             Dock::Colors => {
                 egui::ScrollArea::vertical().id_salt("colors").auto_shrink([false, false]).show(ui, |ui| self.colors_list(ui));

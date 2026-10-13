@@ -595,12 +595,6 @@ msgstr ""
 msgid "Reload"
 msgstr ""
 
-msgid "Shapes"
-msgstr ""
-
-msgid "109 ready-made shapes to stitch or build on (Phosphor Icons, MIT licence)"
-msgstr ""
-
 msgid "Find by name"
 msgstr ""
 
@@ -1230,6 +1224,9 @@ msgstr ""
 msgid "Library"
 msgstr ""
 
+msgid "Symbols"
+msgstr ""
+
 msgid "Objects"
 msgstr ""
 
@@ -1721,6 +1718,72 @@ msgid "Scallop"
 msgstr ""
 
 msgid "The classic appliqué edge: prongs reach into the shape."
+msgstr ""
+
+msgid "The symbols aren't installed."
+msgstr ""
+
+msgid "Find: cat, Christmas, sport…"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Favorites ({v0})"
+msgstr ""
+
+msgid "By category"
+msgstr ""
+
+msgid "A to Z"
+msgstr ""
+
+msgid "Smallest first"
+msgstr ""
+
+msgid "Smallest first: the bold symbols that still stitch cleanly when small"
+msgstr ""
+
+msgid "Large tiles"
+msgstr ""
+
+msgid "Medium tiles"
+msgstr ""
+
+msgid "Small tiles"
+msgstr ""
+
+msgid "Only ones that stitch small"
+msgstr ""
+
+msgid "Only symbols that stitch cleanly at {v0} mm across"
+msgstr ""
+
+msgid "No favorites yet. Click the star on a symbol to keep it here."
+msgstr ""
+
+msgid "No symbols match."
+msgstr ""
+
+msgid "Stitches cleanly from about {v0} mm across."
+msgstr ""
+
+msgid "Click to add it to the drawing."
+msgstr ""
+
+msgid "Click to open it as a new design."
+msgstr ""
+
+msgid "Add to the drawing"
+msgstr ""
+
+msgid "Open as a new design"
+msgstr ""
+
+msgid "Remove from favorites"
+msgstr ""
+
+msgid "Add to favorites"
 msgstr ""
 
 msgid "Team names"
@@ -2400,6 +2463,9 @@ msgstr ""
 msgid "Line"
 msgstr ""
 
+msgid "Shapes"
+msgstr ""
+
 msgid "{color} fill {n}"
 msgstr ""
 
@@ -2650,6 +2716,897 @@ msgid "Edge run"
 msgstr ""
 
 msgid "Double zigzag"
+msgstr ""
+
+msgid "Animals"
+msgstr ""
+
+msgid "Plants"
+msgstr ""
+
+msgid "Sky & weather"
+msgstr ""
+
+msgid "Food & drink"
+msgstr ""
+
+msgid "Celebrations"
+msgstr ""
+
+msgid "Sport & games"
+msgstr ""
+
+msgid "Travel"
+msgstr ""
+
+msgid "Home & hobbies"
+msgstr ""
+
+msgid "Music"
+msgstr ""
+
+msgid "People & faces"
+msgstr ""
+
+msgid "Signs & symbols"
+msgstr ""
+
+msgid "Bird"
+msgstr ""
+
+msgid "Butterfly"
+msgstr ""
+
+msgid "Bug"
+msgstr ""
+
+msgid "Beetle"
+msgstr ""
+
+msgid "Cat"
+msgstr ""
+
+msgid "Cow"
+msgstr ""
+
+msgid "Dog"
+msgstr ""
+
+msgid "Fish"
+msgstr ""
+
+msgid "Simple fish"
+msgstr ""
+
+msgid "Horse"
+msgstr ""
+
+msgid "Rabbit"
+msgstr ""
+
+msgid "Paw print"
+msgstr ""
+
+msgid "Shrimp"
+msgstr ""
+
+msgid "Egg"
+msgstr ""
+
+msgid "Cracked egg"
+msgstr ""
+
+msgid "Bone"
+msgstr ""
+
+msgid "Feather"
+msgstr ""
+
+msgid "Acorn"
+msgstr ""
+
+msgid "Cactus"
+msgstr ""
+
+msgid "Clover"
+msgstr ""
+
+msgid "Flower"
+msgstr ""
+
+msgid "Lotus"
+msgstr ""
+
+msgid "Tulip"
+msgstr ""
+
+msgid "Leaf"
+msgstr ""
+
+msgid "Sprout"
+msgstr ""
+
+msgid "Potted plant"
+msgstr ""
+
+msgid "Tree"
+msgstr ""
+
+msgid "Fir tree"
+msgstr ""
+
+msgid "Palm tree"
+msgstr ""
+
+msgid "Wheat"
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "Park"
+msgstr ""
+
+msgid "Cloud"
+msgstr ""
+
+msgid "Storm"
+msgstr ""
+
+msgid "Cloudy night"
+msgstr ""
+
+msgid "Rain"
+msgstr ""
+
+msgid "Snow"
+msgstr ""
+
+msgid "Sun and cloud"
+msgstr ""
+
+msgid "Lightning"
+msgstr ""
+
+msgid "Moon"
+msgstr ""
+
+msgid "Moon and stars"
+msgstr ""
+
+msgid "Rainbow"
+msgstr ""
+
+msgid "Rainbow cloud"
+msgstr ""
+
+msgid "Snowflake"
+msgstr ""
+
+msgid "Sun"
+msgstr ""
+
+msgid "Sunrise"
+msgstr ""
+
+msgid "Umbrella"
+msgstr ""
+
+msgid "Wind"
+msgstr ""
+
+msgid "Tornado"
+msgstr ""
+
+msgid "Drop"
+msgstr ""
+
+msgid "Waves"
+msgstr ""
+
+msgid "Mountains"
+msgstr ""
+
+msgid "Island"
+msgstr ""
+
+msgid "Planet"
+msgstr ""
+
+msgid "Meteor"
+msgstr ""
+
+msgid "Shooting star"
+msgstr ""
+
+msgid "Flying saucer"
+msgstr ""
+
+msgid "Avocado"
+msgstr ""
+
+msgid "Bread"
+msgstr ""
+
+msgid "Cake"
+msgstr ""
+
+msgid "Carrot"
+msgstr ""
+
+msgid "Cheese"
+msgstr ""
+
+msgid "Cherries"
+msgstr ""
+
+msgid "Coffee"
+msgstr ""
+
+msgid "Coffee bean"
+msgstr ""
+
+msgid "Cookie"
+msgstr ""
+
+msgid "Burger"
+msgstr ""
+
+msgid "Ice cream"
+msgstr ""
+
+msgid "Orange"
+msgstr ""
+
+msgid "Orange slice"
+msgstr ""
+
+msgid "Pepper"
+msgstr ""
+
+msgid "Pizza"
+msgstr ""
+
+msgid "Popcorn"
+msgstr ""
+
+msgid "Ice lolly"
+msgstr ""
+
+msgid "Rice ball"
+msgstr ""
+
+msgid "Hot bowl"
+msgstr ""
+
+msgid "Pot"
+msgstr ""
+
+msgid "Fork and knife"
+msgstr ""
+
+msgid "Wine"
+msgstr ""
+
+msgid "Beer mug"
+msgstr ""
+
+msgid "Champagne"
+msgstr ""
+
+msgid "Cocktail"
+msgstr ""
+
+msgid "Tea bag"
+msgstr ""
+
+msgid "Glass"
+msgstr ""
+
+msgid "Chef's hat"
+msgstr ""
+
+msgid "Balloon"
+msgstr ""
+
+msgid "Confetti"
+msgstr ""
+
+msgid "Gift"
+msgstr ""
+
+msgid "Cheers"
+msgstr ""
+
+msgid "Bell"
+msgstr ""
+
+msgid "Pinwheel"
+msgstr ""
+
+msgid "Disco ball"
+msgstr ""
+
+msgid "Graduation cap"
+msgstr ""
+
+msgid "Happy mask"
+msgstr ""
+
+msgid "Sad mask"
+msgstr ""
+
+msgid "Ticket"
+msgstr ""
+
+msgid "Sparkle"
+msgstr ""
+
+msgid "Four-point star"
+msgstr ""
+
+msgid "Baseball"
+msgstr ""
+
+msgid "Basketball"
+msgstr ""
+
+msgid "Beach ball"
+msgstr ""
+
+msgid "Bowling ball"
+msgstr ""
+
+msgid "Boxing glove"
+msgstr ""
+
+msgid "American football"
+msgstr ""
+
+msgid "Football helmet"
+msgstr ""
+
+msgid "Golf"
+msgstr ""
+
+msgid "Hockey"
+msgstr ""
+
+msgid "Table tennis"
+msgstr ""
+
+msgid "Racquet"
+msgstr ""
+
+msgid "Football"
+msgstr ""
+
+msgid "Tennis ball"
+msgstr ""
+
+msgid "Volleyball"
+msgstr ""
+
+msgid "Trophy"
+msgstr ""
+
+msgid "Medal"
+msgstr ""
+
+msgid "Barbell"
+msgstr ""
+
+msgid "Sneaker"
+msgstr ""
+
+msgid "Runner"
+msgstr ""
+
+msgid "Swimmer"
+msgstr ""
+
+msgid "Cyclist"
+msgstr ""
+
+msgid "Skier"
+msgstr ""
+
+msgid "Snowboarder"
+msgstr ""
+
+msgid "Hiker"
+msgstr ""
+
+msgid "Dice five"
+msgstr ""
+
+msgid "Dice six"
+msgstr ""
+
+msgid "Puzzle piece"
+msgstr ""
+
+msgid "Game controller"
+msgstr ""
+
+msgid "Joystick"
+msgstr ""
+
+msgid "Clubs"
+msgstr ""
+
+msgid "Spades"
+msgstr ""
+
+msgid "Checkerboard"
+msgstr ""
+
+msgid "Checkered flag"
+msgstr ""
+
+msgid "Sword"
+msgstr ""
+
+msgid "Castle"
+msgstr ""
+
+msgid "Treasure chest"
+msgstr ""
+
+msgid "Airplane"
+msgstr ""
+
+msgid "Plane in flight"
+msgstr ""
+
+msgid "Anchor"
+msgstr ""
+
+msgid "Boat"
+msgstr ""
+
+msgid "Sailboat"
+msgstr ""
+
+msgid "Bicycle"
+msgstr ""
+
+msgid "Bus"
+msgstr ""
+
+msgid "Car"
+msgstr ""
+
+msgid "Car side"
+msgstr ""
+
+msgid "Jeep"
+msgstr ""
+
+msgid "Motorbike"
+msgstr ""
+
+msgid "Scooter"
+msgstr ""
+
+msgid "Rocket"
+msgstr ""
+
+msgid "Rocket launch"
+msgstr ""
+
+msgid "Train"
+msgstr ""
+
+msgid "Tractor"
+msgstr ""
+
+msgid "Truck"
+msgstr ""
+
+msgid "Van"
+msgstr ""
+
+msgid "Taxi"
+msgstr ""
+
+msgid "Police car"
+msgstr ""
+
+msgid "Fire engine"
+msgstr ""
+
+msgid "Ambulance"
+msgstr ""
+
+msgid "Globe"
+msgstr ""
+
+msgid "Earth"
+msgstr ""
+
+msgid "Compass"
+msgstr ""
+
+msgid "Compass rose"
+msgstr ""
+
+msgid "Map pin"
+msgstr ""
+
+msgid "Lighthouse"
+msgstr ""
+
+msgid "Tent"
+msgstr ""
+
+msgid "Tipi"
+msgstr ""
+
+msgid "Campfire"
+msgstr ""
+
+msgid "Suitcase"
+msgstr ""
+
+msgid "Paper plane"
+msgstr ""
+
+msgid "Binoculars"
+msgstr ""
+
+msgid "Signpost"
+msgstr ""
+
+msgid "River bridge"
+msgstr ""
+
+msgid "House"
+msgstr ""
+
+msgid "Barn"
+msgstr ""
+
+msgid "Church"
+msgstr ""
+
+msgid "Mosque"
+msgstr ""
+
+msgid "Synagogue"
+msgstr ""
+
+msgid "Key"
+msgstr ""
+
+msgid "Padlock"
+msgstr ""
+
+msgid "Lamp"
+msgstr ""
+
+msgid "Armchair"
+msgstr ""
+
+msgid "Bathtub"
+msgstr ""
+
+msgid "Needle"
+msgstr ""
+
+msgid "Yarn"
+msgstr ""
+
+msgid "Scissors"
+msgstr ""
+
+msgid "Paintbrush"
+msgstr ""
+
+msgid "Palette"
+msgstr ""
+
+msgid "Pencil"
+msgstr ""
+
+msgid "Swatches"
+msgstr ""
+
+msgid "Camera"
+msgstr ""
+
+msgid "Open book"
+msgstr ""
+
+msgid "Books"
+msgstr ""
+
+msgid "Hammer"
+msgstr ""
+
+msgid "Wrench"
+msgstr ""
+
+msgid "Axe"
+msgstr ""
+
+msgid "Shovel"
+msgstr ""
+
+msgid "Magic wand"
+msgstr ""
+
+msgid "Glasses"
+msgstr ""
+
+msgid "Sunglasses"
+msgstr ""
+
+msgid "Hourglass"
+msgstr ""
+
+msgid "Clock"
+msgstr ""
+
+msgid "Light bulb"
+msgstr ""
+
+msgid "T-shirt"
+msgstr ""
+
+msgid "Dress"
+msgstr ""
+
+msgid "Sock"
+msgstr ""
+
+msgid "Baseball cap"
+msgstr ""
+
+msgid "Cowboy hat"
+msgstr ""
+
+msgid "Beanie"
+msgstr ""
+
+msgid "High heel"
+msgstr ""
+
+msgid "Handbag"
+msgstr ""
+
+msgid "Coat hanger"
+msgstr ""
+
+msgid "Backpack"
+msgstr ""
+
+msgid "Basket"
+msgstr ""
+
+msgid "Guitar"
+msgstr ""
+
+msgid "Headphones"
+msgstr ""
+
+msgid "Microphone"
+msgstr ""
+
+msgid "Music note"
+msgstr ""
+
+msgid "Music notes"
+msgstr ""
+
+msgid "Piano keys"
+msgstr ""
+
+msgid "Record"
+msgstr ""
+
+msgid "Metronome"
+msgstr ""
+
+msgid "Clapperboard"
+msgstr ""
+
+msgid "Radio"
+msgstr ""
+
+msgid "Baby"
+msgstr ""
+
+msgid "Pram"
+msgstr ""
+
+msgid "Hand with heart"
+msgstr ""
+
+msgid "Peace hand"
+msgstr ""
+
+msgid "Waving hand"
+msgstr ""
+
+msgid "Clapping hands"
+msgstr ""
+
+msgid "Praying hands"
+msgstr ""
+
+msgid "Handshake"
+msgstr ""
+
+msgid "Thumbs up"
+msgstr ""
+
+msgid "Fist"
+msgstr ""
+
+msgid "Smiley"
+msgstr ""
+
+msgid "Winking smiley"
+msgstr ""
+
+msgid "Sad smiley"
+msgstr ""
+
+msgid "Meh smiley"
+msgstr ""
+
+msgid "Melting smiley"
+msgstr ""
+
+msgid "Dizzy smiley"
+msgstr ""
+
+msgid "Ghost"
+msgstr ""
+
+msgid "Skull"
+msgstr ""
+
+msgid "Alien"
+msgstr ""
+
+msgid "Robot"
+msgstr ""
+
+msgid "Person"
+msgstr ""
+
+msgid "Person with open arms"
+msgstr ""
+
+msgid "Footprints"
+msgstr ""
+
+msgid "Eyes"
+msgstr ""
+
+msgid "Tooth"
+msgstr ""
+
+msgid "Toy figure"
+msgstr ""
+
+msgid "Straight heart"
+msgstr ""
+
+msgid "Half heart"
+msgstr ""
+
+msgid "Broken heart"
+msgstr ""
+
+msgid "Half star"
+msgstr ""
+
+msgid "Crown"
+msgstr ""
+
+msgid "Simple crown"
+msgstr ""
+
+msgid "Royal crown"
+msgstr ""
+
+msgid "Shield with star"
+msgstr ""
+
+msgid "Shield with tick"
+msgstr ""
+
+msgid "Quartered shield"
+msgstr ""
+
+msgid "Seal"
+msgstr ""
+
+msgid "Seal with tick"
+msgstr ""
+
+msgid "Peace"
+msgstr ""
+
+msgid "Yin yang"
+msgstr ""
+
+msgid "Infinity"
+msgstr ""
+
+msgid "Cross"
+msgstr ""
+
+msgid "Star of David"
+msgstr ""
+
+msgid "Star and crescent"
+msgstr ""
+
+msgid "Flag"
+msgstr ""
+
+msgid "Banner flag"
+msgstr ""
+
+msgid "Pennant"
+msgstr ""
+
+msgid "Ribbon banner"
+msgstr ""
+
+msgid "Diamonds"
+msgstr ""
+
+msgid "Four diamonds"
+msgstr ""
+
+msgid "Spiral"
+msgstr ""
+
+msgid "Asterisk"
+msgstr ""
+
+msgid "Certificate"
+msgstr ""
+
+msgid "Target"
+msgstr ""
+
+msgid "Hexagon"
+msgstr ""
+
+msgid "Pentagon"
+msgstr ""
+
+msgid "Octagon"
+msgstr ""
+
+msgid "Triangle"
+msgstr ""
+
+msgid "Fire"
+msgstr ""
+
+msgid "Flame"
+msgstr ""
+
+msgid "Lifebuoy"
+msgstr ""
+
+msgid "Recycle"
+msgstr ""
+
+msgid "Heartbeat"
+msgstr ""
+
+msgid "Pentagram"
+msgstr ""
+
+msgid "Atom"
 msgstr ""
 
 msgid "Satin columns"

@@ -242,32 +242,68 @@ impl HoopApp {
     }
 
     pub(super) fn add_built_in(&mut self, name: &str) {
+        self.add_shapes(&crate::i18n::tr_any(name), |at, size, layer| vec![artwork::built_in(name, at, size, layer)]);
+    }
+
+    /// Adds a symbol to the drawing, half the frame across, in the middle.
+    pub(super) fn add_symbol(&mut self, sym: &crate::symbols::Symbol, svg: &[u8]) -> Result<(), String> {
+        let drawn = artwork::parse(sym.file, svg)?;
+        let b = drawn.bounds;
+        let (mx, my) = ((b.0 + b.2) / 2.0, (b.1 + b.3) / 2.0);
+        let across = (b.2 - b.0).max(b.3 - b.1).max(1e-3);
+        self.add_shapes(crate::i18n::tr(sym.name), |at, size, layer| {
+            let k = size / across;
+            drawn
+                .shapes
+                .into_iter()
+                .map(|mut sh| {
+                    for (c, _) in &mut sh.lines {
+                        for p in c.iter_mut() {
+                            *p = (at.0 + (p.0 - mx) * k, at.1 + (p.1 - my) * k);
+                        }
+                    }
+                    if let artwork::Kind::Stroke { width } = &mut sh.kind {
+                        *width *= k;
+                    }
+                    sh.layer = layer;
+                    sh
+                })
+                .collect()
+        });
+        Ok(())
+    }
+
+    /// Adds new shapes on the picked shape's thread, made by `make` from the
+    /// middle of the drawing, a size and the thread, and picks them.
+    fn add_shapes(&mut self, name: &str, make: impl FnOnce(crate::lettering::Pt, f32, usize) -> Vec<artwork::Shape>) {
         let layer = self.primary().and_then(|i| self.art.as_ref()?.shapes.get(i)).map_or(0, |e| e.layer);
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
         let size = (art.bounds.2 - art.bounds.0).min(art.bounds.3 - art.bounds.1) * 0.5;
         let mid = ((art.bounds.0 + art.bounds.2) / 2.0, (art.bounds.1 + art.bounds.3) / 2.0);
-        let shown = crate::i18n::tr_any(name);
-        let n = s.shapes.iter().filter(|e| e.name.starts_with(&shown)).count();
-        s.shapes.push(ShapeEdit {
-            source: usize::MAX,
-            own: Some(artwork::built_in(name, mid, size, layer)),
-            name: if n == 0 { shown.clone() } else { format!("{shown} {}", n + 1) },
-            layer,
-            look: None,
-            hidden: false,
-            dx: 0.0,
-            dy: 0.0,
-            scale: 1.0,
-            rotate: 0.0,
-            angles: Vec::new(),
-            entry: None,
-            style: None,
-            pinned: false,
-        });
+        let first = s.shapes.len();
+        for own in make(mid, size, layer) {
+            let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
+            s.shapes.push(ShapeEdit {
+                source: usize::MAX,
+                own: Some(own),
+                name: if n == 0 { name.to_string() } else { format!("{name} {}", n + 1) },
+                layer,
+                look: None,
+                hidden: false,
+                dx: 0.0,
+                dy: 0.0,
+                scale: 1.0,
+                rotate: 0.0,
+                angles: Vec::new(),
+                entry: None,
+                style: None,
+                pinned: false,
+            });
+        }
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
         }
-        self.sel = vec![s.shapes.len() - 1];
+        self.sel = (first..s.shapes.len()).collect();
         self.edit_points = false;
     }
 

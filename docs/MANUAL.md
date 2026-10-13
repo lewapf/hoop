@@ -61,16 +61,29 @@ Hoop has three tabs, switched with `V`, `L` and `A`:
 Open JEF, DST, EXP, PES or PEC files with `O`, by dropping them on the
 window, or by clicking a thumbnail in the **Library**.
 
-- **Library:**
-  - **Up** goes to the folder above, **Folder…** picks another folder,
-    and **Find by name** filters the list.
-  - **Shapes** switches to 109 ready-made silhouettes you can stitch or
-    build on.
+- **Library:** **Up** goes to the folder above, **Folder…** picks
+  another folder, and **Find by name** filters the list.
+- **Symbols:** the left panel's **Symbols** page holds 291 ready-made
+  silhouettes, sorted into categories (animals, plants, celebrations,
+  sport, travel and more).
+  - **Find** searches names and words like "Christmas", "wedding" or
+    "sea", in English or the language in use.
+  - Click a category to show only it. **Favorites** keeps the symbols you
+    starred (the star in a tile's corner), and **Recent** the last ones
+    used.
+  - The list sorts by category, A to Z, or **Smallest first**: bold
+    symbols that still stitch cleanly when small. **Only ones that stitch
+    small** hides the ones that need more than 25 mm. A symbol's tooltip
+    says from what size it stitches cleanly.
+  - **S**, **M** and **L** set the tile size.
+  - In Artwork, a click adds the symbol to the drawing on the picked
+    shape's thread. Elsewhere it opens as a new design. Right-click for
+    both.
 - **Playback:**
   - `Space` plays the stitch-out; the **Stitch** page sets the speed.
   - `,` and `.` step one stitch back or forward.
   - `[` and `]` jump to the previous or next thread.
-- **Hoops:** `1`–`4` pick the SQ14b, RE20b, SQ20b or FA10a hoop. The
+- **Hoops:** `1`–`4` pick the machine's first four hoops. The
   **Hoop** page says whether the design fits and offers fixes: rotate it,
   use a bigger hoop, shrink it, or split it into several hoopings.
 - **Rotating and mirroring:** `R` and `Shift+R` rotate by 90°, `M`

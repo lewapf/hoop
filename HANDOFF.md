@@ -293,7 +293,7 @@ override it explicitly).
 
 - Settings window (Edit → Settings, Ctrl+,), new project wizard (N),
   User manual (F1, `docs/MANUAL.md` built in and rendered by
-  `app/manual.rs`; keep it in step with features), 109 Phosphor shapes
+  `app/manual.rs`; keep it in step with features), Phosphor shapes
   (MIT) in `assets/shapes`, installed to /usr/share/hoop/shapes.
 - Polish and German catalogs in `locales/` (bundled in `i18n::BUNDLED`).
   Built from the .pot with translations kept in a scratch script; when
@@ -341,6 +341,25 @@ white with resvg once and tinted), with the machine and hoop picker, the
 test stitch-out and an accent "Send to machine" button on the right.
 Language moved out of View (it is in Settings); thread charts moved to
 Machine; Play demo to Help.
+
+## Symbols page (2026-10-13)
+
+The left dock has a Symbols page (`app/symbols.rs`) next to Library; the
+Library lost its Shapes button. `src/symbols.rs` is the catalog: 291
+Phosphor "fill" icons in `assets/shapes`, each with an English name (n!,
+translated in the .po files), one of 11 categories and search words
+(Phosphor's tags plus occasion words such as christmas, wedding, sea). A
+test checks catalog and folder match both ways; add a symbol by copying
+`<name>-fill.svg` from `@phosphor-icons/core` as `<name>.svg` and adding
+a row. `smallest_mm` rasterizes a symbol and finds the size at which
+dropping parts thinner than 1.2 mm keeps 92% of it; it runs once per
+session on a background thread and drives the "Smallest first" order,
+the "stitch small" filter and the tooltips. Favorites, recent and the
+tile size are prefs (`symbols.favorites`, `symbols.recent`,
+`symbols.tiles`). A click in Artwork goes through `add_symbol` →
+`add_shapes` (shared with the built-in shapes); elsewhere it opens the
+SVG. `shapes_dir()` now prefers the source tree, so a dev build never
+shows the installed, older set.
 
 ## Ideas queued with the owner
 

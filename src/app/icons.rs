@@ -24,21 +24,24 @@ const ICONS: &[(&str, &str)] = &[
     ("play", include_str!("../../assets/icons/play.svg")),
     ("pause", include_str!("../../assets/icons/pause.svg")),
     ("needle", include_str!("../../assets/icons/needle.svg")),
+    ("star", include_str!("../../assets/icons/star.svg")),
+    ("star-fill", include_str!("../../assets/icons/star-fill.svg")),
 ];
 
 /// Pixels the icons are drawn at; painted smaller, so they stay sharp on
 /// scaled screens.
 const PX: u32 = 48;
 
-fn render(svg: &str) -> Option<egui::ColorImage> {
+/// A one-color SVG drawn white, `px` square, to be tinted when painted.
+pub(super) fn render(svg: &str, px: u32) -> Option<egui::ColorImage> {
     let svg = svg.replace("currentColor", "#ffffff");
     let tree = usvg::Tree::from_str(&svg, &usvg::Options::default()).ok()?;
-    let mut pm = resvg::tiny_skia::Pixmap::new(PX, PX)?;
-    let s = PX as f32 / tree.size().width().max(tree.size().height());
+    let mut pm = resvg::tiny_skia::Pixmap::new(px, px)?;
+    let s = px as f32 / tree.size().width().max(tree.size().height());
     resvg::render(&tree, resvg::tiny_skia::Transform::from_scale(s, s), &mut pm.as_mut());
     // tiny-skia keeps premultiplied alpha, which is what egui takes.
     let pixels = pm.pixels().iter().map(|p| Color32::from_rgba_premultiplied(p.red(), p.green(), p.blue(), p.alpha())).collect();
-    Some(egui::ColorImage::new([PX as usize, PX as usize], pixels))
+    Some(egui::ColorImage::new([px as usize, px as usize], pixels))
 }
 
 /// The icon's texture, made the first time it is asked for.
@@ -48,7 +51,7 @@ pub(super) fn texture(ctx: &egui::Context, name: &'static str) -> Option<egui::T
         return Some(t);
     }
     let svg = ICONS.iter().find(|i| i.0 == name)?.1;
-    let tex = ctx.load_texture(format!("icon:{name}"), render(svg)?, egui::TextureOptions::LINEAR);
+    let tex = ctx.load_texture(format!("icon:{name}"), render(svg, PX)?, egui::TextureOptions::LINEAR);
     ctx.data_mut(|d| d.get_temp_mut_or_default::<HashMap<&'static str, egui::TextureHandle>>(id).insert(name, tex.clone()));
     Some(tex)
 }

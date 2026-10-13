@@ -28,6 +28,7 @@ mod shapes;
 mod shell;
 mod stitchedit;
 mod style_cards;
+mod symbols;
 mod team;
 mod testpiece;
 mod threadwin;
@@ -309,6 +310,7 @@ pub struct HoopApp {
     /// A recent file picked in the panel, opened once the panel is drawn.
     open_later: Option<PathBuf>,
     library: library::Library,
+    symbols: symbols::Symbols,
     threads: threadwin::ThreadCharts,
     team: team::Team,
     tools: tools::Tools,
@@ -399,6 +401,7 @@ impl HoopApp {
             want_font: None,
             open_later: None,
             library: Default::default(),
+            symbols: Default::default(),
             threads: Default::default(),
             team: Default::default(),
             tools: Default::default(),
@@ -453,6 +456,7 @@ impl HoopApp {
         }
         match std::env::var("HOOP_DOCK").as_deref() {
             Ok("library") => self.dock = Dock::Library,
+            Ok("symbols") => self.dock = Dock::Symbols,
             Ok("colors") => self.dock = Dock::Colors,
             Ok("check") => self.dock = Dock::Check,
             _ => {}
