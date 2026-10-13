@@ -274,44 +274,6 @@ impl HoopApp {
         }
 
         if tab == Tab::Stitch && self.design.is_some() {
-            let total = self.total();
-            card(ui, t!("Stitch-out"), accent, |ui| {
-                ui.horizontal(|ui| {
-                    let label = if self.playing {
-                        t!("Pause")
-                    } else if self.shown >= total {
-                        t!("Replay")
-                    } else {
-                        t!("Play")
-                    };
-                    if ui.add(primary(label, accent).min_size(vec2(72.0, 28.0))).on_hover_text(t!("Space")).clicked() {
-                        self.toggle_play();
-                    }
-                    ui.spacing_mut().slider_width = (ui.available_width() - 4.0).max(40.0);
-                    let mut n = self.shown;
-                    if ui.add(egui::Slider::new(&mut n, 0..=total).show_value(false)).changed() {
-                        self.playing = false;
-                        self.shown = n;
-                    }
-                });
-                ui.horizontal(|ui| {
-                    let thread = self.design.as_ref().and_then(|d| d.blocks.iter().position(|b| self.shown <= b.end)).unwrap_or(0) + 1;
-                    let text = if self.shown >= total {
-                        t!("All {total} stitches", total = total)
-                    } else {
-                        t!("{shown} / {total} · thread {thread}", shown = self.shown, total = total, thread = thread)
-                    };
-                    ui.label(RichText::new(text).monospace().size(12.0).color(muted));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        egui::ComboBox::from_id_salt("rate").selected_text(crate::i18n::tr(PLAYBACK[self.play_rate].1)).width(84.0).show_ui(ui, |ui| {
-                            for (i, (_, name)) in PLAYBACK.iter().enumerate() {
-                                ui.selectable_value(&mut self.play_rate, i, crate::i18n::tr(name));
-                            }
-                        });
-                    });
-                });
-            });
-
             let d = self.design.as_ref().unwrap();
             let p = &d.pattern;
             let stitches = p.count(Cmd::Stitch);

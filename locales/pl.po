@@ -4541,3 +4541,35 @@ msgstr "tekst"
 
 msgid "{v0} · click to hide the panel"
 msgstr "{v0} · kliknij, by ukryć panel"
+
+msgid "Open a design to play its stitch-out"
+msgstr "Otwórz wzór, by odtworzyć haftowanie"
+
+msgid "Previous thread · ["
+msgstr "Poprzednia nić · ["
+
+msgid "Next thread · ]"
+msgstr "Następna nić · ]"
+
+msgid "Hide the thread renders · F8"
+msgstr "Ukryj podglądy nici · F8"
+
+msgid "Show the thread renders · F8"
+msgstr "Pokaż podglądy nici · F8"
+
+
+msgid "Stitch {i} · thread {k}: {name}"
+msgstr "Ścieg {i} · nić {k}: {name}"
+
+msgid "Thread {k}: {name}{code} · {stitches} stitches\nClick to sew up to the end of it"
+msgstr "Nić {k}: {name}{code} · ściegi: {stitches}\nKliknij, by wyhaftować do jej końca"
+
+msgid "Hide or show the thread renders under the hoop"
+msgstr "Ukryj lub pokaż podglądy nici pod tamborkiem"
+
+
+msgid "F8"
+msgstr "F8"
+
+msgid "Sewing time at {spm} spm, without thread changes · stitch {sewn} of {stitches} · thread {k} of {colors}"
+msgstr "Czas haftowania przy {spm} ściegach/min, bez zmian nici · ścieg {sewn} z {stitches} · nić {k} z {colors}"

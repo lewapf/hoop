@@ -37,6 +37,7 @@ mod symbols;
 mod team;
 mod testpiece;
 mod threadwin;
+mod timeline;
 mod tools;
 mod usbwin;
 mod widgets;
@@ -77,6 +78,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("N"), n!("New project wizard")),
     (n!("F1"), n!("User manual")),
     (n!("F9 / F10"), n!("Hide or show the left / right panel")),
+    (n!("F8"), n!("Hide or show the thread renders under the hoop")),
     (n!("Ctrl+V"), n!("Paste SVG code as artwork")),
     (n!("Space"), n!("Play or pause the stitch-out")),
     (n!("Home / End"), n!("Back to the first stitch / show everything")),
@@ -309,6 +311,10 @@ pub struct HoopApp {
     dock: Dock,
     show_left: bool,
     show_right: bool,
+    /// The timeline under the hoop shows a render of each thread.
+    timeline_open: bool,
+    /// The thread pointed at in the timeline, shown on its own meanwhile.
+    timeline_hover: Option<usize>,
     /// The design check and the stitches it was made for.
     check: Option<crate::check::Report>,
     check_key: u64,
@@ -427,6 +433,8 @@ impl HoopApp {
             dock: Dock::Colors,
             show_left: true,
             show_right: true,
+            timeline_open: true,
+            timeline_hover: None,
             check: None,
             check_key: 0,
             density: false,
@@ -725,6 +733,7 @@ impl HoopApp {
             ("sizes", &mut self.sizes),
             ("show_left", &mut self.show_left),
             ("show_right", &mut self.show_right),
+            ("timeline", &mut self.timeline_open),
         ] {
             if let Some(v) = p.num(key) {
                 *flag = v;
@@ -762,6 +771,7 @@ impl HoopApp {
         self.prefs.set("sizes", self.sizes);
         self.prefs.set("show_left", self.show_left);
         self.prefs.set("show_right", self.show_right);
+        self.prefs.set("timeline", self.timeline_open);
         self.prefs.set("speed", self.speed);
         self.prefs.set("playback", self.play_rate);
         let font = self.fonts.get(self.letter.font).map_or("", |f| f.name.as_str()).to_string();

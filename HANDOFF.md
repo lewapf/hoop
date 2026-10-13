@@ -517,9 +517,11 @@ stitch without the font. `bake()` clears `text`.
 
 ## Docks, rails and the Objects panel (2026-10-13)
 
-- Each dock's tabs are a vertical rail on the window edge (`rail` in
-  shell.rs, `IconTab` = value, label, icon, badge): an icon over a short
-  label, accent bar on the outer edge for the shown page, a red badge for
+- Each dock's tabs are a 32 px vertical rail on the window edge (`rail`
+  in shell.rs, `IconTab` = value, label, icon, badge): an icon over the
+  label turned on its side (`TextShape::with_angle`, which turns around
+  the galley's top-left: reading up on the left rail, down on the right),
+  tab height from the label length, accent bar on the outer edge for the shown page, a red badge for
   Check problems. Clicking the shown page hides the dock (VS Code style);
   the rails replace the old chevron strips. Docks show the page name as
   a title (`dock_title`). `left_tabs()` builds the left pages per mode.

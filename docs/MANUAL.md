@@ -35,8 +35,9 @@ You can change everything afterwards in the panels on the right.
   rotate, mirror, center, pin to hoop; whole hoop, zoom to design, play.
   On the right: the **machine and hoop** picker, the test stitch-out, and
   **Send to machine**.
-- **Left dock:** its pages are icons on the window's left edge, each with
-  its name under it. The Check icon carries the number of problems.
+- **Left dock:** its pages are tabs on the window's left edge, an icon
+  over the name turned on its side. The Check tab carries the number of
+  problems.
   - **Library:** your designs folder, with thumbnails.
   - **Objects:** artwork shapes; this page shows only in the Artwork tab.
   - **Colors:** the threads in sewing order.
@@ -44,10 +45,16 @@ You can change everything afterwards in the panels on the right.
 - **Canvas:** the fabric in the hoop. Drag the design to move it, drag
   the fabric to pan, scroll to zoom, double-click to see the whole hoop.
 - **Right dock:** the settings of the current tab, in pages (Text, Style,
-  Hoop, Stitch, View…), whose icons stand on the window's right edge.
+  Hoop, Stitch, View…), whose tabs stand on the window's right edge.
 - **Hiding a dock:** click the icon of the page it shows to fold the dock
   away; the icons stay, and a click on any of them brings it back on that
   page. `F9` / `F10` do the same.
+- **Timeline:** under the hoop, between the docks. Play, jump between
+  threads, drag along the track (a band per thread) to scrub, and pick the
+  playback speed. Under the bar, a small render of each thread on the
+  fabric; point at one to show that thread alone on the hoop, click it to
+  sew up to its end. The arrow on the right (or `F8`) folds the renders
+  away and leaves the thin bar.
 - **Status bar:** pointer position, then (each with an icon) size, stitch
   count, colors, whether it fits,
   and the result of the design check.
@@ -99,7 +106,7 @@ window, or by clicking a thumbnail in the **Library**.
     shape's thread. Elsewhere it opens as a new design. Right-click for
     both.
 - **Playback:**
-  - `Space` plays the stitch-out; the **Stitch** page sets the speed.
+  - `Space` plays the stitch-out; the timeline under the hoop sets the speed.
   - `,` and `.` step one stitch back or forward.
   - `[` and `]` jump to the previous or next thread.
 - **Hoops:** `1`–`4` pick the machine's first four hoops. The
@@ -512,6 +519,7 @@ Lines left empty stay in English.
 | `1`–`4` | Pick a hoop |
 | `F` / `D` | Whole hoop / zoom to the design |
 | `G` / `J` / `T` / `H` | Grid / jumps / thread texture / density |
+| `F8` | Hide or show the thread renders under the hoop |
 | `F9` / `F10` | Hide or show the left / right panel |
 | `F1` | This manual (Help → User manual) |
 | `?` | Shortcut list |

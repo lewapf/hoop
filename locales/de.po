@@ -4505,3 +4505,35 @@ msgstr "Text"
 
 msgid "{v0} · click to hide the panel"
 msgstr "{v0} · klicken blendet das Feld aus"
+
+msgid "Open a design to play its stitch-out"
+msgstr "Öffne ein Motiv, um den Stickablauf abzuspielen"
+
+msgid "Previous thread · ["
+msgstr "Vorheriger Faden · ["
+
+msgid "Next thread · ]"
+msgstr "Nächster Faden · ]"
+
+msgid "Hide the thread renders · F8"
+msgstr "Fadenvorschauen ausblenden · F8"
+
+msgid "Show the thread renders · F8"
+msgstr "Fadenvorschauen einblenden · F8"
+
+
+msgid "Stitch {i} · thread {k}: {name}"
+msgstr "Stich {i} · Faden {k}: {name}"
+
+msgid "Thread {k}: {name}{code} · {stitches} stitches\nClick to sew up to the end of it"
+msgstr "Faden {k}: {name}{code} · {stitches} Stiche\nKlicken, um bis zu seinem Ende zu sticken"
+
+msgid "Hide or show the thread renders under the hoop"
+msgstr "Fadenvorschauen unter dem Rahmen aus- oder einblenden"
+
+
+msgid "F8"
+msgstr "F8"
+
+msgid "Sewing time at {spm} spm, without thread changes · stitch {sewn} of {stitches} · thread {k} of {colors}"
+msgstr "Stickzeit bei {spm} Stichen/min, ohne Fadenwechsel · Stich {sewn} von {stitches} · Faden {k} von {colors}"

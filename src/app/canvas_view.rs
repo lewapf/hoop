@@ -87,6 +87,9 @@ impl HoopApp {
         if self.demo_running() && press(Modifiers::NONE, Key::Escape) {
             self.stop_demo();
         }
+        if press(Modifiers::NONE, Key::F8) {
+            self.timeline_open = !self.timeline_open;
+        }
         if press(Modifiers::NONE, Key::F9) {
             self.show_left = !self.show_left;
         }
@@ -315,7 +318,7 @@ impl HoopApp {
         }
         if let Some(d) = &self.design {
             let t = Transform::new(d.bounds, &self.setup.at);
-            let style = DesignStyle { textured: self.textured, show_jumps: self.jumps, focus: self.focus, fabric: self.fabric };
+            let style = DesignStyle { textured: self.textured, show_jumps: self.jumps, focus: self.timeline_hover.or(self.focus), fabric: self.fabric };
             canvas::draw_design(&frame, &d.pattern, &d.blocks, &t, self.shown, &style);
             let size = self.setup.at.size(d.size().0, d.size().1);
             let off = !matches!(hoops::fit(self.hoop_size(), d.size(), &self.setup.at), Fit::Inside(_));

@@ -4378,3 +4378,34 @@ msgstr ""
 msgid "hoop center"
 msgstr ""
 
+msgid "Open a design to play its stitch-out"
+msgstr ""
+
+msgid "Previous thread · ["
+msgstr ""
+
+msgid "Next thread · ]"
+msgstr ""
+
+msgid "Hide the thread renders · F8"
+msgstr ""
+
+msgid "Show the thread renders · F8"
+msgstr ""
+
+
+msgid "Stitch {i} · thread {k}: {name}"
+msgstr ""
+
+msgid "Thread {k}: {name}{code} · {stitches} stitches\nClick to sew up to the end of it"
+msgstr ""
+
+msgid "Hide or show the thread renders under the hoop"
+msgstr ""
+
+
+msgid "F8"
+msgstr ""
+
+msgid "Sewing time at {spm} spm, without thread changes · stitch {sewn} of {stitches} · thread {k} of {colors}"
+msgstr ""

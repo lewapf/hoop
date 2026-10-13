@@ -180,50 +180,63 @@ fn segmented<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(
 /// (0 for none).
 pub(super) type IconTab<'a, T> = (T, &'a str, &'static str, usize);
 
-/// A dock's tabs standing on the panel's outer edge, an icon over a short
-/// label each, like an activity bar. Returns the tab clicked: the caller
+/// A dock's tabs standing on the panel's outer edge, like tool windows in
+/// an IDE: an icon over the label turned on its side, reading up on the
+/// left edge and down on the right. Returns the tab clicked: the caller
 /// opens the panel on it, or closes the panel when it was already showing.
 fn rail<T: PartialEq + Copy>(ui: &mut egui::Ui, value: T, open: bool, options: &[IconTab<T>], accent: Color32, left: bool) -> Option<T> {
     let v = ui.visuals().clone();
     let mut clicked = None;
     let w = ui.available_width();
+    const ICON: f32 = 16.0;
     for &(val, label, icon, badge) in options {
-        let (rect, resp) = ui.allocate_exact_size(vec2(w, 50.0), Sense::click());
         let on = open && value == val;
+        let color = |hovered: bool| {
+            if on {
+                accent
+            } else if hovered {
+                v.strong_text_color()
+            } else {
+                v.text_color().gamma_multiply(0.75)
+            }
+        };
+        let g = ui.painter().layout_no_wrap(label.to_string(), egui::FontId::proportional(12.0), v.text_color());
+        let h = 10.0 + ICON + 7.0 + g.size().x + 12.0;
+        let (rect, resp) = ui.allocate_exact_size(vec2(w, h), Sense::click());
+        let ink = color(resp.hovered());
         let p = ui.painter();
-        let tile = rect.shrink2(vec2(4.0, 2.0));
+        let tile = rect.shrink2(vec2(3.0, 2.0));
         if on {
-            p.rect_filled(tile, 7, accent.gamma_multiply(0.22));
+            p.rect_filled(tile, 6, accent.gamma_multiply(0.22));
             let edge = if left { rect.left() + 1.5 } else { rect.right() - 1.5 };
             p.line_segment([egui::pos2(edge, tile.top() + 6.0), egui::pos2(edge, tile.bottom() - 6.0)], egui::Stroke::new(3.0, accent));
         } else if resp.hovered() {
-            p.rect_filled(tile, 7, v.widgets.hovered.weak_bg_fill);
+            p.rect_filled(tile, 6, v.widgets.hovered.weak_bg_fill);
         }
-        let color = if on {
-            accent
-        } else if resp.hovered() {
-            v.strong_text_color()
+        let icon_rect = egui::Rect::from_center_size(egui::pos2(rect.center().x, rect.top() + 10.0 + ICON / 2.0), vec2(ICON, ICON));
+        super::icons::paint(ui, icon, icon_rect, ink);
+        // The label runs from under the icon to the bottom of the tab. A
+        // galley turns around its top-left corner.
+        let (top, bottom) = (icon_rect.bottom() + 7.0, rect.bottom() - 12.0);
+        let half = g.size().y / 2.0;
+        let (pos, angle) = if left {
+            (egui::pos2(rect.center().x - half, bottom), -std::f32::consts::FRAC_PI_2)
         } else {
-            v.text_color().gamma_multiply(0.75)
+            (egui::pos2(rect.center().x + half, top), std::f32::consts::FRAC_PI_2)
         };
-        let icon_rect = egui::Rect::from_center_size(egui::pos2(rect.center().x, rect.top() + 18.0), vec2(20.0, 20.0));
-        super::icons::paint(ui, icon, icon_rect, color);
-        let g = p.layout_no_wrap(label.to_string(), egui::FontId::proportional(10.5), color);
-        let room = tile.width() - 2.0;
-        let clip = egui::Rect::from_center_size(egui::pos2(rect.center().x, rect.top() + 38.0), vec2(room, 14.0));
-        let at = egui::pos2(rect.center().x - g.size().x.min(room) / 2.0, clip.center().y - g.size().y / 2.0);
-        p.with_clip_rect(clip).galley(at, g, color);
+        p.add(egui::epaint::TextShape::new(pos, g, ink).with_override_text_color(ink).with_angle(angle));
         if badge > 0 {
-            let text = p.layout_no_wrap(badge.to_string(), egui::FontId::proportional(10.0), Color32::WHITE);
-            let r = (text.size().x / 2.0 + 4.0).max(7.0);
-            let pill = egui::Rect::from_center_size(icon_rect.right_top() + vec2(2.0, 1.0), vec2(r * 2.0, 14.0));
-            p.rect_filled(pill, 7, super::BAD);
+            let text = p.layout_no_wrap(badge.to_string(), egui::FontId::proportional(9.5), Color32::WHITE);
+            let r = (text.size().x / 2.0 + 3.5).max(6.5);
+            let pill = egui::Rect::from_center_size(icon_rect.right_top() + vec2(1.0, 0.0), vec2(r * 2.0, 13.0));
+            p.rect_filled(pill, 6.5, super::BAD);
             p.galley(pill.center() - text.size() / 2.0, text, Color32::WHITE);
         }
         let tip = if on { t!("{v0} · click to hide the panel", v0 = label) } else { label.to_string() };
         if resp.on_hover_text(tip).clicked() {
             clicked = Some(val);
         }
+        ui.add_space(2.0);
     }
     clicked
 }
@@ -262,7 +275,7 @@ impl HoopApp {
         let rail_frame = egui::Frame::new().fill(fill.lerp_to_gamma(ui.visuals().text_color(), 0.03)).inner_margin(egui::Margin::symmetric(0, 6));
         let accent = self.accent();
         let left_tabs = self.left_tabs();
-        egui::Panel::left("dock-rail").resizable(false).exact_size(60.0).frame(rail_frame).show(ui, |ui| {
+        egui::Panel::left("dock-rail").resizable(false).exact_size(32.0).frame(rail_frame).show(ui, |ui| {
             if let Some(d) = rail(ui, self.dock, self.show_left, &left_tabs, accent, true) {
                 if self.show_left && self.dock == d {
                     self.show_left = false;
@@ -277,7 +290,7 @@ impl HoopApp {
         if !tabs(self.mode).contains(&self.tab[m]) {
             self.tab[m] = tabs(self.mode)[0];
         }
-        egui::Panel::right("controls-rail").resizable(false).exact_size(60.0).frame(rail_frame).show(ui, |ui| {
+        egui::Panel::right("controls-rail").resizable(false).exact_size(32.0).frame(rail_frame).show(ui, |ui| {
             if let Some(t) = rail(ui, self.tab[m], self.show_right, &right_tabs, accent, false) {
                 if self.show_right && self.tab[m] == t {
                     self.show_right = false;
@@ -298,6 +311,9 @@ impl HoopApp {
                 .frame(dock)
                 .show(ui, |ui| self.right_dock(ui, canvas_rect));
         }
+        // Between the docks, so it spans only the hoop.
+        let timeline = egui::Frame::new().fill(fill).inner_margin(egui::Margin { left: 6, right: 8, top: 3, bottom: 3 });
+        egui::Panel::bottom("timeline").resizable(false).frame(timeline).show(ui, |ui| self.timeline(ui));
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
     }
 
