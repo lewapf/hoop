@@ -361,6 +361,15 @@ tile size are prefs (`symbols.favorites`, `symbols.recent`,
 SVG. `shapes_dir()` now prefers the source tree, so a dev build never
 shows the installed, older set.
 
+Library page (same day): breadcrumbs instead of Up, Subfolders
+(`library::scan_deep`, up to 3000 files), kind chips, sort (name, newest,
+smallest, fewest stitches, type), S/M/L tiles (`library.tiles`), a
+"Fits the <hoop>" filter and a fit dot per tile. The thumbnail painter
+also returns `library::Facts` (size, stitches, colors), cached as a .txt
+beside the thumbnail PNG. Sorting by size or the fit filter asks the
+painter for every stitch file in the folder. VP3 files are written but
+can't be read yet, so they don't show in the Library.
+
 ## Ideas queued with the owner
 
 Drag to reorder in the Shapes list, Bezier handles in point editing,

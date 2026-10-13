@@ -61,8 +61,21 @@ Hoop has three tabs, switched with `V`, `L` and `A`:
 Open JEF, DST, EXP, PES or PEC files with `O`, by dropping them on the
 window, or by clicking a thumbnail in the **Library**.
 
-- **Library:** **Up** goes to the folder above, **Folder…** picks
-  another folder, and **Find by name** filters the list.
+- **Library:**
+  - The path at the top is clickable: click a folder name to go there,
+    or **…** for the folders further up. **Folder…** picks another
+    folder.
+  - **Subfolders** also lists the designs in the folders inside this
+    one. **Find by name** filters the list.
+  - **All**, **Embroidery**, **SVG** and **Pictures** show one kind of
+    file.
+  - Sort by name, newest first, smallest design first, fewest stitches
+    first or file type. **S**, **M** and **L** set the tile size.
+  - **Fits the …** shows only embroidery that fits the hoop, as it is or
+    turned a quarter. On each embroidery tile, a green dot means it fits
+    the hoop and an orange one that it doesn't. The size is printed under
+    the name. The tooltip adds stitches, colors, file size and when it
+    changed.
 - **Symbols:** the left panel's **Symbols** page holds 291 ready-made
   silhouettes, sorted into categories (animals, plants, celebrations,
   sport, travel and more).

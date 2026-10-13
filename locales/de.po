@@ -3822,3 +3822,72 @@ msgstr "Wolle"
 
 msgid "Yin yang"
 msgstr "Yin und Yang"
+
+msgid "today"
+msgstr "heute"
+
+msgid "yesterday"
+msgstr "gestern"
+
+msgid "Folders further up"
+msgstr "Ordner weiter oben"
+
+msgid "Subfolders"
+msgstr "Unterordner"
+
+msgid "Also list the designs in the folders inside this one"
+msgstr "Auch die Designs in den Ordnern darin zeigen"
+
+msgid "Every file Hoop can open"
+msgstr "Jede Datei, die Hoop öffnen kann"
+
+msgid "Embroidery"
+msgstr "Stickereien"
+
+msgid "Stitch files: JEF, PES, EXP, DST, PEC"
+msgstr "Stickdateien: JEF, PES, EXP, DST, PEC"
+
+msgid "Drawings to turn into stitches"
+msgstr "Zeichnungen, die zu Stichen werden"
+
+msgid "PNG, JPEG and other pictures to trace"
+msgstr "PNG, JPEG und andere Bilder zum Nachzeichnen"
+
+msgid "Newest first"
+msgstr "Neueste zuerst"
+
+msgid "Smallest design first"
+msgstr "Kleinste Designs zuerst"
+
+msgid "Fewest stitches first"
+msgstr "Wenigste Stiche zuerst"
+
+msgid "File type"
+msgstr "Dateityp"
+
+msgid "Only embroidery that fits the hoop as it is or turned a quarter"
+msgstr "Nur Stickereien, die so oder um 90° gedreht in den Rahmen passen"
+
+msgid "{w} × {h} mm · {s} stitches · {c} colors"
+msgstr "{w} × {h} mm · {s} Stiche · {c} Farben"
+
+msgid "Too big for the {v0}"
+msgstr "Zu groß für {v0}"
+
+msgid "{kb} KB · changed {when}"
+msgstr "{kb} KB · geändert {when}"
+
+msgid "{n} day ago"
+msgid_plural "{n} days ago"
+msgstr[0] "vor {n} Tag"
+msgstr[1] "vor {n} Tagen"
+
+msgid "{n} month ago"
+msgid_plural "{n} months ago"
+msgstr[0] "vor {n} Monat"
+msgstr[1] "vor {n} Monaten"
+
+msgid "{n} year ago"
+msgid_plural "{n} years ago"
+msgstr[0] "vor {n} Jahr"
+msgstr[1] "vor {n} Jahren"

@@ -583,7 +583,28 @@ msgstr ""
 msgid "Back to the default style, keeping the font"
 msgstr ""
 
-msgid "The folder above"
+msgid "today"
+msgstr ""
+
+msgid "yesterday"
+msgstr ""
+
+msgid "{n} day ago"
+msgid_plural "{n} days ago"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} month ago"
+msgid_plural "{n} months ago"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} year ago"
+msgid_plural "{n} years ago"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Folders further up"
 msgstr ""
 
 msgid "Folder…"
@@ -595,10 +616,76 @@ msgstr ""
 msgid "Reload"
 msgstr ""
 
+msgid "Subfolders"
+msgstr ""
+
+msgid "Also list the designs in the folders inside this one"
+msgstr ""
+
 msgid "Find by name"
 msgstr ""
 
+msgid "All"
+msgstr ""
+
+msgid "Every file Hoop can open"
+msgstr ""
+
+msgid "Embroidery"
+msgstr ""
+
+msgid "Stitch files: JEF, PES, EXP, DST, PEC"
+msgstr ""
+
+msgid "Drawings to turn into stitches"
+msgstr ""
+
+msgid "PNG, JPEG and other pictures to trace"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Newest first"
+msgstr ""
+
+msgid "Smallest design first"
+msgstr ""
+
+msgid "Fewest stitches first"
+msgstr ""
+
+msgid "File type"
+msgstr ""
+
+msgid "Large tiles"
+msgstr ""
+
+msgid "Medium tiles"
+msgstr ""
+
+msgid "Small tiles"
+msgstr ""
+
+msgid "Fits the {v0}"
+msgstr ""
+
+msgid "Only embroidery that fits the hoop as it is or turned a quarter"
+msgstr ""
+
 msgid "No designs here. Hoop shows JEF, DST, EXP, PES, PEC, SVG and pictures."
+msgstr ""
+
+msgid "{w} × {h} mm"
+msgstr ""
+
+msgid "{w} × {h} mm · {s} stitches · {c} colors"
+msgstr ""
+
+msgid "Too big for the {v0}"
+msgstr ""
+
+msgid "{kb} KB · changed {when}"
 msgstr ""
 
 msgid "User manual"
@@ -712,9 +799,6 @@ msgid "Open a JEF, DST, EXP, PES or PEC file, or drop one on the hoop."
 msgstr ""
 
 msgid "Recent"
-msgstr ""
-
-msgid "Fits the {v0}"
 msgstr ""
 
 msgid "Closest edge is {m:.1} mm away."
@@ -1148,9 +1232,6 @@ msgid "{v0} shapes picked. Drag them on the hoop or nudge with the arrow keys."
 msgstr ""
 
 msgid "Transform"
-msgstr ""
-
-msgid "Name"
 msgstr ""
 
 msgid "Move X"
@@ -1726,9 +1807,6 @@ msgstr ""
 msgid "Find: cat, Christmas, sport…"
 msgstr ""
 
-msgid "All"
-msgstr ""
-
 msgid "Favorites ({v0})"
 msgstr ""
 
@@ -1742,15 +1820,6 @@ msgid "Smallest first"
 msgstr ""
 
 msgid "Smallest first: the bold symbols that still stitch cleanly when small"
-msgstr ""
-
-msgid "Large tiles"
-msgstr ""
-
-msgid "Medium tiles"
-msgstr ""
-
-msgid "Small tiles"
 msgstr ""
 
 msgid "Only ones that stitch small"
@@ -2062,9 +2131,6 @@ msgid "Sent {file} to {v1}"
 msgstr ""
 
 msgid "{v0} is ejected. You can pull it out."
-msgstr ""
-
-msgid "{w} × {h} mm"
 msgstr ""
 
 msgid "Too small"

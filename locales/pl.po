@@ -3851,3 +3851,75 @@ msgstr "Włóczka"
 
 msgid "Yin yang"
 msgstr "Yin i yang"
+
+msgid "today"
+msgstr "dziś"
+
+msgid "yesterday"
+msgstr "wczoraj"
+
+msgid "Folders further up"
+msgstr "Foldery wyżej"
+
+msgid "Subfolders"
+msgstr "Podfoldery"
+
+msgid "Also list the designs in the folders inside this one"
+msgstr "Pokaż też projekty z folderów w tym folderze"
+
+msgid "Every file Hoop can open"
+msgstr "Każdy plik, który Hoop otworzy"
+
+msgid "Embroidery"
+msgstr "Hafty"
+
+msgid "Stitch files: JEF, PES, EXP, DST, PEC"
+msgstr "Pliki haftu: JEF, PES, EXP, DST, PEC"
+
+msgid "Drawings to turn into stitches"
+msgstr "Rysunki do zamiany na ściegi"
+
+msgid "PNG, JPEG and other pictures to trace"
+msgstr "PNG, JPEG i inne obrazy do obrysowania"
+
+msgid "Newest first"
+msgstr "Najnowsze najpierw"
+
+msgid "Smallest design first"
+msgstr "Najmniejsze projekty najpierw"
+
+msgid "Fewest stitches first"
+msgstr "Najmniej ściegów najpierw"
+
+msgid "File type"
+msgstr "Typ pliku"
+
+msgid "Only embroidery that fits the hoop as it is or turned a quarter"
+msgstr "Tylko hafty, które mieszczą się w tamborku wprost lub obrócone o 90°"
+
+msgid "{w} × {h} mm · {s} stitches · {c} colors"
+msgstr "{w} × {h} mm · ściegi: {s} · kolory: {c}"
+
+msgid "Too big for the {v0}"
+msgstr "Za duży na {v0}"
+
+msgid "{kb} KB · changed {when}"
+msgstr "{kb} KB · zmieniony {when}"
+
+msgid "{n} day ago"
+msgid_plural "{n} days ago"
+msgstr[0] "{n} dzień temu"
+msgstr[1] "{n} dni temu"
+msgstr[2] "{n} dni temu"
+
+msgid "{n} month ago"
+msgid_plural "{n} months ago"
+msgstr[0] "{n} miesiąc temu"
+msgstr[1] "{n} miesiące temu"
+msgstr[2] "{n} miesięcy temu"
+
+msgid "{n} year ago"
+msgid_plural "{n} years ago"
+msgstr[0] "{n} rok temu"
+msgstr[1] "{n} lata temu"
+msgstr[2] "{n} lat temu"

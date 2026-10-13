@@ -28,6 +28,17 @@ pub struct Entry {
     pub path: PathBuf,
     pub name: String,
     pub kind: Kind,
+    pub modified: Option<std::time::SystemTime>,
+    pub bytes: u64,
+}
+
+/// What a stitch file holds, shown under its picture and used for sorting.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Facts {
+    pub w_mm: f32,
+    pub h_mm: f32,
+    pub stitches: usize,
+    pub colors: usize,
 }
 
 pub fn kind_of(path: &Path) -> Option<Kind> {
@@ -55,10 +66,31 @@ pub fn scan(dir: &Path) -> Vec<Entry> {
             if name.starts_with('.') {
                 return None;
             }
-            Some(Entry { kind: kind_of(&path)?, path, name })
+            let meta = e.metadata().ok();
+            Some(Entry { kind: kind_of(&path)?, path, name, modified: meta.as_ref().and_then(|m| m.modified().ok()), bytes: meta.map_or(0, |m| m.len()) })
         })
         .collect();
     out.sort_by(|a, b| (a.kind != Kind::Folder).cmp(&(b.kind != Kind::Folder)).then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())));
+    out
+}
+
+/// Every file Hoop can open in `dir` and the folders below it, up to
+/// `limit` of them, without the folders themselves.
+pub fn scan_deep(dir: &Path, limit: usize) -> Vec<Entry> {
+    let mut out = Vec::new();
+    let mut todo = vec![(dir.to_path_buf(), 0)];
+    while let Some((d, depth)) = todo.pop() {
+        for e in scan(&d) {
+            if e.kind == Kind::Folder {
+                if depth < 8 {
+                    todo.push((e.path, depth + 1));
+                }
+            } else if out.len() < limit {
+                out.push(e);
+            }
+        }
+    }
+    out.sort_by_key(|e| e.name.to_lowercase());
     out
 }
 
@@ -74,6 +106,39 @@ fn cache_path(path: &Path) -> Option<PathBuf> {
     SIZE.hash(&mut h);
     let base = std::env::var_os("XDG_CACHE_HOME").map(PathBuf::from).or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
     Some(base.join("hoop/thumbs").join(format!("{:016x}.png", h.finish())))
+}
+
+/// Size, stitches and colors of a stitch file, from the cache next to its
+/// thumbnail or read now.
+pub fn facts(path: &Path) -> Option<Facts> {
+    if kind_of(path)? != Kind::Stitches {
+        return None;
+    }
+    let cached = cache_path(path).map(|c| c.with_extension("txt"));
+    if let Some(c) = &cached
+        && let Ok(text) = std::fs::read_to_string(c)
+    {
+        let v: Vec<f32> = text.split_whitespace().filter_map(|w| w.parse().ok()).collect();
+        if let [w_mm, h_mm, stitches, colors] = v[..] {
+            return Some(Facts { w_mm, h_mm, stitches: stitches as usize, colors: colors as usize });
+        }
+    }
+    let name = path.file_name()?.to_string_lossy().into_owned();
+    let p = formats::read(&name, &std::fs::read(path).ok()?).ok()?;
+    let b = p.bounds();
+    let f = Facts {
+        w_mm: ((b.2 - b.0) / 10.0).max(0.0),
+        h_mm: ((b.3 - b.1) / 10.0).max(0.0),
+        stitches: p.cmds.iter().filter(|c| **c == Cmd::Stitch).count(),
+        colors: p.blocks().len(),
+    };
+    if let Some(c) = &cached {
+        if let Some(dir) = c.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let _ = std::fs::write(c, format!("{} {} {} {}", f.w_mm, f.h_mm, f.stitches, f.colors));
+    }
+    Some(f)
 }
 
 fn read_png(path: &Path) -> Option<Thumb> {
@@ -201,7 +266,7 @@ fn picture_thumb(path: &Path) -> Option<Thumb> {
 /// Draws thumbnails one at a time on a background thread.
 pub struct Painter {
     ask: Sender<PathBuf>,
-    pub done: Receiver<(PathBuf, Option<Thumb>)>,
+    pub done: Receiver<(PathBuf, Option<Thumb>, Option<Facts>)>,
 }
 
 impl Painter {
@@ -211,7 +276,8 @@ impl Painter {
         std::thread::spawn(move || {
             while let Ok(path) = rx.recv() {
                 let t = thumbnail(&path);
-                if tx.send((path, t)).is_err() {
+                let f = facts(&path);
+                if tx.send((path, t, f)).is_err() {
                     break;
                 }
                 wake();
@@ -241,6 +307,21 @@ mod tests {
     }
 
     #[test]
+    fn facts_give_size_stitches_and_colors() {
+        let dir = std::env::temp_dir().join(format!("hoop-facts-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("heart.jef");
+        std::fs::write(&file, include_bytes!("../tests/fixtures/heart_5x5_fill.jef")).unwrap();
+        let f = facts(&file).unwrap();
+        // A 5 × 5 inch heart.
+        assert!((120.0..=135.0).contains(&f.w_mm) && (120.0..=135.0).contains(&f.h_mm), "{f:?}");
+        assert!(f.stitches > 100 && f.colors == 1, "{f:?}");
+        assert_eq!(facts(&dir.join("missing.svg")), None);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn scan_lists_folders_first_and_skips_other_files() {
         let dir = std::env::temp_dir().join(format!("hoop-lib-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -248,8 +329,11 @@ mod tests {
         for f in ["b.jef", "A.svg", "notes.txt", ".hidden.jef", "c.PNG"] {
             std::fs::write(dir.join(f), b"").unwrap();
         }
+        std::fs::write(dir.join("Zoo/d.dst"), b"").unwrap();
         let names: Vec<String> = scan(&dir).into_iter().map(|e| e.name).collect();
         assert_eq!(names, ["Zoo", "A.svg", "b.jef", "c.PNG"]);
+        let deep: Vec<String> = scan_deep(&dir, 100).into_iter().map(|e| e.name).collect();
+        assert_eq!(deep, ["A.svg", "b.jef", "c.PNG", "d.dst"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
