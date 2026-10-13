@@ -270,16 +270,17 @@ impl HoopApp {
                 let (scale, _) = artwork::frame(art, s);
                 let mut sel: Vec<usize> = self.sel.clone();
                 sel.sort_unstable();
-                let mut fresh = Vec::new();
-                for i in sel {
-                    let mut copy = s.shapes[i].clone();
-                    copy.dx += 50.0 / scale;
-                    copy.dy += 50.0 / scale;
-                    copy.name = t!("{name} copy", name = copy.name);
-                    s.shapes.push(copy);
-                    fresh.push(s.shapes.len() - 1);
-                }
-                self.sel = fresh;
+                let copies = sel
+                    .into_iter()
+                    .map(|i| {
+                        let mut copy = s.shapes[i].clone();
+                        copy.dx += 50.0 / scale;
+                        copy.dy += 50.0 / scale;
+                        copy.name = t!("{name} copy", name = copy.name);
+                        copy
+                    })
+                    .collect();
+                self.sel = s.add_copies(copies).collect();
                 self.edit_points = false;
             }
             Arrange::Delete => {
@@ -429,6 +430,7 @@ impl HoopApp {
         let Some(s) = &mut self.art else { return };
         let layer = own.layer;
         let n = s.shapes.iter().filter(|e| e.name.starts_with(name)).count();
+        let id = s.fresh_id();
         s.shapes.push(ShapeEdit {
             source: usize::MAX,
             own: Some(own),
@@ -446,6 +448,7 @@ impl HoopApp {
             pinned: false,
             made,
             group: None,
+            id,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
@@ -1196,10 +1199,18 @@ impl HoopApp {
                         *inner = pct / 100.0;
                     }
                 }
-                artwork::Made::Line { bend, .. } => {
+                artwork::Made::Line { bend, from, to, .. } => {
                     let mut pct = *bend * 100.0;
                     if slider_row(ui, t!("Bend"), &mut pct, -50.0..=50.0, " %", 0).changed() {
                         *bend = pct / 100.0;
+                    }
+                    if from.is_some() || to.is_some() {
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new(t!("Its green ends follow the shapes they are on.")).size(12.0));
+                            if ui.button(t!("Detach")).clicked() {
+                                (*from, *to) = (None, None);
+                            }
+                        });
                     }
                 }
             }

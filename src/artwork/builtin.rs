@@ -104,12 +104,23 @@ pub enum Made {
         inner: f32,
     },
     /// A line between two points, bowed sideways by `bend` times its
-    /// length (negative bends the other way).
+    /// length (negative bends the other way). An end drawn onto a shape
+    /// stays attached to it as that shape moves.
     Line {
         a: Pt,
         b: Pt,
         bend: f32,
+        from: Option<Anchor>,
+        to: Option<Anchor>,
     },
+}
+
+/// Where a line end is attached: a shape (by `ShapeEdit::id`) and the point
+/// in that shape's own coordinates, before its move.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Anchor {
+    pub shape: u32,
+    pub at: Pt,
 }
 
 impl Made {
@@ -153,7 +164,7 @@ pub fn made_lines(m: &Made) -> Vec<(Contour, bool)> {
                 })
                 .collect()
         }
-        Made::Line { a, b, bend } => {
+        Made::Line { a, b, bend, .. } => {
             let (dx, dy) = (b.0 - a.0, b.1 - a.1);
             // A quadratic curve through the bowed middle.
             let ctrl = ((a.0 + b.0) / 2.0 - dy * bend * 2.0, (a.1 + b.1) / 2.0 + dx * bend * 2.0);
@@ -204,10 +215,10 @@ mod tests {
 
     #[test]
     fn lines_bend_sideways_and_keep_their_ends() {
-        let straight = made_lines(&Made::Line { a: (0.0, 0.0), b: (100.0, 0.0), bend: 0.0 });
+        let straight = made_lines(&Made::Line { a: (0.0, 0.0), b: (100.0, 0.0), bend: 0.0, from: None, to: None });
         assert_eq!(straight[0].0, vec![(0.0, 0.0), (100.0, 0.0)]);
         assert!(!straight[0].1);
-        let bent = &made_lines(&Made::Line { a: (0.0, 0.0), b: (100.0, 0.0), bend: 0.25 })[0].0;
+        let bent = &made_lines(&Made::Line { a: (0.0, 0.0), b: (100.0, 0.0), bend: 0.25, from: None, to: None })[0].0;
         assert_eq!((bent[0], *bent.last().unwrap()), ((0.0, 0.0), (100.0, 0.0)));
         // Bowed a quarter of its length at the middle.
         assert!((bent[12].1 - 25.0).abs() < 0.5, "{:?}", bent[12]);

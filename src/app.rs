@@ -869,6 +869,11 @@ impl eframe::App for HoopApp {
         if !dragging {
             self.keep_groups_together();
         }
+        // Lines attached to shapes follow them, live while dragging.
+        if let (Some(art), Some(s)) = (&self.artwork, &mut self.art) {
+            s.fix_ids();
+            s.follow_lines(art);
+        }
         if self.mode == Mode::Artwork && self.art.is_some() && self.art_built != self.art && !(self.art_slow && dragging) {
             self.regenerate_art(ctx);
         }

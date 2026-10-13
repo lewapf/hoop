@@ -4090,3 +4090,9 @@ msgid "{n} shape · {picked} picked"
 msgid_plural "{n} shapes · {picked} picked"
 msgstr[0] "{n} Form · {picked} gewählt"
 msgstr[1] "{n} Formen · {picked} gewählt"
+
+msgid "Its green ends follow the shapes they are on."
+msgstr "Die grünen Enden folgen den Formen, an denen sie hängen."
+
+msgid "Detach"
+msgstr "Lösen"

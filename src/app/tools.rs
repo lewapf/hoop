@@ -51,6 +51,8 @@ pub(super) struct Tools {
     drag: Option<((f32, f32), (f32, f32))>,
     /// Where a line end would snap to under the pointer, on the hoop.
     snap: Option<(f32, f32)>,
+    /// The shape the line being drawn starts on.
+    from: Option<artwork::Anchor>,
     pub form: Form,
     /// Rectangle corner rounding, a share of the shorter side.
     pub round: f32,
@@ -64,7 +66,7 @@ pub(super) struct Tools {
 
 impl Default for Tools {
     fn default() -> Self {
-        Tools { tool: None, paint: None, drag: None, snap: None, form: Form::Rect, round: 0.0, sides: 6, points: 5, inner: 0.45, bend: 0.0 }
+        Tools { tool: None, paint: None, drag: None, snap: None, from: None, form: Form::Rect, round: 0.0, sides: 6, points: 5, inner: 0.45, bend: 0.0 }
     }
 }
 
@@ -282,23 +284,28 @@ impl HoopApp {
 
     /// Where a line end lands: on the nearest shape outline within reach,
     /// else under the pointer. On the hoop.
-    fn snapped(&self, frame: &Frame, p: egui::Pos2) -> ((f32, f32), bool) {
-        let (Some(m), Some(art), Some(s)) = (self.draw_map(), &self.artwork, &self.art) else { return (frame.to_world(p), false) };
-        let mut best: Option<(egui::Pos2, f32)> = None;
-        for e in s.shapes.iter().filter(|e| !e.hidden && s.layers.get(e.layer).is_none_or(|l| l.enabled)) {
+    /// Also gives the anchor that keeps the end on that shape.
+    fn snapped(&self, frame: &Frame, p: egui::Pos2) -> ((f32, f32), Option<artwork::Anchor>) {
+        let (Some(m), Some(art), Some(s)) = (self.draw_map(), &self.artwork, &self.art) else { return (frame.to_world(p), None) };
+        let mut best: Option<(egui::Pos2, f32, usize)> = None;
+        for (i, e) in s.shapes.iter().enumerate().filter(|(_, e)| !e.hidden && s.layers.get(e.layer).is_none_or(|l| l.enabled)) {
             for (c, closed) in e.lines(art) {
                 let pts: Vec<egui::Pos2> = c.iter().map(|&u| frame.to_screen_pt(m.to_world(u))).collect();
                 if let Some(hit) = nearest_on(&pts, closed, p)
                     && hit.1 <= SNAP
                     && best.is_none_or(|b| hit.1 < b.1)
                 {
-                    best = Some(hit);
+                    best = Some((hit.0, hit.1, i));
                 }
             }
         }
         match best {
-            Some((q, _)) => (frame.to_world(q), true),
-            None => (frame.to_world(p), false),
+            Some((q, _, i)) => {
+                let w = frame.to_world(q);
+                let e = &s.shapes[i];
+                (w, Some(artwork::Anchor { shape: e.id, at: e.unplace(art, m.to_user(w)) }))
+            }
+            None => (frame.to_world(p), None),
         }
     }
 
@@ -306,11 +313,12 @@ impl HoopApp {
         let Some(m) = self.draw_map() else { return false };
         let pos = response.interact_pointer_pos().or(response.hover_pos());
         let hit = pos.map(|p| self.snapped(frame, p));
-        self.tools.snap = hit.filter(|h| h.1).map(|h| h.0);
+        self.tools.snap = hit.filter(|h| h.1.is_some()).map(|h| h.0);
         if response.drag_started()
-            && let Some((w, _)) = hit
+            && let Some((w, anchor)) = hit
         {
             self.tools.drag = Some((w, w));
+            self.tools.from = anchor;
         }
         if let (Some(d), Some((w, _))) = (&mut self.tools.drag, hit) {
             d.1 = w;
@@ -319,7 +327,9 @@ impl HoopApp {
             && let Some((a, b)) = self.tools.drag.take()
             && (a.0 - b.0).hypot(a.1 - b.1) >= 20.0
         {
-            let made = Made::Line { a: m.to_user(a), b: m.to_user(b), bend: self.tools.bend };
+            // The end let go over a shape stays on it too.
+            let to = hit.and_then(|h| h.1);
+            let made = Made::Line { a: m.to_user(a), b: m.to_user(b), bend: self.tools.bend, from: self.tools.from.take(), to };
             let own = artwork::Shape { kind: artwork::Kind::Stroke { width: 12.0 / m.scale }, lines: artwork::made_lines(&made), layer: self.paint_layer() };
             self.push_shape(t!("Line"), own, Some(made));
         }
@@ -364,6 +374,20 @@ impl HoopApp {
                 painter.text(c + vec2(9.0, -9.0), egui::Align2::LEFT_BOTTOM, t!("Start"), egui::FontId::proportional(12.0), Color32::WHITE);
             }
         }
+        // Attached ends of picked lines, as small rings.
+        if let (Some(m), Some(art), Some(s)) = (self.shape_map(), &self.artwork, &self.art) {
+            for &i in &self.sel {
+                let Some(e) = s.shapes.get(i) else { continue };
+                if let Some(Made::Line { a, b, from, to, .. }) = e.made {
+                    for (p, on) in [(a, from.is_some()), (b, to.is_some())] {
+                        if on {
+                            let c = frame.to_screen_pt(m.to_world(e.place(art, p)));
+                            painter.circle(c, 5.0, Color32::from_rgb(0x55, 0xc2, 0x8c), egui::Stroke::new(1.5, Color32::WHITE));
+                        }
+                    }
+                }
+            }
+        }
         let Some(tool) = self.tools.tool else { return };
         let stroke = egui::Stroke::new(1.5, accent);
         match (tool, self.tools.drag) {
@@ -396,7 +420,7 @@ impl HoopApp {
             }
             (ShapeTool::Line, drag) => {
                 if let (Some((a, b)), Some(m)) = (drag, self.draw_map()) {
-                    let made = Made::Line { a: m.to_user(a), b: m.to_user(b), bend: self.tools.bend };
+                    let made = Made::Line { a: m.to_user(a), b: m.to_user(b), bend: self.tools.bend, from: None, to: None };
                     let pts: Vec<egui::Pos2> = artwork::made_lines(&made)[0].0.iter().map(|&p| frame.to_screen_pt(m.to_world(p))).collect();
                     painter.add(egui::Shape::line(pts, egui::Stroke::new(2.0, accent)));
                     painter.circle_stroke(frame.to_screen_pt(a), 4.0, stroke);

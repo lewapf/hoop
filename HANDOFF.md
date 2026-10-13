@@ -416,6 +416,15 @@ Testing with real input: /dev/uinput is writable here. A scratch script
 injected keys were not (wtype special keys and uinput keys got lost or
 repeated), so keys were checked by reading code.
 
+## Attached lines (2026-10-13)
+
+`ShapeEdit::id` is a stable id (`fresh_id`, `fix_ids` run every frame
+makes copies unique; `add_copies` gives duplicates and pastes new ids
+and moves line attachments onto the copies). `Made::Line` has
+`from`/`to: Option<Anchor>` (shape id plus a point in that shape's own
+coordinates). `ArtSettings::follow_lines` runs every frame and moves
+attached ends via `place`/`unplace`; a missing shape lets the end go.
+
 ## Ideas queued with the owner
 
 Bezier handles in point editing,

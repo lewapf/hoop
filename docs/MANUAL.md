@@ -155,7 +155,10 @@ clip art work best; photos do not.
     30 mm across. The strip beside the palette sets round corners, sides,
     star points and inner size for the next one.
   - **Line** (`W`): drag a line. Its ends snap to shape outlines, so it
-    can join two shapes; **Bend** in the strip bows it into a curve.
+    can join two shapes; **Bend** in the strip bows it into a curve. An
+    end drawn onto a shape stays attached: move or turn the shape and the
+    line follows (picked lines show attached ends as green rings).
+    **Detach** in the Form card, or editing the line's points, frees it.
   - **Fill bucket** (`K`): click a shape to give it the current thread.
     `Alt+click` takes a shape's thread as the current one.
   - **Stitch angle** and **Start point** of the picked shape, as on the

@@ -137,6 +137,80 @@ impl ArtSettings {
         order.iter().enumerate().any(|(a, &b)| a != b).then_some(order)
     }
 
+    /// An id no shape has yet.
+    pub fn fresh_id(&self) -> u32 {
+        self.shapes.iter().map(|e| e.id).max().unwrap_or(0) + 1
+    }
+
+    /// Adds copies of shapes on top with ids of their own. Lines attached
+    /// to shapes copied along stay attached to the copies; ends attached
+    /// to anything else come loose. Returns the copies' indices.
+    pub fn add_copies(&mut self, copies: Vec<ShapeEdit>) -> std::ops::Range<usize> {
+        let first = self.shapes.len();
+        let mut map = std::collections::HashMap::new();
+        let mut copies = copies;
+        for (next, c) in (self.fresh_id()..).zip(copies.iter_mut()) {
+            map.insert(c.id, next);
+            c.id = next;
+        }
+        for c in &mut copies {
+            if let Some(Made::Line { from, to, .. }) = &mut c.made {
+                for end in [from, to] {
+                    *end = end.and_then(|an| map.get(&an.shape).map(|&id| Anchor { shape: id, ..an }));
+                }
+            }
+        }
+        self.shapes.extend(copies);
+        first..self.shapes.len()
+    }
+
+    /// Gives copies that share an id (from duplicating or breaking apart)
+    /// new ones; the first keeps it. Returns whether any changed.
+    pub fn fix_ids(&mut self) -> bool {
+        let mut seen = std::collections::HashSet::new();
+        let mut next = self.fresh_id();
+        let mut changed = false;
+        for e in &mut self.shapes {
+            if !seen.insert(e.id) {
+                e.id = next;
+                next += 1;
+                changed = true;
+            }
+        }
+        changed
+    }
+
+    /// Moves the attached ends of lines to where their shapes now are.
+    /// Ends whose shape is gone stay where they were and come loose.
+    /// Returns whether anything moved.
+    pub fn follow_lines(&mut self, art: &Artwork) -> bool {
+        let mut changed = false;
+        for k in 0..self.shapes.len() {
+            let Some(Made::Line { a, b, bend, from, to }) = self.shapes[k].made else { continue };
+            if from.is_none() && to.is_none() {
+                continue;
+            }
+            let line = &self.shapes[k];
+            let end = |p: Pt, anchor: Option<Anchor>| -> (Pt, Option<Anchor>) {
+                let Some(an) = anchor else { return (p, None) };
+                match self.shapes.iter().find(|e| e.id == an.shape) {
+                    Some(t) => (line.unplace(art, t.place(art, an.at)), anchor),
+                    None => (p, None),
+                }
+            };
+            let (na, nf) = end(a, from);
+            let (nb, nt) = end(b, to);
+            let moved = |p: Pt, q: Pt| (p.0 - q.0).abs() > 1e-3 || (p.1 - q.1).abs() > 1e-3;
+            if moved(na, a) || moved(nb, b) || nf != from || nt != to {
+                let e = &mut self.shapes[k];
+                e.made = Some(Made::Line { a: na, b: nb, bend, from: nf, to: nt });
+                e.remake();
+                changed = true;
+            }
+        }
+        changed
+    }
+
     /// Drops the names of groups with no shapes left.
     pub fn prune_groups(&mut self) {
         let shapes = &self.shapes;
@@ -182,6 +256,9 @@ pub struct ShapeEdit {
     pub made: Option<Made>,
     /// The group it belongs to, by `Group::id`.
     pub group: Option<u32>,
+    /// Stays the same as the list is rearranged, for lines attached to it.
+    /// Unique within a drawing (`ArtSettings::fix_ids` sees to that).
+    pub id: u32,
 }
 
 impl ShapeEdit {
@@ -208,6 +285,7 @@ impl ShapeEdit {
             pinned: false,
             made: None,
             group: None,
+            id: i as u32 + 1,
         }
     }
 
@@ -702,6 +780,47 @@ mod tests {
         t.prune_groups();
         assert_eq!(t.groups.len(), 1);
         assert_eq!(t.members(7), vec![0, 1]);
+    }
+
+    #[test]
+    fn attached_lines_follow_their_shapes() {
+        let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20">
+            <rect x="0" y="0" width="20" height="20" fill="#ff0000"/>
+            <rect x="80" y="0" width="20" height="20" fill="#0000ff"/>
+        </svg>"##;
+        let art = parse("two.svg", svg.as_bytes()).unwrap();
+        let mut s = ArtSettings::for_artwork(&art);
+        // A line from the red square's right edge to the blue one's left edge.
+        let made = Made::Line {
+            a: (20.0, 10.0),
+            b: (80.0, 10.0),
+            bend: 0.0,
+            from: Some(Anchor { shape: s.shapes[0].id, at: (20.0, 10.0) }),
+            to: Some(Anchor { shape: s.shapes[1].id, at: (80.0, 10.0) }),
+        };
+        let mut line = ShapeEdit::of(&art, 0);
+        line.source = usize::MAX;
+        line.own = Some(Shape { kind: Kind::Stroke { width: 1.0 }, lines: made_lines(&made), layer: 0 });
+        line.made = Some(made);
+        line.id = s.fresh_id();
+        s.shapes.push(line);
+        assert!(!s.follow_lines(&art));
+        // Blue moves down 30: the line's far end goes with it, the near end stays.
+        s.shapes[1].dy = 30.0;
+        assert!(s.follow_lines(&art));
+        let ends = &s.shapes[2].own.as_ref().unwrap().lines[0].0;
+        assert_eq!((ends[0], *ends.last().unwrap()), ((20.0, 10.0), (80.0, 40.0)));
+        // Red goes away: its end stays put and comes loose.
+        s.shapes.remove(0);
+        s.follow_lines(&art);
+        assert!(matches!(s.shapes[1].made, Some(Made::Line { from: None, to: Some(_), .. })));
+        // Copies sharing an id get new ones.
+        let copy = s.shapes[0].clone();
+        s.shapes.push(copy);
+        assert!(s.fix_ids());
+        let mut ids: Vec<u32> = s.shapes.iter().map(|e| e.id).collect();
+        ids.dedup();
+        assert_eq!(ids.len(), 3);
     }
 
     #[test]

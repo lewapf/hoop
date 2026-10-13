@@ -47,7 +47,7 @@ impl HoopApp {
         }
         let (scale, _) = artwork::frame(art, s);
         let mut ids: Vec<(u32, u32)> = Vec::new();
-        let first = s.shapes.len();
+        let mut copies = Vec::new();
         for c in &self.shape_clip {
             let mut e: ShapeEdit = c.clone();
             e.name = t!("{name} copy", name = e.name);
@@ -69,9 +69,9 @@ impl HoopApp {
                     id
                 }
             });
-            s.shapes.push(e);
+            copies.push(e);
         }
-        self.sel = (first..s.shapes.len()).collect();
+        self.sel = s.add_copies(copies).collect();
         self.edit_points = false;
     }
 

@@ -1346,6 +1346,12 @@ msgstr ""
 msgid "Bend"
 msgstr ""
 
+msgid "Its green ends follow the shapes they are on."
+msgstr ""
+
+msgid "Detach"
+msgstr ""
+
 msgid "Add"
 msgstr ""
 
