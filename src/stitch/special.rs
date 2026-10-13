@@ -114,7 +114,8 @@ fn stipple(st: &mut Stitcher, glyph: &[Contour], even_odd: bool, mask: &[MaskSha
             let k = y * w + x;
             seen[k] = true;
             fine[(2 * y + 1) * fw + 2 * x + 1] = 1.0;
-            fine[((2 * j + 1) as usize + dj as usize) * fw + (2 * i + 1) as usize + di as usize] = 1.0;
+            // The link between the two cells, halfway; signed, since the step may be back.
+            fine[(2 * j + 1 + dj) as usize * fw + (2 * i + 1 + di) as usize] = 1.0;
             stack.push(k);
         }
     }
