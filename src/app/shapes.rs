@@ -887,7 +887,11 @@ impl HoopApp {
                     e.pinned = false;
                 }
             }
-            ui.label(RichText::new(t!("{v0} shapes · {v1} picked", v0 = s.shapes.len(), v1 = self.sel.len())).size(12.0).color(muted));
+            ui.label(
+                RichText::new(tn!(s.shapes.len(), "{n} shape · {picked} picked", "{n} shapes · {picked} picked", picked = self.sel.len()))
+                    .size(12.0)
+                    .color(muted),
+            );
         });
         ui.separator();
         if let Some(op) = group_op {
@@ -911,6 +915,7 @@ impl HoopApp {
             }
         }
         let mut rows: Vec<(Row, egui::Rect)> = Vec::new();
+        let mut menus: Vec<(Row, egui::Response)> = Vec::new();
         let mut clicked = None;
         let mut drag_from = None;
         let mut group_clicked: Option<u32> = None;
@@ -921,6 +926,7 @@ impl HoopApp {
             for row in list {
                 let (rect, resp) = ui.allocate_exact_size(vec2(width, 24.0), Sense::click_and_drag());
                 rows.push((row, rect));
+                menus.push((row, resp.clone()));
                 let painter = ui.painter();
                 if let Row::Head(g) = row {
                     let members = s.members(g);
@@ -1120,6 +1126,20 @@ impl HoopApp {
             } else {
                 self.select_only(Some(i));
             }
+        }
+        // Right-click a row for the shape menu; it picks the row first.
+        for (row, resp) in &menus {
+            if resp.secondary_clicked() {
+                let picked = match *row {
+                    Row::Shape(i) => vec![i],
+                    Row::Head(g) => self.art.as_ref().map_or(Vec::new(), |s| s.members(g)),
+                };
+                if !picked.iter().all(|i| self.sel.contains(i)) || matches!(row, Row::Head(_)) {
+                    self.select_only(None);
+                    self.sel = picked;
+                }
+            }
+            resp.context_menu(|ui| self.shape_menu(ui));
         }
         if let Some(name) = self.list_add.take() {
             self.add_built_in(name);

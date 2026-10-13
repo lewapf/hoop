@@ -155,7 +155,7 @@ fn segmented<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(
     }
 }
 
-fn item(ui: &mut egui::Ui, enabled: bool, text: &str, keys: &str) -> bool {
+pub(super) fn item(ui: &mut egui::Ui, enabled: bool, text: &str, keys: &str) -> bool {
     let clicked = ui.add_enabled(enabled, egui::Button::new(text).shortcut_text(keys)).clicked();
     if clicked {
         ui.close();

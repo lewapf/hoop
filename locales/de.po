@@ -4002,3 +4002,91 @@ msgstr "Strg+G / Strg+Umschalt+G"
 
 msgid "Group / ungroup the selected shapes"
 msgstr "Gewählte Formen gruppieren / Gruppierung aufheben"
+
+msgid "Paste"
+msgstr "Einfügen"
+
+msgid "Use its thread for new shapes"
+msgstr "Sein Garn für neue Formen nehmen"
+
+msgid "Middles across"
+msgstr "Mitten waagerecht"
+
+msgid "One shape aligns to the drawing's frame."
+msgstr "Eine Form richtet sich am Rahmen der Zeichnung aus."
+
+msgid "Turn 90° right"
+msgstr "90° nach rechts drehen"
+
+msgid "Turn 90° left"
+msgstr "90° nach links drehen"
+
+msgid "Flip left to right"
+msgstr "Waagerecht spiegeln"
+
+msgid "Flip upside down"
+msgstr "Senkrecht spiegeln"
+
+msgid "Reset move, size and turn"
+msgstr "Verschiebung, Größe und Drehung zurücksetzen"
+
+msgid "Rename group"
+msgstr "Gruppe umbenennen"
+
+msgid "Unpin from its sewing place"
+msgstr "Vom Platz in der Stickfolge lösen"
+
+msgid "Pin to its sewing place"
+msgstr "An seinen Platz in der Stickfolge heften"
+
+msgid "Change its form…"
+msgstr "Form ändern…"
+
+msgid "Clear stitch angles and start point"
+msgstr "Stichwinkel und Startpunkt entfernen"
+
+msgid "Pick everything in this thread"
+msgstr "Alles in diesem Garn wählen"
+
+msgid "Pick the others instead"
+msgstr "Auswahl umkehren"
+
+msgid "Hide the others"
+msgstr "Die anderen ausblenden"
+
+msgid "Properties…"
+msgstr "Eigenschaften…"
+
+msgid "Add a symbol…"
+msgstr "Symbol hinzufügen…"
+
+msgid "Rotate 90° right"
+msgstr "90° nach rechts drehen"
+
+msgid "Rotate 90° left"
+msgstr "90° nach links drehen"
+
+msgid "Play the stitch-out"
+msgstr "Stickablauf abspielen"
+
+msgid "Show the whole hoop"
+msgstr "Ganzen Rahmen zeigen"
+
+msgid "Zoom to the design"
+msgstr "Auf das Design zoomen"
+
+msgid "Hide the grid"
+msgstr "Raster ausblenden"
+
+msgid "Show the grid"
+msgstr "Raster zeigen"
+
+msgid "Copied {n} shape"
+msgid_plural "Copied {n} shapes"
+msgstr[0] "{n} Form kopiert"
+msgstr[1] "{n} Formen kopiert"
+
+msgid "{n} shape · {picked} picked"
+msgid_plural "{n} shapes · {picked} picked"
+msgstr[0] "{n} Form · {picked} gewählt"
+msgstr[1] "{n} Formen · {picked} gewählt"

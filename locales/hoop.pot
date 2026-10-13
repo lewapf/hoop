@@ -309,6 +309,206 @@ msgstr ""
 msgid "too much"
 msgstr ""
 
+msgid "Copied {n} shape"
+msgid_plural "Copied {n} shapes"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{name} copy"
+msgstr ""
+
+msgid "Group {n}"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Paste"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Thread"
+msgstr ""
+
+msgid "Use its thread for new shapes"
+msgstr ""
+
+msgid "Thread's look"
+msgstr ""
+
+msgid "Arrange"
+msgstr ""
+
+msgid "Bring to front"
+msgstr ""
+
+msgid "Bring forward"
+msgstr ""
+
+msgid "Send backward"
+msgstr ""
+
+msgid "Send to back"
+msgstr ""
+
+msgid "Align"
+msgstr ""
+
+msgid "Left edges"
+msgstr ""
+
+msgid "Middles across"
+msgstr ""
+
+msgid "Right edges"
+msgstr ""
+
+msgid "Top edges"
+msgstr ""
+
+msgid "Middles up and down"
+msgstr ""
+
+msgid "Bottom edges"
+msgstr ""
+
+msgid "One shape aligns to the drawing's frame."
+msgstr ""
+
+msgid "Transform"
+msgstr ""
+
+msgid "Turn 90° right"
+msgstr ""
+
+msgid "Turn 90° left"
+msgstr ""
+
+msgid "Flip left to right"
+msgstr ""
+
+msgid "Flip upside down"
+msgstr ""
+
+msgid "Reset move, size and turn"
+msgstr ""
+
+msgid "Rename group"
+msgstr ""
+
+msgid "Ungroup"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Unpin from its sewing place"
+msgstr ""
+
+msgid "Pin to its sewing place"
+msgstr ""
+
+msgid "Change its form…"
+msgstr ""
+
+msgid "Edit points"
+msgstr ""
+
+msgid "Add stitch angle"
+msgstr ""
+
+msgid "Set start point"
+msgstr ""
+
+msgid "Clear stitch angles and start point"
+msgstr ""
+
+msgid "Pick everything in this thread"
+msgstr ""
+
+msgid "Pick the others instead"
+msgstr ""
+
+msgid "Hide"
+msgstr ""
+
+msgid "Hide the others"
+msgstr ""
+
+msgid "Show all shapes"
+msgstr ""
+
+msgid "Properties…"
+msgstr ""
+
+msgid "Select all shapes"
+msgstr ""
+
+msgid "Add shape"
+msgstr ""
+
+msgid "Add a symbol…"
+msgstr ""
+
+msgid "Draw"
+msgstr ""
+
+msgid "Pen"
+msgstr ""
+
+msgid "Rectangle"
+msgstr ""
+
+msgid "Ellipse"
+msgstr ""
+
+msgid "Polygon"
+msgstr ""
+
+msgid "Star"
+msgstr ""
+
+msgid "Line"
+msgstr ""
+
+msgid "Rotate 90° right"
+msgstr ""
+
+msgid "Rotate 90° left"
+msgstr ""
+
+msgid "Mirror"
+msgstr ""
+
+msgid "Center in hoop"
+msgstr ""
+
+msgid "Pin to hoop"
+msgstr ""
+
+msgid "Pause"
+msgstr ""
+
+msgid "Play the stitch-out"
+msgstr ""
+
+msgid "Show the whole hoop"
+msgstr ""
+
+msgid "Zoom to the design"
+msgstr ""
+
+msgid "Hide the grid"
+msgstr ""
+
+msgid "Show the grid"
+msgstr ""
+
 msgid "Hoop"
 msgstr ""
 
@@ -363,9 +563,6 @@ msgstr ""
 msgid "Click for a corner, drag for a curve · click the first point to close · Enter ends a line · Esc stops"
 msgstr ""
 
-msgid "Draw"
-msgstr ""
-
 msgid "Trace a picture by hand: put it behind the hoop, then draw shapes over it with the pen."
 msgstr ""
 
@@ -376,9 +573,6 @@ msgid "Remove"
 msgstr ""
 
 msgid "How strongly the picture shows"
-msgstr ""
-
-msgid "Pen"
 msgstr ""
 
 msgid "Draw a shape or line point by point"
@@ -849,9 +1043,6 @@ msgstr ""
 msgid "{v0:.0} × {v1:.0} mm"
 msgstr ""
 
-msgid "Pin to hoop"
-msgstr ""
-
 msgid "P · keep this design where it is and start the next part"
 msgstr ""
 
@@ -876,16 +1067,10 @@ msgstr ""
 msgid "Rotate right · R"
 msgstr ""
 
-msgid "Mirror"
-msgstr ""
-
 msgid "{v0}°{v1}  ·  X {v2}  Y {v3} mm"
 msgstr ""
 
 msgid "Stitch-out"
-msgstr ""
-
-msgid "Pause"
 msgstr ""
 
 msgid "Replay"
@@ -1076,19 +1261,10 @@ msgstr ""
 msgid "Settings are back to the start."
 msgstr ""
 
-msgid "{name} copy"
-msgstr ""
-
-msgid "Group {n}"
-msgstr ""
-
 msgid "Too many points to show. Press Simplify first."
 msgstr ""
 
 msgid "Open an SVG or a picture, or start from shapes, to see its parts here."
-msgstr ""
-
-msgid "Add shape"
 msgstr ""
 
 msgid "Optimize…"
@@ -1097,13 +1273,7 @@ msgstr ""
 msgid "Name shapes by thread, break apart compound fills, join touching lines, drop specks"
 msgstr ""
 
-msgid "Ungroup"
-msgstr ""
-
 msgid "Turn the group back into loose shapes · Ctrl+Shift+G"
-msgstr ""
-
-msgid "Group"
 msgstr ""
 
 msgid "Put the picked shapes in a group, like a folder of layers · Ctrl+G"
@@ -1117,8 +1287,10 @@ msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by 
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "{v0} shapes · {v1} picked"
-msgstr ""
+msgid "{n} shape · {picked} picked"
+msgid_plural "{n} shapes · {picked} picked"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Show or hide the whole group"
 msgstr ""
@@ -1180,9 +1352,6 @@ msgstr ""
 msgid "Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."
 msgstr ""
 
-msgid "Arrange"
-msgstr ""
-
 msgid "Front"
 msgstr ""
 
@@ -1234,13 +1403,7 @@ msgstr ""
 msgid "Align bottom edges"
 msgstr ""
 
-msgid "Copy"
-msgstr ""
-
 msgid "Duplicate · Ctrl+D"
-msgstr ""
-
-msgid "Delete"
 msgstr ""
 
 msgid "One shape aligns to the drawing's frame; several align to each other."
@@ -1250,9 +1413,6 @@ msgid "Thread color"
 msgstr ""
 
 msgid "Stitch with this color's thread (set in Threads)"
-msgstr ""
-
-msgid "Thread's look"
 msgstr ""
 
 msgid "Fill style"
@@ -1271,9 +1431,6 @@ msgid "Satin suits parts under about 7 mm wide, tatami wider ones, outline anyth
 msgstr ""
 
 msgid "{v0} shapes picked. Drag them on the hoop or nudge with the arrow keys."
-msgstr ""
-
-msgid "Transform"
 msgstr ""
 
 msgid "Move X"
@@ -1298,9 +1455,6 @@ msgid "{v0:.1} × {v1:.1} mm on the fabric"
 msgstr ""
 
 msgid "Points"
-msgstr ""
-
-msgid "Edit points"
 msgstr ""
 
 msgid "Drag points on the hoop. Right-click a point to remove it, double-click the outline to add one."
@@ -1395,19 +1549,7 @@ msgstr ""
 msgid "Redo"
 msgstr ""
 
-msgid "Select all shapes"
-msgstr ""
-
 msgid "Deselect"
-msgstr ""
-
-msgid "Duplicate"
-msgstr ""
-
-msgid "Hide"
-msgstr ""
-
-msgid "Show all shapes"
 msgstr ""
 
 msgid "Settings…"
@@ -1446,46 +1588,13 @@ msgstr ""
 msgid "Rotate left"
 msgstr ""
 
-msgid "Center in hoop"
-msgstr ""
-
 msgid "Clear pinned parts"
 msgstr ""
 
 msgid "Insert"
 msgstr ""
 
-msgid "Bring to front"
-msgstr ""
-
-msgid "Bring forward"
-msgstr ""
-
-msgid "Send backward"
-msgstr ""
-
-msgid "Send to back"
-msgstr ""
-
-msgid "Align"
-msgstr ""
-
-msgid "Left edges"
-msgstr ""
-
 msgid "Centers across"
-msgstr ""
-
-msgid "Right edges"
-msgstr ""
-
-msgid "Top edges"
-msgstr ""
-
-msgid "Middles up and down"
-msgstr ""
-
-msgid "Bottom edges"
 msgstr ""
 
 msgid "Send to USB…"
@@ -2110,21 +2219,6 @@ msgstr ""
 msgid "{code} {name} · click to mark as mine"
 msgstr ""
 
-msgid "Rectangle"
-msgstr ""
-
-msgid "Ellipse"
-msgstr ""
-
-msgid "Polygon"
-msgstr ""
-
-msgid "Star"
-msgstr ""
-
-msgid "Line"
-msgstr ""
-
 msgid "Start"
 msgstr ""
 
@@ -2179,9 +2273,6 @@ msgstr ""
 msgid "Stitching"
 msgstr ""
 
-msgid "Add stitch angle"
-msgstr ""
-
 msgid "Drag a line across the shape; its fill rows follow it. Several lines split the fill into parts."
 msgstr ""
 
@@ -2189,9 +2280,6 @@ msgid "{n} angle line"
 msgid_plural "{n} angle lines"
 msgstr[0] ""
 msgstr[1] ""
-
-msgid "Set start point"
-msgstr ""
 
 msgid "Where the needle comes in, to save a jump or hide the tie-in"
 msgstr ""
@@ -2236,9 +2324,6 @@ msgid "Too small"
 msgstr ""
 
 msgid "Hoop {name} · key {v1}"
-msgstr ""
-
-msgid "Thread"
 msgstr ""
 
 msgid "Name or text"

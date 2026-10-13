@@ -402,6 +402,20 @@ and group drags (a shape joins the group it lands in). A click on the
 hoop picks the whole group; Alt picks one shape. Optimize only merges
 within one group.
 
+## Right-click menus (2026-10-13)
+
+`app/context.rs`: `canvas_menu` (shape menu, empty-fabric menu, design
+menu in Viewer/Lettering) on the canvas response, and `shape_menu` on
+Objects rows too. `right_click_pick` picks what is under the pointer
+(with its group) first. Shapes copy into `shape_clip` and put the marker
+"hoop-shapes" on the system clipboard; Ctrl+V pastes them only when that
+marker comes back as the paste text, so pasting SVG code still works.
+
+Testing with real input: /dev/uinput is writable here. A scratch script
+(uinput mouse plus `hl.dsp.cursor.move`) clicked and dragged reliably;
+injected keys were not (wtype special keys and uinput keys got lost or
+repeated), so keys were checked by reading code.
+
 ## Ideas queued with the owner
 
 Bezier handles in point editing,

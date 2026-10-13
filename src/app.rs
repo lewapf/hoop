@@ -12,6 +12,7 @@ use crate::hoops::{self, Fit, Placement};
 mod artwork_panel;
 mod canvas_view;
 mod checks;
+mod context;
 mod demo;
 mod draw;
 mod history;
@@ -264,6 +265,9 @@ pub struct HoopApp {
     guides: Vec<(bool, f32)>,
     /// A row of the Objects list being dragged to restack it.
     list_drag: Option<usize>,
+    /// Shapes copied with Ctrl+C or the right-click menu, and their groups.
+    shape_clip: Vec<artwork::ShapeEdit>,
+    shape_clip_groups: Vec<artwork::Group>,
     /// Dragging a whole group in Objects, by its id.
     group_drag: Option<u32>,
     /// Groups folded shut in Objects.
@@ -374,6 +378,8 @@ impl HoopApp {
             sel: Vec::new(),
             guides: Vec::new(),
             list_drag: None,
+            shape_clip: Vec::new(),
+            shape_clip_groups: Vec::new(),
             group_drag: None,
             folded: Default::default(),
             renaming: None,
@@ -794,6 +800,7 @@ impl eframe::App for HoopApp {
                 self.paste_svg(&text);
             }
         }
+        self.clipboard_events(ctx);
         let dropped = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf()));
         if let Some(path) = dropped {
             self.open(ctx, &path);

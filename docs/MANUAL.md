@@ -191,6 +191,22 @@ clip art work best; photos do not.
     of it.
   - A group is sewn as one block: nothing from outside is sewn in the
     middle of it. Inside, its shapes still share thread runs as usual.
+- **Right-click menu:** right-click a shape on the hoop or a row in
+  Objects (it picks it first) for everything you can do to it:
+  - Copy, paste, duplicate, delete. `Ctrl+C` and `Ctrl+V` copy shapes
+    too, also into another drawing; SVG code on the clipboard still opens
+    as artwork.
+  - Thread, its stitch look (fill style, outline, appliqué, leave
+    fabric), and using its thread for new shapes.
+  - Arrange and align; turn 90°, flip either way, reset its move.
+  - Group, ungroup, rename the group; pin to its sewing place.
+  - Change its form (shapes from the tool palette), edit points, add a
+    stitch angle or start point, or clear them.
+  - Pick everything in the same thread, or the others instead; hide it,
+    hide the others, show everything; Properties opens the Shape page.
+  - On empty fabric: paste, select all, add a built-in shape or symbol,
+    pick a drawing tool, and the view. In Viewer and Lettering the menu
+    rotates, mirrors, centers, pins and plays the design.
 - **Optimize…** (top of Objects) tidies the list, with a preview of the
   result before you apply it. By default it names shapes by thread
   ("Black line 3"), merges shapes of one thread and look into one object

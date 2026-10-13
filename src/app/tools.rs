@@ -575,6 +575,11 @@ impl HoopApp {
             return;
         }
         let press = |k: egui::Key| ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
+        // Esc leaves a drawing tool before it deselects the shape just drawn.
+        if (self.tools.tool.is_some() || self.pen.on || self.edit_points) && self.pen.points.is_empty() && press(egui::Key::Escape) {
+            self.set_pick(Pick::Select);
+            return;
+        }
         if press(egui::Key::B) {
             self.set_pick(Pick::Pen);
         }

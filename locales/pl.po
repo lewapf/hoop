@@ -4034,3 +4034,93 @@ msgstr "Ctrl+G / Ctrl+Shift+G"
 
 msgid "Group / ungroup the selected shapes"
 msgstr "Grupuj / rozgrupuj zaznaczone kształty"
+
+msgid "Paste"
+msgstr "Wklej"
+
+msgid "Use its thread for new shapes"
+msgstr "Użyj jej nici dla nowych kształtów"
+
+msgid "Middles across"
+msgstr "Środki w poziomie"
+
+msgid "One shape aligns to the drawing's frame."
+msgstr "Jeden kształt wyrównuje się do ramki rysunku."
+
+msgid "Turn 90° right"
+msgstr "Obróć o 90° w prawo"
+
+msgid "Turn 90° left"
+msgstr "Obróć o 90° w lewo"
+
+msgid "Flip left to right"
+msgstr "Odbij w poziomie"
+
+msgid "Flip upside down"
+msgstr "Odbij w pionie"
+
+msgid "Reset move, size and turn"
+msgstr "Cofnij przesunięcie, rozmiar i obrót"
+
+msgid "Rename group"
+msgstr "Zmień nazwę grupy"
+
+msgid "Unpin from its sewing place"
+msgstr "Odepnij od miejsca w kolejności szycia"
+
+msgid "Pin to its sewing place"
+msgstr "Przypnij do miejsca w kolejności szycia"
+
+msgid "Change its form…"
+msgstr "Zmień kształt…"
+
+msgid "Clear stitch angles and start point"
+msgstr "Usuń kąty ściegu i punkt startu"
+
+msgid "Pick everything in this thread"
+msgstr "Zaznacz wszystko w tej nici"
+
+msgid "Pick the others instead"
+msgstr "Odwróć zaznaczenie"
+
+msgid "Hide the others"
+msgstr "Ukryj pozostałe"
+
+msgid "Properties…"
+msgstr "Właściwości…"
+
+msgid "Add a symbol…"
+msgstr "Dodaj symbol…"
+
+msgid "Rotate 90° right"
+msgstr "Obróć o 90° w prawo"
+
+msgid "Rotate 90° left"
+msgstr "Obróć o 90° w lewo"
+
+msgid "Play the stitch-out"
+msgstr "Odtwórz haftowanie"
+
+msgid "Show the whole hoop"
+msgstr "Pokaż cały tamborek"
+
+msgid "Zoom to the design"
+msgstr "Przybliż do projektu"
+
+msgid "Hide the grid"
+msgstr "Ukryj siatkę"
+
+msgid "Show the grid"
+msgstr "Pokaż siatkę"
+
+msgid "Copied {n} shape"
+msgid_plural "Copied {n} shapes"
+msgstr[0] "Skopiowano {n} kształt"
+msgstr[1] "Skopiowano {n} kształty"
+msgstr[2] "Skopiowano {n} kształtów"
+
+msgid "{n} shape · {picked} picked"
+msgid_plural "{n} shapes · {picked} picked"
+msgstr[0] "{n} kształt · zaznaczone: {picked}"
+msgstr[1] "{n} kształty · zaznaczone: {picked}"
+msgstr[2] "{n} kształtów · zaznaczone: {picked}"

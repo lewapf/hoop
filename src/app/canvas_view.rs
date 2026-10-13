@@ -231,6 +231,9 @@ impl HoopApp {
             || self.pen_input(ui, &response, &frame);
         // Artwork shapes: pick, drag, resize, turn, edit points, rubber band.
         let handled_double = !picking && self.shape_input(ui, &response, &frame);
+        if !picking {
+            self.right_click_pick(&response, &frame);
+        }
         let hover_shape = if picking { None } else { self.shape_hover(ui, &response, &frame) };
 
         // Interaction: drag the design to move it, drag elsewhere to pan, scroll to zoom.
@@ -362,6 +365,9 @@ impl HoopApp {
         self.stitch_edit_overlay(&painter, &frame);
         self.pen_overlay(&painter, &frame);
         self.tool_palette(ui.ctx(), rect);
+        if !self.edit_points && self.tools.tool.is_none() && !self.pen.on {
+            response.context_menu(|ui| self.canvas_menu(ui, rect));
+        }
         self.demo_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
