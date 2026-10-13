@@ -138,7 +138,22 @@ pub(super) fn slider_row(ui: &mut egui::Ui, label: &str, v: &mut f32, range: std
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fits: bool, selected: bool, accent: Color32, muted: Color32) -> egui::Response {
+/// A hoop to pick: its name, size and note, and on the right a small
+/// drawing of it to scale (against the `biggest` side of any hoop, in mm)
+/// with the design's footprint in it.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn hoop_tile(
+    ui: &mut egui::Ui,
+    w: f32,
+    i: usize,
+    h: &hoops::Hoop,
+    fits: bool,
+    selected: bool,
+    design: Option<(f32, f32)>,
+    biggest: f32,
+    accent: Color32,
+    muted: Color32,
+) -> egui::Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(w, 58.0), Sense::click());
     let v = ui.visuals();
     let fill = if selected {
@@ -153,14 +168,25 @@ pub(super) fn hoop_tile(ui: &mut egui::Ui, w: f32, i: usize, h: &hoops::Hoop, fi
     p.rect(rect, 8, fill, stroke, egui::StrokeKind::Inside);
     let text = v.text_color();
     let x = rect.left() + 10.0;
-    p.text(egui::pos2(x, rect.top() + 9.0), egui::Align2::LEFT_TOP, h.name, egui::FontId::proportional(15.0), text);
+    let name = p.text(egui::pos2(x, rect.top() + 9.0), egui::Align2::LEFT_TOP, h.name, egui::FontId::proportional(15.0), text);
     // Number keys pick the first four hoops.
     if i < 4 {
-        p.text(egui::pos2(rect.right() - 10.0, rect.top() + 10.0), egui::Align2::RIGHT_TOP, (i + 1).to_string(), egui::FontId::monospace(11.0), muted);
+        p.text(name.right_top() + vec2(5.0, 2.0), egui::Align2::LEFT_TOP, (i + 1).to_string(), egui::FontId::monospace(10.0), muted.gamma_multiply(0.8));
     }
     p.text(egui::pos2(x, rect.top() + 28.0), egui::Align2::LEFT_TOP, t!("{w} × {h} mm", w = h.w, h = h.h), egui::FontId::monospace(12.0), muted);
     let (note, c) = if fits { (crate::i18n::tr(h.note), muted) } else { (t!("Too small"), BAD) };
     p.text(egui::pos2(x, rect.top() + 43.0), egui::Align2::LEFT_TOP, note, egui::FontId::proportional(11.0), c);
+    // The hoop to scale, and the design in its middle.
+    let room = 42.0;
+    let k = room / biggest;
+    let center = egui::pos2(rect.right() - 8.0 - room / 2.0, rect.center().y);
+    let hoop = egui::Rect::from_center_size(center, vec2(h.w * k, h.h * k));
+    p.rect_stroke(hoop, 3, egui::Stroke::new(1.2, if selected { accent } else { muted }), egui::StrokeKind::Inside);
+    if let Some((dw, dh)) = design {
+        let shape = egui::Rect::from_center_size(center, vec2(dw * k, dh * k));
+        let ink = if fits { if selected { accent } else { text.gamma_multiply(0.7) } } else { BAD };
+        p.rect_filled(shape, 1, ink.gamma_multiply(0.45));
+    }
     if i < 4 { resp.on_hover_text(t!("Hoop {name} · key {v1}", name = h.name, v1 = i + 1)) } else { resp }
 }
 

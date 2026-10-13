@@ -54,6 +54,9 @@ impl HoopApp {
         if tab == Tab::Design {
             self.stitch_tools_card(ui);
         }
+        // When the design fits, the hoop card says so in a line; problems get
+        // a box of their own at the top.
+        let mut fit_line: Option<(String, String, Vec<(String, FitFix)>)> = None;
         if tab == Tab::Hoop
             && let Some(d) = &self.design
         {
@@ -105,91 +108,64 @@ impl HoopApp {
                 Fit::Inside(_) => {}
             }
             let mut chosen = None;
-            egui::Frame::new()
-                .fill(color.gamma_multiply(0.12))
-                .stroke(egui::Stroke::new(1.0, color.gamma_multiply(0.5)))
-                .corner_radius(10)
-                .inner_margin(12)
-                .show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    ui.horizontal(|ui| {
-                        let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
-                        ui.painter().circle_filled(r.center(), 5.0, color);
-                        ui.label(RichText::new(title).color(color).strong());
-                    });
-                    ui.label(RichText::new(detail).color(muted));
-                    if !actions.is_empty() {
-                        ui.horizontal_wrapped(|ui| {
-                            for (label, fix) in &actions {
-                                if ui.button(label).clicked() {
-                                    chosen = Some(*fix);
-                                }
-                            }
+            if let Fit::Inside(m) = fit {
+                fit_line = Some((title.to_string(), t!("{m:.1} mm to spare", m = m), std::mem::take(&mut actions)));
+            }
+            if !ok {
+                egui::Frame::new()
+                    .fill(color.gamma_multiply(0.12))
+                    .stroke(egui::Stroke::new(1.0, color.gamma_multiply(0.5)))
+                    .corner_radius(10)
+                    .inner_margin(12)
+                    .show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.horizontal(|ui| {
+                            let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
+                            ui.painter().circle_filled(r.center(), 5.0, color);
+                            ui.label(RichText::new(title).color(color).strong());
                         });
-                    }
-                });
-            ui.add_space(10.0);
+                        ui.label(RichText::new(detail).color(muted));
+                        if !actions.is_empty() {
+                            ui.horizontal_wrapped(|ui| {
+                                for (label, fix) in &actions {
+                                    if ui.button(label).clicked() {
+                                        chosen = Some(*fix);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                ui.add_space(10.0);
+            }
             if let Some(fix) = chosen {
                 self.apply_fix(fix, canvas_rect);
             }
         }
 
-        if tab == Tab::Hoop && (self.design.is_some() || !self.pinned.is_empty()) {
-            let mut remove = None;
-            let mut clear = false;
-            let mut pin = false;
-            card(ui, t!("Combine"), accent, |ui| {
-                if self.pinned.is_empty() {
-                    ui.label(
-                        RichText::new(t!(
-                            "Pin this design to the hoop, then make or open the next part, like a name under a logo. Saving saves all of them as one file."
-                        ))
-                        .size(12.0)
-                        .color(muted),
-                    );
-                }
-                for (i, p) in self.pinned.iter().enumerate() {
+        if tab == Tab::Hoop {
+            let mut chosen = None;
+            card(ui, t!("Hoop"), accent, |ui| {
+                if let Some((title, spare, actions)) = &fit_line {
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new(format!("{}", i + 1)).monospace().color(muted));
-                        ui.label(&p.name);
-                        ui.label(
-                            RichText::new(t!("{v0:.0} × {v1:.0} mm", v0 = (p.bounds.2 - p.bounds.0) / 10.0, v1 = (p.bounds.3 - p.bounds.1) / 10.0))
-                                .size(12.0)
-                                .color(muted),
-                        );
+                        let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
+                        ui.painter().circle_filled(r.center(), 4.5, OK);
+                        ui.label(RichText::new(title).color(OK));
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.small_button(t!("Remove")).clicked() {
-                                remove = Some(i);
-                            }
+                            ui.label(RichText::new(spare).size(12.0).color(muted)).on_hover_text(t!("From the design to the closest edge of the sewing area"));
                         });
                     });
+                    if !actions.is_empty() {
+                        ui.horizontal(|ui| {
+                            ui.add_space(14.0);
+                            for (label, fix) in actions {
+                                if ui.small_button(label).clicked() {
+                                    chosen = Some(*fix);
+                                }
+                            }
+                        });
+                    }
+                    ui.add_space(6.0);
                 }
-                ui.horizontal(|ui| {
-                    if ui
-                        .add_enabled(self.design.is_some(), egui::Button::new(t!("Pin to hoop")))
-                        .on_hover_text(t!("P · keep this design where it is and start the next part"))
-                        .clicked()
-                    {
-                        pin = true;
-                    }
-                    if !self.pinned.is_empty() && ui.button(t!("Clear pinned")).clicked() {
-                        clear = true;
-                    }
-                });
-            });
-            if let Some(i) = remove {
-                self.pinned.remove(i);
-            }
-            if clear {
-                self.pinned.clear();
-            }
-            if pin {
-                self.pin();
-            }
-        }
-
-        if tab == Tab::Hoop {
-            card(ui, t!("Hoop"), accent, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(t!("Machine"));
                     let current = hoops::machine_index();
@@ -208,6 +184,12 @@ impl HoopApp {
                 });
                 ui.add_space(4.0);
                 let design_size = self.design.as_ref().map(|d| d.size());
+                // The design as it sits, turned or not, in mm, for the tiles' drawings.
+                let footprint = self.design.as_ref().map(|d| {
+                    let (w, h) = self.setup.at.size(d.size().0, d.size().1);
+                    (w / 10.0, h / 10.0)
+                });
+                let biggest = hoops::list().iter().fold(1.0f32, |m, h| m.max(h.w).max(h.h));
                 let w = (ui.available_width() - 8.0) / 2.0;
                 for row in hoops::list().chunks(2).enumerate() {
                     ui.horizontal(|ui| {
@@ -215,7 +197,7 @@ impl HoopApp {
                             let i = row.0 * 2 + j;
                             let fits =
                                 design_size.is_none_or(|s| !matches!(hoops::fit((h.w, h.h), s, &Placement::default()), Fit::TooBig { fits_turned: false, .. }));
-                            if hoop_tile(ui, w, i, h, fits, self.setup.hoop == i, accent, muted).clicked() {
+                            if hoop_tile(ui, w, i, h, fits, self.setup.hoop == i, footprint, biggest, accent, muted).clicked() {
                                 self.change(|s| s.hoop = i);
                                 self.fit_view(canvas_rect, false);
                             }
@@ -223,6 +205,9 @@ impl HoopApp {
                     });
                 }
             });
+            if let Some(fix) = chosen {
+                self.apply_fix(fix, canvas_rect);
+            }
 
             card(ui, t!("Position"), accent, |ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
@@ -266,6 +251,66 @@ impl HoopApp {
                     });
                 });
             });
+        }
+
+        if tab == Tab::Hoop && (self.design.is_some() || !self.pinned.is_empty()) {
+            let mut remove = None;
+            let mut clear = false;
+            let mut pin = false;
+            let body = |ui: &mut egui::Ui| {
+                if self.pinned.is_empty() {
+                    ui.label(
+                        RichText::new(t!(
+                            "Pin this design to the hoop, then make or open the next part, like a name under a logo. Saving saves all of them as one file."
+                        ))
+                        .size(12.0)
+                        .color(muted),
+                    );
+                }
+                for (i, p) in self.pinned.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new(format!("{}", i + 1)).monospace().color(muted));
+                        ui.label(&p.name);
+                        ui.label(
+                            RichText::new(t!("{v0:.0} × {v1:.0} mm", v0 = (p.bounds.2 - p.bounds.0) / 10.0, v1 = (p.bounds.3 - p.bounds.1) / 10.0))
+                                .size(12.0)
+                                .color(muted),
+                        );
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.small_button(t!("Remove")).clicked() {
+                                remove = Some(i);
+                            }
+                        });
+                    });
+                }
+                ui.horizontal(|ui| {
+                    if ui
+                        .add_enabled(self.design.is_some(), egui::Button::new(t!("Pin to hoop")))
+                        .on_hover_text(t!("P · keep this design where it is and start the next part"))
+                        .clicked()
+                    {
+                        pin = true;
+                    }
+                    if !self.pinned.is_empty() && ui.button(t!("Clear pinned")).clicked() {
+                        clear = true;
+                    }
+                });
+            };
+            // Folded until something is pinned: most designs are one part.
+            if self.pinned.is_empty() {
+                card_folded(ui, t!("Combine"), accent, body);
+            } else {
+                card(ui, t!("Combine"), accent, body);
+            }
+            if let Some(i) = remove {
+                self.pinned.remove(i);
+            }
+            if clear {
+                self.pinned.clear();
+            }
+            if pin {
+                self.pin();
+            }
         }
 
         if tab == Tab::Stitch && self.design.is_some() {

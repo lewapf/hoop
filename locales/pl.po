@@ -4663,3 +4663,9 @@ msgstr "Zaznacz wszystko"
 
 msgid "Group · Ctrl+G"
 msgstr "Grupuj · Ctrl+G"
+
+msgid "{m:.1} mm to spare"
+msgstr "{m:.1} mm zapasu"
+
+msgid "From the design to the closest edge of the sewing area"
+msgstr "Od wzoru do najbliższej krawędzi pola haftu"

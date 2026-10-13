@@ -4505,3 +4505,9 @@ msgstr ""
 
 msgid "Group · Ctrl+G"
 msgstr ""
+
+msgid "{m:.1} mm to spare"
+msgstr ""
+
+msgid "From the design to the closest edge of the sewing area"
+msgstr ""
