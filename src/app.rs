@@ -9,6 +9,7 @@ use crate::export::{self, Out};
 use crate::formats::{self, Block, Cmd, Pattern};
 use crate::hoops::{self, Fit, Placement};
 
+mod arttext;
 mod artwork_panel;
 mod canvas_view;
 mod checks;
@@ -274,6 +275,8 @@ pub struct HoopApp {
     /// The state when last opened or saved, to tell unsaved changes.
     clean: Snapshot,
     closing: project::Closing,
+    /// Put the cursor in the Text card on its next showing (new text).
+    focus_text: bool,
     /// The window title last set, and the one the open design asks for.
     title: String,
     title_base: String,
@@ -394,6 +397,7 @@ impl HoopApp {
             project_mode: Mode::Viewer,
             clean: Snapshot { setup: Setup { hoop: 0, at: Placement::default() }, letter: Settings::default(), art: None, stitches: None },
             closing: Default::default(),
+            focus_text: false,
             title: String::new(),
             title_base: "Hoop".into(),
             shape_clip: Vec::new(),

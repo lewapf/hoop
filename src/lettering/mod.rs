@@ -234,12 +234,12 @@ impl Default for Settings {
     }
 }
 
-/// The laid-out letter outlines, as `generate` stitches them.
-#[cfg(test)]
-pub(crate) fn outlines(font: &FontSource, s: &Settings) -> Vec<Vec<Contour>> {
-    let (bytes, index) = font.bytes().unwrap();
-    let face = ttf_parser::Face::parse(&bytes, index).unwrap();
-    layout(&face, s)
+/// The laid-out letter outlines, as `generate` stitches them (shape, arc,
+/// spacing and all): one list of contours per glyph, in 0.1 mm, y down.
+pub fn outlines(font: &FontSource, s: &Settings) -> Result<Vec<Vec<Contour>>, String> {
+    let (bytes, index) = font.bytes()?;
+    let face = ttf_parser::Face::parse(&bytes, index).map_err(|_| format!("{} isn't a font Hoop can read.", font.name))?;
+    Ok(layout(&face, s))
 }
 
 pub fn generate(font: &FontSource, s: &Settings) -> Result<Pattern, String> {
@@ -383,6 +383,19 @@ mod tests {
         let b = p.bounds();
         assert!(((b.3 - b.1) / 10.0 - 30.0).abs() < 1.0, "height {}", (b.3 - b.1) / 10.0);
         assert_eq!(p.blocks().len(), 1);
+    }
+
+    #[test]
+    fn outlines_follow_the_text_shape() {
+        let font = &bundled_fonts()[1];
+        let straight = outlines(font, &Settings { text: "ABC".into(), height_mm: 20.0, ..Default::default() }).unwrap();
+        assert_eq!(straight.len(), 3);
+        let b = straight.iter().flatten().flatten().fold((f32::MAX, f32::MIN), |a, p| (a.0.min(p.1), a.1.max(p.1)));
+        assert!(((b.1 - b.0) / 10.0 - 20.0).abs() < 1.0, "{b:?}");
+        // On an arc, the outer letters sit lower than the middle one.
+        let arc = outlines(font, &Settings { text: "ABC".into(), height_mm: 20.0, shape: TextShape::Arc, arc_deg: 90.0, ..Default::default() }).unwrap();
+        let top = |g: &Vec<Contour>| g.iter().flatten().map(|p| p.1).fold(f32::MAX, f32::min);
+        assert!(top(&arc[0]) > top(&arc[1]) && top(&arc[2]) > top(&arc[1]));
     }
 
     #[test]

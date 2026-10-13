@@ -4292,3 +4292,18 @@ msgstr "To nie jest projekt, który Hoop potrafi odczytać: {e}."
 
 msgid "This project comes from a newer Hoop. Update Hoop to open it."
 msgstr "Ten projekt pochodzi z nowszego Hoop. Zaktualizuj Hoop, by go otworzyć."
+
+msgid "Font"
+msgstr "Czcionka"
+
+msgid "Edit the text…"
+msgstr "Edytuj tekst…"
+
+msgid "Click where the text goes · Esc to stop"
+msgstr "Kliknij, gdzie ma być tekst · Esc kończy"
+
+msgid "Text: click where it goes"
+msgstr "Tekst: kliknij, gdzie ma być"
+
+msgid "Back (tape backing fabric under the hoop)"
+msgstr "Spód (przyklej podkład pod tamborkiem)"

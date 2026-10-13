@@ -47,6 +47,7 @@ fn with_lines(e: &ShapeEdit, kind: Kind, lines: Vec<Line>) -> ShapeEdit {
         angles: Vec::new(),
         entry: None,
         made: None,
+        text: None,
         ..e.clone()
     }
 }

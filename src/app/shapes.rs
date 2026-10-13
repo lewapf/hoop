@@ -457,6 +457,7 @@ impl HoopApp {
             style: None,
             pinned: false,
             made,
+            text: None,
             group: None,
             id,
         });
@@ -1261,6 +1262,7 @@ impl HoopApp {
             );
             return;
         }
+        self.text_card(ui);
         self.form_card(ui);
         self.tool_card(ui);
         let mut op = None;

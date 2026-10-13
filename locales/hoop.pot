@@ -7,6 +7,30 @@ msgstr ""
 "Language: \n"
 "Language-Name: \n"
 
+msgid "Text"
+msgstr ""
+
+msgid "Font"
+msgstr ""
+
+msgid "Height"
+msgstr ""
+
+msgid "Spacing"
+msgstr ""
+
+msgid "Shape"
+msgstr ""
+
+msgid "Arc"
+msgstr ""
+
+msgid "Circle"
+msgstr ""
+
+msgid "Bend"
+msgstr ""
+
 msgid "Pasted SVG"
 msgstr ""
 
@@ -413,6 +437,9 @@ msgstr ""
 msgid "Pin to its sewing place"
 msgstr ""
 
+msgid "Edit the text…"
+msgstr ""
+
 msgid "Change its form…"
 msgstr ""
 
@@ -618,25 +645,13 @@ msgstr[1] ""
 msgid "Lettering — Hoop"
 msgstr ""
 
-msgid "Text"
-msgstr ""
-
 msgid "Search fonts"
 msgstr ""
 
 msgid "Looking for installed fonts…"
 msgstr ""
 
-msgid "Shape"
-msgstr ""
-
-msgid "Height"
-msgstr ""
-
 msgid "Height of capital letters"
-msgstr ""
-
-msgid "Spacing"
 msgstr ""
 
 msgid "Extra space between letters"
@@ -645,13 +660,7 @@ msgstr ""
 msgid "Layout"
 msgstr ""
 
-msgid "Arc"
-msgstr ""
-
 msgid "Bend the text into an arch (positive) or a smile (negative). 360° closes the circle."
-msgstr ""
-
-msgid "Circle"
 msgstr ""
 
 msgid "Inside diameter of the ring of text"
@@ -1371,9 +1380,6 @@ msgid "Star points"
 msgstr ""
 
 msgid "Inner size"
-msgstr ""
-
-msgid "Bend"
 msgstr ""
 
 msgid "Its green ends follow the shapes they are on."
@@ -2276,6 +2282,9 @@ msgstr ""
 msgid "Click a shape to give it the current thread · Alt+click takes a shape's thread · Esc to stop"
 msgstr ""
 
+msgid "Click where the text goes · Esc to stop"
+msgstr ""
+
 msgid "Select and move · Esc"
 msgstr ""
 
@@ -2292,6 +2301,9 @@ msgid "Ellipse · U again"
 msgstr ""
 
 msgid "Line that snaps to shapes · W"
+msgstr ""
+
+msgid "Text: click where it goes"
 msgstr ""
 
 msgid "Fill bucket: give a shape the current thread · K"
@@ -3002,6 +3014,9 @@ msgid "Grow"
 msgstr ""
 
 msgid "Hello"
+msgstr ""
+
+msgid "Back (tape backing fabric under the hoop)"
 msgstr ""
 
 msgid "This isn't a Hoop project Hoop can read: {e}."

@@ -102,6 +102,24 @@ pub struct ArtSettings {
     pub groups: Vec<Group>,
 }
 
+/// Text in a drawing. Sizes are in the drawing's user units, so text
+/// grows and shrinks with the drawing like every other shape.
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
+pub struct ArtText {
+    pub text: String,
+    /// The font by name.
+    pub font: String,
+    /// Height of the capitals.
+    pub height: f32,
+    /// Extra room between letters.
+    pub spacing: f32,
+    pub shape: lettering::TextShape,
+    pub arc_deg: f32,
+    /// How far the envelope shapes bend, and the badge circle's size.
+    pub envelope: f32,
+    pub circle: f32,
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct Group {
     pub id: u32,
@@ -256,6 +274,10 @@ pub struct ShapeEdit {
     pub made: Option<Made>,
     /// The group it belongs to, by `Group::id`.
     pub group: Option<u32>,
+    /// Text set with the Text tool: what it says and how, so it can be
+    /// changed later. Cleared once its points are edited by hand.
+    #[serde(default)]
+    pub text: Option<ArtText>,
     /// Stays the same as the list is rearranged, for lines attached to it.
     /// Unique within a drawing (`ArtSettings::fix_ids` sees to that).
     pub id: u32,
@@ -284,6 +306,7 @@ impl ShapeEdit {
             style: None,
             pinned: false,
             made: None,
+            text: None,
             group: None,
             id: i as u32 + 1,
         }
@@ -361,6 +384,7 @@ impl ShapeEdit {
     pub fn bake(&mut self, art: &Artwork) {
         // Its points are about to be edited by hand.
         self.made = None;
+        self.text = None;
         if self.own.is_some() && !self.moved() {
             return;
         }

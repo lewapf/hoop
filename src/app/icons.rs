@@ -36,6 +36,7 @@ const ICONS: &[(&str, &str)] = &[
     ("bucket", include_str!("../../assets/icons/paint-bucket.svg")),
     ("angle", include_str!("../../assets/icons/angle.svg")),
     ("start", include_str!("../../assets/icons/flag-pennant.svg")),
+    ("text", include_str!("../../assets/icons/text-t.svg")),
 ];
 
 /// Pixels the icons are drawn at; painted smaller, so they stay sharp on

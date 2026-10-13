@@ -163,6 +163,12 @@ clip art work best; photos do not.
     end drawn onto a shape stays attached: move or turn the shape and the
     line follows (picked lines show attached ends as green rings).
     **Detach** in the Form card, or editing the line's points, frees it.
+  - **Text**: click where the text goes and type. The Shape page's
+    **Text** card changes the words, font, height, letter spacing and
+    shape (straight, arc, circle badge, arch, wave and more), and the
+    letters are redrawn; they stitch like any other shape, so a name
+    fits in a frame or on a banner from the symbols. Editing their points
+    by hand turns them into ordinary shapes.
   - **Fill bucket** (`K`): click a shape to give it the current thread.
     `Alt+click` takes a shape's thread as the current one.
   - **Stitch angle** and **Start point** of the picked shape, as on the

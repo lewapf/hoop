@@ -450,6 +450,16 @@ cancels a close with unsaved work and asks. `project_mode` keeps an
 artwork project from being overwritten by lettering work. The Library
 shows .hoop files, with stitch thumbnails for artwork projects.
 
+## Text in Artwork (2026-10-13)
+
+The Text tool (`app/arttext.rs`) puts `lettering::outlines` (now public,
+returns a Result) into an own Fill shape; `ShapeEdit::text`
+(`artwork::ArtText`: text, font name, sizes in user units, TextShape,
+arc/envelope/circle) keeps it editable. The Text card in the Shape tab
+changes it and `retext` redraws around the old middle. Fonts are only
+needed while editing; the outlines are stored in the shape, so projects
+stitch without the font. `bake()` clears `text`.
+
 ## Ideas queued with the owner
 
 Bezier handles in point editing,

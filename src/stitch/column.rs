@@ -1009,7 +1009,7 @@ pub(crate) mod debug {
             ..Settings::default()
         };
         let p = crate::lettering::generate(font, &s).unwrap();
-        let g = crate::lettering::outlines(font, &s);
+        let g = crate::lettering::outlines(font, &s).unwrap();
         render(&format!("{out}/letters.png"), &g, &p.points, &p.cmds, std::env::var("PX").ok().and_then(|v| v.parse().ok()).unwrap_or(8.0));
     }
 }

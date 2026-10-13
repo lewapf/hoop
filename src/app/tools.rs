@@ -21,6 +21,8 @@ pub(super) enum ShapeTool {
     Line,
     /// Click a shape to give it the current thread.
     Fill,
+    /// Click where new text goes.
+    Text,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -78,6 +80,7 @@ pub(super) enum Pick {
     Pen,
     Shape(Form),
     Line,
+    Text,
     Fill,
     Angle,
     Start,
@@ -121,6 +124,7 @@ impl HoopApp {
             Some(ShapeTool::Shape) => Pick::Shape(self.tools.form),
             Some(ShapeTool::Line) => Pick::Line,
             Some(ShapeTool::Fill) => Pick::Fill,
+            Some(ShapeTool::Text) => Pick::Text,
             Some(ShapeTool::Angle) => Pick::Angle,
             Some(ShapeTool::Entry) => Pick::Start,
             None if self.edit_points => Pick::Points,
@@ -136,7 +140,7 @@ impl HoopApp {
         self.tools.tool = None;
         self.tools.drag = None;
         self.edit_points = false;
-        let draws = matches!(pick, Pick::Pen | Pick::Shape(_) | Pick::Line);
+        let draws = matches!(pick, Pick::Pen | Pick::Shape(_) | Pick::Line | Pick::Text);
         if draws && self.art.is_none() {
             self.picture = None;
             self.use_artwork(Ok(artwork::blank()));
@@ -151,6 +155,7 @@ impl HoopApp {
             }
             Pick::Line => self.tools.tool = Some(ShapeTool::Line),
             Pick::Fill => self.tools.tool = Some(ShapeTool::Fill),
+            Pick::Text => self.tools.tool = Some(ShapeTool::Text),
             Pick::Angle => self.tools.tool = self.tool_target().map(|_| ShapeTool::Angle),
             Pick::Start => self.tools.tool = self.tool_target().map(|_| ShapeTool::Entry),
         }
@@ -177,6 +182,15 @@ impl HoopApp {
             ShapeTool::Shape => self.shape_tool_input(ui, response, frame),
             ShapeTool::Line => self.line_tool_input(response, frame),
             ShapeTool::Fill => self.fill_tool_input(ui, response, frame),
+            ShapeTool::Text => {
+                if response.clicked()
+                    && let (Some(m), Some(p)) = (self.draw_map(), response.interact_pointer_pos())
+                {
+                    self.tools.tool = None;
+                    self.add_text(m.to_user(frame.to_world(p)));
+                }
+                true
+            }
         }
     }
 
@@ -437,6 +451,7 @@ impl HoopApp {
             ShapeTool::Shape => t!("Drag to draw, Shift for even sides, or click for one 30 mm across · Esc to stop"),
             ShapeTool::Line => t!("Drag a line; its ends snap to shape outlines · Esc to stop"),
             ShapeTool::Fill => t!("Click a shape to give it the current thread · Alt+click takes a shape's thread · Esc to stop"),
+            ShapeTool::Text => t!("Click where the text goes · Esc to stop"),
         };
         let galley = painter.layout(tip.into(), egui::FontId::proportional(14.0), Color32::WHITE, frame.rect.width() - 80.0);
         let pos = frame.rect.center_bottom() + vec2(-galley.size().x / 2.0, -galley.size().y - 24.0);
@@ -477,6 +492,7 @@ impl HoopApp {
                 (Pick::Shape(Form::Polygon), "polygon", t!("Polygon"), true),
                 (Pick::Shape(Form::Star), "star", t!("Star"), true),
                 (Pick::Line, "line", t!("Line that snaps to shapes · W"), true),
+                (Pick::Text, "text", t!("Text: click where it goes"), true),
             ],
             &[(Pick::Fill, "bucket", t!("Fill bucket: give a shape the current thread · K"), has_art)],
             &[(Pick::Angle, "angle", t!("Stitch angle of the picked shape"), picked), (Pick::Start, "start", t!("Start point of the picked shape"), picked)],

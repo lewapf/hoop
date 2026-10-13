@@ -306,6 +306,11 @@ impl HoopApp {
         if let Some(i) = one {
             let (made, angles, entry) =
                 self.art.as_ref().map(|s| (s.shapes[i].made.is_some(), !s.shapes[i].angles.is_empty(), s.shapes[i].entry.is_some())).unwrap_or_default();
+            let text = self.art.as_ref().is_some_and(|s| s.shapes[i].text.is_some());
+            if text && item(ui, true, t!("Edit the text…"), "") {
+                self.focus_text = true;
+                self.show_tab(Tab::Shape);
+            }
             if made && item(ui, true, t!("Change its form…"), "") {
                 self.show_tab(Tab::Shape);
             }
@@ -413,6 +418,7 @@ impl HoopApp {
                 (t!("Polygon"), "", Pick::Shape(Form::Polygon)),
                 (t!("Star"), "", Pick::Shape(Form::Star)),
                 (t!("Line"), "W", Pick::Line),
+                (t!("Text"), "", Pick::Text),
             ] {
                 if item(ui, true, text, keys) {
                     self.set_pick(pick);
