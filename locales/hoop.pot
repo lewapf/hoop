@@ -4427,3 +4427,42 @@ msgstr ""
 
 msgid "Reset"
 msgstr ""
+
+msgid "Hide this panel · F9"
+msgstr ""
+
+msgid "Hide this panel · F10"
+msgstr ""
+
+msgid "Reset the lettering style, keeping the font and text"
+msgstr ""
+
+msgid "Open a picture or SVG · O"
+msgstr ""
+
+msgid "Open… · O"
+msgstr ""
+
+msgid "Save worksheet… · Ctrl+P"
+msgstr ""
+
+msgid "Save picture… · Ctrl+Shift+S"
+msgstr ""
+
+msgid "Zoom out · scroll"
+msgstr ""
+
+msgid "Zoom in · scroll"
+msgstr ""
+
+msgid "Template grid · G"
+msgstr ""
+
+msgid "Jump stitches · J"
+msgstr ""
+
+msgid "Thread texture · T"
+msgstr ""
+
+msgid "{stitches} st · {v0:.1} m"
+msgstr ""

@@ -4555,3 +4555,36 @@ msgstr "{v0:.0} m · Unterfaden ≈ {v1:.0} m"
 
 msgid "Reset"
 msgstr "Zurücksetzen"
+
+msgid "Reset the lettering style, keeping the font and text"
+msgstr "Schriftstil zurücksetzen, Schrift und Text bleiben"
+
+msgid "Open a picture or SVG · O"
+msgstr "Bild oder SVG öffnen · O"
+
+msgid "Open… · O"
+msgstr "Öffnen… · O"
+
+msgid "Save worksheet… · Ctrl+P"
+msgstr "Arbeitsblatt speichern… · Strg+P"
+
+msgid "Save picture… · Ctrl+Shift+S"
+msgstr "Bild speichern… · Strg+Umschalt+S"
+
+msgid "Zoom out · scroll"
+msgstr "Verkleinern · Mausrad"
+
+msgid "Zoom in · scroll"
+msgstr "Vergrößern · Mausrad"
+
+msgid "Template grid · G"
+msgstr "Vorlagenraster · G"
+
+msgid "Jump stitches · J"
+msgstr "Sprungstiche · J"
+
+msgid "Thread texture · T"
+msgstr "Garnstruktur · T"
+
+msgid "{stitches} st · {v0:.1} m"
+msgstr "{stitches} St. · {v0:.1} m"

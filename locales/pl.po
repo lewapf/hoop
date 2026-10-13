@@ -4591,3 +4591,36 @@ msgstr "{v0:.0} m · szpulka ≈ {v1:.0} m"
 
 msgid "Reset"
 msgstr "Resetuj"
+
+msgid "Reset the lettering style, keeping the font and text"
+msgstr "Przywróć domyślny styl napisu, zachowując czcionkę i tekst"
+
+msgid "Open a picture or SVG · O"
+msgstr "Otwórz obraz lub SVG · O"
+
+msgid "Open… · O"
+msgstr "Otwórz… · O"
+
+msgid "Save worksheet… · Ctrl+P"
+msgstr "Zapisz kartę pracy… · Ctrl+P"
+
+msgid "Save picture… · Ctrl+Shift+S"
+msgstr "Zapisz obraz… · Ctrl+Shift+S"
+
+msgid "Zoom out · scroll"
+msgstr "Pomniejsz · kółko myszy"
+
+msgid "Zoom in · scroll"
+msgstr "Powiększ · kółko myszy"
+
+msgid "Template grid · G"
+msgstr "Siatka szablonu · G"
+
+msgid "Jump stitches · J"
+msgstr "Przeskoki · J"
+
+msgid "Thread texture · T"
+msgstr "Faktura nici · T"
+
+msgid "{stitches} st · {v0:.1} m"
+msgstr "{stitches} śc. · {v0:.1} m"

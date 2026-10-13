@@ -3,6 +3,9 @@
 
 use super::*;
 
+/// Corner radius of the canvas, inset between the docks.
+const CANVAS_ROUND: f32 = 10.0;
+
 impl HoopApp {
     pub(super) fn fit_view(&mut self, rect: egui::Rect, design: bool) {
         let (w, h, cx, cy) = match (&self.design, design) {
@@ -376,6 +379,79 @@ impl HoopApp {
         }
         self.demo_overlay(&painter, &frame);
         self.test_overlay(&painter, &frame);
+        // Round the canvas's corners: a wide band in the dock color over
+        // everything outside the rounded edge, then a hairline along it.
+        let (r, v) = (CANVAS_ROUND, ui.visuals());
+        painter.rect_stroke(rect.expand(r / 2.0), r * 1.5, egui::Stroke::new(r, v.panel_fill), egui::StrokeKind::Middle);
+        painter.rect_stroke(rect, r, egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color), egui::StrokeKind::Inside);
+        self.view_bar(ui.ctx(), rect);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
+    }
+
+    /// Zooms by `factor` around the middle of the canvas.
+    fn zoom_center(&mut self, factor: f32) {
+        let old = self.view.scale;
+        let new = (old * factor).clamp(0.05, 40.0);
+        self.view.pan *= new / old;
+        self.view.scale = new;
+        self.user_view = true;
+    }
+
+    /// Floating view controls in the canvas's lower right corner: zoom,
+    /// framing, and what the hoop shows.
+    fn view_bar(&mut self, ctx: &egui::Context, rect: egui::Rect) {
+        let v = ctx.global_style().visuals.clone();
+        let frame = egui::Frame::new()
+            .fill(v.panel_fill)
+            .corner_radius(8)
+            .inner_margin(egui::Margin::same(3))
+            .stroke(egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color))
+            .shadow(egui::Shadow { offset: [0, 2], blur: 8, spread: 0, color: Color32::from_black_alpha(60) });
+        let has = self.design.is_some();
+        let gap = |ui: &mut egui::Ui| {
+            let x = ui.cursor().left() + 3.0;
+            let y = ui.max_rect().y_range().shrink(5.0);
+            ui.painter().vline(x, y, egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color));
+            ui.add_space(7.0);
+        };
+        egui::Area::new(egui::Id::new("view-bar"))
+            .order(egui::Order::Foreground)
+            .pivot(egui::Align2::RIGHT_BOTTOM)
+            .fixed_pos(rect.right_bottom() - vec2(10.0, 10.0))
+            .show(ctx, |ui| {
+                frame.show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        if icons::button(ui, true, false, "zoom-out", t!("Zoom out · scroll")) {
+                            self.zoom_center(1.0 / 1.25);
+                        }
+                        let pct = format!("{:.0}%", self.view.scale * 100.0 / self.hoop_scale.max(1e-6));
+                        let label = egui::Button::new(RichText::new(pct).monospace().size(12.0)).frame(false).min_size(vec2(48.0, 28.0));
+                        if ui.add(label).on_hover_text(t!("Show the whole hoop · F")).clicked() {
+                            self.fit_view(rect, false);
+                        }
+                        if icons::button(ui, true, false, "zoom", t!("Zoom in · scroll")) {
+                            self.zoom_center(1.25);
+                        }
+                        gap(ui);
+                        if icons::button(ui, true, false, "fit", t!("Show the whole hoop · F")) {
+                            self.fit_view(rect, false);
+                        }
+                        if icons::button(ui, has, false, "center", t!("Zoom to the design · D")) {
+                            self.fit_view(rect, true);
+                        }
+                        gap(ui);
+                        if icons::button(ui, true, self.grid, "grid", t!("Template grid · G")) {
+                            self.grid = !self.grid;
+                        }
+                        if icons::button(ui, true, self.jumps, "jumps", t!("Jump stitches · J")) {
+                            self.jumps = !self.jumps;
+                        }
+                        if icons::button(ui, true, self.textured, "yarn", t!("Thread texture · T")) {
+                            self.textured = !self.textured;
+                        }
+                    });
+                });
+            });
     }
 }

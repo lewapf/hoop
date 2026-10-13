@@ -235,6 +235,9 @@ impl HoopApp {
         }
         if tab == Tab::Threads {
             let fabric = self.fabric;
+            // Stitches and thread length per thread color, from the design.
+            let usage: Vec<([u8; 3], usize, f32)> =
+                self.design.as_ref().map_or(Vec::new(), |d| d.blocks.iter().map(|b| (b.thread.color, b.stitches, d.pattern.thread_meters(b))).collect());
             card(ui, t!("Threads"), accent, |ui| {
                 // Colors no shape uses any more are left out.
                 let used_layers: Vec<bool> = (0..art.layers.len()).map(|l| s.shapes.iter().any(|e| e.layer == l && !e.hidden)).collect();
@@ -315,6 +318,13 @@ impl HoopApp {
                         });
                         for &i in members {
                             s.layers[i].look = look;
+                        }
+                        let color = crate::formats::jef_thread(*thread, 0).color;
+                        let (st, m) = usage.iter().filter(|u| u.0 == color).fold((0, 0.0), |a, u| (a.0 + u.1, a.1 + u.2));
+                        if st > 0 {
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                ui.label(RichText::new(t!("{stitches} st · {v0:.1} m", stitches = st, v0 = m)).size(11.5).color(muted));
+                            });
                         }
                     });
                     if t != *thread {

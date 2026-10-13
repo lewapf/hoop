@@ -32,7 +32,7 @@ You can change everything afterwards in the panels on the right.
   Machine and Help, with the three workspaces (Viewer, Lettering,
   Artwork, each with its icon) in the middle.
 - **Tool bar** under it: new, open, save, worksheet; undo and redo;
-  rotate, mirror, center, pin to hoop; whole hoop, zoom to design, play.
+  rotate, mirror, center, pin to hoop.
   On the right: the **machine and hoop** picker, the test stitch-out, and
   **Send to machine**.
 - **Left dock:** its pages are tabs on the window's left edge, an icon
@@ -44,11 +44,17 @@ You can change everything afterwards in the panels on the right.
   - **Check:** problems found in the design.
 - **Canvas:** the fabric in the hoop. Drag the design to move it, drag
   the fabric to pan, scroll to zoom, double-click to see the whole hoop.
+  The bar in its lower right corner zooms out and in (click the
+  percentage for the whole hoop), frames the hoop or the design, and
+  turns the grid, jump stitches and thread texture on and off.
 - **Right dock:** the settings of the current tab, in pages (Text, Style,
   Hoop, Stitch, View…), whose tabs stand on the window's right edge.
-- **Hiding a dock:** click the icon of the page it shows to fold the dock
-  away; the icons stay, and a click on any of them brings it back on that
-  page. `F9` / `F10` do the same.
+- **Dock title bar:** the page's name, its most used command as an icon
+  (open on Source and Design, worksheet on Stitch, picture on View, reset
+  the lettering style on Text and Style), and an arrow that hides the dock.
+- **Hiding a dock:** the arrow in its title bar, or a click on the icon of
+  the page it shows; the icons stay, and a click on any of them brings it
+  back on that page. `F9` / `F10` do the same.
 - **Timeline:** under the hoop, between the docks. Play, jump between
   threads, drag along the track (a band per thread) to scrub, and pick the
   playback speed. Under the bar, a small render of each thread on the

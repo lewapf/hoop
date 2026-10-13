@@ -270,10 +270,6 @@ impl HoopApp {
         if tab == Tab::Text {
             self.team_card(ui);
         }
-        if tab == Tab::Text && ui.button(t!("Reset lettering")).on_hover_text(t!("Back to the default style, keeping the font")).clicked() {
-            let font = self.letter.font;
-            self.letter = Settings { font, ..Default::default() };
-        }
         ui.add_space(10.0);
     }
 }

@@ -249,10 +249,33 @@ pub(super) fn item(ui: &mut egui::Ui, enabled: bool, text: &str, keys: &str) -> 
     clicked
 }
 
-/// The name of the page a dock shows, over it.
-fn dock_title(ui: &mut egui::Ui, title: &str) {
-    ui.label(RichText::new(title).size(15.0).strong());
-    ui.add_space(4.0);
+/// What a dock's title bar gives back: the page's action, or hide.
+enum HeaderClick {
+    Action,
+    Hide,
+}
+
+/// A dock's title bar: the page's name, then its action (icon, tip,
+/// enabled) and a button that hides the dock, on the right.
+fn dock_header(ui: &mut egui::Ui, title: &str, action: Option<(&'static str, &str, bool)>, hide: (&'static str, &str)) -> Option<HeaderClick> {
+    let mut click = None;
+    ui.horizontal(|ui| {
+        ui.set_height(28.0);
+        ui.label(RichText::new(title).size(15.0).strong());
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            if icons::button(ui, true, false, hide.0, hide.1) {
+                click = Some(HeaderClick::Hide);
+            }
+            if let Some((icon, tip, enabled)) = action
+                && icons::button(ui, enabled, false, icon, tip)
+            {
+                click = Some(HeaderClick::Action);
+            }
+        });
+    });
+    ui.add_space(2.0);
+    click
 }
 
 fn check(ui: &mut egui::Ui, value: &mut bool, text: &str, keys: &str) {
@@ -314,7 +337,9 @@ impl HoopApp {
         // Between the docks, so it spans only the hoop.
         let timeline = egui::Frame::new().fill(fill).inner_margin(egui::Margin { left: 6, right: 8, top: 3, bottom: 3 });
         egui::Panel::bottom("timeline").resizable(false).frame(timeline).show(ui, |ui| self.timeline(ui));
-        egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.canvas(ui));
+        // The hoop sits inset from the docks, its corners rounded off.
+        let inset = egui::Frame::new().fill(fill).inner_margin(egui::Margin { left: 6, right: 6, top: 6, bottom: 0 });
+        egui::CentralPanel::default().frame(inset).show(ui, |ui| self.canvas(ui));
     }
 
     /// The left dock's pages for the mode in use.
@@ -336,7 +361,9 @@ impl HoopApp {
 
     fn left_dock(&mut self, ui: &mut egui::Ui) {
         let title = self.left_tabs().into_iter().find(|o| o.0 == self.dock).map_or("", |o| o.1);
-        dock_title(ui, title);
+        if let Some(HeaderClick::Hide) = dock_header(ui, title, None, ("caret-left", t!("Hide this panel · F9"))) {
+            self.show_left = false;
+        }
         match self.dock {
             Dock::Library => self.library_page(ui),
             Dock::Symbols => self.symbols_page(ui),
@@ -350,8 +377,32 @@ impl HoopApp {
 
     fn right_dock(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect) {
         let m = self.mode as usize;
-        dock_title(ui, self.tab[m].label());
         let tab = self.tab[m];
+        let has = self.design.is_some();
+        // A page's most used command, also in its cards or menus.
+        let action = match (self.mode, tab) {
+            (Mode::Lettering, Tab::Text | Tab::Style) => Some(("turn-left", t!("Reset the lettering style, keeping the font and text"), true)),
+            (Mode::Artwork, Tab::Source) => Some(("open", t!("Open a picture or SVG · O"), true)),
+            (_, Tab::Design) => Some(("open", t!("Open… · O"), true)),
+            (_, Tab::Stitch) => Some(("print", t!("Save worksheet… · Ctrl+P"), has)),
+            (_, Tab::View) => Some(("source", t!("Save picture… · Ctrl+Shift+S"), has)),
+            _ => None,
+        };
+        match dock_header(ui, tab.label(), action, ("caret-right", t!("Hide this panel · F10"))) {
+            Some(HeaderClick::Hide) => self.show_right = false,
+            Some(HeaderClick::Action) => match tab {
+                Tab::Text | Tab::Style => {
+                    let font = self.letter.font;
+                    let text = std::mem::take(&mut self.letter.text);
+                    self.letter = Settings { font, text, ..Default::default() };
+                }
+                Tab::Source | Tab::Design => self.pick_file(),
+                Tab::Stitch => self.save_worksheet(),
+                Tab::View => self.save_picture(),
+                _ => {}
+            },
+            None => {}
+        }
         let key = egui::Id::new(PAGE_TITLE);
         ui.ctx().data_mut(|d| d.insert_temp(key, tab.label().to_string()));
         egui::ScrollArea::vertical().id_salt(("page", m, tab as usize)).auto_shrink([false, false]).show(ui, |ui| {
@@ -688,17 +739,6 @@ impl HoopApp {
             if icons::button(ui, has, !self.pinned.is_empty(), "pin", t!("Pin to hoop: keep this design and start the next part · P")) {
                 self.pin();
             }
-            tool_gap(ui);
-            if icons::button(ui, true, false, "fit", t!("Show the whole hoop · F")) {
-                self.fit_view(canvas_rect, false);
-            }
-            if icons::button(ui, has, false, "zoom", t!("Zoom to the design · D")) {
-                self.fit_view(canvas_rect, true);
-            }
-            let (icon, tip) = if self.playing { ("pause", t!("Pause the stitch-out · Space")) } else { ("play", t!("Play the stitch-out · Space")) };
-            if icons::button(ui, has, self.playing, icon, tip) {
-                self.toggle_play();
-            }
             // Machine side on the right: the hoop, a test piece, and sending.
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
@@ -798,7 +838,6 @@ impl HoopApp {
                 }
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(text(format!("{:.0}%", self.view.scale * 100.0 / self.hoop_scale.max(1e-6))));
                 let hint = match self.mode {
                     Mode::Artwork if self.design.is_some() => {
                         t!("Drag a shape to move it · drag empty fabric to pick several · Shift+drag moves the design · middle-drag pans")
