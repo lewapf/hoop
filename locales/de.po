@@ -4633,3 +4633,6 @@ msgstr "{m:.1} mm Luft"
 
 msgid "From the design to the closest edge of the sewing area"
 msgstr "Vom Motiv bis zum nächsten Rand des Stickfelds"
+
+msgid "Omarchy logo (example)"
+msgstr "Omarchy-Logo (Beispiel)"

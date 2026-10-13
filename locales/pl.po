@@ -4669,3 +4669,6 @@ msgstr "{m:.1} mm zapasu"
 
 msgid "From the design to the closest edge of the sewing area"
 msgstr "Od wzoru do najbliższej krawędzi pola haftu"
+
+msgid "Omarchy logo (example)"
+msgstr "Logo Omarchy (przykład)"

@@ -316,6 +316,8 @@ pub struct HoopApp {
     /// The timeline under the hoop shows a render of each thread.
     timeline_open: bool,
     palette: palette::Palette,
+    /// The example artwork was offered this session.
+    example_shown: bool,
     /// The thread pointed at in the timeline, shown on its own meanwhile.
     timeline_hover: Option<usize>,
     /// The design check and the stitches it was made for.
@@ -438,6 +440,7 @@ impl HoopApp {
             show_right: true,
             timeline_open: true,
             palette: Default::default(),
+            example_shown: false,
             timeline_hover: None,
             check: None,
             check_key: 0,
@@ -953,6 +956,7 @@ impl eframe::App for HoopApp {
         if let Some(p) = self.open_later.take() {
             self.open(&p);
         }
+        self.artwork_example();
         let canvas_rect = self.canvas_rect;
         self.palette(ctx, canvas_rect);
         self.tool_keys(ctx);

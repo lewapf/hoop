@@ -56,7 +56,7 @@ impl HoopApp {
         }
         // When the design fits, the hoop card says so in a line; problems get
         // a box of their own at the top.
-        let mut fit_line: Option<(String, String, Vec<(String, FitFix)>)> = None;
+        let mut fit_line: Option<FitLine> = None;
         if tab == Tab::Hoop
             && let Some(d) = &self.design
         {
@@ -496,10 +496,7 @@ impl HoopApp {
                     });
                     if sewing {
                         let rect = r.response.rect;
-                        ui.painter().line_segment(
-                            [rect.left_top() + vec2(1.0, 6.0), rect.left_bottom() + vec2(1.0, -6.0)],
-                            egui::Stroke::new(3.0, accent),
-                        );
+                        ui.painter().line_segment([rect.left_top() + vec2(1.0, 6.0), rect.left_bottom() + vec2(1.0, -6.0)], egui::Stroke::new(3.0, accent));
                         let at = egui::Rect::from_center_size(egui::pos2(rect.right() - 12.0, rect.top() + 12.0), vec2(14.0, 14.0));
                         super::icons::paint(ui, "needle", at, accent);
                     }
@@ -614,3 +611,6 @@ impl HoopApp {
 fn mm_field(v: &mut f32) -> egui::DragValue<'_> {
     egui::DragValue::new(v).speed(0.1).fixed_decimals(1).suffix(" mm")
 }
+
+/// The hoop card's fit line: what fits, the room to spare, and fixes.
+type FitLine = (String, String, Vec<(String, FitFix)>);

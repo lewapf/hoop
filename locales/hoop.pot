@@ -4511,3 +4511,6 @@ msgstr ""
 
 msgid "From the design to the closest edge of the sewing area"
 msgstr ""
+
+msgid "Omarchy logo (example)"
+msgstr ""

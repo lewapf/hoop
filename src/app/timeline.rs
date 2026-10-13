@@ -25,7 +25,10 @@ impl HoopApp {
     pub(super) fn timeline(&mut self, ui: &mut egui::Ui) {
         self.timeline_hover = None;
         let Some(d) = &self.design else {
-            ui.add_sized(vec2(ui.available_width(), BAR - 6.0), egui::Label::new(RichText::new(t!("Open a design to play its stitch-out")).size(12.0).color(self.muted())));
+            ui.add_sized(
+                vec2(ui.available_width(), BAR - 6.0),
+                egui::Label::new(RichText::new(t!("Open a design to play its stitch-out")).size(12.0).color(self.muted())),
+            );
             return;
         };
         let total = d.pattern.points.len();
@@ -53,7 +56,8 @@ impl HoopApp {
             // Right side first, so the scrubber takes what is left.
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 8.0;
-                let (icon, tip) = if self.timeline_open { ("caret-down", t!("Hide the thread renders · F8")) } else { ("caret-up", t!("Show the thread renders · F8")) };
+                let (icon, tip) =
+                    if self.timeline_open { ("caret-down", t!("Hide the thread renders · F8")) } else { ("caret-up", t!("Show the thread renders · F8")) };
                 if icons::button(ui, true, false, icon, tip) {
                     self.timeline_open = !self.timeline_open;
                 }
@@ -108,7 +112,10 @@ impl HoopApp {
                 p.rect_filled(lit, 0, c);
             }
             if k > 0 {
-                p.line_segment([egui::pos2(band.left(), track.top() - 2.0), egui::pos2(band.left(), track.bottom() + 2.0)], egui::Stroke::new(1.0, v.panel_fill));
+                p.line_segment(
+                    [egui::pos2(band.left(), track.top() - 2.0), egui::pos2(band.left(), track.bottom() + 2.0)],
+                    egui::Stroke::new(1.0, v.panel_fill),
+                );
             }
         }
         p.rect_stroke(track, 4, egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color), egui::StrokeKind::Outside);
@@ -171,7 +178,13 @@ impl HoopApp {
                     let current = !finished && self.shown > b.start && self.shown <= b.end;
                     let done = self.shown >= b.end;
                     let p = ui.painter();
-                    let fill = if current { accent.gamma_multiply(0.18) } else if resp.hovered() { v.widgets.hovered.weak_bg_fill } else { v.extreme_bg_color };
+                    let fill = if current {
+                        accent.gamma_multiply(0.18)
+                    } else if resp.hovered() {
+                        v.widgets.hovered.weak_bg_fill
+                    } else {
+                        v.extreme_bg_color
+                    };
                     p.rect_filled(rect, 6, fill);
                     let edge = if current { egui::Stroke::new(1.5, accent) } else { egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color) };
                     p.rect_stroke(rect, 6, edge, egui::StrokeKind::Inside);
@@ -199,7 +212,8 @@ impl HoopApp {
                     let swatch = egui::Rect::from_min_size(egui::pos2(rect.left() + 6.0, rect.bottom() - 15.0), vec2(10.0, 10.0));
                     p.circle_filled(swatch.center(), 5.0, c);
                     p.circle_stroke(swatch.center(), 5.0, egui::Stroke::new(1.0, muted.gamma_multiply(0.6)));
-                    let label = p.layout_no_wrap(format!("{} · {}", k + 1, short(b.stitches)), egui::FontId::proportional(10.5), if current { accent } else { muted });
+                    let label =
+                        p.layout_no_wrap(format!("{} · {}", k + 1, short(b.stitches)), egui::FontId::proportional(10.5), if current { accent } else { muted });
                     p.galley(egui::pos2(swatch.right() + 4.0, swatch.center().y - label.size().y / 2.0), label, muted);
                     let code = if b.thread.code.is_empty() { String::new() } else { format!(" ({})", b.thread.code) };
                     let resp = resp.on_hover_text(t!(

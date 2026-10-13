@@ -137,7 +137,6 @@ pub(super) fn slider_row(ui: &mut egui::Ui, label: &str, v: &mut f32, range: std
     .inner
 }
 
-#[allow(clippy::too_many_arguments)]
 /// A hoop to pick: its name, size and note, and on the right a small
 /// drawing of it to scale (against the `biggest` side of any hoop, in mm)
 /// with the design's footprint in it.

@@ -3,6 +3,43 @@
 
 use super::*;
 
+/// The example artwork: the square Omarchy mark, glyph U+E900 of
+/// Omarchy's icon font.
+const EXAMPLE_FONT: &str = "/usr/share/omarchy/default/fonts/omarchy/omarchy.ttf";
+const EXAMPLE_GLYPH: char = '\u{e900}';
+
+/// A font's glyph as an SVG document, or None when the font or glyph is
+/// missing.
+fn glyph_svg(font: &[u8], c: char) -> Option<String> {
+    struct Path(String);
+    impl ttf_parser::OutlineBuilder for Path {
+        fn move_to(&mut self, x: f32, y: f32) {
+            self.0 += &format!("M{x} {y}");
+        }
+        fn line_to(&mut self, x: f32, y: f32) {
+            self.0 += &format!("L{x} {y}");
+        }
+        fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+            self.0 += &format!("Q{x1} {y1} {x} {y}");
+        }
+        fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+            self.0 += &format!("C{x1} {y1} {x2} {y2} {x} {y}");
+        }
+        fn close(&mut self) {
+            self.0 += "Z";
+        }
+    }
+    let face = ttf_parser::Face::parse(font, 0).ok()?;
+    let mut path = Path(String::new());
+    let b = face.outline_glyph(face.glyph_index(c)?, &mut path)?;
+    // Fonts count y upwards; SVG downwards.
+    let (w, h) = (b.x_max - b.x_min, b.y_max - b.y_min);
+    Some(format!(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}"><path fill="#000" fill-rule="nonzero" transform="matrix(1 0 0 -1 {} {})" d="{}"/></svg>"##,
+        -b.x_min, b.y_max, path.0
+    ))
+}
+
 impl HoopApp {
     /// Shows freshly read artwork in the Artwork tab, or the reason it failed.
     pub(super) fn use_artwork(&mut self, result: Result<artwork::Artwork, String>) -> bool {
@@ -31,6 +68,28 @@ impl HoopApp {
                 self.error = Some(e);
                 false
             }
+        }
+    }
+
+    /// The first time Artwork opens empty, the Omarchy logo is there as an
+    /// example to try things on. It counts as nothing changed, so leaving
+    /// it asks nothing.
+    pub(super) fn artwork_example(&mut self) {
+        if self.mode != Mode::Artwork || self.artwork.is_some() || std::mem::replace(&mut self.example_shown, true) {
+            return;
+        }
+        let Some(svg) = std::fs::read(EXAMPLE_FONT).ok().and_then(|f| glyph_svg(&f, EXAMPLE_GLYPH)) else { return };
+        self.picture = None;
+        if self.use_artwork(artwork::parse(t!("Omarchy logo (example)"), svg.as_bytes())) {
+            if let Some(a) = &mut self.artwork {
+                a.name = t!("Omarchy logo (example)").into();
+            }
+            // A patch-sized mark, well inside the smallest common hoop.
+            if let Some(s) = &mut self.art {
+                s.width_mm = 90.0;
+            }
+            self.clean = self.snapshot();
+            self.committed = self.clean.clone();
         }
     }
 

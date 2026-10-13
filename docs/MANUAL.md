@@ -195,7 +195,9 @@ Check list suggests it.
 
 Open an SVG file or a picture (PNG, JPG, WebP), or start from shapes.
 Pictures are reduced to a few flat colors and traced first. Logos and
-clip art work best; photos do not.
+clip art work best; photos do not. The first time Artwork opens empty,
+the square Omarchy logo is there as an example to try things on; open your own
+file whenever you like, nothing needs saving.
 
 - **Source page:** the size of the design.
   - **Draw:** put a **backdrop picture** behind the hoop and trace it by
