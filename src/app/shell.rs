@@ -500,6 +500,9 @@ impl HoopApp {
                 if item(ui, true, t!("Thread charts and my threads…"), "") {
                     self.threads.open = true;
                 }
+                if item(ui, true, t!("Google Fonts…"), "") {
+                    self.fontwin.open = true;
+                }
             });
             ui.menu_button(t!("Help"), |ui| {
                 if item(ui, true, t!("User manual"), "F1") {

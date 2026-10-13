@@ -466,6 +466,55 @@ changes it and `retext` redraws around the old middle. Fonts are only
 needed while editing; the outlines are stored in the shape, so projects
 stitch without the font. `bake()` clears `text`.
 
+## Fonts and Google Fonts (2026-10-13)
+
+- 12 more bundled fonts (20 in all), static TTFs fetched from the Google
+  Fonts CSS API; `FontSource::group` sorts them into Block, Serif,
+  Script and Rounded for the font list. The first eight keep their
+  indexes (tests and `Settings::font` default use them); new ones are
+  appended. Licenses: `assets/fonts/OFL.txt` (one copyright line per
+  font, then the license) and `assets/fonts/APACHE-2.0.txt`.
+- `layout()` now takes the cap height from the drawn H, not the OS/2
+  table: Courgette's table value made its letters about 6× too tall.
+- `symbols::smallest_across(svg, px)` is `smallest_mm` at any raster
+  size. Its `distance` now takes what lies past the image edge; the
+  "kept" pass treats it as far from the core (before, pixels near the
+  border counted as kept, which flattered thin shapes near the edge).
+  `lettering::smallest_height_mm` runs it on "Hag" and converts to cap
+  height. The font list shows it per font; the Text card warns when
+  the height is below it.
+- `lettering::render_line` rasterizes a line of text (tiny-skia) for
+  font list previews. `font_file`, `face_name`, `downloaded_fonts`,
+  `download_dir` (`~/.local/share/fonts/hoop`); `system_fonts` skips
+  that folder and the app inserts downloaded fonts after the bundled
+  ones at start-up.
+- `src/gfonts.rs`: catalog from `fonts.google.com/metadata/fonts`
+  (undocumented but keyless; cached a week in `~/.cache/hoop/google-fonts`,
+  stale copy used offline), filtered to open, non-brand, Latin.
+  Font files come from `fonts.googleapis.com/css2?family=X:wght@W`,
+  which answers curl with TrueType URLs (static instances, so variable
+  families work); `&text=` gives tiny preview subsets. Licenses from
+  `raw.githubusercontent.com/google/fonts/main/{ofl,apache,ufl}/<dir>/`.
+  All through curl, like thread charts. `thickness` is Google's stroke
+  rating, or 2.5 + weight/200 where missing (most families).
+- `app/fontwin.rs`: the Google Fonts window (Machine → Google Fonts,
+  `HOOP_WINDOW=fonts`). Four worker threads fill previews from a LIFO
+  queue (visible rows only, trimmed to 60). A shared `View` (look,
+  sample text, the Lettering style, fabric, pixel height) carries a
+  generation; changing it clears previews and drops stale results.
+  "Stitched" runs `lettering::generate` on the subset font and draws
+  with `library::draw_stitched` (edge, thread and highlight passes,
+  like the hoop view). Also holds the font list's thumbnails and size
+  estimates (`update_font_sizes`).
+- Checked in the running app with screenshots: letters and stitched
+  previews, sample text, sorting, the grouped font list. Add/remove was
+  checked by the ignored network test `google_fonts_download`; the Add
+  button itself wasn't clicked in a test window.
+- Screenshots: `grim` geometry is in logical pixels, but the PNG is at
+  the monitor scale (1.25 here), so divide image coordinates by 1.25
+  before clicking. uinput clicks need a small relative move after
+  `cursor.move` or egui doesn't see the hover.
+
 ## Ideas queued with the owner
 
 Bezier handles in point editing,

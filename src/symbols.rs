@@ -77,11 +77,16 @@ const THINNEST_MM: f32 = 1.2;
 /// parts get too narrow: the size where shaving off everything thinner than
 /// `THINNEST_MM` still keeps nearly all of it.
 pub fn smallest_mm(svg: &str) -> Option<f32> {
-    const PX: usize = 160;
+    smallest_across(svg, 160)
+}
+
+/// `smallest_mm`, judged on a raster `px` pixels square: finer for
+/// drawings with small details, such as a few letters.
+pub fn smallest_across(svg: &str, px: usize) -> Option<f32> {
     let svg = svg.replace("currentColor", "#000000");
     let tree = usvg::Tree::from_str(&svg, &usvg::Options::default()).ok()?;
-    let mut pm = resvg::tiny_skia::Pixmap::new(PX as u32, PX as u32)?;
-    let s = PX as f32 / tree.size().width().max(tree.size().height());
+    let mut pm = resvg::tiny_skia::Pixmap::new(px as u32, px as u32)?;
+    let s = px as f32 / tree.size().width().max(tree.size().height());
     resvg::render(&tree, resvg::tiny_skia::Transform::from_scale(s, s), &mut pm.as_mut());
     let inside: Vec<bool> = pm.pixels().iter().map(|p| p.alpha() > 127).collect();
     let total = inside.iter().filter(|&&b| b).count();
@@ -89,17 +94,18 @@ pub fn smallest_mm(svg: &str) -> Option<f32> {
         return None;
     }
     // Distance from each inside pixel to the outside.
-    let depth = distance(&inside, PX);
+    let depth = distance(&inside, px, 0.0);
     // The share of the shape kept when parts narrower than 2r pixels go:
     // what lies within r of a pixel at least r deep.
     let kept = |r: f32| {
         let core: Vec<bool> = depth.iter().map(|&d| d >= r).collect();
-        let away = distance(&core.iter().map(|&c| !c).collect::<Vec<_>>(), PX);
+        // Past the edge is no core: nothing there to be near.
+        let away = distance(&core.iter().map(|&c| !c).collect::<Vec<_>>(), px, f32::MAX);
         inside.iter().zip(&away).filter(|&(&i, &a)| i && a <= r + 0.5).count() as f32 / total as f32
     };
-    // The drawing is PX pixels across; at `mm` across, the thinnest part
-    // allowed is THINNEST_MM / mm * PX pixels wide.
-    let ok = |mm: f32| kept(THINNEST_MM / mm * PX as f32 / 2.0) >= 0.92;
+    // The drawing is px pixels across; at `mm` across, the thinnest part
+    // allowed is THINNEST_MM / mm * px pixels wide.
+    let ok = |mm: f32| kept(THINNEST_MM / mm * px as f32 / 2.0) >= 0.92;
     let (mut lo, mut hi) = (5.0f32, 300.0f32);
     if ok(lo) {
         return Some(lo);
@@ -115,12 +121,13 @@ pub fn smallest_mm(svg: &str) -> Option<f32> {
 }
 
 /// Chamfer distance (in pixels) from each set pixel to the nearest unset
-/// one; unset pixels are 0. Pixels past the edge count as unset.
-fn distance(set: &[bool], n: usize) -> Vec<f32> {
+/// one; unset pixels are 0. Pixels past the edge are `outside` away
+/// (0 makes them count as unset).
+fn distance(set: &[bool], n: usize, outside: f32) -> Vec<f32> {
     const A: f32 = 1.0;
     const B: f32 = std::f32::consts::SQRT_2;
     let mut d: Vec<f32> = set.iter().map(|&s| if s { f32::MAX } else { 0.0 }).collect();
-    let at = |d: &[f32], x: isize, y: isize| if x < 0 || y < 0 || x >= n as isize || y >= n as isize { 0.0 } else { d[y as usize * n + x as usize] };
+    let at = |d: &[f32], x: isize, y: isize| if x < 0 || y < 0 || x >= n as isize || y >= n as isize { outside } else { d[y as usize * n + x as usize] };
     for y in 0..n as isize {
         for x in 0..n as isize {
             let i = y as usize * n + x as usize;

@@ -5,7 +5,7 @@ pkgdesc='Make and preview machine embroidery designs'
 arch=('x86_64' 'aarch64')
 license=('MIT')
 depends=('gcc-libs' 'glibc' 'libglvnd' 'libxkbcommon' 'wayland' 'xdg-desktop-portal')
-optdepends=('curl: download thread charts of other brands')
+optdepends=('curl: download thread charts of other brands and Google Fonts')
 makedepends=('cargo')
 options=('!lto' '!debug')
 source=()
@@ -24,6 +24,8 @@ package() {
   install -Dm644 docs/MANUAL.md "$pkgdir/usr/share/doc/$pkgname/MANUAL.md"
   install -Dm644 assets/ui/OFL-IBMPlex.txt "$pkgdir/usr/share/licenses/$pkgname/IBMPlex-OFL.txt"
   install -Dm644 assets/shapes/LICENSE "$pkgdir/usr/share/licenses/$pkgname/shapes-LICENSE"
+  install -Dm644 assets/fonts/OFL.txt "$pkgdir/usr/share/licenses/$pkgname/fonts-OFL.txt"
+  install -Dm644 assets/fonts/APACHE-2.0.txt "$pkgdir/usr/share/licenses/$pkgname/fonts-APACHE-2.0.txt"
   install -Dm644 "$startdir/hoop.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/hoop.svg"
   install -Dm644 "$startdir/hoop.desktop" "$pkgdir/usr/share/applications/hoop.desktop"
   install -Dm644 "$startdir/hoop.xml" "$pkgdir/usr/share/mime/packages/hoop.xml"

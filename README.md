@@ -198,9 +198,18 @@ change by clicking a swatch.
 
 ## Fonts
 
-Bundled display fonts (Alfa Slab One, Anton, Bebas Neue, Bungee, Dancing
-Script, Lobster, Pacifico, Righteous) come from Google Fonts under the SIL Open
-Font License (`assets/fonts/OFL.txt`). Installed system fonts are listed too.
+Twenty bundled display fonts come from Google Fonts, chosen because they
+stitch well: Abril Fatface, Alfa Slab One, Anton, Archivo Black, Bebas Neue,
+Black Ops One, Bungee, Cinzel Decorative, Courgette, Dancing Script, Graduate,
+Kaushan Script, Lobster, Pacifico, Righteous, Titan One and UnifrakturMaguntia
+under the SIL Open Font License (`assets/fonts/OFL.txt`), and Luckiest Guy,
+Ultra and Yellowtail under the Apache License 2.0
+(`assets/fonts/APACHE-2.0.txt`). Installed system fonts are listed too.
+
+Machine → Google Fonts browses all free Google Fonts families, previews them
+as letters or as real stitches in your Lettering style, and adds a weight
+with one click (into `~/.local/share/fonts/hoop`, with its license). Each
+font shows about how small it stitches cleanly.
 
 ## Checking a design before it sews
 

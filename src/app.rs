@@ -16,6 +16,7 @@ mod checks;
 mod context;
 mod demo;
 mod draw;
+mod fontwin;
 mod history;
 mod hoopings;
 mod icons;
@@ -346,6 +347,7 @@ pub struct HoopApp {
     library: library::Library,
     symbols: symbols::Symbols,
     threads: threadwin::ThreadCharts,
+    fontwin: fontwin::FontBrowser,
     team: team::Team,
     tools: tools::Tools,
     hoopings: hoopings::Hoopings,
@@ -434,7 +436,7 @@ impl HoopApp {
             art_slow: false,
             letter: Settings::default(),
             letter_built: None,
-            fonts: lettering::bundled_fonts(),
+            fonts: lettering::bundled_fonts().into_iter().chain(lettering::downloaded_fonts()).collect(),
             font_scan: None,
             font_filter: String::new(),
             saver: None,
@@ -453,6 +455,7 @@ impl HoopApp {
             library: Default::default(),
             symbols: Default::default(),
             threads: Default::default(),
+            fontwin: Default::default(),
             team: Default::default(),
             tools: Default::default(),
             hoopings: Default::default(),
@@ -525,6 +528,7 @@ impl HoopApp {
             Ok("settings") => self.settings.open = true,
             Ok("manual") => self.manual.open = true,
             Ok("optimize") => self.optimize.open = true,
+            Ok("fonts") => self.fontwin.open = true,
             Ok("wizard") => {
                 self.open_wizard();
                 if let Ok(m) = std::env::var("HOOP_WIZARD_MAKE") {
@@ -860,8 +864,9 @@ impl eframe::App for HoopApp {
         }
 
         if let Some(rx) = &self.font_scan
-            && let Ok(found) = rx.try_recv()
+            && let Ok(mut found) = rx.try_recv()
         {
+            found.retain(|f| !self.fonts.iter().any(|g| g.name == f.name));
             self.fonts.extend(found);
             self.font_scan = None;
             let untouched = self.snapshot() == self.clean;
@@ -943,6 +948,8 @@ impl eframe::App for HoopApp {
         self.test_window(ctx);
         self.usb_window(ctx);
         self.threads_window(ctx);
+        self.fonts_window(ctx);
+        self.update_font_sizes(ctx);
         self.hoopings_window(ctx);
         self.settings_window(ctx);
         self.wizard_window(ctx);

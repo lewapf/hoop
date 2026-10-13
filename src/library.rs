@@ -243,6 +243,49 @@ pub fn draw_stitches(points: &[(f32, f32)], cmds: &[Cmd], colors: &[[u8; 3]]) ->
     pixmap_rgba(&pm)
 }
 
+/// Draws stitches the way the hoop view does (a dark edge, the thread and
+/// a highlight per stitch) on plain fabric, `height` pixels tall at most
+/// `scale` pixels per 0.1 mm, as wide as the design needs.
+pub fn draw_stitched(pattern: &crate::formats::Pattern, height: u32, scale: f32, fabric: [u8; 3]) -> Option<egui::ColorImage> {
+    let pts = &pattern.points;
+    let mut b = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for (&(x, y), _) in pts.iter().zip(&pattern.cmds).filter(|(_, c)| **c == Cmd::Stitch) {
+        b = (b.0.min(x), b.1.min(y), b.2.max(x), b.3.max(y));
+    }
+    if b.0 > b.2 {
+        return None;
+    }
+    let pad = 6.0;
+    let s = scale.min((height as f32 - 2.0 * pad) / (b.3 - b.1).max(1.0));
+    let w = (((b.2 - b.0) * s + 2.0 * pad).ceil() as u32).clamp(1, 1600);
+    let mut pm = tiny_skia::Pixmap::new(w, height)?;
+    pm.fill(tiny_skia::Color::from_rgba8(fabric[0], fabric[1], fabric[2], 255));
+    let (ox, oy) = (pad - b.0 * s, height as f32 / 2.0 - (b.1 + b.3) / 2.0 * s);
+    // Thread is about 0.4 mm wide.
+    let width = (4.0 * s).max(0.8);
+    let mix = |c: [u8; 3], to: u8, t: f32| c.map(|v| (v as f32 + (to as f32 - v as f32) * t) as u8);
+    for block in pattern.blocks() {
+        let c = block.thread.color;
+        let mut path = tiny_skia::PathBuilder::new();
+        for i in block.start.max(1)..block.end {
+            if pattern.cmds[i] == Cmd::Stitch {
+                path.move_to(pts[i - 1].0 * s + ox, pts[i - 1].1 * s + oy);
+                path.line_to(pts[i].0 * s + ox, pts[i].1 * s + oy);
+            }
+        }
+        let Some(path) = path.finish() else { continue };
+        for (wf, col, alpha, shift) in [(1.15, mix(c, 0, 0.45), 255, 0.0), (0.8, c, 255, 0.0), (0.22, mix(c, 255, 0.5), 140, -0.12)] {
+            let mut paint = tiny_skia::Paint::default();
+            paint.set_color_rgba8(col[0], col[1], col[2], alpha);
+            paint.anti_alias = true;
+            let stroke = tiny_skia::Stroke { width: width * wf, line_cap: tiny_skia::LineCap::Round, ..Default::default() };
+            let t = tiny_skia::Transform::from_translate(shift * width, shift * width);
+            pm.stroke_path(&path, &paint, &stroke, t, None);
+        }
+    }
+    Some(egui::ColorImage::from_rgba_unmultiplied([w as usize, height as usize], &pixmap_rgba(&pm)))
+}
+
 fn svg_thumb(path: &Path) -> Option<Thumb> {
     let data = std::fs::read(path).ok()?;
     let opt = usvg::Options::default();

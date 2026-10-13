@@ -4322,3 +4322,162 @@ msgstr "Odrzuć"
 
 msgid "Your work is back. Save it as a project to keep it."
 msgstr "Praca wróciła. Zapisz ją jako projekt, by ją zachować."
+
+msgid "Added from Google Fonts"
+msgstr "Dodane z Google Fonts"
+
+msgid "Best for stitching"
+msgstr "Najlepsze do haftu"
+
+msgid "Block"
+msgstr "Blokowe"
+
+msgid "Bold"
+msgstr "Pogrubiona"
+
+msgid "Extra black"
+msgstr "Bardzo czarna"
+
+msgid "Extra bold"
+msgstr "Bardzo gruba"
+
+msgid "Extra light"
+msgstr "Bardzo cienka"
+
+msgid "Fonts with heavy strokes first: they stitch cleanly at smaller sizes"
+msgstr "Najpierw czcionki o grubych kreskach: wyszywają się czysto w mniejszych rozmiarach"
+
+msgid "Free fonts from Google Fonts (SIL Open Font License or Apache 2.0). Added fonts go to ~/.local/share/fonts/hoop with their license, and other programs can use them too."
+msgstr "Darmowe czcionki z Google Fonts (SIL Open Font License lub Apache 2.0). Dodane czcionki trafiają do ~/.local/share/fonts/hoop razem z licencją i mogą z nich korzystać też inne programy."
+
+msgid "Get more fonts from Google Fonts…"
+msgstr "Więcej czcionek z Google Fonts…"
+
+msgid "Google Fonts"
+msgstr "Google Fonts"
+
+msgid "Google Fonts sent no font file."
+msgstr "Google Fonts nie przesłało pliku czcionki."
+
+msgid "Google Fonts…"
+msgstr "Google Fonts…"
+
+msgid "Handwriting"
+msgstr "Odręczne"
+
+msgid "In the list"
+msgstr "Na liście"
+
+msgid "Installed on this computer"
+msgstr "Zainstalowane na tym komputerze"
+
+msgid "It's the font in use. Pick another font first."
+msgstr "Ta czcionka jest w użyciu. Najpierw wybierz inną."
+
+msgid "Letters"
+msgstr "Litery"
+
+msgid "Loading the Google Fonts list…"
+msgstr "Wczytywanie listy Google Fonts…"
+
+msgid "Medium"
+msgstr "Średnia"
+
+msgid "Monospace"
+msgstr "O stałej szerokości"
+
+msgid "Most popular"
+msgstr "Najpopularniejsze"
+
+msgid "Newest"
+msgstr "Najnowsze"
+
+msgid "Open folder"
+msgstr "Otwórz folder"
+
+msgid "Other"
+msgstr "Inne"
+
+msgid "Regular"
+msgstr "Zwykła"
+
+msgid "Rounded and fun"
+msgstr "Zaokrąglone i zabawne"
+
+msgid "Sample text (font names if empty)"
+msgstr "Przykładowy tekst (puste: nazwy czcionek)"
+
+msgid "Sans serif"
+msgstr "Bezszeryfowe"
+
+msgid "Script"
+msgstr "Pisane"
+
+msgid "Semibold"
+msgstr "Półgruba"
+
+msgid "Serif"
+msgstr "Szeryfowe"
+
+msgid "Serif, slab and varsity"
+msgstr "Szeryfowe, egipcjanki i sportowe"
+
+msgid "Stitched"
+msgstr "Wyszyte"
+
+msgid "Stitched with your Lettering fill, edge and threads at 15 mm. Change them in Lettering to compare."
+msgstr "Wyszyte z wypełnieniem, obrzeżem i nićmi z Napisów, w wysokości 15 mm. Zmień je w Napisach, by porównać."
+
+msgid "Stitches cleanly from about {mm} mm tall"
+msgstr "Wyszywa się czysto od około {mm} mm wysokości"
+
+msgid "The download wasn't a font Hoop can use."
+msgstr "Pobrany plik nie jest czcionką, której Hoop może użyć."
+
+msgid "The first line of your Lettering text"
+msgstr "Pierwszy wiersz tekstu z Napisów"
+
+msgid "The folder added fonts are kept in"
+msgstr "Folder z dodanymi czcionkami"
+
+msgid "The font list from Google Fonts couldn't be read."
+msgstr "Nie udało się odczytać listy czcionek z Google Fonts."
+
+msgid "Thin"
+msgstr "Cienka"
+
+msgid "Thin strokes of this font get lost below about {mm} mm. Make the letters taller or pick a bolder font."
+msgstr "Cienkie kreski tej czcionki giną poniżej około {mm} mm. Powiększ litery albo wybierz grubszą czcionkę."
+
+msgid "This font stitches cleanly from about {mm} mm tall."
+msgstr "Ta czcionka wyszywa się czysto od około {mm} mm wysokości."
+
+msgid "Try again"
+msgstr "Spróbuj ponownie"
+
+msgid "Use my text"
+msgstr "Użyj mojego tekstu"
+
+msgid "stitches from {mm} mm"
+msgstr "haftuje się od {mm} mm"
+
+msgid "{v0} is in the font list and in use."
+msgstr "{v0} jest na liście czcionek i w użyciu."
+
+msgid "{v0} is in the font list."
+msgstr "{v0} jest na liście czcionek."
+
+msgid "{v0} was removed."
+msgstr "Usunięto {v0}."
+
+msgid "{n} family"
+msgid_plural "{n} families"
+msgstr[0] "{n} rodzina"
+msgstr[1] "{n} rodziny"
+msgstr[2] "{n} rodzin"
+
+msgid "{n} weight"
+msgid_plural "{n} weights"
+msgstr[0] "{n} grubość"
+msgstr[1] "{n} grubości"
+msgstr[2] "{n} grubości"

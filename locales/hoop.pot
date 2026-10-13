@@ -608,6 +608,103 @@ msgstr ""
 msgid "Pictures"
 msgstr ""
 
+msgid "Google Fonts sent no font file."
+msgstr ""
+
+msgid "stitches from {mm} mm"
+msgstr ""
+
+msgid "Google Fonts"
+msgstr ""
+
+msgid "Free fonts from Google Fonts (SIL Open Font License or Apache 2.0). Added fonts go to ~/.local/share/fonts/hoop with their license, and other programs can use them too."
+msgstr ""
+
+msgid "Search fonts"
+msgstr ""
+
+msgid "Best for stitching"
+msgstr ""
+
+msgid "Most popular"
+msgstr ""
+
+msgid "Newest"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Fonts with heavy strokes first: they stitch cleanly at smaller sizes"
+msgstr ""
+
+msgid "Open folder"
+msgstr ""
+
+msgid "The folder added fonts are kept in"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Letters"
+msgstr ""
+
+msgid "Stitched"
+msgstr ""
+
+msgid "Sample text (font names if empty)"
+msgstr ""
+
+msgid "Use my text"
+msgstr ""
+
+msgid "The first line of your Lettering text"
+msgstr ""
+
+msgid "Stitched with your Lettering fill, edge and threads at 15 mm. Change them in Lettering to compare."
+msgstr ""
+
+msgid "Loading the Google Fonts list…"
+msgstr ""
+
+msgid "Try again"
+msgstr ""
+
+msgid "{n} family"
+msgid_plural "{n} families"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{n} weight"
+msgid_plural "{n} weights"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "It's the font in use. Pick another font first."
+msgstr ""
+
+msgid "In the list"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "No home folder."
+msgstr ""
+
+msgid "{v0} is in the font list and in use."
+msgstr ""
+
+msgid "{v0} is in the font list."
+msgstr ""
+
+msgid "The download wasn't a font Hoop can use."
+msgstr ""
+
+msgid "{v0} was removed."
+msgstr ""
+
 msgid "Undone"
 msgstr ""
 
@@ -645,10 +742,25 @@ msgstr[1] ""
 msgid "Lettering — Hoop"
 msgstr ""
 
-msgid "Search fonts"
+msgid "Get more fonts from Google Fonts…"
+msgstr ""
+
+msgid "Stitches cleanly from about {mm} mm tall"
+msgstr ""
+
+msgid "Added from Google Fonts"
+msgstr ""
+
+msgid "Installed on this computer"
 msgstr ""
 
 msgid "Looking for installed fonts…"
+msgstr ""
+
+msgid "Thin strokes of this font get lost below about {mm} mm. Make the letters taller or pick a bolder font."
+msgstr ""
+
+msgid "This font stitches cleanly from about {mm} mm tall."
 msgstr ""
 
 msgid "Height of capital letters"
@@ -828,9 +940,6 @@ msgstr ""
 msgid "Find by name"
 msgstr ""
 
-msgid "All"
-msgstr ""
-
 msgid "Every file Hoop can open"
 msgstr ""
 
@@ -844,9 +953,6 @@ msgid "Drawings to turn into stitches"
 msgstr ""
 
 msgid "PNG, JPEG and other pictures to trace"
-msgstr ""
-
-msgid "Name"
 msgstr ""
 
 msgid "Newest first"
@@ -1204,6 +1310,21 @@ msgstr ""
 msgid "The project is for {v0}; Hoop switched to it."
 msgstr ""
 
+msgid "Bring back unsaved work?"
+msgstr ""
+
+msgid "Hoop didn't close properly last time, and kept a copy of the work that wasn't saved."
+msgstr ""
+
+msgid "Bring it back"
+msgstr ""
+
+msgid "Throw it away"
+msgstr ""
+
+msgid "Your work is back. Save it as a project to keep it."
+msgstr ""
+
 msgid "● {name} — Hoop"
 msgstr ""
 
@@ -1386,9 +1507,6 @@ msgid "Its green ends follow the shapes they are on."
 msgstr ""
 
 msgid "Detach"
-msgstr ""
-
-msgid "Add"
 msgstr ""
 
 msgid "Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."
@@ -1649,6 +1767,9 @@ msgid "Test stitch-out…"
 msgstr ""
 
 msgid "Thread charts and my threads…"
+msgstr ""
+
+msgid "Google Fonts…"
 msgstr ""
 
 msgid "Help"
@@ -2968,6 +3089,54 @@ msgstr ""
 msgid "The file has no stitches in it."
 msgstr ""
 
+msgid "Handwriting"
+msgstr ""
+
+msgid "Serif"
+msgstr ""
+
+msgid "Sans serif"
+msgstr ""
+
+msgid "Monospace"
+msgstr ""
+
+msgid "Other"
+msgstr ""
+
+msgid "Thin"
+msgstr ""
+
+msgid "Extra light"
+msgstr ""
+
+msgid "Regular"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "Semibold"
+msgstr ""
+
+msgid "Bold"
+msgstr ""
+
+msgid "Extra bold"
+msgstr ""
+
+msgid "Extra black"
+msgstr ""
+
+msgid "Couldn't run curl: {e}"
+msgstr ""
+
+msgid "Download failed: {v0}"
+msgstr ""
+
+msgid "The font list from Google Fonts couldn't be read."
+msgstr ""
+
 msgid "Standard"
 msgstr ""
 
@@ -2984,6 +3153,18 @@ msgid "Other machine (DST)"
 msgstr ""
 
 msgid "Common"
+msgstr ""
+
+msgid "Block"
+msgstr ""
+
+msgid "Serif, slab and varsity"
+msgstr ""
+
+msgid "Script"
+msgstr ""
+
+msgid "Rounded and fun"
 msgstr ""
 
 msgid "Couldn't read {v0}: {e}."
@@ -4079,15 +4260,6 @@ msgid "Abg"
 msgstr ""
 
 msgid "Janome"
-msgstr ""
-
-msgid "No home folder."
-msgstr ""
-
-msgid "Couldn't run curl: {e}"
-msgstr ""
-
-msgid "Download failed: {v0}"
 msgstr ""
 
 msgid "The download wasn't a thread chart."

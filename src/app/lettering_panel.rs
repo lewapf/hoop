@@ -34,29 +34,97 @@ impl HoopApp {
         let muted = self.muted();
         let accent = self.accent();
         let mut tip_later = None;
+        // Previews of the bundled and added fonts for the font list.
+        let thumbs: Vec<Option<egui::TextureHandle>> = if tab == Tab::Text {
+            let ctx = ui.ctx().clone();
+            (0..self.fonts.len()).map(|i| self.font_thumb(&ctx, i)).collect()
+        } else {
+            Vec::new()
+        };
+        let mut more_fonts = false;
         let s = &mut self.letter;
         if tab == Tab::Text {
             card(ui, t!("Text"), accent, |ui| {
                 ui.add(egui::TextEdit::multiline(&mut s.text).desired_rows(2).desired_width(f32::INFINITY).font(egui::TextStyle::Heading));
                 let current = self.fonts.get(s.font).map_or("", |f| f.name.as_str()).to_string();
-                egui::ComboBox::from_id_salt("font").selected_text(current).width(ui.available_width()).height(380.0).show_ui(ui, |ui| {
+                let sizes = &self.fontwin.sizes;
+                let text_color = ui.visuals().text_color();
+                egui::ComboBox::from_id_salt("font").selected_text(&current).width(ui.available_width()).height(420.0).show_ui(ui, |ui| {
                     ui.add(egui::TextEdit::singleline(&mut self.font_filter).hint_text(t!("Search fonts")));
+                    if ui.button(t!("Get more fonts from Google Fonts…")).clicked() {
+                        more_fonts = true;
+                        ui.close();
+                    }
                     let filter = self.font_filter.to_lowercase();
-                    let mut was_featured = true;
-                    for (i, f) in self.fonts.iter().enumerate() {
-                        if !filter.is_empty() && !f.name.to_lowercase().contains(&filter) {
-                            continue;
+                    let fonts = &self.fonts;
+                    let ppp = ui.ctx().pixels_per_point();
+                    let row = |ui: &mut egui::Ui, font: &mut usize, i: usize| {
+                        let f = &fonts[i];
+                        let mm = sizes.get(&f.name).copied().flatten();
+                        let sel = *font == i;
+                        let btn = match &thumbs[i] {
+                            Some(tex) => egui::Button::selectable(sel, egui::Image::new((tex.id(), tex.size_vec2() / ppp)).tint(text_color)),
+                            None => egui::Button::selectable(sel, f.name.as_str()),
+                        };
+                        let note = mm.map_or(String::new(), |mm| format!("{mm} mm"));
+                        let note = RichText::new(note).size(11.0);
+                        let note = if sel { note } else { note.color(muted) };
+                        let r = ui.add(btn.right_text(note).min_size(egui::vec2(ui.available_width(), 0.0)));
+                        let r = match mm {
+                            Some(mm) => r.on_hover_text(format!("{}\n{}", f.name, t!("Stitches cleanly from about {mm} mm tall", mm = mm))),
+                            None => r.on_hover_text(&f.name),
+                        };
+                        if r.clicked() {
+                            *font = i;
                         }
-                        if was_featured && !f.featured {
-                            ui.separator();
-                            was_featured = false;
+                    };
+                    let shown = |f: &lettering::FontSource| filter.is_empty() || f.name.to_lowercase().contains(&filter);
+                    let header = |ui: &mut egui::Ui, text: &str| {
+                        ui.add_space(4.0);
+                        ui.label(RichText::new(text).size(11.0).strong().color(muted));
+                    };
+                    for g in lettering::FontGroup::ALL {
+                        let mut list: Vec<usize> = (0..fonts.len()).filter(|&i| fonts[i].group == Some(g) && shown(&fonts[i])).collect();
+                        list.sort_by_key(|&i| fonts[i].name.to_lowercase());
+                        if !list.is_empty() {
+                            header(ui, g.name());
+                            for i in list {
+                                row(ui, &mut s.font, i);
+                            }
                         }
-                        ui.selectable_value(&mut s.font, i, &f.name);
+                    }
+                    let added: Vec<usize> = (0..fonts.len()).filter(|&i| fonts[i].downloaded() && shown(&fonts[i])).collect();
+                    if !added.is_empty() {
+                        header(ui, t!("Added from Google Fonts"));
+                        for i in added {
+                            row(ui, &mut s.font, i);
+                        }
+                    }
+                    let system: Vec<usize> = (0..fonts.len()).filter(|&i| !fonts[i].featured && !fonts[i].downloaded() && shown(&fonts[i])).collect();
+                    if !system.is_empty() {
+                        header(ui, t!("Installed on this computer"));
+                        for i in system {
+                            row(ui, &mut s.font, i);
+                        }
                     }
                     if self.font_scan.is_some() {
                         ui.label(RichText::new(t!("Looking for installed fonts…")).color(muted));
                     }
                 });
+                if let Some(Some(mm)) = sizes.get(&current) {
+                    if s.height_mm < *mm {
+                        ui.label(
+                            RichText::new(t!(
+                                "Thin strokes of this font get lost below about {mm} mm. Make the letters taller or pick a bolder font.",
+                                mm = mm
+                            ))
+                            .size(12.0)
+                            .color(super::WARN),
+                        );
+                    } else {
+                        ui.label(RichText::new(t!("This font stitches cleanly from about {mm} mm tall.", mm = mm)).size(12.0).color(muted));
+                    }
+                }
             });
             card(ui, t!("Quick styles"), accent, |ui| {
                 if let Some(i) = preset_chips(ui, &lettering::PRESETS.map(|p| (p.0, p.1))) {
@@ -177,6 +245,9 @@ impl HoopApp {
         }
         if let Some(tip) = tip_later {
             self.toast(tip.to_string());
+        }
+        if more_fonts {
+            self.fontwin.open = true;
         }
         if tab == Tab::Text {
             self.team_card(ui);

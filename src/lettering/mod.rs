@@ -376,6 +376,23 @@ mod tests {
     }
 
     #[test]
+    fn bundled_fonts_have_a_smallest_height_and_a_preview() {
+        let mut sizes = Vec::new();
+        for f in bundled_fonts() {
+            let mm = smallest_height_mm(&f).unwrap();
+            assert!((2.0..=40.0).contains(&mm), "{}: {mm}", f.name);
+            sizes.push((f.name.clone(), mm));
+            let (bytes, _) = f.bytes().unwrap();
+            let img = render_line(&bytes, &f.name, 32.0).unwrap();
+            assert!(img.size[0] > 40 && img.size[1] == 32, "{}", f.name);
+        }
+        eprintln!("{sizes:?}");
+        let of = |n: &str| sizes.iter().find(|s| s.0 == n).unwrap().1;
+        // Heavy block letters sew smaller than a thin script.
+        assert!(of("Archivo Black") < of("Dancing Script"));
+    }
+
+    #[test]
     fn letters_come_out_at_the_requested_height() {
         let font = &bundled_fonts()[1]; // Anton
         let s = Settings { text: "HI".into(), height_mm: 30.0, edge: EdgeKind::None, ..Default::default() };

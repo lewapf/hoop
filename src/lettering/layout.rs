@@ -73,7 +73,10 @@ pub(crate) fn envelope(glyphs: &mut [Vec<Contour>], shape: TextShape, amount: f3
 }
 
 pub(crate) fn layout(face: &ttf_parser::Face, s: &Settings) -> Vec<Vec<Contour>> {
-    let cap = face.capital_height().filter(|h| *h > 0).unwrap_or(face.ascender()) as f32;
+    // The height of H as drawn: some fonts (Courgette) give a wrong
+    // capital height in their tables.
+    let drawn_h = face.glyph_index('H').and_then(|g| face.glyph_bounding_box(g)).map(|b| b.y_max).filter(|h| *h > 0);
+    let cap = drawn_h.or(face.capital_height().filter(|h| *h > 0)).unwrap_or(face.ascender()) as f32;
     let k = s.height_mm * 10.0 / cap;
     let pitch = s.height_mm * 10.0 * s.line_spacing;
     let lines: Vec<&str> = s.text.lines().collect();

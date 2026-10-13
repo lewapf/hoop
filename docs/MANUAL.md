@@ -108,8 +108,31 @@ window, or by clicking a thumbnail in the **Library**.
 
 ## Lettering
 
-Type in the **Text** page and pick a font. Bundled fonts come first;
-installed system fonts follow.
+Type in the **Text** page and pick a font. The font list shows each font
+in its own letters. Bundled fonts come first, grouped into Block; Serif,
+slab and varsity; Script; and Rounded and fun. Fonts added from Google
+Fonts come next, then the fonts installed on the computer. The number
+beside a font, and the line under the list, say about how tall its
+capitals must be before thin strokes get too narrow to stitch (1.2 mm).
+Below that height the line turns orange.
+
+**Google Fonts** (Machine → Google Fonts, or *Get more fonts from Google
+Fonts* at the top of the font list) lists the 1,600 or so free Google
+Fonts families with Latin letters:
+
+- Sort them by *Best for stitching* (heavy strokes first), popularity,
+  newest or name, and filter by kind (display, handwriting, serif…).
+- **Show Letters** draws each family in its own letters. **Show Stitched**
+  runs it through the stitch engine with your Lettering fill, edge and
+  threads at 15 mm, on your fabric color, so you see how it will sew.
+- Type a **sample text** (or *Use my text*) to preview your own words
+  instead of the font names.
+- Pick a weight and press **Add**. The font goes to
+  `~/.local/share/fonts/hoop` with its license, joins the font list and,
+  in Lettering, is put to use. Other programs can use it too. **Remove**
+  takes it away again.
+
+Hoop needs the internet and `curl` for this. The list is kept for a week.
 
 - **Quick styles** set a whole look in one click:
   - Classic, Satin, Outline, Bold, Vintage, Wavy, Shaded.

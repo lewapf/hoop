@@ -6,6 +6,7 @@ mod canvas;
 mod check;
 mod export;
 mod formats;
+mod gfonts;
 mod hoops;
 mod lettering;
 mod library;
