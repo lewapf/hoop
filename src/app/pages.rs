@@ -225,7 +225,9 @@ impl HoopApp {
             });
 
             card(ui, t!("Position"), accent, |ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
                 let w = (ui.available_width() - 18.0) / 4.0;
+                let at = self.setup.at;
                 ui.horizontal(|ui| {
                     let b = |t: &str| egui::Button::new(t).min_size(vec2(w, 28.0));
                     if ui.add(b(t!("Left 90°"))).on_hover_text(t!("Rotate left · Shift+R")).clicked() {
@@ -234,7 +236,7 @@ impl HoopApp {
                     if ui.add(b(t!("Right 90°"))).on_hover_text(t!("Rotate right · R")).clicked() {
                         self.change(|s| s.at.quarter_turns = (s.at.quarter_turns + 1) % 4);
                     }
-                    if ui.add(b(t!("Mirror"))).on_hover_text("M").clicked() {
+                    if ui.add(b(t!("Mirror")).selected(at.mirror)).on_hover_text("M").clicked() {
                         self.change(|s| s.at.mirror = !s.at.mirror);
                     }
                     if ui.add(b(t!("Center"))).on_hover_text("C").clicked() {
@@ -244,32 +246,25 @@ impl HoopApp {
                         });
                     }
                 });
-                let at = self.setup.at;
-                let signed = |v: f32| {
-                    format!(
-                        "{}{:.1}",
-                        if v > 0.0 {
-                            "+"
-                        } else if v < 0.0 {
-                            "−"
-                        } else {
-                            ""
-                        },
-                        (v / 10.0).abs()
-                    )
-                };
-                ui.label(
-                    RichText::new(t!(
-                        "{v0}°{v1}  ·  X {v2}  Y {v3} mm",
-                        v0 = at.quarter_turns as u32 * 90,
-                        v1 = if at.mirror { " mirrored" } else { "" },
-                        v2 = signed(at.dx),
-                        v3 = signed(-at.dy)
-                    ))
-                    .monospace()
-                    .size(12.0)
-                    .color(muted),
-                );
+                ui.add_space(2.0);
+                // Offset from the hoop's center in mm, up and right positive.
+                ui.horizontal(|ui| {
+                    // Adding 0.0 turns -0.0 into 0.0.
+                    let (mut x, mut y) = (at.dx / 10.0 + 0.0, -at.dy / 10.0 + 0.0);
+                    ui.label(RichText::new("X").color(muted));
+                    let rx = ui.add_sized(vec2(w, 24.0), mm_field(&mut x)).on_hover_text(t!("Right of the hoop's center"));
+                    ui.label(RichText::new("Y").color(muted));
+                    let ry = ui.add_sized(vec2(w, 24.0), mm_field(&mut y)).on_hover_text(t!("Above the hoop's center"));
+                    if rx.changed() || ry.changed() {
+                        self.change(|s| {
+                            s.at.dx = x * 10.0;
+                            s.at.dy = -y * 10.0;
+                        });
+                    }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(RichText::new(format!("{}°", at.quarter_turns as u32 * 90)).monospace().color(muted)).on_hover_text(t!("Turned"));
+                    });
+                });
             });
         }
 
@@ -287,10 +282,13 @@ impl HoopApp {
                 t!("≈ {mins} min", mins = mins)
             };
             let trims = p.count(Cmd::Trim);
+            let top: f32 = d.blocks.iter().map(|b| p.thread_meters(b)).sum();
             let rows = [
                 (t!("Size"), t!("{v0:.1} × {v1:.1} mm", v0 = w / 10.0, v1 = h / 10.0)),
                 (t!("Stitches"), stitches.to_string()),
                 (t!("Colors"), d.blocks.len().to_string()),
+                // Bobbin thread runs about a third of the top thread.
+                (t!("Thread"), t!("{v0:.0} m · bobbin ≈ {v1:.0} m", v0 = top, v1 = top / 3.0)),
                 (t!("Jumps"), if trims > 0 { t!("{v0} · {trims} trims", v0 = p.count(Cmd::Jump), trims = trims) } else { p.count(Cmd::Jump).to_string() }),
                 (t!("Sewing time"), time),
             ];
@@ -325,11 +323,14 @@ impl HoopApp {
         }
 
         if tab == Tab::View {
-            card(ui, t!("Display"), accent, |ui| {
+            card(ui, t!("Fabric"), accent, |ui| {
                 ui.horizontal_wrapped(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.0;
+                    let mut preset = false;
                     for (name, c) in FABRICS {
                         let selected = self.fabric == c;
-                        let (rect, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
+                        preset |= selected;
+                        let (rect, resp) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
                         if selected {
                             ui.painter().circle_stroke(rect.center(), 12.5, egui::Stroke::new(2.0, accent));
                         }
@@ -338,12 +339,42 @@ impl HoopApp {
                             self.fabric = c;
                         }
                     }
-                    ui.color_edit_button_srgb(&mut self.fabric).on_hover_text(t!("Other fabric color"));
+                    // Any other color: a round swatch like the rest, showing the
+                    // color while it is in use and a plus otherwise.
+                    let (rect, resp) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    let ink = ui.visuals().text_color();
+                    if preset {
+                        ui.painter().circle_stroke(rect.center(), 10.0, egui::Stroke::new(1.0, ink.gamma_multiply(0.5)));
+                        super::icons::paint(ui, "plus", egui::Rect::from_center_size(rect.center(), vec2(12.0, 12.0)), ink);
+                    } else {
+                        ui.painter().circle_stroke(rect.center(), 12.5, egui::Stroke::new(2.0, accent));
+                        ui.painter().circle(rect.center(), 10.0, rgb(self.fabric), egui::Stroke::new(1.0, Color32::from_black_alpha(90)));
+                    }
+                    let resp = resp.on_hover_text(t!("Other fabric color"));
+                    egui::Popup::from_toggle_button_response(&resp).close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside).show(|ui| {
+                        let f = self.fabric;
+                        let mut c = Color32::from_rgb(f[0], f[1], f[2]);
+                        if egui::color_picker::color_picker_color32(ui, &mut c, egui::color_picker::Alpha::Opaque) {
+                            self.fabric = [c.r(), c.g(), c.b()];
+                        }
+                    });
                 });
-                ui.checkbox(&mut self.textured, t!("Thread texture  T"));
-                ui.checkbox(&mut self.grid, t!("Template grid, 10 mm  G"));
-                ui.checkbox(&mut self.jumps, t!("Jump stitches  J"));
-                ui.checkbox(&mut self.sizes, t!("Size label under the design"));
+            });
+            card(ui, t!("Display"), accent, |ui| {
+                // A switch with its key, the key lined up on the right.
+                let toggle = |ui: &mut egui::Ui, on: &mut bool, label: &str, key: &str| {
+                    ui.horizontal(|ui| {
+                        ui.checkbox(on, label);
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.label(RichText::new(key).monospace().size(12.0).color(muted));
+                        });
+                    });
+                };
+                toggle(ui, &mut self.textured, t!("Thread texture"), "T");
+                toggle(ui, &mut self.grid, t!("Template grid, 10 mm"), "G");
+                toggle(ui, &mut self.jumps, t!("Jump stitches"), "J");
+                toggle(ui, &mut self.sizes, t!("Size label under the design"), "");
+                ui.add_space(4.0);
                 if ui
                     .add_enabled(self.design.is_some(), egui::Button::new(t!("Save picture…")))
                     .on_hover_text(t!("A PNG of the hoop preview, to share · Ctrl+Shift+S"))
@@ -510,4 +541,9 @@ impl HoopApp {
             }
         }
     }
+}
+
+/// A drag-or-type field for a length in mm, to a tenth.
+fn mm_field(v: &mut f32) -> egui::DragValue<'_> {
+    egui::DragValue::new(v).speed(0.1).fixed_decimals(1).suffix(" mm")
 }

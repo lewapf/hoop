@@ -4573,3 +4573,21 @@ msgstr "F8"
 
 msgid "Sewing time at {spm} spm, without thread changes · stitch {sewn} of {stitches} · thread {k} of {colors}"
 msgstr "Czas haftowania przy {spm} ściegach/min, bez zmian nici · ścieg {sewn} z {stitches} · nić {k} z {colors}"
+
+msgid "Keeps its proportions"
+msgstr "Zachowuje proporcje"
+
+msgid "Right of the hoop's center"
+msgstr "W prawo od środka tamborka"
+
+msgid "Above the hoop's center"
+msgstr "Powyżej środka tamborka"
+
+msgid "Turned"
+msgstr "Obrót"
+
+msgid "{v0:.0} m · bobbin ≈ {v1:.0} m"
+msgstr "{v0:.0} m · szpulka ≈ {v1:.0} m"
+
+msgid "Reset"
+msgstr "Resetuj"

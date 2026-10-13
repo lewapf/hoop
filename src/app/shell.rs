@@ -352,11 +352,14 @@ impl HoopApp {
         let m = self.mode as usize;
         dock_title(ui, self.tab[m].label());
         let tab = self.tab[m];
+        let key = egui::Id::new(PAGE_TITLE);
+        ui.ctx().data_mut(|d| d.insert_temp(key, tab.label().to_string()));
         egui::ScrollArea::vertical().id_salt(("page", m, tab as usize)).auto_shrink([false, false]).show(ui, |ui| {
             // Leave room for the scroll bar and never grow past the panel.
             ui.set_max_width(ui.available_width() - 10.0);
             self.side_panel(ui, canvas_rect, tab);
         });
+        ui.ctx().data_mut(|d| d.remove::<String>(key));
     }
 
     fn menu_bar(&mut self, ui: &mut egui::Ui, canvas_rect: egui::Rect) {

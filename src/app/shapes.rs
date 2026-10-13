@@ -937,10 +937,28 @@ impl HoopApp {
     }
 
     /// The Shape tab: what can be done to the picked shapes.
+    /// The picked shapes' settings, then adding new ones; with nothing
+    /// picked, adding comes first.
     pub(super) fn shape_tab(&mut self, ui: &mut egui::Ui) {
-        let muted = self.muted();
+        if self.sel.is_empty() {
+            self.add_card(ui, true);
+            ui.label(
+                RichText::new(t!("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."))
+                    .size(12.0)
+                    .color(self.muted()),
+            );
+        } else {
+            self.picked_cards(ui);
+            self.add_card(ui, false);
+        }
+        if let Some(name) = self.list_add.take() {
+            self.add_built_in(name);
+        }
+    }
+
+    fn add_card(&mut self, ui: &mut egui::Ui, open: bool) {
         let accent = self.accent();
-        card(ui, t!("Add"), accent, |ui| {
+        let body = |ui: &mut egui::Ui| {
             let w = (ui.available_width() - 12.0) / 4.0;
             for row in artwork::BUILT_IN.chunks(4) {
                 ui.horizontal(|ui| {
@@ -952,18 +970,17 @@ impl HoopApp {
                     }
                 });
             }
-        });
-        if let Some(name) = self.list_add.take() {
-            self.add_built_in(name);
+        };
+        if open {
+            card(ui, t!("Add"), accent, body);
+        } else {
+            card_folded(ui, t!("Add"), accent, body);
         }
-        if self.sel.is_empty() {
-            ui.label(
-                RichText::new(t!("Click a shape on the hoop or in Objects. Drag on empty fabric to pick several; Ctrl+click adds one."))
-                    .size(12.0)
-                    .color(muted),
-            );
-            return;
-        }
+    }
+
+    fn picked_cards(&mut self, ui: &mut egui::Ui) {
+        let muted = self.muted();
+        let accent = self.accent();
         self.text_card(ui);
         self.form_card(ui);
         self.tool_card(ui);
@@ -1121,7 +1138,7 @@ impl HoopApp {
                     }
                 }
                 let can_reset = e.moved() || (e.own.is_some() && e.source < art.shapes.len());
-                if ui.add_enabled(can_reset, egui::Button::new("Reset")).on_hover_text(t!("Back to the shape as drawn")).clicked() {
+                if ui.add_enabled(can_reset, egui::Button::new(t!("Reset"))).on_hover_text(t!("Back to the shape as drawn")).clicked() {
                     (e.dx, e.dy, e.scale, e.rotate) = (0.0, 0.0, 1.0, 0.0);
                     if e.source < art.shapes.len() {
                         e.own = None;

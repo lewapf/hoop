@@ -113,7 +113,9 @@ window, or by clicking a thumbnail in the **Library**.
   **Hoop** page says whether the design fits and offers fixes: rotate it,
   use a bigger hoop, shrink it, or split it into several hoopings.
 - **Rotating and mirroring:** `R` and `Shift+R` rotate by 90°, `M`
-  mirrors, `C` centers. Saving bakes these in.
+  mirrors, `C` centers. Saving bakes these in. For an exact spot, type
+  the offset from the hoop's center under **Position** on the Hoop page
+  (X to the right, Y up, in mm).
 
 ## Lettering
 

@@ -4409,3 +4409,21 @@ msgstr ""
 
 msgid "Sewing time at {spm} spm, without thread changes · stitch {sewn} of {stitches} · thread {k} of {colors}"
 msgstr ""
+
+msgid "Keeps its proportions"
+msgstr ""
+
+msgid "Right of the hoop's center"
+msgstr ""
+
+msgid "Above the hoop's center"
+msgstr ""
+
+msgid "Turned"
+msgstr ""
+
+msgid "{v0:.0} m · bobbin ≈ {v1:.0} m"
+msgstr ""
+
+msgid "Reset"
+msgstr ""

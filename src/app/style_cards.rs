@@ -314,13 +314,15 @@ pub(super) fn fill_card(ui: &mut egui::Ui, s: &mut Settings, muted: Color32, acc
 
 pub(super) fn edge_card(ui: &mut egui::Ui, s: &mut Settings, accent: Color32, title: &str, with_thread: bool) {
     card(ui, title, accent, |ui| {
-        segmented(
-            ui,
-            &mut s.edge,
-            &[(EdgeKind::Satin, t!("Satin")), (EdgeKind::Running, t!("Run")), (EdgeKind::Triple, t!("Triple")), (EdgeKind::None, t!("None"))],
-            accent,
-        );
-        segmented(ui, &mut s.edge, &[(EdgeKind::Blanket, t!("Blanket")), (EdgeKind::Scallop, t!("Scallop"))], accent);
+        let kinds = [
+            (EdgeKind::Satin, t!("Satin")),
+            (EdgeKind::Running, t!("Run")),
+            (EdgeKind::Triple, t!("Triple")),
+            (EdgeKind::Blanket, t!("Blanket")),
+            (EdgeKind::Scallop, t!("Scallop")),
+            (EdgeKind::None, t!("None")),
+        ];
+        segmented_grid(ui, &mut s.edge, &kinds, 3, accent);
         if matches!(s.edge, EdgeKind::Satin | EdgeKind::Blanket | EdgeKind::Scallop) {
             ui.add_space(4.0);
             slider_row(ui, t!("Width"), &mut s.edge_width_mm, 0.8..=5.0, " mm", 1);

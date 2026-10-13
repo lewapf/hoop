@@ -214,9 +214,15 @@ impl HoopApp {
         let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else { return };
         if tab == Tab::Source {
             card(ui, t!("Size"), accent, |ui| {
+                // Width and height stay in proportion; either one sets the size.
+                let a = art.aspect().max(1e-3);
                 slider_row(ui, t!("Width"), &mut s.width_mm, 10.0..=360.0, " mm", 1);
+                let mut h = s.width_mm * a;
+                if slider_row(ui, t!("Height"), &mut h, 10.0 * a..=360.0 * a, " mm", 1).changed() {
+                    s.width_mm = (h / a).clamp(10.0, 360.0);
+                }
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(t!("Height {v0:.1} mm", v0 = s.width_mm * art.aspect())).color(muted));
+                    ui.label(RichText::new(t!("Keeps its proportions")).size(12.0).color(muted));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button(t!("Fit hoop")).on_hover_text(t!("Largest size that fits the hoop with 5 mm to spare")).clicked() {
                             let by_w = hoop.0 - 10.0;

@@ -4537,3 +4537,21 @@ msgstr "F8"
 
 msgid "Sewing time at {spm} spm, without thread changes · stitch {sewn} of {stitches} · thread {k} of {colors}"
 msgstr "Stickzeit bei {spm} Stichen/min, ohne Fadenwechsel · Stich {sewn} von {stitches} · Faden {k} von {colors}"
+
+msgid "Keeps its proportions"
+msgstr "Behält die Proportionen"
+
+msgid "Right of the hoop's center"
+msgstr "Rechts von der Rahmenmitte"
+
+msgid "Above the hoop's center"
+msgstr "Über der Rahmenmitte"
+
+msgid "Turned"
+msgstr "Gedreht"
+
+msgid "{v0:.0} m · bobbin ≈ {v1:.0} m"
+msgstr "{v0:.0} m · Unterfaden ≈ {v1:.0} m"
+
+msgid "Reset"
+msgstr "Zurücksetzen"

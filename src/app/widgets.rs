@@ -25,6 +25,13 @@ pub(super) fn card_folded(ui: &mut egui::Ui, title: &str, accent: Color32, add: 
 /// A group box whose title folds it away. Folding is remembered per card
 /// for the session.
 fn fold_card(ui: &mut egui::Ui, title: &str, accent: Color32, open_default: bool, add: impl FnOnce(&mut egui::Ui)) {
+    // A card named like the page it is on would only repeat the page's
+    // title: it shows as a plain box that doesn't fold.
+    if ui.ctx().data(|d| d.get_temp::<String>(egui::Id::new(PAGE_TITLE))).is_some_and(|t| t == title) {
+        card_box(ui, add);
+        ui.add_space(10.0);
+        return;
+    }
     let id = ui.make_persistent_id(("card", title));
     let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, open_default);
     let open = state.is_open();
@@ -49,14 +56,22 @@ fn fold_card(ui: &mut egui::Ui, title: &str, accent: Color32, open_default: bool
     }
     state.store(ui.ctx());
     if open {
-        let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.025);
-        let stroke = egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color);
-        egui::Frame::new().fill(fill).stroke(stroke).corner_radius(6).inner_margin(10).show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            add(ui);
-        });
+        card_box(ui, add);
     }
     ui.add_space(if open { 10.0 } else { 2.0 });
+}
+
+/// The right dock's page title, kept in the context while the page draws.
+pub(super) const PAGE_TITLE: &str = "hoop-page-title";
+
+fn card_box(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui)) {
+    let v = ui.visuals().clone();
+    let fill = v.panel_fill.lerp_to_gamma(v.text_color(), 0.025);
+    let stroke = egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color);
+    egui::Frame::new().fill(fill).stroke(stroke).corner_radius(6).inner_margin(10).show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        add(ui);
+    });
 }
 
 pub(super) fn primary(text: &str, accent: Color32) -> egui::Button<'static> {
@@ -65,25 +80,32 @@ pub(super) fn primary(text: &str, accent: Color32) -> egui::Button<'static> {
 
 /// Equal-width options in one row, the chosen one filled with the accent.
 pub(super) fn segmented<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], accent: Color32) {
+    segmented_grid(ui, value, options, options.len(), accent);
+}
+
+/// `segmented` in rows of `cols` options, all the same width.
+pub(super) fn segmented_grid<T: PartialEq + Copy>(ui: &mut egui::Ui, value: &mut T, options: &[(T, &str)], cols: usize, accent: Color32) {
     let track = ui.visuals().extreme_bg_color;
     egui::Frame::new().fill(track).corner_radius(8).inner_margin(3).show(ui, |ui| {
         ui.set_width(ui.available_width());
-        let w = (ui.available_width() - 4.0 * (options.len() - 1) as f32) / options.len() as f32;
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 4.0;
-            for (v, name) in options {
-                let on = *value == *v;
-                let text = RichText::new(*name).color(if on { contrast(accent) } else { ui.visuals().text_color() });
-                let b = egui::Button::new(text)
-                    .fill(if on { accent } else { Color32::TRANSPARENT })
-                    .stroke(egui::Stroke::NONE)
-                    .corner_radius(6)
-                    .min_size(vec2(w, 26.0));
-                if ui.add(b).clicked() {
-                    *value = *v;
+        ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
+        let w = (ui.available_width() - 4.0 * (cols - 1) as f32) / cols as f32;
+        for row in options.chunks(cols) {
+            ui.horizontal(|ui| {
+                for (v, name) in row {
+                    let on = *value == *v;
+                    let text = RichText::new(*name).color(if on { contrast(accent) } else { ui.visuals().text_color() });
+                    let b = egui::Button::new(text)
+                        .fill(if on { accent } else { Color32::TRANSPARENT })
+                        .stroke(egui::Stroke::NONE)
+                        .corner_radius(6)
+                        .min_size(vec2(w, 26.0));
+                    if ui.add(b).clicked() {
+                        *value = *v;
+                    }
                 }
-            }
-        });
+            });
+        }
     });
 }
 
@@ -94,9 +116,9 @@ pub(super) fn int_row<T: egui::emath::Numeric>(ui: &mut egui::Ui, label: &str, v
             ui.set_min_width(62.0);
             ui.label(label);
         });
-        ui.spacing_mut().slider_width = (ui.available_width() - 86.0).max(40.0);
+        ui.spacing_mut().slider_width = (ui.available_width() - 96.0).max(40.0);
         ui.add(egui::Slider::new(v, range.clone()).show_value(false)).on_hover_text(hover);
-        ui.add_sized([78.0, 22.0], egui::DragValue::new(v).range(range).speed(0.05));
+        ui.add_sized([88.0, 22.0], egui::DragValue::new(v).range(range).speed(0.05));
     });
 }
 
@@ -107,9 +129,9 @@ pub(super) fn slider_row(ui: &mut egui::Ui, label: &str, v: &mut f32, range: std
             ui.set_min_width(62.0);
             ui.label(label);
         });
-        ui.spacing_mut().slider_width = (ui.available_width() - 86.0).max(40.0);
+        ui.spacing_mut().slider_width = (ui.available_width() - 96.0).max(40.0);
         let r = ui.add(egui::Slider::new(v, range.clone()).show_value(false));
-        let d = ui.add_sized([78.0, 22.0], egui::DragValue::new(v).range(range).suffix(suffix).fixed_decimals(decimals).speed(0.1));
+        let d = ui.add_sized([88.0, 22.0], egui::DragValue::new(v).range(range).suffix(suffix).fixed_decimals(decimals).speed(0.1));
         r | d
     })
     .inner
