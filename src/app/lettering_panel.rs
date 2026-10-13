@@ -49,13 +49,17 @@ impl HoopApp {
                 let current = self.fonts.get(s.font).map_or("", |f| f.name.as_str()).to_string();
                 let sizes = &self.fontwin.sizes;
                 let text_color = ui.visuals().text_color();
-                egui::ComboBox::from_id_salt("font").selected_text(&current).width(ui.available_width()).height(420.0).show_ui(ui, |ui| {
-                    ui.add(egui::TextEdit::singleline(&mut self.font_filter).hint_text(t!("Search fonts")));
+                let list = egui::ComboBox::from_id_salt("font").selected_text(&current).width(ui.available_width()).height(420.0).show_ui(ui, |ui| {
+                    let search = ui.add(egui::TextEdit::singleline(&mut self.font_filter).hint_text(t!("Search fonts")).desired_width(f32::INFINITY));
+                    // Typing goes straight into the search when the list opens.
+                    if ui.ctx().memory(|m| m.focused().is_none()) {
+                        search.request_focus();
+                    }
                     if ui.button(t!("Get more fonts from Google Fonts…")).clicked() {
                         more_fonts = true;
                         ui.close();
                     }
-                    let filter = self.font_filter.to_lowercase();
+                    let filter = self.font_filter.clone();
                     let fonts = &self.fonts;
                     let ppp = ui.ctx().pixels_per_point();
                     let row = |ui: &mut egui::Ui, font: &mut usize, i: usize| {
@@ -78,7 +82,7 @@ impl HoopApp {
                             *font = i;
                         }
                     };
-                    let shown = |f: &lettering::FontSource| filter.is_empty() || f.name.to_lowercase().contains(&filter);
+                    let shown = |f: &lettering::FontSource| lettering::font_matches(&f.name, &filter);
                     let header = |ui: &mut egui::Ui, text: &str| {
                         ui.add_space(4.0);
                         ui.label(RichText::new(text).size(11.0).strong().color(muted));
@@ -110,7 +114,20 @@ impl HoopApp {
                     if self.font_scan.is_some() {
                         ui.label(RichText::new(t!("Looking for installed fonts…")).color(muted));
                     }
+                    if !filter.trim().is_empty() {
+                        if !fonts.iter().any(shown) {
+                            ui.label(RichText::new(t!("No font here matches.")).color(muted));
+                        }
+                        if ui.button(t!("Search Google Fonts for “{q}”", q = filter.trim())).clicked() {
+                            more_fonts = true;
+                            ui.close();
+                        }
+                    }
                 });
+                // Each time the list opens, it starts with an empty search.
+                if list.inner.is_none() && !more_fonts {
+                    self.font_filter.clear();
+                }
                 if let Some(Some(mm)) = sizes.get(&current) {
                     if s.height_mm < *mm {
                         ui.label(
@@ -247,7 +264,8 @@ impl HoopApp {
             self.toast(tip.to_string());
         }
         if more_fonts {
-            self.fontwin.open = true;
+            self.fontwin.search(&self.font_filter);
+            self.font_filter.clear();
         }
         if tab == Tab::Text {
             self.team_card(ui);

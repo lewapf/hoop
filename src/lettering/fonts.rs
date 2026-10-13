@@ -119,6 +119,14 @@ pub fn face_name(data: &[u8]) -> Option<String> {
     })
 }
 
+/// Whether a font name matches what was typed in a font search: letters
+/// and digits only, any case, so "blackops" and "Black-Ops" both find
+/// "Black Ops One".
+pub fn font_matches(name: &str, query: &str) -> bool {
+    let key = |s: &str| s.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect::<String>();
+    key(name).contains(&key(query))
+}
+
 /// One font file as a list entry.
 pub fn font_file(path: &Path) -> Option<FontSource> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();

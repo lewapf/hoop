@@ -376,6 +376,15 @@ mod tests {
     }
 
     #[test]
+    fn font_search_ignores_case_spaces_and_dashes() {
+        assert!(font_matches("Black Ops One", "blackops"));
+        assert!(font_matches("Black Ops One", "Black-Ops"));
+        assert!(font_matches("Black Ops One", "  ops one "));
+        assert!(font_matches("Anton", ""));
+        assert!(!font_matches("Anton", "bebas"));
+    }
+
+    #[test]
     fn bundled_fonts_have_a_smallest_height_and_a_preview() {
         let mut sizes = Vec::new();
         for f in bundled_fonts() {

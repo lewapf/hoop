@@ -4445,3 +4445,15 @@ msgid "{n} weight"
 msgid_plural "{n} weights"
 msgstr[0] "{n} Schnitt"
 msgstr[1] "{n} Schnitte"
+
+msgid "Built into Hoop"
+msgstr "In Hoop enthalten"
+
+msgid "No font here matches."
+msgstr "Keine Schrift hier passt."
+
+msgid "Search Google Fonts for “{q}”"
+msgstr "„{q}“ in Google Fonts suchen"
+
+msgid "No family matches. Try fewer letters or another kind."
+msgstr "Keine Familie passt. Versuch weniger Buchstaben oder eine andere Art."

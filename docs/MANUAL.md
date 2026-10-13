@@ -116,6 +116,11 @@ beside a font, and the line under the list, say about how tall its
 capitals must be before thin strokes get too narrow to stitch (1.2 mm).
 Below that height the line turns orange.
 
+The search box at the top of the font list takes the typing as soon as
+the list opens and ignores case, spaces and dashes ("blackops" finds
+Black Ops One). When you've typed something, *Search Google Fonts for
+“…”* opens Google Fonts with the same search.
+
 **Google Fonts** (Machine → Google Fonts, or *Get more fonts from Google
 Fonts* at the top of the font list) lists the 1,600 or so free Google
 Fonts families with Latin letters:

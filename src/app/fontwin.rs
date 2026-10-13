@@ -94,6 +94,9 @@ pub(super) struct FontBrowser {
     look: Look,
     sample: String,
     view: Arc<Mutex<View>>,
+    focus_search: bool,
+    /// Search, kind, order and look the list was last shown for.
+    list_key: Option<(String, Option<&'static str>, u8, u8)>,
     /// The weight picked for each family.
     weight: HashMap<String, u16>,
     previews: HashMap<Key, Preview>,
@@ -124,6 +127,8 @@ impl Default for FontBrowser {
             look: Look::default(),
             sample: String::new(),
             view: Default::default(),
+            focus_search: true,
+            list_key: None,
             weight: HashMap::new(),
             previews: HashMap::new(),
             queue: Default::default(),
@@ -136,6 +141,21 @@ impl Default for FontBrowser {
             sizes: HashMap::new(),
             sizing: None,
         }
+    }
+}
+
+impl FontBrowser {
+    /// Opens on a search typed elsewhere (the font list), across all kinds.
+    pub fn search(&mut self, query: &str) {
+        self.show();
+        self.filter = query.trim().to_string();
+        self.category = None;
+    }
+
+    /// Opens the window with the cursor in its search box.
+    pub fn show(&mut self) {
+        self.open = true;
+        self.focus_search = true;
     }
 }
 
@@ -323,6 +343,7 @@ impl HoopApp {
             FontData::File(p, _) => Some(p.clone()),
             _ => None,
         });
+        let built_in: Vec<String> = self.fonts.iter().filter(|f| f.featured).map(|f| f.name.clone()).collect();
         let lettering_text: String = self.letter.text.lines().next().unwrap_or("").chars().take(40).collect();
         let fb = &mut self.fontwin;
         egui::Window::new(t!("Google Fonts")).open(&mut open).collapsible(false).resizable(true).default_size(vec2(760.0, 760.0)).show(ctx, |ui| {
@@ -334,7 +355,11 @@ impl HoopApp {
             );
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                ui.add(egui::TextEdit::singleline(&mut fb.filter).hint_text(t!("Search fonts")).desired_width(220.0));
+                let search = ui.add(egui::TextEdit::singleline(&mut fb.filter).hint_text(t!("Search fonts")).desired_width(220.0));
+                if fb.focus_search {
+                    search.request_focus();
+                    fb.focus_search = false;
+                }
                 egui::ComboBox::from_id_salt("gf-sort")
                     .selected_text(match fb.sort {
                         Sort::Fit => t!("Best for stitching"),
@@ -403,9 +428,7 @@ impl HoopApp {
                 }
                 Some(Ok(f)) => f,
             };
-            let needle = fb.filter.to_lowercase();
-            let mut shown: Vec<&Family> =
-                fams.iter().filter(|f| fb.category.is_none_or(|c| f.category == c) && (needle.is_empty() || f.name.to_lowercase().contains(&needle))).collect();
+            let mut shown: Vec<&Family> = fams.iter().filter(|f| fb.category.is_none_or(|c| f.category == c) && lettering::font_matches(&f.name, &fb.filter)).collect();
             match fb.sort {
                 Sort::Fit => shown.sort_by(|a, b| b.thickness.total_cmp(&a.thickness).then(a.popularity.cmp(&b.popularity))),
                 Sort::Popular => {}
@@ -416,7 +439,18 @@ impl HoopApp {
             let preview_h = if fb.look == Look::Stitched { STITCHED_H } else { PREVIEW_H };
             let row_h = preview_h + 26.0;
             let mut wanted: Vec<Key> = Vec::new();
-            egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(ui, row_h, shown.len(), |ui, range| {
+            if shown.is_empty() {
+                ui.label(RichText::new(t!("No family matches. Try fewer letters or another kind.")).color(muted));
+            }
+            // A new search, kind, order or look starts at the top; an
+            // old scroll position could otherwise show an empty list.
+            let list_key = (fb.filter.clone(), fb.category, fb.sort as u8, fb.look as u8);
+            let mut scroll = egui::ScrollArea::vertical().auto_shrink([false, false]);
+            if fb.list_key.as_ref() != Some(&list_key) {
+                scroll = scroll.vertical_scroll_offset(0.0);
+                fb.list_key = Some(list_key);
+            }
+            scroll.show_rows(ui, row_h, shown.len(), |ui, range| {
                 for f in &shown[range] {
                     let weight = *fb.weight.get(&f.name).unwrap_or(&f.default_weight());
                     let key = (f.name.clone(), weight);
@@ -460,7 +494,12 @@ impl HoopApp {
                             });
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 let busy = fb.job.is_some();
-                                if installed {
+                                // Bundled fonts are the regular weight, but
+                                // Cinzel Decorative is its Black.
+                                let bundled_weight = if f.name == "Cinzel Decorative" { 900 } else { 400 };
+                                if built_in.contains(&f.name) && weight == bundled_weight {
+                                    ui.label(RichText::new(t!("Built into Hoop")).color(muted));
+                                } else if installed {
                                     let path = gfonts::installed_path(&f.name, weight);
                                     let used = path.is_some() && path == in_use;
                                     if ui

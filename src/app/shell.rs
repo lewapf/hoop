@@ -501,7 +501,7 @@ impl HoopApp {
                     self.threads.open = true;
                 }
                 if item(ui, true, t!("Google Fonts…"), "") {
-                    self.fontwin.open = true;
+                    self.fontwin.show();
                 }
             });
             ui.menu_button(t!("Help"), |ui| {

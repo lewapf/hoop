@@ -4481,3 +4481,15 @@ msgid_plural "{n} weights"
 msgstr[0] "{n} grubość"
 msgstr[1] "{n} grubości"
 msgstr[2] "{n} grubości"
+
+msgid "Built into Hoop"
+msgstr "Wbudowana w Hoop"
+
+msgid "No font here matches."
+msgstr "Żadna czcionka tu nie pasuje."
+
+msgid "Search Google Fonts for “{q}”"
+msgstr "Szukaj „{q}” w Google Fonts"
+
+msgid "No family matches. Try fewer letters or another kind."
+msgstr "Żadna rodzina nie pasuje. Wpisz mniej liter albo wybierz inny rodzaj."

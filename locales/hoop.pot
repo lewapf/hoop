@@ -676,10 +676,16 @@ msgid_plural "{n} families"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "No family matches. Try fewer letters or another kind."
+msgstr ""
+
 msgid "{n} weight"
 msgid_plural "{n} weights"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Built into Hoop"
+msgstr ""
 
 msgid "It's the font in use. Pick another font first."
 msgstr ""
@@ -755,6 +761,12 @@ msgid "Installed on this computer"
 msgstr ""
 
 msgid "Looking for installed fonts…"
+msgstr ""
+
+msgid "No font here matches."
+msgstr ""
+
+msgid "Search Google Fonts for “{q}”"
 msgstr ""
 
 msgid "Thin strokes of this font get lost below about {mm} mm. Make the letters taller or pick a bolder font."
