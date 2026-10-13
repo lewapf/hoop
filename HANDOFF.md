@@ -284,7 +284,8 @@ right-click menu. Engine parts behind them have unit tests.
 Debug environment variables for screenshots (read in `debug_start`):
 HOOP_MODE, HOOP_TAB (tab enum name), HOOP_DOCK=library|colors|check,
 HOOP_WINDOW=threads|test|help|split, HOOP_SPLIT_HOOP=index,
-HOOP_SELECT=shape index, HOOP_BACKDROP=picture path (also turns the pen
+HOOP_SELECT=shape index, HOOP_PALETTE=query (opens Ctrl+K with it),
+HOOP_BACKDROP=picture path (also turns the pen
 on). Run test windows with XDG_STATE_HOME pointing at a scratch folder so
 the owner's prefs aren't touched (the shell's XDG_STATE_HOME is set, so
 override it explicitly).

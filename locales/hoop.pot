@@ -4466,3 +4466,42 @@ msgstr ""
 
 msgid "{stitches} st · {v0:.1} m"
 msgstr ""
+
+msgid "Show all threads"
+msgstr ""
+
+msgid "Show this thread alone"
+msgstr ""
+
+msgid "Play from here"
+msgstr ""
+
+msgid "Click to show this thread on its own and sew up to it"
+msgstr ""
+
+msgid "Type a command…"
+msgstr ""
+
+msgid "No command matches"
+msgstr ""
+
+msgid "Find a command…"
+msgstr ""
+
+msgid "Find any command by name"
+msgstr ""
+
+msgid "Go to {page}"
+msgstr ""
+
+msgid "Next thread"
+msgstr ""
+
+msgid "Previous thread"
+msgstr ""
+
+msgid "Select all"
+msgstr ""
+
+msgid "Group · Ctrl+G"
+msgstr ""

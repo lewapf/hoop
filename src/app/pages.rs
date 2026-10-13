@@ -400,6 +400,7 @@ impl HoopApp {
         };
         {
             let focus = self.focus;
+            let (shown, total) = (self.shown, self.total());
             let mut toggle = None;
             let mut block_op = None;
             let matched: Vec<Option<formats::Thread>> = self.design.as_ref().unwrap().blocks.iter().map(|b| self.chart_thread(&b.thread)).collect();
@@ -410,6 +411,8 @@ impl HoopApp {
             {
                 for (k, b) in d.blocks.iter_mut().enumerate() {
                     let selected = focus == Some(k);
+                    // The thread the stitch-out is on, while it is part way.
+                    let sewing = shown < total && shown > b.start && shown <= b.end;
                     let fill = if selected { accent.gamma_multiply(0.18) } else { Color32::TRANSPARENT };
                     let r = egui::Frame::new().fill(fill).corner_radius(6).inner_margin(egui::Margin::symmetric(6, 3)).show(ui, |ui| {
                         ui.set_width(ui.available_width());
@@ -446,8 +449,18 @@ impl HoopApp {
                             });
                         });
                     });
-                    let row =
-                        ui.interact(r.response.rect, ui.id().with(("thread", k)), Sense::click()).on_hover_text(t!("Click to show this thread on its own"));
+                    if sewing {
+                        let rect = r.response.rect;
+                        ui.painter().line_segment(
+                            [rect.left_top() + vec2(1.0, 6.0), rect.left_bottom() + vec2(1.0, -6.0)],
+                            egui::Stroke::new(3.0, accent),
+                        );
+                        let at = egui::Rect::from_center_size(egui::pos2(rect.right() - 12.0, rect.top() + 12.0), vec2(14.0, 14.0));
+                        super::icons::paint(ui, "needle", at, accent);
+                    }
+                    let row = ui
+                        .interact(r.response.rect, ui.id().with(("thread", k)), Sense::click())
+                        .on_hover_text(t!("Click to show this thread on its own and sew up to it"));
                     if row.clicked() {
                         toggle = Some(k);
                     }
@@ -501,8 +514,17 @@ impl HoopApp {
             if let Some((k, op)) = block_op {
                 self.block_op(k, op);
             }
+            // Showing a thread alone also sews the timeline up to its end;
+            // showing all again sews everything.
             if let Some(k) = toggle {
-                self.focus = if self.focus == Some(k) { None } else { Some(k) };
+                self.playing = false;
+                if self.focus == Some(k) {
+                    self.focus = None;
+                    self.shown = self.total();
+                } else {
+                    self.focus = Some(k);
+                    self.shown = self.design.as_ref().map_or(0, |d| d.blocks[k].end);
+                }
             }
         }
     }

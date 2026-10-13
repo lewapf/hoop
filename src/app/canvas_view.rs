@@ -385,6 +385,7 @@ impl HoopApp {
         painter.rect_stroke(rect.expand(r / 2.0), r * 1.5, egui::Stroke::new(r, v.panel_fill), egui::StrokeKind::Middle);
         painter.rect_stroke(rect, r, egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color), egui::StrokeKind::Inside);
         self.view_bar(ui.ctx(), rect);
+        self.selection_bar(ui, &frame);
         self.hover_at = response.hover_pos().map(|p| frame.to_world(p));
     }
 

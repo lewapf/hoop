@@ -72,6 +72,70 @@ fn screen_box(frame: &Frame, m: ShapeMap, art: &Artwork, e: &ShapeEdit) -> Optio
     (!pts.is_empty()).then(|| egui::Rect::from_points(&pts))
 }
 
+impl HoopApp {
+    /// The picked shapes' box on screen.
+    pub(super) fn selection_box(&self, frame: &Frame) -> Option<egui::Rect> {
+        let (Some(m), Some(art), Some(s)) = (self.shape_map(), &self.artwork, &self.art) else { return None };
+        self.sel.iter().filter_map(|&i| screen_box(frame, m, art, s.shapes.get(i)?)).reduce(|a, b| a.union(b))
+    }
+
+    /// A small floating bar over the picked shapes with what is most often
+    /// done to them. It steps aside while the pointer is down.
+    pub(super) fn selection_bar(&mut self, ui: &egui::Ui, frame: &Frame) {
+        if self.mode != Mode::Artwork
+            || self.sel.is_empty()
+            || self.playing
+            || self.edit_points
+            || self.pen.on
+            || self.tools.tool.is_some()
+            || ui.input(|i| i.pointer.any_down())
+        {
+            return;
+        }
+        let Some(b) = self.selection_box(frame) else { return };
+        let ctx = ui.ctx();
+        let v = ctx.global_style().visuals.clone();
+        let bar = egui::Frame::new()
+            .fill(v.panel_fill)
+            .corner_radius(8)
+            .inner_margin(egui::Margin::same(3))
+            .stroke(egui::Stroke::new(1.0, v.widgets.noninteractive.bg_stroke.color))
+            .shadow(egui::Shadow { offset: [0, 2], blur: 8, spread: 0, color: Color32::from_black_alpha(60) });
+        // Above the turn knob, or under the shapes when there is no room.
+        let above = b.top() - 40.0 > frame.rect.top() + 44.0;
+        let (pos, pivot) = if above {
+            (b.center_top() - vec2(0.0, 40.0), egui::Align2::CENTER_BOTTOM)
+        } else {
+            (b.center_bottom() + vec2(0.0, 14.0), egui::Align2::CENTER_TOP)
+        };
+        let several = self.sel.len() > 1;
+        let mut op = None;
+        egui::Area::new(egui::Id::new("selection-bar")).order(egui::Order::Foreground).pivot(pivot).fixed_pos(pos).constrain_to(frame.rect).show(ctx, |ui| {
+            bar.show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    let buttons: [(&'static str, &str, Arrange, bool); 6] = [
+                        ("copy", t!("Duplicate · Ctrl+D"), Arrange::Duplicate, true),
+                        ("up", t!("One step up · ]"), Arrange::Forward, true),
+                        ("down", t!("One step down · ["), Arrange::Backward, true),
+                        ("group", t!("Group · Ctrl+G"), Arrange::Group, several),
+                        ("eye-off", t!("Hide"), Arrange::Hide, true),
+                        ("trash", t!("Delete · Del"), Arrange::Delete, true),
+                    ];
+                    for (icon, tip, a, show) in buttons {
+                        if show && icons::button(ui, true, false, icon, tip) {
+                            op = Some(a);
+                        }
+                    }
+                });
+            });
+        });
+        if let Some(op) = op {
+            self.arrange(op);
+        }
+    }
+}
+
 pub(super) fn shape_handles(frame: &Frame, m: ShapeMap, art: &Artwork, e: &ShapeEdit) -> Option<Handles> {
     // Keep tiny shapes grabbable: the box is at least 24 px across.
     let rect = screen_box(frame, m, art, e)?.expand(4.0);

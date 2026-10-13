@@ -13,6 +13,14 @@ const CARD: Vec2 = vec2(68.0, 74.0);
 const CARD_POINTS: usize = 2500;
 const GHOST_POINTS: usize = 1500;
 
+/// What a thread card's menu asks for.
+enum CardOp {
+    Alone(usize),
+    PlayFrom(usize),
+    Color(usize, [u8; 3]),
+    Block(usize, stitchedit::BlockOp),
+}
+
 impl HoopApp {
     pub(super) fn timeline(&mut self, ui: &mut egui::Ui) {
         self.timeline_hover = None;
@@ -149,6 +157,8 @@ impl HoopApp {
         let ghost = thin(d.pattern.points.len(), GHOST_POINTS);
         let mut jump = None;
         let mut hover = None;
+        let mut op = None;
+        let viewer = self.mode == Mode::Viewer;
         egui::ScrollArea::horizontal().id_salt("thread-strip").auto_shrink([false, true]).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
@@ -205,6 +215,30 @@ impl HoopApp {
                     if resp.clicked() {
                         jump = Some(b.end);
                     }
+                    resp.context_menu(|ui| {
+                        let alone = if self.focus == Some(k) { t!("Show all threads") } else { t!("Show this thread alone") };
+                        if ui.button(alone).clicked() {
+                            op = Some(CardOp::Alone(k));
+                        }
+                        if ui.button(t!("Play from here")).clicked() {
+                            op = Some(CardOp::PlayFrom(b.start));
+                        }
+                        if viewer {
+                            ui.separator();
+                            ui.menu_button(t!("Thread color"), |ui| {
+                                let mut c = Color32::from_rgb(b.thread.color[0], b.thread.color[1], b.thread.color[2]);
+                                if egui::color_picker::color_picker_color32(ui, &mut c, egui::color_picker::Alpha::Opaque) {
+                                    op = Some(CardOp::Color(k, [c.r(), c.g(), c.b()]));
+                                }
+                            });
+                            if let Some(o) = HoopApp::block_menu(ui) {
+                                op = Some(CardOp::Block(k, o));
+                            }
+                        }
+                        if matches!(op, Some(CardOp::Alone(_) | CardOp::PlayFrom(_))) {
+                            ui.close();
+                        }
+                    });
                 }
             });
         });
@@ -214,6 +248,21 @@ impl HoopApp {
         if let Some(n) = jump {
             self.playing = false;
             self.shown = n;
+        }
+        match op {
+            Some(CardOp::Alone(k)) => self.focus = if self.focus == Some(k) { None } else { Some(k) },
+            Some(CardOp::PlayFrom(n)) => {
+                self.shown = n;
+                self.play_acc = 0.0;
+                self.playing = true;
+            }
+            Some(CardOp::Color(k, c)) => {
+                if let Some(b) = self.design.as_mut().and_then(|d| d.blocks.get_mut(k)) {
+                    b.thread.color = c;
+                }
+            }
+            Some(CardOp::Block(k, o)) => self.block_op(k, o),
+            None => {}
         }
     }
 }

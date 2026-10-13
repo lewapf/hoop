@@ -4588,3 +4588,42 @@ msgstr "Garnstruktur · T"
 
 msgid "{stitches} st · {v0:.1} m"
 msgstr "{stitches} St. · {v0:.1} m"
+
+msgid "Show all threads"
+msgstr "Alle Fäden zeigen"
+
+msgid "Show this thread alone"
+msgstr "Nur diesen Faden zeigen"
+
+msgid "Play from here"
+msgstr "Ab hier abspielen"
+
+msgid "Click to show this thread on its own and sew up to it"
+msgstr "Klicken, um nur diesen Faden zu zeigen und bis zu ihm zu sticken"
+
+msgid "Type a command…"
+msgstr "Befehl eingeben…"
+
+msgid "No command matches"
+msgstr "Kein passender Befehl"
+
+msgid "Find a command…"
+msgstr "Befehl suchen…"
+
+msgid "Find any command by name"
+msgstr "Jeden Befehl nach Namen finden"
+
+msgid "Go to {page}"
+msgstr "Gehe zu: {page}"
+
+msgid "Next thread"
+msgstr "Nächster Faden"
+
+msgid "Previous thread"
+msgstr "Vorheriger Faden"
+
+msgid "Select all"
+msgstr "Alles auswählen"
+
+msgid "Group · Ctrl+G"
+msgstr "Gruppieren · Strg+G"

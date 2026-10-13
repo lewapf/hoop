@@ -27,6 +27,7 @@ mod objects;
 mod optimizewin;
 mod output;
 mod pages;
+mod palette;
 mod project;
 mod settings;
 mod shapes;
@@ -77,6 +78,7 @@ const SHORTCUTS: &[(&str, &str)] = &[
     (n!("Ctrl+,"), n!("Settings: language, folders, machine, threads")),
     (n!("N"), n!("New project wizard")),
     (n!("F1"), n!("User manual")),
+    (n!("Ctrl+K"), n!("Find any command by name")),
     (n!("F9 / F10"), n!("Hide or show the left / right panel")),
     (n!("F8"), n!("Hide or show the thread renders under the hoop")),
     (n!("Ctrl+V"), n!("Paste SVG code as artwork")),
@@ -313,6 +315,7 @@ pub struct HoopApp {
     show_right: bool,
     /// The timeline under the hoop shows a render of each thread.
     timeline_open: bool,
+    palette: palette::Palette,
     /// The thread pointed at in the timeline, shown on its own meanwhile.
     timeline_hover: Option<usize>,
     /// The design check and the stitches it was made for.
@@ -434,6 +437,7 @@ impl HoopApp {
             show_left: true,
             show_right: true,
             timeline_open: true,
+            palette: Default::default(),
             timeline_hover: None,
             check: None,
             check_key: 0,
@@ -554,6 +558,10 @@ impl HoopApp {
                 }
             }
             _ => {}
+        }
+        if let Ok(q) = std::env::var("HOOP_PALETTE") {
+            self.palette.show();
+            self.palette.query = q;
         }
         if let Ok(t) = std::env::var("HOOP_TAB")
             && let Some(tab) = shell::tab_named(self.mode, &t)
@@ -946,6 +954,7 @@ impl eframe::App for HoopApp {
             self.open(&p);
         }
         let canvas_rect = self.canvas_rect;
+        self.palette(ctx, canvas_rect);
         self.tool_keys(ctx);
         self.keys(ctx, canvas_rect);
         self.project_title(ctx);

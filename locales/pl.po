@@ -4624,3 +4624,42 @@ msgstr "Faktura nici · T"
 
 msgid "{stitches} st · {v0:.1} m"
 msgstr "{stitches} śc. · {v0:.1} m"
+
+msgid "Show all threads"
+msgstr "Pokaż wszystkie nici"
+
+msgid "Show this thread alone"
+msgstr "Pokaż tylko tę nić"
+
+msgid "Play from here"
+msgstr "Odtwórz od tego miejsca"
+
+msgid "Click to show this thread on its own and sew up to it"
+msgstr "Kliknij, by pokazać tylko tę nić i wyhaftować do niej"
+
+msgid "Type a command…"
+msgstr "Wpisz polecenie…"
+
+msgid "No command matches"
+msgstr "Brak pasującego polecenia"
+
+msgid "Find a command…"
+msgstr "Znajdź polecenie…"
+
+msgid "Find any command by name"
+msgstr "Znajdź dowolne polecenie po nazwie"
+
+msgid "Go to {page}"
+msgstr "Przejdź do: {page}"
+
+msgid "Next thread"
+msgstr "Następna nić"
+
+msgid "Previous thread"
+msgstr "Poprzednia nić"
+
+msgid "Select all"
+msgstr "Zaznacz wszystko"
+
+msgid "Group · Ctrl+G"
+msgstr "Grupuj · Ctrl+G"

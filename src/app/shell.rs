@@ -36,7 +36,7 @@ impl Tab {
         }
     }
 
-    fn label(self) -> &'static str {
+    pub(super) fn label(self) -> &'static str {
         match self {
             Tab::Design => t!("Design"),
             Tab::Text => t!("Text"),
@@ -52,7 +52,7 @@ impl Tab {
     }
 }
 
-fn tabs(mode: Mode) -> &'static [Tab] {
+pub(super) fn tabs(mode: Mode) -> &'static [Tab] {
     match mode {
         Mode::Viewer => &[Tab::Design, Tab::Hoop, Tab::Stitch, Tab::View],
         Mode::Lettering => &[Tab::Text, Tab::Style, Tab::Patch, Tab::Hoop, Tab::Stitch, Tab::View],
@@ -343,7 +343,7 @@ impl HoopApp {
     }
 
     /// The left dock's pages for the mode in use.
-    fn left_tabs(&mut self) -> Vec<IconTab<'static, Dock>> {
+    pub(super) fn left_tabs(&mut self) -> Vec<IconTab<'static, Dock>> {
         let problems = self.check.as_ref().map_or(0, |r| r.count(crate::check::Level::Problem));
         let mut options: Vec<IconTab<Dock>> = vec![
             (Dock::Library, t!("Library"), "library", 0),
@@ -505,6 +505,9 @@ impl HoopApp {
                     }
                 }
                 ui.separator();
+                if item(ui, true, t!("Find a command…"), "Ctrl+K") {
+                    self.palette.show();
+                }
                 if item(ui, true, t!("Settings…"), "Ctrl+,") {
                     self.settings.open = true;
                 }

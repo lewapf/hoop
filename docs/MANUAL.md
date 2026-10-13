@@ -59,8 +59,19 @@ You can change everything afterwards in the panels on the right.
   threads, drag along the track (a band per thread) to scrub, and pick the
   playback speed. Under the bar, a small render of each thread on the
   fabric; point at one to show that thread alone on the hoop, click it to
-  sew up to its end. The arrow on the right (or `F8`) folds the renders
-  away and leaves the thin bar.
+  sew up to its end, right-click it to show it alone, play from it, or (in
+  the Viewer) recolor it, sew it earlier or later, or delete it. The arrow
+  on the right (or `F8`) folds the renders away and leaves the thin bar.
+- **Colors and the timeline:** clicking a thread in Colors shows it alone
+  and sews the timeline up to it; click it again for everything. While
+  the stitch-out is part way, the thread being sewn is marked with a
+  needle.
+- **Selection bar:** in Artwork, a small bar floats over the picked
+  shapes: duplicate, one step up or down, group (several shapes), hide
+  and delete.
+- **Command palette:** `Ctrl+K` (or Edit → Find a command…) lists every
+  command; type part of a name, pick with the arrows and Enter. "Go to"
+  commands open any dock page.
 - **Status bar:** pointer position, then (each with an icon) size, stitch
   count, colors, whether it fits,
   and the result of the design check.
@@ -527,6 +538,7 @@ Lines left empty stay in English.
 | `1`–`4` | Pick a hoop |
 | `F` / `D` | Whole hoop / zoom to the design |
 | `G` / `J` / `T` / `H` | Grid / jumps / thread texture / density |
+| `Ctrl+K` | Find any command by name |
 | `F8` | Hide or show the thread renders under the hoop |
 | `F9` / `F10` | Hide or show the left / right panel |
 | `F1` | This manual (Help → User manual) |
