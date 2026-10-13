@@ -23,6 +23,7 @@ mod icons;
 mod lettering_panel;
 mod library;
 mod manual;
+mod objects;
 mod optimizewin;
 mod output;
 mod pages;
@@ -348,6 +349,7 @@ pub struct HoopApp {
     symbols: symbols::Symbols,
     threads: threadwin::ThreadCharts,
     fontwin: fontwin::FontBrowser,
+    objects: objects::ObjectsUi,
     team: team::Team,
     tools: tools::Tools,
     hoopings: hoopings::Hoopings,
@@ -456,6 +458,7 @@ impl HoopApp {
             symbols: Default::default(),
             threads: Default::default(),
             fontwin: Default::default(),
+            objects: Default::default(),
             team: Default::default(),
             tools: Default::default(),
             hoopings: Default::default(),
@@ -513,6 +516,7 @@ impl HoopApp {
             Ok("symbols") => self.dock = Dock::Symbols,
             Ok("colors") => self.dock = Dock::Colors,
             Ok("check") => self.dock = Dock::Check,
+            Ok("objects") => self.dock = Dock::Objects,
             _ => {}
         }
         if std::env::var("HOOP_DENSITY").is_ok() {

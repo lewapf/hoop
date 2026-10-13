@@ -37,6 +37,34 @@ const ICONS: &[(&str, &str)] = &[
     ("angle", include_str!("../../assets/icons/angle.svg")),
     ("start", include_str!("../../assets/icons/flag-pennant.svg")),
     ("text", include_str!("../../assets/icons/text-t.svg")),
+    ("eye", include_str!("../../assets/icons/eye.svg")),
+    ("eye-off", include_str!("../../assets/icons/eye-slash.svg")),
+    ("lock", include_str!("../../assets/icons/lock-simple.svg")),
+    ("unlock", include_str!("../../assets/icons/lock-simple-open.svg")),
+    ("copy", include_str!("../../assets/icons/copy.svg")),
+    ("trash", include_str!("../../assets/icons/trash.svg")),
+    ("group", include_str!("../../assets/icons/folder-simple-plus.svg")),
+    ("ungroup", include_str!("../../assets/icons/folder-simple-minus.svg")),
+    ("folder", include_str!("../../assets/icons/folder-simple.svg")),
+    ("up", include_str!("../../assets/icons/arrow-up.svg")),
+    ("down", include_str!("../../assets/icons/arrow-down.svg")),
+    ("wand", include_str!("../../assets/icons/magic-wand.svg")),
+    ("plus", include_str!("../../assets/icons/plus.svg")),
+    ("search", include_str!("../../assets/icons/magnifying-glass.svg")),
+    ("caret-down", include_str!("../../assets/icons/caret-down.svg")),
+    ("caret-right", include_str!("../../assets/icons/caret-right.svg")),
+    ("library", include_str!("../../assets/icons/books.svg")),
+    ("symbols", include_str!("../../assets/icons/shapes.svg")),
+    ("layers", include_str!("../../assets/icons/stack.svg")),
+    ("palette", include_str!("../../assets/icons/palette.svg")),
+    ("check", include_str!("../../assets/icons/seal-check.svg")),
+    ("source", include_str!("../../assets/icons/file-image.svg")),
+    ("brush", include_str!("../../assets/icons/paint-brush.svg")),
+    ("yarn", include_str!("../../assets/icons/yarn.svg")),
+    ("info", include_str!("../../assets/icons/info.svg")),
+    ("patch", include_str!("../../assets/icons/shield.svg")),
+    ("ruler", include_str!("../../assets/icons/ruler.svg")),
+    ("warning", include_str!("../../assets/icons/warning.svg")),
 ];
 
 /// Pixels the icons are drawn at; painted smaller, so they stay sharp on
@@ -76,6 +104,12 @@ pub(super) fn paint(ui: &egui::Ui, name: &'static str, rect: egui::Rect, tint: C
 
 /// A flat icon button for the tool bar: a frame on hover, the accent when on.
 pub(super) fn button(ui: &mut egui::Ui, enabled: bool, on: bool, name: &'static str, tip: &str) -> bool {
+    let resp = icon_button(ui, enabled, on, name, tip);
+    enabled && resp.clicked()
+}
+
+/// `button`, giving the response (for a menu under it).
+pub(super) fn icon_button(ui: &mut egui::Ui, enabled: bool, on: bool, name: &'static str, tip: &str) -> egui::Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(30.0, 28.0), if enabled { Sense::click() } else { Sense::hover() });
     let v = ui.visuals();
     if enabled && (resp.hovered() || on) {
@@ -90,6 +124,5 @@ pub(super) fn button(ui: &mut egui::Ui, enabled: bool, on: bool, name: &'static 
         v.text_color()
     };
     paint(ui, name, egui::Rect::from_center_size(rect.center(), vec2(18.0, 18.0)), tint);
-    let resp = resp.on_hover_text(tip);
-    enabled && resp.clicked()
+    resp.on_hover_text(tip)
 }

@@ -4493,3 +4493,51 @@ msgstr "Szukaj „{q}” w Google Fonts"
 
 msgid "No family matches. Try fewer letters or another kind."
 msgstr "Żadna rodzina nie pasuje. Wpisz mniej liter albo wybierz inny rodzaj."
+
+msgid "Add a shape"
+msgstr "Dodaj kształt"
+
+msgid "Bring forward: sewn later, on top · ]"
+msgstr "Przesuń do przodu: szyty później, na wierzchu · ]"
+
+msgid "Delete · Del"
+msgstr "Usuń · Del"
+
+msgid "Double-click to rename · drag to restack"
+msgstr "Dwuklik zmienia nazwę · przeciągnij, by zmienić kolejność"
+
+msgid "Find a shape by name"
+msgstr "Znajdź kształt po nazwie"
+
+msgid "Group the picked shapes, like a folder of layers · Ctrl+G"
+msgstr "Zgrupuj wybrane kształty, jak folder warstw · Ctrl+G"
+
+msgid "Lock or unlock the whole group"
+msgstr "Zablokuj lub odblokuj całą grupę"
+
+msgid "Lock: keep it from being picked or moved on the hoop"
+msgstr "Zablokuj: nie da się go wybrać ani przesunąć na tamborku"
+
+msgid "Locked: can't be picked or moved on the hoop. Click to unlock."
+msgstr "Zablokowany: nie da się go wybrać ani przesunąć na tamborku. Kliknij, by odblokować."
+
+msgid "No shape is called that."
+msgstr "Żaden kształt tak się nie nazywa."
+
+msgid "Optimize: name shapes by thread, break apart compound fills, join touching lines, drop specks"
+msgstr "Optymalizuj: nazwij kształty wg nici, rozbij złożone wypełnienia, połącz stykające się linie, usuń drobiny"
+
+msgid "Send backward: sewn earlier, below · ["
+msgstr "Przesuń do tyłu: szyty wcześniej, pod spodem · ["
+
+msgid "Show or hide this shape · Alt+click shows it alone"
+msgstr "Pokaż lub ukryj ten kształt · Alt+klik pokazuje tylko jego"
+
+msgid "Ungroup: turn the group back into loose shapes · Ctrl+Shift+G"
+msgstr "Rozgrupuj: zamień grupę z powrotem w luźne kształty · Ctrl+Shift+G"
+
+msgid "text"
+msgstr "tekst"
+
+msgid "{v0} · click to hide the panel"
+msgstr "{v0} · kliknij, by ukryć panel"

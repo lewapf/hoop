@@ -30,12 +30,13 @@ You can change everything afterwards in the panels on the right.
 
 - **Menu bar** at the top: File, Edit, View, Design, Shape (in Artwork),
   Machine and Help, with the three workspaces (Viewer, Lettering,
-  Artwork) in the middle.
+  Artwork, each with its icon) in the middle.
 - **Tool bar** under it: new, open, save, worksheet; undo and redo;
   rotate, mirror, center, pin to hoop; whole hoop, zoom to design, play.
   On the right: the **machine and hoop** picker, the test stitch-out, and
   **Send to machine**.
-- **Left dock:**
+- **Left dock:** its pages are icons on the window's left edge, each with
+  its name under it. The Check icon carries the number of problems.
   - **Library:** your designs folder, with thumbnails.
   - **Objects:** artwork shapes; this page shows only in the Artwork tab.
   - **Colors:** the threads in sewing order.
@@ -43,11 +44,12 @@ You can change everything afterwards in the panels on the right.
 - **Canvas:** the fabric in the hoop. Drag the design to move it, drag
   the fabric to pan, scroll to zoom, double-click to see the whole hoop.
 - **Right dock:** the settings of the current tab, in pages (Text, Style,
-  Hoop, Stitch, View…).
-- **Collapsing:** the small arrow next to each panel's tabs folds it
-  away to a thin strip; click the arrow on the strip, or press `F9` /
-  `F10`, to bring it back.
-- **Status bar:** pointer position, size, stitch count, whether it fits,
+  Hoop, Stitch, View…), whose icons stand on the window's right edge.
+- **Hiding a dock:** click the icon of the page it shows to fold the dock
+  away; the icons stay, and a click on any of them brings it back on that
+  page. `F9` / `F10` do the same.
+- **Status bar:** pointer position, then (each with an icon) size, stitch
+  count, colors, whether it fits,
   and the result of the design check.
 
 Hoop has three tabs, switched with `V`, `L` and `A`:
@@ -207,23 +209,34 @@ clip art work best; photos do not.
   - Shapes drawn with these tools keep their numbers: pick one and the
     Shape page's **Form** card changes its size, corners, sides, points
     or bend. Editing its points by hand turns it into an ordinary shape.
-- **Objects:** every shape, topmost first.
+- **Objects:** every shape, topmost first, like a layers panel.
+  - The icon row at the top adds a shape, groups or ungroups, duplicates,
+    deletes, brings forward or sends backward, and opens Optimize. Below
+    it, **Find a shape by name** narrows the list.
+  - Each row shows a small picture of the shape in its thread, its name
+    and what it is (fill, line, text, edited…). Hover a row to outline
+    the shape on the hoop; double-click it to rename.
+  - The **eye** shows or hides a shape; `Alt+click` the eye to show that
+    shape alone, and again to show everything. The **lock** (on hover,
+    or shown when on) keeps a shape from being picked or moved on the
+    hoop, so you can work on what lies over it. Locked shapes can still be
+    picked and styled in the list.
   - Click a shape to pick it, `Ctrl+click` to add another, or drag over
     empty fabric to pick several.
   - Drag shapes on the hoop to move them, use the corner handle to
     resize, and the round knob to turn.
-  - Drag a row up or down to restack it, like a layer: higher sews
+  - Drag a row up or down to restack it, like a layer (drag one of
+    several picked rows to move them all): higher sews
     later and lies on top. With **Group by thread** on, Hoop otherwise
     sews shapes in thread runs, moving a shape past others it doesn't
     overlap. A shape you drag or arrange (Front, Back, `[`, `]`) gets a
     pin and is sewn exactly where it sits: after everything below it,
     before everything above. Click the pin to let Hoop group it again;
-    **Unpin all** releases every shape. The swatch shows the thread the
-    shape sews in.
+    **Unpin all** releases every shape.
 - **Groups:** like folders of layers. Pick shapes and press **Group**
   (`Ctrl+G`, also in Edit); **Ungroup** (`Ctrl+Shift+G`) undoes it.
   - A group shows as a folder row: the arrow folds it, the eye shows or
-    hides all of it, a double-click renames it.
+    hides all of it, the lock locks all of it, a double-click renames it.
   - Click the folder row, or any of its shapes on the hoop, to pick the
     whole group and move or arrange it together. `Alt+click` on the hoop
     picks a single shape inside it.
@@ -248,7 +261,7 @@ clip art work best; photos do not.
   - On empty fabric: paste, select all, add a built-in shape or symbol,
     pick a drawing tool, and the view. In Viewer and Lettering the menu
     rotates, mirrors, centers, pins and plays the design.
-- **Optimize…** (top of Objects) tidies the list, with a preview of the
+- **Optimize** (the wand at the top of Objects) tidies the list, with a preview of the
   result before you apply it. By default it names shapes by thread
   ("Black line 3"), merges shapes of one thread and look into one object
   (never across a shape that overlaps them, so the stacking stays as

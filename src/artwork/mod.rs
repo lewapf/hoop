@@ -281,6 +281,9 @@ pub struct ShapeEdit {
     /// Stays the same as the list is rearranged, for lines attached to it.
     /// Unique within a drawing (`ArtSettings::fix_ids` sees to that).
     pub id: u32,
+    /// Locked in the Objects list: not picked or moved on the hoop.
+    #[serde(default)]
+    pub locked: bool,
 }
 
 impl ShapeEdit {
@@ -309,6 +312,7 @@ impl ShapeEdit {
             text: None,
             group: None,
             id: i as u32 + 1,
+            locked: false,
         }
     }
 
@@ -426,7 +430,7 @@ pub fn shape_at(art: &Artwork, s: &ArtSettings, p: Pt, slop: f32) -> Option<usiz
     let slop = slop / scale;
     (0..s.shapes.len()).rev().find(|&i| {
         let e = &s.shapes[i];
-        if e.hidden || !s.layers.get(e.layer).is_none_or(|l| l.enabled) {
+        if e.hidden || e.locked || !s.layers.get(e.layer).is_none_or(|l| l.enabled) {
             return false;
         }
         let lines = e.lines(art);

@@ -515,6 +515,29 @@ stitch without the font. `bake()` clears `text`.
   before clicking. uinput clicks need a small relative move after
   `cursor.move` or egui doesn't see the hover.
 
+## Docks, rails and the Objects panel (2026-10-13)
+
+- Each dock's tabs are a vertical rail on the window edge (`rail` in
+  shell.rs, `IconTab` = value, label, icon, badge): an icon over a short
+  label, accent bar on the outer edge for the shown page, a red badge for
+  Check problems. Clicking the shown page hides the dock (VS Code style);
+  the rails replace the old chevron strips. Docks show the page name as
+  a title (`dock_title`). `left_tabs()` builds the left pages per mode.
+- The mode switch and the status bar facts have icons (`segmented` takes
+  (value, label, icon)). Icons: 28 more Phosphor regular SVGs in
+  assets/icons, registered in `icons::ICONS`; `icons::icon_button`
+  returns the response (for menus under an icon).
+- `app/objects.rs` now holds the Objects list (moved out of shapes.rs).
+  Rows use `show_rows` (fixed 30 px), so only visible rows are drawn and
+  thumbnailed. Thumbnails: `thumb_image` rasterizes `ShapeEdit::lines` in
+  the thread color on the fabric color, cached per `ShapeEdit::id` with a
+  hash of points, kind and color. Hovering a row sets `objects.hover`,
+  which the canvas outlines like a hovered shape.
+- `ShapeEdit::locked` (serde default): `shape_at` and the band pick skip
+  locked shapes; the list still picks them. Alt+click on an eye solos.
+  `drop_rows` moves all picked rows when a picked row is dragged.
+- `HOOP_DOCK=objects` opens the Objects page for screenshots.
+
 ## Ideas queued with the owner
 
 Bezier handles in point editing,

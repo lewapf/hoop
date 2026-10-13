@@ -1012,6 +1012,103 @@ msgstr ""
 msgid "User manual"
 msgstr ""
 
+msgid "Open an SVG or a picture, or start from shapes, to see its parts here."
+msgstr ""
+
+msgid "Add a shape"
+msgstr ""
+
+msgid "Ungroup: turn the group back into loose shapes · Ctrl+Shift+G"
+msgstr ""
+
+msgid "Group the picked shapes, like a folder of layers · Ctrl+G"
+msgstr ""
+
+msgid "Duplicate · Ctrl+D"
+msgstr ""
+
+msgid "Delete · Del"
+msgstr ""
+
+msgid "Bring forward: sewn later, on top · ]"
+msgstr ""
+
+msgid "Send backward: sewn earlier, below · ["
+msgstr ""
+
+msgid "Optimize: name shapes by thread, break apart compound fills, join touching lines, drop specks"
+msgstr ""
+
+msgid "Find a shape by name"
+msgstr ""
+
+msgid "{n} shape · {picked} picked"
+msgid_plural "{n} shapes · {picked} picked"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Unpin all"
+msgstr ""
+
+msgid "{n} shape is sewn where you placed it. Let Hoop group it by thread again."
+msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "No shape is called that."
+msgstr ""
+
+msgid "Show or hide the whole group"
+msgstr ""
+
+msgid "Lock or unlock the whole group"
+msgstr ""
+
+msgid "Fold or unfold the group"
+msgstr ""
+
+msgid "A group: click picks all of it, double-click renames it, drag moves it as one block"
+msgstr ""
+
+msgid "Show or hide this shape · Alt+click shows it alone"
+msgstr ""
+
+msgid "Locked: can't be picked or moved on the hoop. Click to unlock."
+msgstr ""
+
+msgid "Lock: keep it from being picked or moved on the hoop"
+msgstr ""
+
+msgid "Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again."
+msgstr ""
+
+msgid "Pin: sew exactly here in the list instead of grouping it by thread"
+msgstr ""
+
+msgid "text"
+msgstr ""
+
+msgid "own style"
+msgstr ""
+
+msgid "added"
+msgstr ""
+
+msgid "edited"
+msgstr ""
+
+msgid "moved"
+msgstr ""
+
+msgid "fill"
+msgstr ""
+
+msgid "line"
+msgstr ""
+
+msgid "Double-click to rename · drag to restack"
+msgstr ""
+
 msgid "Optimize objects"
 msgstr ""
 
@@ -1436,70 +1533,6 @@ msgstr ""
 msgid "Too many points to show. Press Simplify first."
 msgstr ""
 
-msgid "Open an SVG or a picture, or start from shapes, to see its parts here."
-msgstr ""
-
-msgid "Optimize…"
-msgstr ""
-
-msgid "Name shapes by thread, break apart compound fills, join touching lines, drop specks"
-msgstr ""
-
-msgid "Turn the group back into loose shapes · Ctrl+Shift+G"
-msgstr ""
-
-msgid "Put the picked shapes in a group, like a folder of layers · Ctrl+G"
-msgstr ""
-
-msgid "Unpin all"
-msgstr ""
-
-msgid "{n} shape is sewn where you placed it. Let Hoop group it by thread again."
-msgid_plural "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "{n} shape · {picked} picked"
-msgid_plural "{n} shapes · {picked} picked"
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "Show or hide the whole group"
-msgstr ""
-
-msgid "Fold or unfold the group"
-msgstr ""
-
-msgid "A group: click picks all of it, double-click renames it, drag moves it as one block"
-msgstr ""
-
-msgid "Show or hide this shape"
-msgstr ""
-
-msgid "fill"
-msgstr ""
-
-msgid "line"
-msgstr ""
-
-msgid "own style"
-msgstr ""
-
-msgid "added"
-msgstr ""
-
-msgid "edited"
-msgstr ""
-
-msgid "moved"
-msgstr ""
-
-msgid "Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again."
-msgstr ""
-
-msgid "Pin: sew exactly here in the list instead of grouping it by thread"
-msgstr ""
-
 msgid "Form"
 msgstr ""
 
@@ -1573,9 +1606,6 @@ msgid "Bottom"
 msgstr ""
 
 msgid "Align bottom edges"
-msgstr ""
-
-msgid "Duplicate · Ctrl+D"
 msgstr ""
 
 msgid "One shape aligns to the drawing's frame; several align to each other."
@@ -1658,16 +1688,7 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-msgid "Show the left panel · F9"
-msgstr ""
-
-msgid "Show the right panel · F10"
-msgstr ""
-
-msgid "Check ({v0})"
-msgstr ""
-
-msgid "Check"
+msgid "{v0} · click to hide the panel"
 msgstr ""
 
 msgid "Library"
@@ -1676,13 +1697,10 @@ msgstr ""
 msgid "Symbols"
 msgstr ""
 
+msgid "Check"
+msgstr ""
+
 msgid "Objects"
-msgstr ""
-
-msgid "Hide this panel · F9"
-msgstr ""
-
-msgid "Hide this panel · F10"
 msgstr ""
 
 msgid "File"

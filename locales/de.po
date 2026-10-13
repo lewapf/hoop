@@ -4457,3 +4457,51 @@ msgstr "„{q}“ in Google Fonts suchen"
 
 msgid "No family matches. Try fewer letters or another kind."
 msgstr "Keine Familie passt. Versuch weniger Buchstaben oder eine andere Art."
+
+msgid "Add a shape"
+msgstr "Form hinzufügen"
+
+msgid "Bring forward: sewn later, on top · ]"
+msgstr "Nach vorn: später gestickt, obenauf · ]"
+
+msgid "Delete · Del"
+msgstr "Löschen · Entf"
+
+msgid "Double-click to rename · drag to restack"
+msgstr "Doppelklick benennt um · ziehen ändert die Reihenfolge"
+
+msgid "Find a shape by name"
+msgstr "Form nach Namen suchen"
+
+msgid "Group the picked shapes, like a folder of layers · Ctrl+G"
+msgstr "Gewählte Formen gruppieren, wie ein Ebenenordner · Strg+G"
+
+msgid "Lock or unlock the whole group"
+msgstr "Ganze Gruppe sperren oder entsperren"
+
+msgid "Lock: keep it from being picked or moved on the hoop"
+msgstr "Sperren: kann auf dem Rahmen nicht gewählt oder verschoben werden"
+
+msgid "Locked: can't be picked or moved on the hoop. Click to unlock."
+msgstr "Gesperrt: kann auf dem Rahmen nicht gewählt oder verschoben werden. Klicken zum Entsperren."
+
+msgid "No shape is called that."
+msgstr "Keine Form heißt so."
+
+msgid "Optimize: name shapes by thread, break apart compound fills, join touching lines, drop specks"
+msgstr "Optimieren: Formen nach Garn benennen, zusammengesetzte Füllungen trennen, sich berührende Linien verbinden, Krümel entfernen"
+
+msgid "Send backward: sewn earlier, below · ["
+msgstr "Nach hinten: früher gestickt, darunter · ["
+
+msgid "Show or hide this shape · Alt+click shows it alone"
+msgstr "Form zeigen oder verbergen · Alt+Klick zeigt nur sie"
+
+msgid "Ungroup: turn the group back into loose shapes · Ctrl+Shift+G"
+msgstr "Gruppierung aufheben: wieder lose Formen · Strg+Umschalt+G"
+
+msgid "text"
+msgstr "Text"
+
+msgid "{v0} · click to hide the panel"
+msgstr "{v0} · klicken blendet das Feld aus"

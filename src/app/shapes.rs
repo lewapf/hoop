@@ -30,14 +30,14 @@ impl ShapeMap {
 
 /// A row of the Objects list.
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum Row {
+pub(super) enum Row {
     Head(u32),
     Shape(usize),
 }
 
 /// What is being dragged in the Objects list.
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum ListDrag {
+pub(super) enum ListDrag {
     One(usize),
     Group(u32),
 }
@@ -131,14 +131,14 @@ impl HoopApp {
         self.sel.last().copied().filter(|&i| i < n)
     }
 
-    fn select_only(&mut self, i: Option<usize>) {
+    pub(super) fn select_only(&mut self, i: Option<usize>) {
         if self.sel.len() != 1 || self.sel.first().copied() != i {
             self.edit_points = false;
         }
         self.sel = i.into_iter().collect();
     }
 
-    fn toggle_selected(&mut self, i: usize) {
+    pub(super) fn toggle_selected(&mut self, i: usize) {
         match self.sel.iter().position(|&k| k == i) {
             Some(at) => {
                 self.sel.remove(at);
@@ -186,10 +186,16 @@ impl HoopApp {
     /// above or below it on screen. A shape joins the group it lands in, or
     /// leaves its group when it lands outside; a group moves as one block
     /// and never lands inside another.
-    fn drop_rows(&mut self, what: ListDrag, row: Row, above: bool) {
+    pub(super) fn drop_rows(&mut self, what: ListDrag, row: Row, above: bool) {
         let Some(s) = &mut self.art else { return };
         let n = s.shapes.len();
+        // A row that is one of several picked carries them all along.
         let moving: Vec<usize> = match what {
+            ListDrag::One(i) if self.sel.contains(&i) && self.sel.len() > 1 => {
+                let mut v = self.sel.clone();
+                v.sort();
+                v
+            }
             ListDrag::One(i) => vec![i],
             ListDrag::Group(g) => s.members(g),
         };
@@ -215,6 +221,9 @@ impl HoopApp {
                 if above { (hi, true, None) } else { (lo, false, None) }
             }
         };
+        if moving.len() > 1 && moving.contains(&anchor) && matches!(what, ListDrag::One(_)) {
+            return;
+        }
         if moving.contains(&anchor) && moving.len() == 1 {
             // Dropped on itself: only its group may change.
             if let ListDrag::One(i) = what
@@ -224,8 +233,10 @@ impl HoopApp {
             }
             return;
         }
-        if let ListDrag::One(i) = what {
-            s.shapes[i].group = join;
+        if let ListDrag::One(_) = what {
+            for &i in &moving {
+                s.shapes[i].group = join;
+            }
         }
         let mut order: Vec<usize> = (0..n).filter(|k| !moving.contains(k)).collect();
         let at = order.iter().position(|&k| k == anchor).map_or(order.len(), |k| if after { k + 1 } else { k });
@@ -460,6 +471,7 @@ impl HoopApp {
             text: None,
             group: None,
             id,
+            locked: false,
         });
         if let Some(l) = s.layers.get_mut(layer) {
             l.enabled = true;
@@ -682,7 +694,7 @@ impl HoopApp {
                 let band = egui::Rect::from_two_pos(*start, end);
                 let mut picked: Vec<usize> = if *add { self.sel.clone() } else { Vec::new() };
                 for (i, e) in s.shapes.iter().enumerate() {
-                    let on = !e.hidden && s.layers.get(e.layer).is_none_or(|l| l.enabled);
+                    let on = !e.hidden && !e.locked && s.layers.get(e.layer).is_none_or(|l| l.enabled);
                     if on && !picked.contains(&i) && screen_box(frame, m, art, e).is_some_and(|b| b.intersects(band)) {
                         picked.push(i);
                     }
@@ -847,316 +859,6 @@ impl HoopApp {
                     }
                 }
             }
-        }
-    }
-
-    /// The Objects list in the left dock: every shape, topmost first. Click
-    /// to pick (Ctrl adds, Shift picks a run), drag a row to restack.
-    pub(super) fn objects_list(&mut self, ui: &mut egui::Ui) {
-        let muted = self.muted();
-        let accent = self.accent();
-        let (Some(art), Some(s)) = (&self.artwork, &mut self.art) else {
-            ui.label(RichText::new(t!("Open an SVG or a picture, or start from shapes, to see its parts here.")).size(12.0).color(muted));
-            return;
-        };
-        let mut group_op = None;
-        ui.horizontal_wrapped(|ui| {
-            ui.menu_button(t!("Add shape"), |ui| {
-                for name in artwork::BUILT_IN {
-                    if ui.button(crate::i18n::tr(name)).clicked() {
-                        self.list_add = Some(name);
-                        ui.close();
-                    }
-                }
-            });
-            if ui.button(t!("Optimize…")).on_hover_text(t!("Name shapes by thread, break apart compound fills, join touching lines, drop specks")).clicked() {
-                self.optimize.open = true;
-            }
-            let in_group = self.sel.iter().any(|&i| s.shapes.get(i).is_some_and(|e| e.group.is_some()));
-            let whole = in_group && self.sel.iter().all(|&i| s.shapes.get(i).is_some_and(|e| e.group.is_some() && e.group == s.shapes[self.sel[0]].group));
-            if whole {
-                if ui.button(t!("Ungroup")).on_hover_text(t!("Turn the group back into loose shapes · Ctrl+Shift+G")).clicked() {
-                    group_op = Some(Arrange::Ungroup);
-                }
-            } else if ui
-                .add_enabled(!self.sel.is_empty(), egui::Button::new(t!("Group")))
-                .on_hover_text(t!("Put the picked shapes in a group, like a folder of layers · Ctrl+G"))
-                .clicked()
-            {
-                group_op = Some(Arrange::Group);
-            }
-            let pinned = s.shapes.iter().filter(|e| e.pinned).count();
-            if s.group_colors
-                && pinned > 0
-                && ui
-                    .button(t!("Unpin all"))
-                    .on_hover_text(tn!(
-                        pinned,
-                        "{n} shape is sewn where you placed it. Let Hoop group it by thread again.",
-                        "{n} shapes are sewn where you placed them. Let Hoop group them by thread again."
-                    ))
-                    .clicked()
-            {
-                for e in &mut s.shapes {
-                    e.pinned = false;
-                }
-            }
-            ui.label(
-                RichText::new(tn!(s.shapes.len(), "{n} shape · {picked} picked", "{n} shapes · {picked} picked", picked = self.sel.len()))
-                    .size(12.0)
-                    .color(muted),
-            );
-        });
-        ui.separator();
-        if let Some(op) = group_op {
-            self.arrange(op);
-            return;
-        }
-        let mods = ui.input(|i| i.modifiers);
-        // Rows topmost first: a group's header, then its shapes (unless folded).
-        let mut list: Vec<Row> = Vec::new();
-        for i in (0..s.shapes.len()).rev() {
-            match s.shapes[i].group {
-                Some(g) => {
-                    if !list.iter().any(|r| matches!(r, Row::Head(h) if *h == g)) {
-                        list.push(Row::Head(g));
-                    }
-                    if !self.folded.contains(&g) {
-                        list.push(Row::Shape(i));
-                    }
-                }
-                None => list.push(Row::Shape(i)),
-            }
-        }
-        let mut rows: Vec<(Row, egui::Rect)> = Vec::new();
-        let mut menus: Vec<(Row, egui::Response)> = Vec::new();
-        let mut clicked = None;
-        let mut drag_from = None;
-        let mut group_clicked: Option<u32> = None;
-        let mut group_drag: Option<u32> = None;
-        let mut fold: Option<u32> = None;
-        egui::ScrollArea::vertical().id_salt("objects").auto_shrink([false, false]).show(ui, |ui| {
-            let width = ui.available_width();
-            for row in list {
-                let (rect, resp) = ui.allocate_exact_size(vec2(width, 24.0), Sense::click_and_drag());
-                rows.push((row, rect));
-                menus.push((row, resp.clone()));
-                let painter = ui.painter();
-                if let Row::Head(g) = row {
-                    let members = s.members(g);
-                    let selected = !members.is_empty() && members.iter().all(|i| self.sel.contains(i));
-                    if selected {
-                        painter.rect_filled(rect, 3, accent.gamma_multiply(0.25));
-                    } else if resp.hovered() {
-                        painter.rect_filled(rect, 3, ui.visuals().widgets.hovered.weak_bg_fill);
-                    }
-                    let all_hidden = members.iter().all(|&i| s.shapes[i].hidden);
-                    let eye = egui::Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(16.0, 16.0));
-                    if ui.interact(eye, ui.id().with(("geye", g)), Sense::click()).on_hover_text(t!("Show or hide the whole group")).clicked() {
-                        for &i in &members {
-                            s.shapes[i].hidden = !all_hidden;
-                        }
-                    }
-                    let ink = if all_hidden { muted.gamma_multiply(0.6) } else { ui.visuals().text_color() };
-                    painter.circle(eye.center(), 4.5, if all_hidden { Color32::TRANSPARENT } else { ink }, egui::Stroke::new(1.2, ink));
-                    // Fold arrow and a folder.
-                    let open = !self.folded.contains(&g);
-                    let arrow = egui::Rect::from_min_size(rect.min + vec2(24.0, 4.0), vec2(16.0, 16.0));
-                    if ui.interact(arrow, ui.id().with(("fold", g)), Sense::click()).on_hover_text(t!("Fold or unfold the group")).clicked() {
-                        fold = Some(g);
-                    }
-                    let c = arrow.center();
-                    let tri = if open {
-                        vec![c + vec2(-4.0, -2.0), c + vec2(4.0, -2.0), c + vec2(0.0, 3.0)]
-                    } else {
-                        vec![c + vec2(-2.0, -4.0), c + vec2(3.0, 0.0), c + vec2(-2.0, 4.0)]
-                    };
-                    painter.add(egui::Shape::convex_polygon(tri, ink, egui::Stroke::NONE));
-                    let folder = egui::Rect::from_min_size(rect.min + vec2(44.0, 7.0), vec2(14.0, 10.0));
-                    painter.rect_filled(egui::Rect::from_min_size(folder.min - vec2(0.0, 2.0), vec2(6.0, 3.0)), 1, ink.gamma_multiply(0.8));
-                    painter.rect_filled(folder, 2, ink.gamma_multiply(0.8));
-                    let name = s.groups.iter().find(|x| x.id == g).map_or(String::new(), |x| x.name.clone());
-                    if self.renaming == Some(g) {
-                        let field = egui::Rect::from_min_max(rect.min + vec2(64.0, 2.0), rect.max - vec2(6.0, 2.0));
-                        let mut text = name.clone();
-                        let edit = ui.put(field, egui::TextEdit::singleline(&mut text));
-                        edit.request_focus();
-                        if text != name
-                            && let Some(x) = s.groups.iter_mut().find(|x| x.id == g)
-                        {
-                            x.name = text;
-                        }
-                        if edit.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                            self.renaming = None;
-                        }
-                    } else {
-                        painter.text(rect.left_center() + vec2(64.0, 0.0), egui::Align2::LEFT_CENTER, &name, egui::FontId::proportional(13.5), ink);
-                        let count = tn!(members.len(), "{n} shape", "{n} shapes");
-                        painter.text(rect.right_center() - vec2(6.0, 0.0), egui::Align2::RIGHT_CENTER, count, egui::FontId::proportional(11.0), muted);
-                    }
-                    let resp = resp.on_hover_text(t!("A group: click picks all of it, double-click renames it, drag moves it as one block"));
-                    if resp.double_clicked() {
-                        self.renaming = Some(g);
-                    } else if resp.clicked() {
-                        group_clicked = Some(g);
-                    }
-                    if resp.drag_started() {
-                        group_drag = Some(g);
-                    }
-                    continue;
-                }
-                let Row::Shape(i) = row else { continue };
-                let e = &mut s.shapes[i];
-                // Shapes in a group sit indented under its header.
-                let x0 = if e.group.is_some() { 18.0 } else { 0.0 };
-                let selected = self.sel.contains(&i);
-                if selected {
-                    painter.rect_filled(rect, 3, accent.gamma_multiply(0.25));
-                } else if resp.hovered() {
-                    painter.rect_filled(rect, 3, ui.visuals().widgets.hovered.weak_bg_fill);
-                }
-                if x0 > 0.0 {
-                    painter.vline(rect.left() + 32.0, rect.y_range(), egui::Stroke::new(1.0, muted.gamma_multiply(0.4)));
-                }
-                // Eye toggle, swatch, name, tag.
-                let eye = egui::Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(16.0, 16.0));
-                let eye_resp = ui.interact(eye, ui.id().with(("eye", i)), Sense::click()).on_hover_text(t!("Show or hide this shape"));
-                if eye_resp.clicked() {
-                    e.hidden = !e.hidden;
-                }
-                let ink = if e.hidden { muted.gamma_multiply(0.6) } else { ui.visuals().text_color() };
-                painter.circle(eye.center(), 4.5, if e.hidden { Color32::TRANSPARENT } else { ink }, egui::Stroke::new(1.2, ink));
-                let sw = egui::Rect::from_min_size(rect.min + vec2(26.0 + x0, 5.0), vec2(14.0, 14.0));
-                // The thread it sews in, which may differ from the drawing's color.
-                let color = s.layers.get(e.layer).map_or(art.layers[e.layer].color, |l| crate::formats::jef_thread(l.thread, 0).color);
-                painter.rect_filled(sw, 3, rgb(color));
-                painter.rect_stroke(sw, 3, egui::Stroke::new(1.0, muted.gamma_multiply(0.6)), egui::StrokeKind::Inside);
-                let kind = match e.base(art).kind {
-                    artwork::Kind::Fill { .. } => t!("fill"),
-                    artwork::Kind::Stroke { .. } => t!("line"),
-                };
-                let tag = if e.style.is_some() {
-                    t!("own style")
-                } else if e.source >= art.shapes.len() {
-                    t!("added")
-                } else if e.own.is_some() {
-                    t!("edited")
-                } else if e.moved() {
-                    t!("moved")
-                } else {
-                    kind
-                };
-                painter.text(rect.left_center() + vec2(48.0 + x0, 0.0), egui::Align2::LEFT_CENTER, &e.name, egui::FontId::proportional(13.5), ink);
-                // Pin: shown on pinned rows, and faintly on the hovered one to pin it.
-                // Without grouping every shape sews in list order anyway.
-                let mut right = rect.right() - 6.0;
-                if s.group_colors {
-                    let pin = egui::Rect::from_center_size(egui::pos2(rect.right() - 14.0, rect.center().y), vec2(16.0, 16.0));
-                    let tip = if e.pinned {
-                        t!("Placed by hand: sewn exactly here in the list. Click to let Hoop group it by thread again.")
-                    } else {
-                        t!("Pin: sew exactly here in the list instead of grouping it by thread")
-                    };
-                    let pin_resp = ui.interact(pin, ui.id().with(("pin", i)), Sense::click()).on_hover_text(tip);
-                    if pin_resp.clicked() {
-                        e.pinned = !e.pinned;
-                    }
-                    if e.pinned || resp.hovered() || pin_resp.hovered() {
-                        let c = if e.pinned { accent } else { muted.gamma_multiply(0.7) };
-                        let head = pin.center() - vec2(0.0, 2.5);
-                        painter.line_segment([head, pin.center() + vec2(0.0, 6.0)], egui::Stroke::new(1.4, c));
-                        if e.pinned {
-                            painter.circle_filled(head, 3.5, c);
-                        } else {
-                            painter.circle_stroke(head, 3.5, egui::Stroke::new(1.2, c));
-                        }
-                    }
-                    right -= 18.0;
-                }
-                painter.text(egui::pos2(right, rect.center().y), egui::Align2::RIGHT_CENTER, tag, egui::FontId::proportional(11.0), muted);
-                if resp.clicked() {
-                    clicked = Some(i);
-                }
-                if resp.drag_started() {
-                    drag_from = Some(i);
-                }
-            }
-        });
-        if let Some(g) = fold
-            && !self.folded.remove(&g)
-        {
-            self.folded.insert(g);
-        }
-        if let Some(i) = drag_from {
-            self.list_drag = Some(i);
-        }
-        if let Some(g) = group_drag {
-            self.group_drag = Some(g);
-        }
-        if let Some(g) = group_clicked {
-            let members = s.members(g);
-            if mods.command {
-                let fresh: Vec<usize> = members.into_iter().filter(|i| !self.sel.contains(i)).collect();
-                self.sel.extend(fresh);
-            } else {
-                self.select_only(None);
-                self.sel = members;
-            }
-        }
-        // While a row or a group is dragged, show where it lands; drop on release.
-        let dragging = self.list_drag.map(ListDrag::One).or(self.group_drag.map(ListDrag::Group));
-        if let Some(what) = dragging
-            && let Some(p) = ui.ctx().pointer_latest_pos()
-        {
-            let target = rows.iter().min_by(|a, b| (a.1.center().y - p.y).abs().total_cmp(&(b.1.center().y - p.y).abs())).copied();
-            let released = !ui.input(|i| i.pointer.any_down());
-            if let Some((row, r)) = target {
-                // A shape dropped just under a group's header goes into the group.
-                let into = matches!((what, row), (ListDrag::One(_), Row::Head(_))) && p.y >= r.center().y;
-                let y = if p.y < r.center().y { r.top() } else { r.bottom() };
-                let x = if into { r.left() + 18.0 } else { r.left() };
-                ui.painter().hline(x..=r.right(), y, egui::Stroke::new(2.0, accent));
-                if released {
-                    self.list_drag = None;
-                    self.group_drag = None;
-                    // Rows are topmost first, so above a row means later in stitch order.
-                    let above = p.y < r.center().y;
-                    self.drop_rows(what, row, above);
-                    return;
-                }
-            } else if released {
-                self.list_drag = None;
-                self.group_drag = None;
-            }
-        }
-        if let Some(i) = clicked {
-            if mods.command {
-                self.toggle_selected(i);
-            } else if mods.shift
-                && let Some(p) = self.primary()
-            {
-                let (a, b) = (p.min(i), p.max(i));
-                self.sel = (a..=b).collect();
-            } else {
-                self.select_only(Some(i));
-            }
-        }
-        // Right-click a row for the shape menu; it picks the row first.
-        for (row, resp) in &menus {
-            if resp.secondary_clicked() {
-                let picked = match *row {
-                    Row::Shape(i) => vec![i],
-                    Row::Head(g) => self.art.as_ref().map_or(Vec::new(), |s| s.members(g)),
-                };
-                if !picked.iter().all(|i| self.sel.contains(i)) || matches!(row, Row::Head(_)) {
-                    self.select_only(None);
-                    self.sel = picked;
-                }
-            }
-            resp.context_menu(|ui| self.shape_menu(ui));
-        }
-        if let Some(name) = self.list_add.take() {
-            self.add_built_in(name);
         }
     }
 

@@ -362,7 +362,7 @@ impl HoopApp {
         }
 
         self.check_overlay(&painter, &frame);
-        self.shape_overlay(&painter, &frame, hover_shape);
+        self.shape_overlay(&painter, &frame, hover_shape.or(self.objects.hover));
         self.tool_overlay(&painter, &frame);
         self.hoopings_overlay(&painter, &frame);
         self.stitch_edit_overlay(&painter, &frame);
